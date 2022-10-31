@@ -1,0 +1,496 @@
+မြန်မာဝစ်ရှင်နရီက ကြိုဆိုပါ၏။ မြန်မာဝစ်ရှင်နရီသည် စကားမျိုးစုံ၏ အဓိပ္ပာယ်တို့ကို မြန်မာစာဖြင့် ဖေါ်ပြနေသော အများပူးပေါင်း ပါဝင်ပြုစု ပျိုးထောင်နေသော မွန်မြတ်သော လုပ်ငန်းတစ်ခု ဖြစ်သည်။ အများအတွက် ပိုမို အသုံးဝင် အကျိုးရှိသော အွန်လိုင်းအဘိဓာန် တစ်ခု ဖြစ်အောင် မည်သူမဆို ပါဝင် ဝိုင်းဝန်းကူညီ ဖြည့်စွက်ပေးနိုင်ကြပါသည်။
+ဝစ်ရှင်နရီသည် ဝီကီ တစ်ခု ဖြစ်ပြီး သင်သည်လည်း ပါဝင်တည်းဖြတ် ပြင်ဆင်နိုင်ပါသည်။ ပါဝင်အကြောင်းအရာများအားလုံးကို Creative Commons Attribution-ShareAlike 3.0 Unported လိုင်စင် နှင့် GNU Free Documentation လိုင်စင် နှစ်မျိုးလုံးဖြင့် ရရှိနိုင်ပါသည်။ ယူနီကုဒ်စည်းမျဉ်းနှင့်ညီသော မည်သည့်ဖောင့်နှင့်မဆို ရေးသားခြင်း တည်းဖြတ်ခြင်းများ ပြုလုပ်နိုင်သည်။ အထွေထွေဆွေးနွေးရန်နှင့် မေးမြန်းရန်နေရာတို့တွင်လည်း ဝင်ရောက်ဆွေးနွေးမေးမြန်းနိုင်ပါသည်။
+ဝစ်ရှင်နရီ အခမဲ့လွတ်လပ်အဘိဓာန်
+ဘာသာစကား ၃၂ ခုအတွက် အဓိပ္ပာယ်ဖွင့်ဆိုချက်ပေါင်း ၁၂၃၉၃၃ နှင့်အထက် ရှိပါသည်။
+El Viccionari és un diccionari universal lliure en desenvolupament continu sobre la base de col·laboracions desinteressades. Tothom hi pot ajudar!
+L'objectiu és recollir totes les paraules del món i explicar-les en català. Més enllà del simple diccionari habitual, pot incloure no només les definicions, sinó també tot tipus de recull lexicogràfic: traduccions multilingües del català i bilingües al català, etimologies, pronunciacions, exemples, sinònims, formes gramaticals, expressions i locucions, etcètera. El nostre objectiu és facilitar tota la informació que ajudi a comprendre una paraula en el seu context, evolució, usos i aspectes diversos, i fer-ho de forma descriptiva, sense jutjar el seu valor ni amb cap intenció normativa.
+Com a wiki obert i lliure, tothom hi pot col·laborar, modificar o corregir, ja que tothom hi participa sota els termes de la llicència Reconeixement i Compartir Igual de Creative Commons.
+Français
+autrice
+
+Étymologie
+(1477-1478) Attesté d’abord sous la forme actrixe, ensuite (1503) auctrixe, puis (1524) sous la forme auctrice dans une lettre de Guillaume Briçonnet à Marguerite d’Angoulême. Puis sous le pluriel autrices en 1554 dans La Claire, de Louis Le Caron. Du latin auctrix (« agente, autrice, fondatrice, instigatrice », « conseillère », en droit « garante d’une vente »). Emprunt savant au latin, l’évolution phonétique classique du c devant t (k implosif devant t : factum qui donne fait) en roman et en ancien français n’a pas joué, elle était déjà achevée en moyen français, bien avant les premières attestations du mot.
+Nom commun
+Jocelyn Bell est l’autrice (sens 1) de la découverte des pulsars
+autrice \o.tʁis\ féminin (pour un homme on dit : auteur)
+Personne à l’origine de quelque chose.
+Cette situation familiale, prise en compte dans le processus de personnalisation des peines au même titre que la personnalité de l’auteur ou de l’autrice, la gravité et les circonstances de l’infraction, fait que, dans bien des cas, la criminelle n’est pas seule à la barre — (Lucile Quillet, Les femmes, ces criminelles (presque) comme les hommes, dans Slate, 4 mars 2019 [texte intégral])
+(Littérature) Personne qui a rédigé un ouvrage de littérature, de science ou d’art.
+Au Carouzel de nôtre Roy
+La jeune Autrice de Torquate
+Piéce charmante et délicate
+A fait, en ſtile net & fin,
+Vn Carouzel pour le Daufin — (Jean Loret, La Muse historique du 27 mai 1662, 1665, page 78)
+(Plus rare) Génitrice ; ascendante (Note : ce sens n’est plus guère utilisé que sous la forme de la locution « autrice de mes jours »).
+Au commencement de cette lettre l’Autrice de l’Impetrant a taché de capter la bienveillance de ſa belle Sœur, en lui voulant procurer un Docteur pour la guerir de ſon chancre, dont elle eſt morte peu de tems après. — (Reflexions paratitlaires pour la Dame Marie Joſephe Comteſſe Douariere… contre Meſſire Frederic Comte d’Eynatten Seigneur…, 1728, page 12)
+Notes
+Malgré son emploi jusque dans la première moitié du XXe siècle, le TLFi indique qu’auteur n’a pas de forme féminine. Le mot autrice a fait cependant son retour, à partir de 1996 comme féminin d’auteur dans le Petit Robert, 1996, sous une forme plus développée à partir du Petit Robert, 2003, ainsi que dans le Dictionnaire Hachette et L’Officiel du jeu Scrabble (ODS4) à partir de 2004. En 2019, l’Académie française juge qu’autrice est le féminin d’auteur « dont la formation est plus satisfaisante » et elle réhabilite le terme (souvent perçu à tort comme un néologisme), quarante ans après la recommandation de l’Office québécois de la langue française.
+Lire la page autrice en entier
+Travail collaboratif du mois
+Ce mois-ci, seconde édition du Défi Thésaurus visant à créer 100 thésaurus en 30 jours. Réussite le 22 novembre avec le nouvel objectif d’atteindre 1 000 thésaurus avant la fin du mois ! Venez participer pour réussir ensemble !
+Travail collaboratif de la semaine
+Cette semaine, intéressons-nous au vocabulaire de l’isolation avec quelques mots à créer : boîte dans la boîte, faux-plafond, inertie thermique, maison passive, remontée capillaire. Enrichissons les entrées existantes grâce à un lexique de spécialité !
+Mot à créer aujourd’hui
+voyoucratique
+
+Добро пожаловать в русский Викисловарь — многофункциональный многоязычный словарь и тезаурус, в обсуждении и пополнении которого может участвовать каждый.
+Словарь был открыт 1 мая 2004 года, и сейчас в нём содержится 1 094 903 статьи о словах, словообразовательных единицах и словосочетаниях более 500 языков мира.
+
+Вы можете дополнять и улучшать уже начатые статьи, создавать новые, а также оставлять запросы на создание новых статей. Если вы не являетесь зарегистрированным участником, то используйте для создания статей Инкубатор. При этом в качестве подспорья рекомендуется использовать правила оформления статей и cправочный раздел Викисловаря. Обсуждать возникающие вопросы можно в разделах портала сообщества, страницы обсуждения есть также у каждой статьи, категории и т. п.
+О Викисловаре	Новости
+Лексикографическая концепция‎
+Структура Викисловаря
+Условные сокращения
+Правила оформления статей
+Быстрое создание статей
+Полный список статей
+Шаблоны в Викисловаре
+Участники Викисловаря
+24 ноября: слово дня — грузовоз
+октябрь 2020: за месяц в русском Викисловаре создано порядка 3900 статей.
+сентябрь 2020: за месяц в русском Викисловаре создано порядка 4200 статей.
+август 2020: за месяц в русском Викисловаре создано порядка 5960 статей.
+июль 2020: за месяц в русском Викисловаре создано порядка 5000 статей.
+июнь 2020: за месяц в русском Викисловаре создано порядка 5500 статей.
+25 сентября 2019: число всех страниц в русском Викисловаре превысило 2 000 000.
+Прочие новости
+Новые статьи ·· в русском языке
+한국어 위키낱말사전에 오신 것을 환영합니다!
+위키낱말사전은 한국어를 비롯한 세계의 모든 언어의 모든 어휘를 수록하는 사전입니다. 누구나 참여가 가능하며, 언어와 낱말 풀이에 관심이 있으신 분은 언제나 환영합니다!
+처음 방문하신 분은 첫걸음 문서와 도움말 문서를 읽어보시기 바랍니다.
+현재, 한국어 위키낱말사전에는 294,427 개의 항목이 수록되어 있습니다.
+WiktFaviconKo.svg 찾아보기
+언어
+분야
+품사와 형태소
+IPA와 맞춤법
+한국어
+표준어, 문화어, 한자어, 외래어, 옛말
+한자
+부수 색인, 자전, 한자성어, 기초한자
+영어
+프랑스어
+중국어
+독일어
+이탈리아어
+스페인어
+러시아어
+일본어
+베트남어
+▼
+기타 언어
+지리, 철학, 종교
+사회, 문화, 역사
+문학, 음악, 미술
+동물 (학명), 식물 (학명)
+생물, 물리, 화학
+언어학, 의학, 수학
+기상학, 심리
+천문, 컴퓨터
+교육, 경제
+정치, 법률
+농업, 어업, 광업
+공업, 건설
+교통, 군사
+색깔, 스포츠, 음식
+감탄사
+관사, 관형사
+명사, 대명사, 수사
+동사, 형용사
+부사
+전치사, 접속사
+조사
+격조사, 보조사
+어미, 어근, 어간
+접두사, 접미사
+단일어, 복합어, 첩어
+의성어, 의태어
+여린말, 센말
+작은말, 큰말
+한글 맞춤법
+표준어 규정
+외래어 표기법
+국어의 로마자 표기법
+매큔-라이샤워 표기법
+예일 표기법
+부록
+가족과 친척
+시간의 단위와 표현
+신체 부분의 이름
+사용 빈도가 높은 한국어 5800
+교육용 기초 한자 1800
+사용 빈도가 높은 영어 3000
+사용 빈도가 높은 스페인어 1000
+O Wikcionário é um projeto colaborativo para produzir um dicionário poliglota livre em português, com significados, etimologias e pronúncia. Iniciamos o projeto em 3 de Maio de 2004 e temos 262 907 entradas na versão em português. Qualquer pessoa pode editar e salvar qualquer definição; não é necessário identificar-se. Mais informações sobre o projeto estão disponíveis no Portal comunitário.
+O conteúdo do Wikcionário está sujeito à Licença GNU de Documentação, o que significa que todo o conteúdo é livre e assim permanecerá para sempre. Veja Direitos autorais para mais detalhes.
+O objetivo do Wikcionário é descrever todas as palavras de todos os idiomas, com definições e descrições em português, idioma falado em Angola, Brasil, Cabo Verde, Galiza, Guiné-Bissau, Macau, Moçambique, Portugal, São Tomé e Príncipe, Timor Leste e por diversas comunidades em todo o mundo. Para isso, as diferentes versões da língua portuguesa são aceitas.
+Wiktionary, das freie Wörterbuch
+932.132 deutschsprachige Einträge zu über 230 Sprachen
+122.938 Einträge mit deutschen Grundformen
+
+Durchsuchen: alle Einträge • alle Sprachen • Fachwörter • Abkürzungen • Verzeichnisse • Sprachportal Deutsch
+A a Ä ä B b C c D d E e F f G g H h I i J j K k L l M m N n O o Ö ö P p Q q R r S s T t U u Ü ü V v W w X x Y y Z z À Å å͵α Є Ա ב ب あ 가 ა
+
+
+pix.gif
+pix.gif
+pix.gif
+pix.gif
+pix.gif
+Willkommen beim Wikiwörterbuch!
+Das Wikiwörterbuch ist das deutschsprachige Wiktionary: ein frei verfügbares, mehrsprachiges Wörterbuch für den Wortschatz aller Sprachen.
+Wort der Woche
+WdW-Sterne.png
+Woche 48Wort: zeihen
+Wortart:	Verb
+Trennung:	zei·hen, Präteritum: zieh, Partizip II: ge·zie·hen
+Aussprache:	[ˈt͡saɪ̯ən], Präteritum: [t͡siː], Partizip II: [ɡəˈt͡siːən]
+Herkunft:	Das Verb zeihen lässt sich auf eine indoeuropäische Wurzel *deik̑- ‚zeigen‘ zurückführen. Näheres ist dem Eintrag zu entnehmen.
+Frühere Wörter der WocheFeed-icon.svg abonnieren
+pix.gif
+pix.gif
+pix.gif
+pix.gif
+pix.gif
+Weitere interessante Einträge
+Quetschkommode, Beispiel, wählen, virulent, Asthma, Acker, wie auch schon, losfahren, jemandem in den Schoß fallen, hinfallen (… → mehr · Zufälliger Eintrag)
+
+pix.gif
+pix.gif
+pix.gif
+pix.gif
+pix.gif
+Reim der Woche
+Woche 48
+Was reimt sich auf obszönster ? Weiter zur Lösung
+
+Beachte: Einige Wörter können veraltet oder nur regional bekannt sein oder nur regional eine passende Aussprache haben.
+pix.gif
+pix.gif
+pix.gif
+pix.gif
+pix.gif
+Aktuelles
+Wir haben ein Verzeichnis zu Wörtern im Zusammenhang mit Corona.
+Am 15. November 2020 wurde die 36.000. deutschsprachige Reim-Seite angelegt.
+Seit dem 14. November 2020 gibt es über 230.000 deutschsprachige Einträge mit Reim.
+Meilenstein: Am 26. Oktober 2020 wurde der 925.000. Eintrag angelegt: rollet zusammen.
+Seit dem 26. Oktober 2020 gibt es über 470.000 Einträge mit Hörbeispielen.
+Am 9. Juni 2020 wurde der 120.000. deutschsprachige Grundform-Eintrag erstellt.
+Am 1. Mai 2020 ist das deutschsprachige Wiktionary 16 Jahre alt geworden. Der erste Eintrag im Jahre 2004 war „ich“.
+> weitere Neuerungen <
+bearbeiten
+pix.gif
+pix.gif
+pix.gif
+pix.gif
+pix.gif
+Jeder ist herzlich eingeladen mitzuhelfen – eine Übersicht
+Crystal Clear app linneighborhood.png	Einträge nach Sprachen
+Crystal Clear action spellcheck.png	Einträge nach Grammatik
+Nuvola apps gaim.png	Redewendungen und Sprichwörter
+Nuvola apps kghostview.png	Fremdwörter
+Crystal Clear app kword.png	Fachwortlisten
+Crystal Clear app mydocuments.png	Wiktionary-Verzeichnisse
+  	
+Icon apps query.svg	Hilfeseiten
+Exquisite-khelpcenter.png	Fragen zur Sprache (Auskunft)
+Nuvola apps bookcase.png	Fragen zum Wiktionary
+Crystal Clear app package settings.png	Formatieren der Einträge
+Crystal Project Voice-support.png	Wichtige Diskussionen
+pix.gif
+pix.gif
+pix.gif
+pix.gif
+pix.gif
+Allgemeine Hinweise
+Beim Anlegen von Einträgen bitte die Groß- und Kleinschreibung beachten!
+Nicht mehr aktuelle Schreibweisen (anderer Wörter als das Lemma) in Zitaten werden wie im Original belassen.
+In den Einträgen werden Abkürzungen ausgeschrieben.
+Für Bedeutungsangaben bitte Hilfe:Referenzen und Wiktionary:Referenzen beachten.
+Die Vorlage:K wird nur im Abschnitt Bedeutungen verwendet/verwandt.
+Bei Unklarheiten im Umgang mit der Formatvorlage kann ein Blick in die Hilfeseite der Formatvorlage weiterhelfen.
+Die Eingabe von Übersetzungen erklärt die Hilfe:Einfügen-Erweiterung.
+Das deutsche Wiktionary verfügt über einen eigenen IRC-Channel namens wiktionary-de. Alle, die Fragen haben oder auch einfach nur so vorbeischauen möchten, sind herzlich willkommen.
+به ویکی‌واژه خوش‌آمدید
+واژه‌نامهٔ آزادی که همه می‌تواند آن را ویرایش کند.
+دارای ۱۰۱٬۹۳۹ سرواژه با آوایش فارسی
+درباره • جستجو • راهنما  • نسخهٔ تلفن همراه	
+الف-ی
+
+Nuvola apps edu languages.svg پرسش‌های شما     Crystal128-kdict.svg خودآموز ویکی‌واژه     Biografías y vida.png سیاست‌ها و رهنمودها    
+
+گشت و گذار: الفبای جهانی • زبان‌ها • فهرست عنوان‌ها • فهرست دستور زبانی
+
+فهرست الفبایی واژه‌ها
+
+آ ا ب پ ت ث ج چ ح خ د ذ ر ز ژ س ش ص ض ط ظ ع غ ف ق ک گ ل م ن و ه ی
+
+a A b B c C d D e E f F g G h H i I j J k K l L m M
+
+n N o O p P q Q r R s S t T u U v V w W x X y Y z Z
+
+پیوست‌ها • سرنام‌ها • فهرست‌های بسامدی
+
+ 
+ویکی‌واژه یک واژه‌نامه به همهٔ زبان‌های موجود است که با همکاری همگانی بر روی اینترنت پدیدآمده و گسترش می‌یابد. ویکی‌واژه واژه‌نامه‌ای آزاد از واژه‌ها است که در آن به بررسی تمام واژه‌ها در هر زبانی می‌پردازد و اطلاعاتی نظیر ریشه‌شناسی، آوایش، پاره‌های سخن، مترادف و برگردان واژه‌ها را به شما می‌دهد. منظور از آزاد بودن این واژه‌نامه این است که همگان (از جمله شما) می‌توانند آن را آزادانه بازنشر کنند با این شرط که این آزادی را از دیگر کاربران سلب نکنند و در آن چیز بنویسند و به ویرایش نوشته‌ها بپردازند.
+
+ویکی‌واژه همکار دانشنامهٔ آزاد ویكی‌پدیا است. می‌توان از ویکی‌واژه برای آشنایی با واژه‌های ناآشنا استفاده کرد و آن را برای ساخت بانک داده برای یک مترجم رایانه‌ای به کار گرفت.
+
+نسخهٔ فارسی ویکی‌واژه از تاریخ ۲۹ مهر ۱۳۸۳ آغاز به کار کرده و هم‌اکنون ۱۰۱٬۹۳۹ سرواژه دارد.
+Voor elke taal kan een eigen WikiWoordenboek, een Wiktionary, worden gemaakt die dan alle woorden uit alle talen in die taal probeert te beschrijven. Op elke pagina kun je in de balk links zien welke andere Wiktionary's er zijn met een pagina die dezelfde titel heeft. Dat is dan een beschrijving van hetzelfde woord, maar dan in die taal; het is dus niet de vertaling!
+
+De meer dan 150 Wiktionary's staan allemaal in deze lijst, die met meer dan 20.000 pagina's staan van groot naar klein hieronder. De naam van de taal in de eigen taal linkt naar de hoofdpagina van de wiktionary, de Nederlandse naam naar de pagina in WikiWoordenboek.
+Wikisłownik:Logowanie
+Przejdź do nawigacjiPrzejdź do wyszukiwania
+Zarejestrowanie się w Wikisłowniku ma wiele zalet:
+
+można sobie ustawić swoje własne preferencje oglądania stron, takie jak schematy kolorów, układ pomocy, sposób pokazywania tekstu itp.
+przy pisaniu tekstów będziemy widoczni na liście ostatnich zmian nie pod swoim adresem IP, lecz pod wybranym przez siebie podpisem.
+uzyskuje się w ten sposób możliwość edycji swojej osobistej strony w Wikisłowniku, którą można wykorzystać w dowolny sposób (pod warunkiem, że to nie łamie zasad);
+można wysłać e-mail do innego zarejestrowanego użytownika z jego strony na Wikisłowniku pod warunkiem, że:
+on podał swój adres e-mail
+osoba wysyłająca podała swój adres e-mail i oczywiście jest zarejestrowana
+uzyskasz możliwość korzystania z dodatków skryptowych pomocnych przy przeglądaniu i edycji haseł
+
+Spis treści
+1	Jak się zarejestrować?
+2	Jak się zalogować?
+3	Jak zmienić swoje preferencje?
+4	Jak korzystać ze swojej strony osobistej?
+Jak się zarejestrować?
+Jest to bardzo proste – trzeba kliknąć na link Logowanie i rejestracja w prawym górnym rogu, następnie Zarejestruj się, wypełnić bardzo prosty formularz i kliknąć na Załóż nowe konto.
+
+Gdy w tym formularzu wybierzesz opcję Pamiętaj moje hasło między sesjami oprogramowanie Wikisłownika, wykorzystując mechanizm ciasteczek (cookies), zapisze na Twoim komputerze Twoje hasło. W efekcie, przy każdym wejściu na strony Wikisłownika z tego komputera będziesz od razu zalogowany/zalogowana. W przypadku gdy do komputera, z którego korzystasz ma dostęp więcej osób, lepiej z tej opcji nie korzystać. Oczywiście, żeby ten mechanizm zadziałał trzeba mieć w swojej przeglądarce odblokowaną opcję korzystania z mechanizmu cookie.
+
+Jak się zalogować?
+O ile przy rejestracji nie została wybrana opcja "Pamiętaj moje hasło między sesjami" i nie nastąpiło automatyczne zalogowanie, należy kliknąć na opcję "Zaloguj mnie" i w formularzu podać swój login, hasło i kliknąć na zaloguj mnie.
+
+Wybranie opcji Pamiętaj moje hasło między sesjami daje przy logowaniu ten sam efekt w przyszłości jak w przypadku pierwszej rejestracji.
+
+Jak zmienić swoje preferencje?
+Po zalogowaniu się, należy kliknąć na Preferencje. W formularzu mamy szereg opcji, które w większości "tłumaczą się same", ale których sens poznasz z czasem używania Wikisłownika. Po wybraniu swoich preferencji należy kliknąc na Zapisz preferencje i system będzie używał ich automatycznie po każdym Twoim zalogowaniu. W razie wątpliwości można zawsze wrócić do standardowych ustawień przez kliknięcie na Preferencje domyślne.
+
+Jak korzystać ze swojej strony osobistej?
+Strona ta otwiera się po kliknięciu na link zatytułowany wybranym przez siebie loginem. Można ją edytować tak samo jak każdą inną stronę po kliknięciu na link Edytuj na górze strony.
+Το ελληνικό βικιλεξικό χρειάζεται την εθελοντική σας συνεισφορά για να αναπτυχθεί. Αν κάποιο λήμμα σάς ενδιαφέρει αλλά είναι ανεπαρκές, συμπληρώστε το.
+με ορισμούς - με συνώνυμα - με δικές σας φράσεις παραδειγμάτων - με μεταφράσεις - και με χίλιους άλλους τρόπους!
+Μπορείτε επίσης να ξεκινήσετε ένα καινούριο λήμμα απ' την αρχή. Εξασκηθείτε στο αμμοδοχείο και... καλή συνεισφορά!
+
+
+Λέξη της Ημέρας
+Σήμερα Τρίτη, 24 Νοεμβρίου 2020,
+η λέξη της ημέρας για επεξεργασία είναι:
+«μερικώς»
+
+Το όνομα ή το επώνυμό σας στο Βικιλεξικό
+Αναζητήστε ή δημιουργήστε Παραδείγματα: Ελένη, Παπαδόπουλος
+
+Συστηθείτε στους Μυκηναίους! Γράψτε το με Γραμμική Β!
+
+ma-ri-a
+
+Αλφαριθμητικός Κατάλογος
+Α Ά Β Γ Δ Ε Έ Ζ Η Ή Θ Ι Ί Κ Λ Μ Ν Ξ Ο Ό Π Ρ Σ Τ Υ Ύ Φ Χ Ψ Ω Ώ
+
+α ά β γ δ ε έ ζ η ή θ ι ί κ λ μ ν ξ ο ό π ρ σ τ υ ύ φ χ ψ ω ώ
+
+A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+
+1 2 3 4 5 6 7 8 9 0
+Μπορείτε να βοηθήσετε το Βικιλεξικό με πολλούς τρόπους!
+
+
+Λήμματα
+Ανά γλώσσα - Ανά θέμα - Θέματα (ανά γλώσσα) - Νέα λήμματα
+Δημιουργία λημμάτων - Αριθμός λημμάτων ανά γλώσσα
+Από τη Μυκηναϊκή διάλεκτο ως την Πληροφορική & το Διαδίκτυο
+
+Ελληνική Γλώσσα
+αρχαία - μεσαιωνικά - νέα ελληνικά
+ουσιαστικά - κύρια ονόματα - επίθετα - ρήματα - μετοχές - επιρρήματα - προθέσεις - αντωνυμίες - άρθρα - σύνδεσμοι - μόρια - επιφωνήματα - προθήματα - επιθήματα - συντομομορφές - εκφράσεις - καθαρεύουσα - αργκό
+
+Πρόσφατα Γεγονότα
+16 Αυγούστου 2020 - Οι ελλείποντες ορισμοί είναι πλέον λιγότεροι από 11.000!
+8 Απριλίου 2020 - Οι ελλείποντες ορισμοί είναι πλέον λιγότεροι από 12.000!
+15 Ιανουαρίου 2020 - Οι ελλείποντες ορισμοί είναι πλέον λιγότεροι από 13.000!
+31 Δεκεμβρίου 2019 - Εισαγωγή σημαντικού αριθμού ελληνικών ονομάτων και επωνύμων από δημόσιους καταλόγους από τον FocalPoint που δημιούργησε και το Παράρτημα:Ονόματα και επώνυμα στα ελληνικά
+Όλα τα γεγονότα
+
+ଉଇକିଅଭିଧାନକୁ ସ୍ଵାଗତ
+
+
+ଏହା ଏକ ମାଗଣାରେ ଉପଲବ୍ଧ ଅଭିଧାନ ଅଟେ ଓ ଏହାକୁ ଗଢିବାରେ ସଭିଏଁ ସହଯୋଗ କରିପାରିବେ ।
+ବର୍ତ୍ତମାନ ସୁଦ୍ଧା ଏଥିରେ ବିଭିନ୍ନ ଭାଷାର ୧,୦୮,୫୯୪ ଟି ଶବ୍ଦ ଓ ଏହାର ଓଡ଼ିଆ ଶବ୍ଦାର୍ଥ ରହିଛି ।
+
+
+ଅ ଆ ଇ ଈ ଉ ଊ ଋ ଌ ଏ ଐ ଓ ଔ କ ଖ ଗ ଘ ଙ ଚ ଛ ଜ ଝ ଞ ଟ ଠ ଡ ଢ ଣ ତ ଥ ଦ ଧ ନ ପ ଫ ବ ଭ ମ ଯ ର ଲ ଵ ଶ ଷ ସ ହ ଳ କ୍ଷ ଜ୍ଞ
+ଓଡ଼ିଆ - ଇଂରାଜୀ - ବଙ୍ଗଳା - ହିନ୍ଦୀ - ଗ୍ରୀକ - ସଂସ୍କୃତ
+ଅବଲୋକନ	ଏ ମାସର ଶବ୍ଦ
+ଉଇକିଅଭିଧାନ, ଉଇକିପିଡ଼ିଆର ଏକ ସହଯୋଗୀ ପ୍ରକଳ୍ପ । ଓଡ଼ିଆ ଉଇକିଅଭିଧାନରେ ବର୍ତ୍ତମାନ ସୁଦ୍ଧା ୧,୦୮,୫୯୪ଟି ଶବ୍ଦ ରହିଛି । ଏହି ଶବ୍ଦ ଗୁଡ଼ିକ ଓଡ଼ିଆ ସମେତ ଆହୁରି ଅନେକ ଭାଷାରେ ରହିଛି କିନ୍ତୁ ଏହାର ଶବ୍ଦାର୍ଥ ଓ ବ୍ୟାଖ୍ୟା ଓଡ଼ିଆରେ ଅଛି । ଯଥା - ଓଡ଼ିଆ ଶବ୍ଦର ଓଡ଼ିଆ ଶବ୍ଦାର୍ଥ; ବଙ୍ଗାଳୀ ଶବ୍ଦର ଓଡ଼ିଆ ଶବ୍ଦାର୍ଥ; ଇଂରାଜୀ ଶବ୍ଦର ଓଡ଼ିଆ ଶବ୍ଦାର୍ଥ ଇତ୍ୟାଦି । ଏହି ଅଭିଧାନଟି ମୁଖ୍ୟତଃ ସ୍ଵେଚ୍ଛାସେବୀମାନଙ୍କ ଦ୍ଵାରା ତିଆରି ହୋଇଛି । ଏହାକୁ ଯେକେହି ସମ୍ପାଦନା କରିପାରିବେ ଓ ବ୍ୟବହାର ମଧ୍ୟ କରିପାରିବେ । ଏଥିପାଇଁ କୌଣସି ଶୁଳ୍କ ଦେବାକୁ ପଡେନାହିଁ ।
+ଆପଣ ବି ଚାହିଁଲେ ଏହି ଅଭିଧାନଟିରେ କୌଣସି ନୂଆ ଶବ୍ଦ, ଯେକୌଣସି ଭାଷାର ଶବ୍ଦ, ଯୋଡିପାରିବେ କିମ୍ବା କୌଣସି ଭୁଲ ସଂଶୋଧନ କରିପାରିବେ । ନୂଆ ଶବ୍ଦଟିଏ ଯୋଡିବା ପାଇଁ ନିମ୍ନୋକ୍ତ ବାକ୍ସରେ ଶବ୍ଦଟିକୁ ଲେଖି କ୍ଲିକ କରନ୍ତୁ ।
+
+ 
+
+ଉଇକିଅଭିଧାନରେ ଓଡ଼ିଆ ଲେଖିବା ଓ ନୂଆ ଶବ୍ଦଟିଏ ଯୋଡିବା ପ୍ରଣାଳୀ
+
+ଅଧିକ ସାହାଯ୍ୟ ପାଇଁ ଯୋଗାଯୋଗ କରନ୍ତୁ
+
+ବଦଳାଇବେ, ସତେଜ
+ତୋଟାଳ
+
+ଉଚ୍ଚାରଣ: Toṭāḻa
+ଦେଶଜ - ବିଶେଷ୍ୟ —
+
+ତୋଟା ରଖୁଆଳ; ତୋଟା ଜଗୁଆଳି; ଉପବନ-ରକ୍ଷକ ମାଳି
+ପୁରା ପଢନ୍ତୁ • ଅଭିଲେଖ • ମାସିକ ବଛା ଶବ୍ଦ କଣ ?
+ಮುಖ್ಯ ಪುಟ
+Jump to navigationJump to search
+
+ವಿಕ್ಷನರಿ
+ಒಂದು ತೆರೆದ ಪದನೆರಕೆ
+ಒಟ್ಟು ಪದಗಳು: ೨,೬೪,೧೬೨
+
+ಕನ್ನಡ : ಅ ಆ ಇ ಈ ಉ ಊ ಋ ಎ ಏ ಐ ಒ ಓ ಔ ಕ ಖ ಗ ಘ ಙ ಚ ಛ ಜ ಝ ಞ ಟ ಠ ಡ ಢ ಣ ತ ಥ ದ ಧ ನ ಪ ಫ ಬ ಭ ಮ ಯ ರ ಱ ಲ ವ ಶ ಷ ಸ ಹ ಳ ೞ
+
+ಇಂಗ್ಲೀಷ್ : A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+
+Crystal Clear action viewmag.png	
+ 
+ನೇರವಾಗಿ ಕನ್ನಡದಲ್ಲಿ ಬರೆಯುವುದರ ಬಗ್ಗೆ ಸಹಾಯಕ್ಕಾಗಿ ಲಿಪ್ಯಂತರ ಸಹಾಯ ಪುಟವನ್ನು ನೋಡಿ.
+
+Logo book2.png ಕನ್ನಡ ವಿಕ್ಷನರಿಗೆ ನಲ್ಬರವು. ಇದು ಜಾಲತಾಣದಲ್ಲಿ ಸಾಮಾನ್ಯ ಕನ್ನಡಿಗರಿಂದಲೇ ಕಟ್ಟಲಾಗುತ್ತಿರುವ ಪದನೆರಕೆ. ನೀವೂ ಪದಗಳನ್ನು ಸೇರಿಸಿ ಕನ್ನಡ ವಿಕ್ಷನರಿಯನ್ನು ಮತ್ತಷ್ಟು ಉಪಯುಕ್ತವಾಗಿಸಬಹುದು! ಆಸಕ್ತಿಯಿರುವವರು ದಯವಿಟ್ಟು ಒಮ್ಮೆ ಸಮುದಾಯ ಪುಟವನ್ನು ಓದಿಕೊಂಡು ಪದಗಳನ್ನು ಸೇರಿಸಲು ಮುಂದಾಗಿ.
+Writing star.svg
+
+ದಿನದ ಪದ ೨೩ ನವೆಂಬರ್ ೨೦೨೦
+ಸಂಪಾದಿಸಿ , ಮುಂದಿನ ಪದ
+ಱೊಪ್ಪ ನಾಮಪದ
+ಮಾಳ, ಲಾಯ, ದೊಡ್ಡಿ, ಕೊಟ್ಟಿಗೆ, ರೊಪ್ಪ, ಱೊಪ್ಪು
+ಆಶ್ರಯಸ್ಥಾನ, ನೆಲೆ
+« ಹಿಂದಿನ ಪದ | ಹಳೆಯ ಪದಗಳು »
+
+
+Notepad icon.png
+
+ತೆರೆಯ ಮರೆಯಲ್ಲಿ
+ಸಮುದಾಯ ಪುಟ
+
+ವಿಕ್ಷನರಿಯ ಬಗ್ಗೆ ನೀವು ತಿಳಿಯಬೇಕಿರುವ ಎಲ್ಲಾ ಮಾಹಿತಿಯನ್ನೊಳಗೊಂಡ ಪುಟ.
+ಅರಳಿ ಕಟ್ಟೆ
+
+ಸಮುದಾಯದ ಇತರ ಸದಸ್ಯರೊಂದಿಗೆ ಚರ್ಚೆ ಮಾಡಲು ಅರಳಿ ಕಟ್ಟೆ.
+ಮಾಡಬೇಕಾಗಿರುವ ಕೆಲಸಗಳು • ಸಹಾಯ • ಸಹಾಯ
+欢迎来到维基多语词典！
+今天是2020年11月24日星期二(协调世界时)
+ISO 8601格式表示为2020-11-24T05:07
+ 
+欢迎来到维基词典。这是一个由志愿者编纂的多语言词典计划，它旨在囊括各种语言词汇的语源、读音和解释。任何人甚至无须登录就可以编辑任何字词。维基词典中文版始于2004年5月，现在已经有889,198个词条。请参见常见问题和帮助来获得有关如何使用本网站的更多信息。维基词典中的内容均在CC BY-SA 3.0 協議下发布，这意味着它将是完全自由的。详细信息请参见版权。
+其他语言
+精选词条
+ulalaluan | ベリリウム | pară | 蟧蜈 | 一 | 虎 | 懷孕 | 獨立 | độc nhất vô nhị | 되 | 곱다랗다
+
+浏览维基词典	快速索引
+索引
+漢字索引	主题索引	词性索引	成语索引
+缩写词索引	连绵词索引	佈局解釋	字母索引
+語言種類索引	语言词汇索引	佛教词彙索引	基督宗教詞典
+
+附录
+代词	动物	历法	月份	星期	颜色	星座	国家	元素
+姓氏	数字	地名	天体	缩写	货币	宗教	军衔	艺术
+親朋	发音	语言列表	简化字总表	斯氏核心词
+汉语拼音方案	第一批异形词整理表	第一批异体字整理表	现代汉语常用字表	现代汉语通用字表
+原始印欧语词根	原始印欧语名词	英语不规则复数	英语不规则动词	法语不规则动词
+所有维基词典都应该有的词汇列表
+ವಿಕ್ಷನರಿ
+ಒಂದು ತೆರೆದ ಪದನೆರಕೆ
+ಒಟ್ಟು ಪದಗಳು: ೨,೬೪,೧೬೨
+
+ಕನ್ನಡ : ಅ ಆ ಇ ಈ ಉ ಊ ಋ ಎ ಏ ಐ ಒ ಓ ಔ ಕ ಖ ಗ ಘ ಙ ಚ ಛ ಜ ಝ ಞ ಟ ಠ ಡ ಢ ಣ ತ ಥ ದ ಧ ನ ಪ ಫ ಬ ಭ ಮ ಯ ರ ಱ ಲ ವ ಶ ಷ ಸ ಹ ಳ ೞ
+
+ಇಂಗ್ಲೀಷ್ : A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+
+Crystal Clear action viewmag.png	
+ 
+ನೇರವಾಗಿ ಕನ್ನಡದಲ್ಲಿ ಬರೆಯುವುದರ ಬಗ್ಗೆ ಸಹಾಯಕ್ಕಾಗಿ ಲಿಪ್ಯಂತರ ಸಹಾಯ ಪುಟವನ್ನು ನೋಡಿ.
+
+Logo book2.png ಕನ್ನಡ ವಿಕ್ಷನರಿಗೆ ನಲ್ಬರವು. ಇದು ಜಾಲತಾಣದಲ್ಲಿ ಸಾಮಾನ್ಯ ಕನ್ನಡಿಗರಿಂದಲೇ ಕಟ್ಟಲಾಗುತ್ತಿರುವ ಪದನೆರಕೆ. ನೀವೂ ಪದಗಳನ್ನು ಸೇರಿಸಿ ಕನ್ನಡ ವಿಕ್ಷನರಿಯನ್ನು ಮತ್ತಷ್ಟು ಉಪಯುಕ್ತವಾಗಿಸಬಹುದು! ಆಸಕ್ತಿಯಿರುವವರು ದಯವಿಟ್ಟು ಒಮ್ಮೆ ಸಮುದಾಯ ಪುಟವನ್ನು ಓದಿಕೊಂಡು ಪದಗಳನ್ನು ಸೇರಿಸಲು ಮುಂದಾಗಿ.
+Writing star.svg
+
+ದಿನದ ಪದ ೨೩ ನವೆಂಬರ್ ೨೦೨೦
+ಸಂಪಾದಿಸಿ , ಮುಂದಿನ ಪದ
+ಱೊಪ್ಪ ನಾಮಪದ
+ಮಾಳ, ಲಾಯ, ದೊಡ್ಡಿ, ಕೊಟ್ಟಿಗೆ, ರೊಪ್ಪ, ಱೊಪ್ಪು
+ಆಶ್ರಯಸ್ಥಾನ, ನೆಲೆ
+« ಹಿಂದಿನ ಪದ | ಹಳೆಯ ಪದಗಳು »
+
+
+Notepad icon.png
+
+ತೆರೆಯ ಮರೆಯಲ್ಲಿ
+ಸಮುದಾಯ ಪುಟ
+
+ವಿಕ್ಷನರಿಯ ಬಗ್ಗೆ ನೀವು ತಿಳಿಯಬೇಕಿರುವ ಎಲ್ಲಾ ಮಾಹಿತಿಯನ್ನೊಳಗೊಂಡ ಪುಟ.
+ಅರಳಿ ಕಟ್ಟೆ
+
+ಸಮುದಾಯದ ಇತರ ಸದಸ್ಯರೊಂದಿಗೆ ಚರ್ಚೆ ಮಾಡಲು ಅರಳಿ ಕಟ್ಟೆ.
+ಮಾಡಬೇಕಾಗಿರುವ ಕೆಲಸಗಳು • ಸಹಾಯ • ಸಹಾಯ
+
+Vad är Wiktionary?
+Wiktionary är en fri ordbok för alla ord på alla språk. Alla som vill kan bidra. All text i Wiktionary är fri att använda och ändra, så länge du berättar varifrån du fick texterna och de förblir fria under samma villkor.
+
+Veckans ord
+vecka 48tidigare ordföreslå ett orddrott
+Ordklass:	substantiv
+Definition:	
+(historia) hövding, furste; person som följs av en hird
+Etymologi: Av fornsvenska drotin, av fornnordiska dróttinn.
+Besläktade ord: drots, drottning
+
+Wikisanakirja on monikielinen hanke, jonka tavoitteena on luoda jatkuvasti kasvava ja tarkentuva vapaan sisällön sanakirja. Wikisanakirja on käyttäjille ilmainen. Englanninkielinen Wikisanakirja aloitti joulukuussa 2002 ja suomenkielinen vuoden 2004 toukokuussa.
+
+Icona
+
+Wikisanakirjan käyttäminen
+Wikisanakirjan artikkeleina on eri kielten sanoja, kuten vaikka koira tai five. Artikkeleissa annetaan merkitykset suomenkielisille sanoille ja muiden kielten sanoille annetaan käännökset suomeksi.
+
+Wikisanakirjan käyttömuotoja ovat:
+
+sanojen, termien ja lyhenteiden selitysteos
+sivistyssanakirja
+murresanakirja ja slangisanakirja
+synonyymisanakirja
+käännössanakirja
+etymologinen sanakirja
+Icona
+
+Wikisanakirjan muokkaaminen
+Wikisanakirja on kenen tahansa muokattavissa. Voit täydentää tietoja sanoista tai lisätä uusia sanoja. Ohjeita muokkaamiseen saat tutustumalla sana-artikkelin malliin ja sivuun Kuinka sivuja muokataan. Uusien artikkelien luomiseen saat apua sivulta Uuden artikkelin luominen.
+
+Hiekkalaatikossa voit harjoitella Wikisanakirjan käyttämistä ja tehdä haluamiasi kokeiluja.
+
+Icona
+
+Wikisanakirjoja muilla kielillä
+Suurimmat Wikisanakirjat artikkeleiden määrällä mitaten:
+
+1 000 000+ artikkelia
+English (englanti) • Malagasy (malagassi) • Français (ranska) • Русский (venäjä)
+500 000–1 000 000 artikkelia
+Srpskohrvatski / Српскохрватски (serbokroaatti) • Español (espanja) • Deutsch (saksa) • 中文 (kiina) • Kurdî / كوردی (kurdi) • Ελληνικά (kreikka) • Nederlands (hollanti) • Svenska (ruotsi) • Polski (puola) • Lietuvių (liettua) • Italiano (italia)
+100 000–500 000 artikkelia
+Català (katalaani) • தமிழ் (tamili) • Magyar (unkari) • Türkçe (turkki) • Հայերեն (armenia) • Ido (ido) • 한국어 (korea) • ಕನ್ನಡ (kannada) • Português (portugali) • 日本語 (japani) • Tiếng Việt (vietnam) • Српски / Srpski (serbia) • ไทย (thai) • ᏣᎳᎩ (cherokee) • हिन्दी (hindi) • Română (romania) • Norsk (Bokmål) (norja (kirjanorja)) • Eesti (viro) • Bahasa Indonesia (indonesia) • മലയാളം (malajalam) • မြန်မာဘာသာ (burma) • Čeština (tšekki) • O‘zbek (uzbekki) • Limburgs (limburg) • ଓଡ଼ିଆ (orija) • తెలుగు (telugu) • Esperanto (esperanto) • فارسی (persia / farsi)
+Icona
+
+Ajankohtaista
+569-bottle-with-popping-cork.svg
+Suomenkieliseen Wikisanakirjaan on tehty perustamisen jälkeen yli neljä miljoonaa muokkausta!
+Suomen lemmojen määrä suomenkielisessä Wikisanakirjassa on ylittänyt 100 000 rajan!
+Suomenkielinen Wikisanakirja on tällä hetkellä 17:nneksi suurin artikkelimäärällä mitattuna.
+Viimeisimmät keskustelut sana-artikkeleista.
+Icona
+
+Miten voit auttaa?
+Wikisanakirja tarvitsee apuasi! Punainen linkki tarkoittaa, että aiheesta ei vielä ole artikkelia. Voit auttaa kirjoittamalla puuttuvista aiheista. Lue miten artikkeleita luodaan.
+Täytä artikkelitoive:
+attribuuttimuoto – backcross – determinatiivinen – duaalikappale – geishapallot – kõlmaiᴢ – lipoa – oikeakielisyyssanakirja – oikeustoimihenkilö – osåld – rahkapiimä – saatavuusharkinta – kirkkopitäjä – kunnianhimoinen – pidättyä – siivilöidä – hahmotelma – jyrsiä – kantasieni – lyhennys – nipistää – purkautua – rypistää – vertainen – villakangas – ajelehtia – huokua – hylkäys – kimallus – palautua – takaisku – tihkua – tukeutua – tullimaksu – tulvia – vaientaa – visertää – hoivata – hajamielinen – houkutteleva – hätkähtää – kapseli – karmi – keystone – kinless – kludge – sair.hoit. – enneagoni – tetraatio – esiema

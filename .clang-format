@@ -1,0 +1,61 @@
+#this file is used by clang-format to autoformat matx source code
+#
+# The clang-format is part of llvm toolchain.
+# It need to install llvm and clang to format source code style.
+#
+# The basic usage is,
+#   clang-format -i -style=file PATH/TO/SOURCE/CODE
+#
+# The -style=file implicit use ".clang-format" file located in one of 
+# parent directory. 
+# The -i means inplace change.
+#
+# The document of clang-format is 
+#   http://clang.llvm.org/docs/ClangFormat.html
+#   http://clang.llvm.org/docs/ClangFormatStyleOptions.html
+---
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+
+Language: Cpp
+Standard: Cpp11 
+BasedOnStyle: Google
+
+# indent
+AccessModifierOffset: -1  # The private/protected/public has no indent in class
+ContinuationIndentWidth: 4
+
+# align
+BreakBeforeTernaryOperators: true
+BreakBeforeBinaryOperators: false
+ColumnLimit: 100
+
+# short block
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+# other
+AllowAllParametersOfDeclarationOnNextLine: true
+BinPackParameters: false
+BinPackArguments: false
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+# clang-format 3.9+
+SortIncludes: true
+IncludeBlocks: Preserve
+BreakStringLiterals: false
+ReflowComments: true
+IncludeCategories:
+  - Regex:           '^<.*\.h(pp)?>'
+    Priority:        1
+  - Regex:           '^<.*'
+    Priority:        2
+  - Regex:           '.*'
+    Priority:        3
+...
+

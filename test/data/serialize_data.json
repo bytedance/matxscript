@@ -1,0 +1,1 @@
+{"version":"v1.0","doc":{"t":"Dict","v":[{"t":"Unicode","v":"key1"},{"t":"NDArray","v":{"dtype":"float32","shape":[2,4],"data":[0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5]}},{"t":"Unicode","v":"key2"},{"t":"List","v":[{"t":"Unicode","v":"hello"},{"t":"Unicode","v":"world"}]}]}}

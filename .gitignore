@@ -1,0 +1,37 @@
+code_review
+*log
+.bundle
+/**/.idea
+/**/__pycache__
+/**/*.pyc
+cmake-build-debug
+cmake-build-release
+/**/CMakeLists.txt
+/.history/
+output
+
+
+# for vscode
+.vscode
+build
+
+# for compile outcome
+*.so
+/**/dso
+/**/*.py_dso/
+3rdparty/pcre_build/
+
+
+# for local ci test
+/lib
+/test/tempdir/test_*
+
+
+# for .clangd
+.clangd
+.cache
+
+
+# for vim
+/**/*.swp
+/**/.tasks
