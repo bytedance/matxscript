@@ -33,6 +33,7 @@ mkdir -p "${PCRE_BUILD_PATH}"
 
 # build pcre
 cd "${PCRE_BUILD_PATH}"
+echo > ChangeLog
 "${PCRE_SOURCE_PATH}"/configure \
   --prefix="${PCRE_INSTALL_PATH}" \
   --enable-shared=yes \
