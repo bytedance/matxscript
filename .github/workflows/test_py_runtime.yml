@@ -1,4 +1,4 @@
-name: Build PIP Wheel
+name: Test Python Runtime
 
 on:
   push:

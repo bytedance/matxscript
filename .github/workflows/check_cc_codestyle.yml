@@ -1,4 +1,4 @@
-name: Build PIP Wheel
+name: Check C++ Codestyle
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: Build PIP Wheel
+name: Include Analysis
 
 on:
   push:
