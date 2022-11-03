@@ -20,7 +20,6 @@
 #include <float.h>
 #include <limits.h>
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <matxscript/runtime/container/ft_dict.h>
 #include <matxscript/runtime/container/ft_list.h>
