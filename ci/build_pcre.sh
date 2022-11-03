@@ -33,7 +33,7 @@ mkdir -p "${PCRE_BUILD_PATH}"
 
 # build pcre
 cd "${PCRE_BUILD_PATH}"
-touch ChangeLog
+echo > ChangeLog
 "${PCRE_SOURCE_PATH}"/configure \
   --prefix="${PCRE_INSTALL_PATH}" \
   --enable-shared=yes \
@@ -47,6 +47,7 @@ touch ChangeLog
   --with-pic=yes \
   --with-link-size=4
 
+echo > ChangeLog
 make -j 8
 make install
 
