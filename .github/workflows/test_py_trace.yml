@@ -16,5 +16,5 @@ jobs:
     - uses: actions/setup-python@v4
         with:
           python-version: '3.8'
-    - name: Build
-      run: bash ci/build_pip_whl.sh
+    - name: Test Python Trace
+      run: python3 ci/run_py_trace_test.py

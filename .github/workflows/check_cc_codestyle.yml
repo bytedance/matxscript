@@ -13,8 +13,5 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
-    - name: Build
-      run: bash ci/build_pip_whl.sh
+    - name: Check C++ Codestyle
+      run: bash ci/code-format-cxx.sh --show-only --fail-on-diff -t $GITLAB_MASTER_COMMIT_SHA -b $GITLAB_COMMIT_SHA

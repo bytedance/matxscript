@@ -13,8 +13,5 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
-    - name: Build
-      run: bash ci/build_pip_whl.sh
+    - name: Test C++ Runtime
+      run: bash ci/run_cc_test.sh
