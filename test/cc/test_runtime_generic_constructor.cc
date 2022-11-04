@@ -20,7 +20,6 @@
 #include <float.h>
 #include <limits.h>
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <matxscript/runtime/container/ft_dict.h>
 #include <matxscript/runtime/container/ft_list.h>
@@ -571,7 +570,10 @@ TEST(KernelConstructor, NDArray) {
     List shape{2, 3};
     Unicode dtype(U"float64");
     NDArray arr = Kernel_NDArray::make(data, shape, dtype);
-    ASSERT_THAT(arr.Shape(), ::testing::ElementsAre(2, 3));
+    auto shape2 = arr.Shape();
+    EXPECT_EQ(shape2.size(), 2);
+    EXPECT_EQ(shape2[0], 2);
+    EXPECT_EQ(shape2[1], 3);
     double* p = static_cast<double*>(arr->data);
     std::cout << "ndarray contents: ";
     for (int i = 0; i < 6; ++i) {

@@ -174,6 +174,9 @@ TEST(filesystem, copy_rd_case2) {
   TemporaryDirectory t(TempOpt::change_path);
   std::cout << t.path() << std::endl;
 
+  fs::create_directory("test");
+  generateFile("test/abc");
+
   std::error_code ec;
   fs::create_directory("dir1");
   generateFile("dir1/file1");
