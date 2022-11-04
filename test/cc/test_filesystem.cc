@@ -124,7 +124,7 @@ TEST(filesystem, copy_R_case2) {
   ASSERT_TRUE(fs::exists("dir1_sym"));
   ASSERT_TRUE(fs::is_symlink("dir1_sym"));
 
-  fs::create_symlink("../../test/abc", "dir1/dir2/abc_sym");
+  fs::create_symlink("test/abc", "dir1/dir2/abc_sym");
   ASSERT_TRUE(fs::exists("dir1/dir2/abc_sym"));
   ASSERT_TRUE(fs::is_symlink("dir1/dir2/abc_sym"));
 
@@ -174,6 +174,9 @@ TEST(filesystem, copy_rd_case2) {
   TemporaryDirectory t(TempOpt::change_path);
   std::cout << t.path() << std::endl;
 
+  fs::create_directory("test");
+  generateFile("test/abc");
+
   std::error_code ec;
   fs::create_directory("dir1");
   generateFile("dir1/file1");
@@ -181,7 +184,7 @@ TEST(filesystem, copy_rd_case2) {
   fs::create_directory("dir1/dir2");
   generateFile("dir1/dir2/file3");
 
-  fs::create_symlink("../../test/abc", "dir1/dir2/abc_sym");
+  fs::create_symlink("test/abc", "dir1/dir2/abc_sym");
   ASSERT_TRUE(fs::exists("dir1/dir2/abc_sym"));
   ASSERT_TRUE(fs::is_symlink("dir1/dir2/abc_sym"));
 
