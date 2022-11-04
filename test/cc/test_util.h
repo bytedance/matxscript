@@ -38,7 +38,7 @@ enum class TempOpt { none, change_path };
 class TemporaryDirectory {
  public:
   TemporaryDirectory(TempOpt opt = TempOpt::none) {
-    static auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     std::mt19937 gen(static_cast<unsigned int>(seed) ^
                      static_cast<unsigned int>(reinterpret_cast<ptrdiff_t>(&opt)));
     std::uniform_int_distribution<int> random_dist(0, 35);  // define the range
