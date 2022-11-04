@@ -80,9 +80,9 @@ class TemporaryDirectory {
 static void generateFile(const fs::path& pathname, int withSize = -1) {
   fs::ofstream outfile(pathname);
   if (withSize < 0) {
-    outfile << "Hello world!" << std::endl;
+    outfile << "Hello world!" << std::endl << std::flush;
   } else {
-    outfile << std::string(size_t(withSize), '*');
+    outfile << std::string(size_t(withSize), '*') << std::flush;
   }
 }
 
