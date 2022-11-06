@@ -266,7 +266,7 @@ class CUDADeviceAPI final : public DeviceAPI {
   }
 
   void ResetStreamForCurrentThread(MATXScriptContext ctx) final {
-    CUDAGlobalEntry::thread_local_stream.reset();
+    CUDAGlobalEntry::thread_local_stream = 0;
   }
 
   static CUDADeviceAPI* Global() {

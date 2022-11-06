@@ -66,7 +66,8 @@ class CUDAGlobalEntry {
   // get the workspace
   static CUDAGlobalEntry* Get();
 };
-thread_local std::shared_ptr<void> CUDAGlobalEntry::thread_local_stream = nullptr;
+thread_local std::shared_ptr<void> CUDAGlobalEntry::thread_local_stream =
+    0;  // 0 presents the default cuda stream
 }  // namespace runtime
 }  // namespace matxscript
 #endif  // MATXSCRIPT_RUNTIME_CUDA_CUDA_COMMON_H_
