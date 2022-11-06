@@ -75,20 +75,14 @@ struct TXSession {
   explicit TXSession(TXSessionOptions opt);
   TXSession() : TXSession(DEFAULT_SESSION_OPTIONS) {
   }
-  virtual ~TXSession() {
-    if (cuda_stream_) {
-      MATXScriptContext ctx{kDLGPU, device_};
-      DeviceAPI::Get(ctx)->ResetStreamForCurrentThread(ctx);
-    }
-  }
+  virtual ~TXSession() = default;
 
  public:
   void Save(string_view folder, string_view name) const;
   static std::unique_ptr<TXSession> Load(string_view folder,
                                          string_view name,
                                          int device = -1,
-                                         string_view version = "",
-                                         std::shared_ptr<void> cuda_stream = nullptr);
+                                         string_view version = "");
 
   /**
    * build a new trace and clear history
@@ -117,10 +111,13 @@ struct TXSession {
    * @return
    */
   std::vector<std::pair<std::string, RTValue>> Run(
-      const std::unordered_map<std::string, RTValue>& feed_dict) const;
+      const std::unordered_map<std::string, RTValue>& feed_dict,
+      std::shared_ptr<void> cuda_stream = nullptr) const;
 
   std::vector<std::pair<std::string, RTValue>> Run(
-      const std::unordered_map<std::string, RTValue>& feed_dict, TXSessionRunMeta* meta) const;
+      const std::unordered_map<std::string, RTValue>& feed_dict,
+      TXSessionRunMeta* meta,
+      std::shared_ptr<void> cuda_stream = nullptr) const;
 
   /**
    * Each task thread will execute a session run at once
@@ -216,7 +213,6 @@ struct TXSession {
 
  private:
   int device_ = NONE_DEVICE;
-  std::shared_ptr<void*> cuda_stream_ = nullptr;
   std::shared_ptr<Graph> graph_;
   std::vector<NodePtr> serial_nodes_;
   std::vector<std::vector<NodePtr>> parallel_nodes_;

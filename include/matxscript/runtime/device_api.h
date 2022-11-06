@@ -183,7 +183,7 @@ class MATX_DLL DeviceAPI {
    * \param ctx The context to set stream.
    * \param stream The stream to be set.
    */
-  virtual void SetStreamForCurrentThread(MATXScriptContext ctx, MATXScriptStreamHandle stream) {
+  virtual void SetStreamForCurrentThread(MATXScriptContext ctx, std::shared_ptr<void> stream) {
   }
 
   /*!

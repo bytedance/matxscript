@@ -59,16 +59,15 @@ namespace runtime {
 /*! \brief simple lock workspace */
 class CUDAGlobalEntry {
  public:
-  /*! \brief The cuda stream */
-  cudaStream_t stream{nullptr};
   /*! \brief cuda stream map*/
-  static thread_local cudaStream_t thread_local_stream;
+  static thread_local std::shared_ptr<void> thread_local_stream;
   /*! \brief constructor */
   CUDAGlobalEntry();
   // get the workspace
   static CUDAGlobalEntry* Get();
 };
-thread_local cudaStream_t CUDAGlobalEntry::thread_local_stream = nullptr;
+thread_local std::shared_ptr<void> CUDAGlobalEntry::thread_local_stream =
+    0;  // 0 presents the default cuda stream
 }  // namespace runtime
 }  // namespace matxscript
 #endif  // MATXSCRIPT_RUNTIME_CUDA_CUDA_COMMON_H_

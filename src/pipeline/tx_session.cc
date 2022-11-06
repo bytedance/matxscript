@@ -301,7 +301,7 @@ OpKernelPtr TXSession::CreateOp(string_view class_name, Dict attrs, string_view 
   bool share = reg_ptr->threadsafety_;
   if (class_name == "JitObject") {
     JitObjectPtr jit_ptr = try_get_jit_object(ud);
-    share &= jit_ptr->options_.share & (cuda_stream_ == nullptr);
+    share &= jit_ptr->options_.share;
   }
   if (share) {
     ud_cache_->Set(class_name, op_ptr->name_, std::move(ud));
@@ -534,22 +534,37 @@ void TXSession::BuildOutputKeys() {
 }
 
 std::vector<std::pair<std::string, RTValue>> TXSession::Run(
-    const std::unordered_map<std::string, RTValue>& feed_dict) const {
+    const std::unordered_map<std::string, RTValue>& feed_dict,
+    std::shared_ptr<void> cuda_stream) const {
   MXCHECK(graph_) << "forget trace? run must after trace!!!";
+  if (cuda_stream) {
+    MATXScriptContext ctx{kDLGPU, device_};
+    DeviceAPI::Get(ctx)->SetStreamForCurrentThread(ctx, cuda_stream);
+  }
   std::vector<std::pair<std::string, RTValue>> result;
   if (options_.enable_graph_parallel && options_.enable_scheduling_pool && scheduling_pool_) {
     RunImplMultiThread(feed_dict, result);
   } else {
     RunImpl(feed_dict, result);
   }
+  if (cuda_stream) {
+    MATXScriptContext ctx{kDLGPU, device_};
+    DeviceAPI::Get(ctx)->ResetStreamForCurrentThread(ctx);
+  }
   return result;
 }
 
 std::vector<std::pair<std::string, RTValue>> TXSession::Run(
-    const std::unordered_map<std::string, RTValue>& feed_dict, TXSessionRunMeta* meta) const {
+    const std::unordered_map<std::string, RTValue>& feed_dict,
+    TXSessionRunMeta* meta,
+    std::shared_ptr<void> cuda_stream) const {
   ProfilingHelper ph(meta ? &meta->time_line : nullptr);
   MXCHECK(graph_) << "forget trace? run must after trace!!!";
   std::vector<std::pair<std::string, RTValue>> result;
+  if (cuda_stream) {
+    MATXScriptContext ctx{kDLGPU, device_};
+    DeviceAPI::Get(ctx)->SetStreamForCurrentThread(ctx, cuda_stream);
+  }
   if (meta) {
     meta->step_stats.reserve(serial_nodes_.size());
   }
@@ -557,6 +572,10 @@ std::vector<std::pair<std::string, RTValue>> TXSession::Run(
     RunImplMultiThread(feed_dict, result, meta);
   } else {
     RunImpl(feed_dict, result, meta);
+  }
+  if (cuda_stream) {
+    MATXScriptContext ctx{kDLGPU, device_};
+    DeviceAPI::Get(ctx)->ResetStreamForCurrentThread(ctx);
   }
   return result;
 }
@@ -1047,8 +1066,7 @@ void TXSession::Save(string_view folder, string_view name) const {
 std::unique_ptr<TXSession> TXSession::Load(string_view folder,
                                            string_view name,
                                            int device,
-                                           string_view version,
-                                           std::shared_ptr<void> cuda_stream) {
+                                           string_view version) {
   String folder_fix;
   String config_path;
   if (folder.empty()) {
@@ -1070,11 +1088,6 @@ std::unique_ptr<TXSession> TXSession::Load(string_view folder,
   std::unique_ptr<TXSession> sess(new TXSession(std::move(sess_opts)));
 
   sess->SetDevice(device);
-  if (cuda_stream) {
-    sess->cuda_stream_ = std::static_pointer_cast<void*>(cuda_stream);
-    MATXScriptContext ctx{kDLGPU, device};
-    DeviceAPI::Get(ctx)->SetStreamForCurrentThread(ctx, *sess->cuda_stream_);
-  }
   // init ops
   MXCHECK(generic_session.contains("ops")) << "ops not found in config!";
   MXCHECK(generic_session["ops"].IsObjectRef<List>()) << "ops is not array type";

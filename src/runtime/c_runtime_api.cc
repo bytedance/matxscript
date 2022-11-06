@@ -762,7 +762,8 @@ int MATXScriptSetStream(int device_type, int device_id, MATXScriptStreamHandle h
   MATXScriptContext ctx;
   ctx.device_type = static_cast<DLDeviceType>(device_type);
   ctx.device_id = device_id;
-  DeviceAPI::Get(ctx)->SetStream(ctx, handle);
+  DeviceAPI::Get(ctx)->SetStreamForCurrentThread(ctx,
+                                                 std::make_shared<MATXScriptStreamHandle>(handle));
   API_END();
 }
 
