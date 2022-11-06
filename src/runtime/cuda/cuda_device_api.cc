@@ -261,16 +261,12 @@ class CUDADeviceAPI final : public DeviceAPI {
     CUDA_CALL(cudaStreamSynchronize(static_cast<cudaStream_t>(stream)));
   }
 
-  void SetStream(MATXScriptContext ctx, MATXScriptStreamHandle stream) final {
-    CUDAGlobalEntry::Get()->stream = static_cast<cudaStream_t>(stream);
-  }
-
-  void SetStreamForCurrentThread(MATXScriptContext ctx, MATXScriptStreamHandle stream) final {
-    CUDAGlobalEntry::thread_local_stream = static_cast<cudaStream_t>(stream);
+  void SetStreamForCurrentThread(MATXScriptContext ctx, std::shared_ptr<void> stream) final {
+    CUDAGlobalEntry::thread_local_stream = stream;
   }
 
   void ResetStreamForCurrentThread(MATXScriptContext ctx) final {
-    CUDAGlobalEntry::thread_local_stream = nullptr;
+    CUDAGlobalEntry::thread_local_stream.reset();
   }
 
   static CUDADeviceAPI* Global() {
@@ -282,21 +278,24 @@ class CUDADeviceAPI final : public DeviceAPI {
 
   MATXScriptStreamHandle GetDefaultComputeStream(MATXScriptContext ctx) {
     if (CUDAGlobalEntry::thread_local_stream != nullptr) {
-      return CUDAGlobalEntry::thread_local_stream;
+      return *std::static_pointer_cast<MATXScriptStreamHandle>(
+          CUDAGlobalEntry::thread_local_stream);
     }
     return GetStream(ctx, cudaDefaultStreams);
   }
 
   MATXScriptStreamHandle GetDefaultIOStreamH2D(MATXScriptContext ctx) {
     if (CUDAGlobalEntry::thread_local_stream != nullptr) {
-      return CUDAGlobalEntry::thread_local_stream;
+      return *std::static_pointer_cast<MATXScriptStreamHandle>(
+          CUDAGlobalEntry::thread_local_stream);
     }
     return GetStream(ctx, cudaDefaultH2DStreams);
   }
 
   MATXScriptStreamHandle GetDefaultIOStreamD2H(MATXScriptContext ctx) {
     if (CUDAGlobalEntry::thread_local_stream != nullptr) {
-      return CUDAGlobalEntry::thread_local_stream;
+      return *std::static_pointer_cast<MATXScriptStreamHandle>(
+          CUDAGlobalEntry::thread_local_stream);
     }
     return GetStream(ctx, cudaDefaultD2HStreams);
   }
