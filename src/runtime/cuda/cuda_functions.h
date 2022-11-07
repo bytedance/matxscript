@@ -19,6 +19,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+#pragma once
 
 namespace matxscript {
 namespace runtime {

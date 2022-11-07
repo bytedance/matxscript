@@ -30,6 +30,7 @@
 
 #include <string>
 
+#include <matxscript/runtime/logging.h>
 #include <matxscript/runtime/runtime_port.h>
 
 namespace matxscript {

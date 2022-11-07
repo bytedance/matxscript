@@ -39,7 +39,7 @@ int32_t driver_version() {
 
 int device_count_impl(bool fail_if_no_driver) {
   int count;
-  auto err = C10_CUDA_ERROR_HANDLED(cudaGetDeviceCount(&count));
+  auto err = cudaGetDeviceCount(&count);
   if (err == cudaSuccess) {
     return count;
   }
@@ -60,52 +60,43 @@ int device_count_impl(bool fail_if_no_driver) {
           count = 0;
           break;
         }
-        MXCHECK(false,
-                "Found no NVIDIA driver on your system. Please check that you "
-                "have an NVIDIA GPU and installed a driver from "
-                "http://www.nvidia.com/Download/index.aspx");
+        MXTHROW << "Found no NVIDIA driver on your system. Please check that you "
+                   "have an NVIDIA GPU and installed a driver from "
+                   "http://www.nvidia.com/Download/index.aspx";
       } else {
-        MXCHECK(false,
-                "The NVIDIA driver on your system is too old (found version ",
-                version,
-                "). Please update your GPU driver by downloading and installing "
-                "a new version from the URL: "
-                "http://www.nvidia.com/Download/index.aspx Alternatively, go to: "
-                "https://pytorch.org to install a PyTorch version that has been "
-                "compiled with your version of the CUDA driver.");
+        MXTHROW << "The NVIDIA driver on your system is too old (found version " << version
+                << "). Please update your GPU driver by downloading and installing "
+                   "a new version from the URL: "
+                   "http://www.nvidia.com/Download/index.aspx Alternatively, go to: "
+                   "https://pytorch.org to install a PyTorch version that has been "
+                   "compiled with your version of the CUDA driver.";
       }
     } break;
     case cudaErrorInitializationError:
-      MXCHECK(false,
-              "CUDA driver initialization failed, you might not "
-              "have a CUDA gpu.");
+      MXTHROW << "CUDA driver initialization failed, you might not "
+                 "have a CUDA gpu.";
       break;
     case cudaErrorUnknown:
-      MXCHECK(false,
-              "CUDA unknown error - this may be due to an "
-              "incorrectly set up environment, e.g. changing env "
-              "variable CUDA_VISIBLE_DEVICES after program start. "
-              "Setting the available devices to be zero.");
+      MXTHROW << "CUDA unknown error - this may be due to an "
+                 "incorrectly set up environment, e.g. changing env "
+                 "variable CUDA_VISIBLE_DEVICES after program start. "
+                 "Setting the available devices to be zero.";
       break;
 #if MATXSCRIPT_SANITIZE_ADDRESS
     case cudaErrorMemoryAllocation:
       // In ASAN mode, we know that a cudaErrorMemoryAllocation error will
       // pop up if compiled with NVCC (clang-cuda is fine)
-      MXCHECK(false,
-              "Got 'out of memory' error while trying to initialize CUDA. "
-              "CUDA with nvcc does not work well with ASAN and it's probably "
-              "the reason. We will simply shut down CUDA support. If you "
-              "would like to use GPUs, turn off ASAN.");
+      MXTHROW << "Got 'out of memory' error while trying to initialize CUDA. "
+                 "CUDA with nvcc does not work well with ASAN and it's probably "
+                 "the reason. We will simply shut down CUDA support. If you "
+                 "would like to use GPUs, turn off ASAN.";
       break;
-#endif  // C10_ASAN_ENABLED
+#endif  // MATXSCRIPT_SANITIZE_ADDRESS
     default:
-      MXCHECK(false,
-              "Unexpected error from cudaGetDeviceCount(). Did you run "
-              "some cuda functions before calling NumCudaDevices() "
-              "that might have already set an error? Error ",
-              err,
-              ": ",
-              cudaGetErrorString(err));
+      MXTHROW << "Unexpected error from cudaGetDeviceCount(). Did you run "
+                 "some cuda functions before calling NumCudaDevices() "
+                 "that might have already set an error? Error "
+              << err << ": " << cudaGetErrorString(err);
   }
   return count;
 }
@@ -116,8 +107,9 @@ int device_count() noexcept {
   static int count = []() {
     try {
       auto result = device_count_impl(/*fail_if_no_driver=*/false);
-      MATXSCRIPT_ASSERT(result <= std::numeric_limits<DeviceIndex>::max(),
-                        "Too many CUDA devices, DeviceIndex overflowed");
+      if (result <= std::numeric_limits<int>::max()) {
+        MXTHROW << "Too many CUDA devices, DeviceIndex overflowed";
+      }
       return result;
     } catch (const std::exception& ex) {
       // We don't want to fail, but still log the warning
@@ -132,7 +124,7 @@ int device_count_ensure_non_zero() {
   // Call the implementation every time to throw the exception
   int count = device_count_impl(/*fail_if_no_driver=*/true);
   // Zero gpus doesn't produce a warning in `device_count` but we fail here
-  MXCHECK(count, "No CUDA GPUs are available");
+  MXCHECK(count) << "No CUDA GPUs are available";
   return static_cast<int>(count);
 }
 
