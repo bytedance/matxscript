@@ -41,63 +41,7 @@ namespace runtime {
 MATX_REGISTER_NATIVE_OP(TorchInferOp).SetThreadSafety(false);
 // clang-format on
 
-static DataType tx_dtype_fp16 = DataType::Float(16, 1);
-static DataType tx_dtype_fp32 = DataType::Float(32, 1);
-static DataType tx_dtype_int32 = DataType::Int(32, 1);
-static DataType tx_dtype_int64 = DataType::Int(64, 1);
-static DataType tx_dtype_uint8 = DataType::UInt(8, 1);
-
 namespace {
-inline c10::ScalarType tx_dtype_to_torch_dtype(DataType dtype) {
-  if (dtype == tx_dtype_fp32) {
-    return torch::kFloat32;
-  } else if (dtype == tx_dtype_fp16) {
-    return torch::kFloat16;
-  } else if (dtype == tx_dtype_int32) {
-    return torch::kInt32;
-  } else if (dtype == tx_dtype_int64) {
-    return torch::kInt64;
-  } else if (dtype == tx_dtype_uint8) {
-    return torch::kUInt8;
-  } else {
-    MXTHROW << "[TorchInferOp] Invalid data type " << dtype;
-  }
-  return torch::kInt32;
-}
-
-inline DataType torch_dtype_to_tx_dtype(c10::ScalarType dtype) {
-  switch (dtype) {
-    case torch::kFloat16:
-      return tx_dtype_fp16;
-    case torch::kFloat32:
-      return tx_dtype_fp32;
-    case torch::kInt32:
-      return tx_dtype_int32;
-    case torch::kInt64:
-      return tx_dtype_int64;
-    case torch::kUInt8:
-      return tx_dtype_uint8;
-    default:
-      MXTHROW << "[TorchInferOp] Invalid data type " << dtype;
-  }
-  return tx_dtype_int32;
-}
-
-torch::Tensor ToTorchTensorWithConsistentDevice(const NDArray& tx_tsr, at::Device device) {
-  auto th_type = tx_dtype_to_torch_dtype(tx_tsr.DataType());
-  auto options = torch::TensorOptions().dtype(th_type).device(device);
-  void* data = static_cast<char*>(tx_tsr->data) + tx_tsr->byte_offset;
-  if (tx_tsr->strides != nullptr) {
-    auto th_tsr = torch::from_blob(data,
-                                   torch::IntArrayRef(tx_tsr->shape, tx_tsr->ndim),
-                                   torch::IntArrayRef(tx_tsr->strides, tx_tsr->ndim),
-                                   options);
-    return th_tsr;
-  } else {
-    auto th_tsr = torch::from_blob(data, torch::IntArrayRef(tx_tsr->shape, tx_tsr->ndim), options);
-    return th_tsr;
-  }
-}
 
 torch::Tensor ToTorchTensor(const NDArray& tx_tsr, at::Device device) {
   DLContext ctx = tx_tsr->ctx;
@@ -107,14 +51,6 @@ torch::Tensor ToTorchTensor(const NDArray& tx_tsr, at::Device device) {
   }
 
   return at::fromDLPack(tx_tsr.ToDLPack()).to(device);
-}
-
-NDArray FromTorchTensorWithGPUDevice(const torch::Tensor& arg_th_tsr) {
-  DLContext ctx = {DLDeviceType::kDLGPU, static_cast<int>(arg_th_tsr.get_device())};
-  auto tx_dtype = torch_dtype_to_tx_dtype(arg_th_tsr.scalar_type());
-  auto tx_tsr = NDArray::Empty(arg_th_tsr.sizes().vec(), tx_dtype, ctx);
-  tx_tsr.CopyFromBytes(arg_th_tsr.data_ptr(), arg_th_tsr.nbytes(), ctx);
-  return tx_tsr;
 }
 
 NDArray FromTorchTensor(const torch::Tensor& arg_th_tsr, bool output_to_cpu = true) {
@@ -405,11 +341,10 @@ void TorchInferOp::Init() {
 }
 
 RTValue TorchInferOp::Process(PyArgs inputs) const {
-  // device_api_->DefaultComputeStreamSync(ctx_);
 #ifdef MATX_ENABLE_TORCH_MODEL_AUTO_SYNCHRONIZATION_WITH_PREPROCESS
   if (ctx_.device_type == kDLGPU) {
     cudaStream_t preprocessStream =
-        static_cast<cudaStream_t>(device_api_->GetDefaultComputeStream(ctx_));
+        static_cast<cudaStream_t>(device_api_->GetCurrentThreadStream(ctx_));
     auto torchModelStream = c10::cuda::getCurrentCUDAStream(ctx_.device_id);
     cudaStream_t torchModelCudaStream = torchModelStream.stream();
     if (preprocessStream != torchModelCudaStream) {

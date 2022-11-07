@@ -134,19 +134,16 @@ void DeviceAPI::SyncStreamFromTo(MATXScriptContext ctx,
   MXTHROW << "Device does not support stream api.";
 }
 
-MATXScriptStreamHandle DeviceAPI::GetDefaultComputeStream(MATXScriptContext ctx) {
-  MXTHROW << "Device does not support stream api.";
-  return nullptr;
+DeviceStreamGuard::DeviceStreamGuard(MATXScriptContext ctx, std::shared_ptr<void> stream) {
+  this->ctx_ = ctx;
+  this->new_stream_ = std::move(stream);
+  this->device_api_ = DeviceAPI::Get(ctx_);
+  this->old_stream_ = this->device_api_->GetSharedCurrentThreadStream(ctx);
+  this->device_api_->SetCurrentThreadStream(this->ctx_, this->new_stream_);
 }
 
-MATXScriptStreamHandle DeviceAPI::GetDefaultIOStreamH2D(MATXScriptContext ctx) {
-  MXTHROW << "Device does not support stream api.";
-  return nullptr;
-}
-
-MATXScriptStreamHandle DeviceAPI::GetDefaultIOStreamD2H(MATXScriptContext ctx) {
-  MXTHROW << "Device does not support stream api.";
-  return nullptr;
+DeviceStreamGuard::~DeviceStreamGuard() {
+  this->device_api_->SetCurrentThreadStream(this->ctx_, this->old_stream_);
 }
 
 }  // namespace runtime

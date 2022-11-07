@@ -25,7 +25,13 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#include "core/device/cuda/cuda_allocator.h"
+#include "core/framework/allocator.h"
+#include "core/framework/arena.h"
+#include "core/framework/bfc_arena.h"
+
 #include "cuda_common.h"
+#include "cuda_functions.h"
 
 #include <matxscript/runtime/c_runtime_api.h>
 #include <matxscript/runtime/device_api.h>
@@ -34,12 +40,78 @@
 
 namespace matxscript {
 namespace runtime {
+namespace cuda {
+
+static void* create_stream(int device_id) {
+  MATXSCRIPT_CUDA_CALL(cudaSetDevice(device_id));
+  cudaStream_t retval;
+  MATXSCRIPT_CUDA_CALL(cudaStreamCreate(&retval));
+  return static_cast<MATXScriptStreamHandle>(retval);
+}
+
+static void free_stream(int device_id, void* stream) {
+  MATXSCRIPT_CUDA_CALL(cudaSetDevice(device_id));
+  cudaStream_t cu_stream = static_cast<cudaStream_t>(stream);
+  MATXSCRIPT_CUDA_CALL(cudaStreamDestroy(cu_stream));
+}
+
+// Global stream state and constants
+static std::once_flag init_flag;
+static int num_gpus = -1;
+
+// Thread-local current streams
+static thread_local std::unique_ptr<std::shared_ptr<void>[]> current_streams = nullptr;
+
+// Populates global values.
+// Warning: this function must only be called once!
+static void initGlobalStreamState() {
+  num_gpus = device_count();
+}
+
+// Init front-end to ensure initialization only occurs once
+static std::unique_ptr<std::shared_ptr<void>[]> createDefaultCUDAStreams() {
+  // Inits default streams (once, globally)
+  std::call_once(init_flag, initGlobalStreamState);
+
+  // Inits current streams (thread local) to default streams
+  auto streams = std::make_unique<std::shared_ptr<void>[]>(num_gpus);
+  for (int i = 0; i < num_gpus; ++i) {
+    streams[i] =
+        std::shared_ptr<void>(create_stream(i), [i](void* stream) { free_stream(i, stream); });
+  }
+  return streams;
+}
+
+// Default streams
+static std::unique_ptr<std::shared_ptr<void>[]> default_streams = createDefaultCUDAStreams();
+
+// Init front-end to ensure initialization only occurs once
+static void initCUDAStreamsOnce() {
+  // Inits default streams (once, globally)
+  std::call_once(init_flag, initGlobalStreamState);
+
+  if (current_streams) {
+    return;
+  }
+
+  // Inits current streams (thread local) to default streams
+  current_streams = std::make_unique<std::shared_ptr<void>[]>(num_gpus);
+  for (int i = 0; i < num_gpus; ++i) {
+    current_streams[i] = default_streams[i];
+  }
+}
+
+// Helper to verify the GPU index is valid
+static inline void check_gpu(int device_index) {
+  MATXSCRIPT_ASSERT(device_index >= 0 && device_index < num_gpus);
+}
 
 class CUDADeviceAPI final : public DeviceAPI {
  public:
   void SetDevice(MATXScriptContext ctx) final {
-    CUDA_CALL(cudaSetDevice(ctx.device_id));
+    MATXSCRIPT_CUDA_CALL(cudaSetDevice(ctx.device_id));
   }
+
   void GetAttr(MATXScriptContext ctx, DeviceAttrKind kind, RTValue* rv) final {
     int value = 0;
     switch (kind) {
@@ -48,47 +120,54 @@ class CUDADeviceAPI final : public DeviceAPI {
                  cudaSuccess);
         break;
       case kMaxThreadsPerBlock: {
-        CUDA_CALL(cudaDeviceGetAttribute(&value, cudaDevAttrMaxThreadsPerBlock, ctx.device_id));
+        MATXSCRIPT_CUDA_CALL(
+            cudaDeviceGetAttribute(&value, cudaDevAttrMaxThreadsPerBlock, ctx.device_id));
         break;
       }
       case kWarpSize: {
-        CUDA_CALL(cudaDeviceGetAttribute(&value, cudaDevAttrWarpSize, ctx.device_id));
+        MATXSCRIPT_CUDA_CALL(cudaDeviceGetAttribute(&value, cudaDevAttrWarpSize, ctx.device_id));
         break;
       }
       case kMaxSharedMemoryPerBlock: {
-        CUDA_CALL(
+        MATXSCRIPT_CUDA_CALL(
             cudaDeviceGetAttribute(&value, cudaDevAttrMaxSharedMemoryPerBlock, ctx.device_id));
         break;
       }
       case kComputeVersion: {
         std::ostringstream os;
-        CUDA_CALL(cudaDeviceGetAttribute(&value, cudaDevAttrComputeCapabilityMajor, ctx.device_id));
+        MATXSCRIPT_CUDA_CALL(
+            cudaDeviceGetAttribute(&value, cudaDevAttrComputeCapabilityMajor, ctx.device_id));
         os << value << ".";
-        CUDA_CALL(cudaDeviceGetAttribute(&value, cudaDevAttrComputeCapabilityMinor, ctx.device_id));
+        MATXSCRIPT_CUDA_CALL(
+            cudaDeviceGetAttribute(&value, cudaDevAttrComputeCapabilityMinor, ctx.device_id));
         os << value;
         *rv = String(os.str());
         return;
       }
       case kDeviceName: {
         String name(256, '\0');
-        CUDA_DRIVER_CALL(cuDeviceGetName(&name[0], name.size(), ctx.device_id));
+        MATXSCRIPT_CUDA_DRIVER_CALL(cuDeviceGetName(&name[0], name.size(), ctx.device_id));
         name.resize(strlen(name.c_str()));
         *rv = std::move(name);
         return;
       }
       case kMaxClockRate: {
-        CUDA_CALL(cudaDeviceGetAttribute(&value, cudaDevAttrClockRate, ctx.device_id));
+        MATXSCRIPT_CUDA_CALL(cudaDeviceGetAttribute(&value, cudaDevAttrClockRate, ctx.device_id));
         break;
       }
       case kMultiProcessorCount: {
-        CUDA_CALL(cudaDeviceGetAttribute(&value, cudaDevAttrMultiProcessorCount, ctx.device_id));
+        MATXSCRIPT_CUDA_CALL(
+            cudaDeviceGetAttribute(&value, cudaDevAttrMultiProcessorCount, ctx.device_id));
         break;
       }
       case kMaxThreadDimensions: {
         int dims[3];
-        CUDA_CALL(cudaDeviceGetAttribute(&dims[0], cudaDevAttrMaxBlockDimX, ctx.device_id));
-        CUDA_CALL(cudaDeviceGetAttribute(&dims[1], cudaDevAttrMaxBlockDimY, ctx.device_id));
-        CUDA_CALL(cudaDeviceGetAttribute(&dims[2], cudaDevAttrMaxBlockDimZ, ctx.device_id));
+        MATXSCRIPT_CUDA_CALL(
+            cudaDeviceGetAttribute(&dims[0], cudaDevAttrMaxBlockDimX, ctx.device_id));
+        MATXSCRIPT_CUDA_CALL(
+            cudaDeviceGetAttribute(&dims[1], cudaDevAttrMaxBlockDimY, ctx.device_id));
+        MATXSCRIPT_CUDA_CALL(
+            cudaDeviceGetAttribute(&dims[2], cudaDevAttrMaxBlockDimZ, ctx.device_id));
 
         std::stringstream ss;  // use json string to return multiple int values;
         ss << "[" << dims[0] << ", " << dims[1] << ", " << dims[2] << "]";
@@ -96,7 +175,8 @@ class CUDADeviceAPI final : public DeviceAPI {
         return;
       }
       case kMaxRegistersPerBlock: {
-        CUDA_CALL(cudaDeviceGetAttribute(&value, cudaDevAttrMaxRegistersPerBlock, ctx.device_id));
+        MATXSCRIPT_CUDA_CALL(
+            cudaDeviceGetAttribute(&value, cudaDevAttrMaxRegistersPerBlock, ctx.device_id));
         break;
       }
       case kGcnArch:
@@ -139,10 +219,10 @@ class CUDADeviceAPI final : public DeviceAPI {
     MXCHECK_EQ(256 % alignment, 0U) << "CUDA space is aligned at 256 bytes";
     void* ret;
     if (ctx.device_type == kDLCPUPinned) {
-      CUDA_CALL(cudaMallocHost(&ret, nbytes));
+      MATXSCRIPT_CUDA_CALL(cudaMallocHost(&ret, nbytes));
     } else {
-      CUDA_CALL(cudaSetDevice(ctx.device_id));
-      CUDA_CALL(cudaMalloc(&ret, nbytes));
+      MATXSCRIPT_CUDA_CALL(cudaSetDevice(ctx.device_id));
+      MATXSCRIPT_CUDA_CALL(cudaMalloc(&ret, nbytes));
     }
     return ret;
   }
@@ -161,20 +241,14 @@ class CUDADeviceAPI final : public DeviceAPI {
 
   void FreeRaw(MATXScriptContext ctx, void* ptr) final {
     if (ctx.device_type == kDLCPUPinned) {
-      CUDA_CALL(cudaFreeHost(ptr));
+      MATXSCRIPT_CUDA_CALL(cudaFreeHost(ptr));
     } else {
-      CUDA_CALL(cudaSetDevice(ctx.device_id));
-      CUDA_CALL(cudaFree(ptr));
+      MATXSCRIPT_CUDA_CALL(cudaSetDevice(ctx.device_id));
+      MATXSCRIPT_CUDA_CALL(cudaFree(ptr));
     }
   }
 
   ~CUDADeviceAPI() {
-    std::lock_guard<std::mutex> lock(streamAllocMutex_);
-    for (int i = 0; i < cudaDefaultStreams.size(); ++i) {
-      if (cudaDefaultStreams[i] != nullptr) {
-        FreeStream(MATXScriptContext{kDLGPU, i}, cudaDefaultStreams[i]);
-      }
-    }
   }
 
  protected:
@@ -206,17 +280,17 @@ class CUDADeviceAPI final : public DeviceAPI {
     }
 
     if (ctx_from.device_type == kDLGPU && ctx_to.device_type == kDLGPU) {
-      CUDA_CALL(cudaSetDevice(ctx_from.device_id));
+      MATXSCRIPT_CUDA_CALL(cudaSetDevice(ctx_from.device_id));
       if (ctx_from.device_id == ctx_to.device_id) {
         GPUCopy(from, to, size, cudaMemcpyDeviceToDevice, cu_stream);
       } else {
         cudaMemcpyPeerAsync(to, ctx_to.device_id, from, ctx_from.device_id, size, cu_stream);
       }
     } else if (ctx_from.device_type == kDLGPU && ctx_to.device_type == kDLCPU) {
-      CUDA_CALL(cudaSetDevice(ctx_from.device_id));
+      MATXSCRIPT_CUDA_CALL(cudaSetDevice(ctx_from.device_id));
       GPUCopy(from, to, size, cudaMemcpyDeviceToHost, cu_stream);
     } else if (ctx_from.device_type == kDLCPU && ctx_to.device_type == kDLGPU) {
-      CUDA_CALL(cudaSetDevice(ctx_to.device_id));
+      MATXSCRIPT_CUDA_CALL(cudaSetDevice(ctx_to.device_id));
       GPUCopy(from, to, size, cudaMemcpyHostToDevice, cu_stream);
     } else {
       MXLOG(FATAL) << "expect copy from/to GPU or between GPU";
@@ -225,48 +299,72 @@ class CUDADeviceAPI final : public DeviceAPI {
 
  public:
   MATXScriptStreamHandle CreateStream(MATXScriptContext ctx) {
-    CUDA_CALL(cudaSetDevice(ctx.device_id));
-    cudaStream_t retval;
-    CUDA_CALL(cudaStreamCreate(&retval));
-    return static_cast<MATXScriptStreamHandle>(retval);
+    return create_stream(ctx.device_id);
   }
 
   void FreeStream(MATXScriptContext ctx, MATXScriptStreamHandle stream) {
-    CUDA_CALL(cudaSetDevice(ctx.device_id));
-    cudaStream_t cu_stream = static_cast<cudaStream_t>(stream);
-    CUDA_CALL(cudaStreamDestroy(cu_stream));
+    return free_stream(ctx.device_id, stream);
+  }
+
+  MATXScriptStreamHandle GetDefaultStream(MATXScriptContext ctx) final {
+    initCUDAStreamsOnce();
+    auto device_index = ctx.device_id;
+    if (device_index == -1) {
+      device_index = current_device();
+    }
+    check_gpu(device_index);
+    return default_streams[device_index].get();
+  }
+
+  MATXScriptStreamHandle GetCurrentThreadStream(MATXScriptContext ctx) final {
+    initCUDAStreamsOnce();
+    auto device_index = ctx.device_id;
+    if (device_index == -1) {
+      device_index = current_device();
+    }
+    check_gpu(device_index);
+    return current_streams[device_index].get();
+  }
+
+  std::shared_ptr<void> GetSharedCurrentThreadStream(MATXScriptContext ctx) final {
+    initCUDAStreamsOnce();
+    auto device_index = ctx.device_id;
+    if (device_index == -1) {
+      device_index = current_device();
+    }
+    check_gpu(device_index);
+    return current_streams[device_index];
+  }
+
+  void SetCurrentThreadStream(MATXScriptContext ctx, std::shared_ptr<void> stream) final {
+    initCUDAStreamsOnce();
+    current_streams[ctx.device_id] = std::move(stream);
+  }
+
+  void StreamSync(MATXScriptContext ctx, MATXScriptStreamHandle stream) final {
+    MATXSCRIPT_CUDA_CALL(cudaSetDevice(ctx.device_id));
+    MATXSCRIPT_CUDA_CALL(cudaStreamSynchronize(static_cast<cudaStream_t>(stream)));
+  }
+
+  void CreateEventSync(MATXScriptStreamHandle stream) final {
+    cudaEvent_t finish_event;
+    MATXSCRIPT_CUDA_CALL(cudaEventCreate(&finish_event))
+    MATXSCRIPT_CUDA_CALL(cudaEventRecord(finish_event, static_cast<cudaStream_t>(stream)))
+    MATXSCRIPT_CUDA_CALL(cudaEventSynchronize(finish_event));
+    MATXSCRIPT_CUDA_CALL(cudaEventDestroy(finish_event));
   }
 
   void SyncStreamFromTo(MATXScriptContext ctx,
                         MATXScriptStreamHandle event_src,
                         MATXScriptStreamHandle event_dst) {
-    CUDA_CALL(cudaSetDevice(ctx.device_id));
+    MATXSCRIPT_CUDA_CALL(cudaSetDevice(ctx.device_id));
     cudaStream_t src_stream = static_cast<cudaStream_t>(event_src);
     cudaStream_t dst_stream = static_cast<cudaStream_t>(event_dst);
     cudaEvent_t evt;
-    CUDA_CALL(cudaEventCreate(&evt));
-    CUDA_CALL(cudaEventRecord(evt, src_stream));
-    CUDA_CALL(cudaStreamWaitEvent(dst_stream, evt, 0));
-    CUDA_CALL(cudaEventDestroy(evt));
-  }
-
-  void StreamSync(MATXScriptContext ctx, MATXScriptStreamHandle stream) final {
-    CUDA_CALL(cudaSetDevice(ctx.device_id));
-    CUDA_CALL(cudaStreamSynchronize(static_cast<cudaStream_t>(stream)));
-  }
-
-  void DefaultComputeStreamSync(MATXScriptContext ctx) final {
-    CUDA_CALL(cudaSetDevice(ctx.device_id));
-    MATXScriptStreamHandle stream = GetDefaultComputeStream(ctx);
-    CUDA_CALL(cudaStreamSynchronize(static_cast<cudaStream_t>(stream)));
-  }
-
-  void SetStreamForCurrentThread(MATXScriptContext ctx, std::shared_ptr<void> stream) final {
-    CUDAGlobalEntry::thread_local_stream = stream;
-  }
-
-  void ResetStreamForCurrentThread(MATXScriptContext ctx) final {
-    CUDAGlobalEntry::thread_local_stream = 0;
+    MATXSCRIPT_CUDA_CALL(cudaEventCreate(&evt));
+    MATXSCRIPT_CUDA_CALL(cudaEventRecord(evt, src_stream));
+    MATXSCRIPT_CUDA_CALL(cudaStreamWaitEvent(dst_stream, evt, 0));
+    MATXSCRIPT_CUDA_CALL(cudaEventDestroy(evt));
   }
 
   static CUDADeviceAPI* Global() {
@@ -274,53 +372,6 @@ class CUDADeviceAPI final : public DeviceAPI {
     // Global state will be recycled by OS as the process exits.
     static auto* inst = new CUDADeviceAPI();
     return inst;
-  }
-
-  MATXScriptStreamHandle GetDefaultComputeStream(MATXScriptContext ctx) {
-    if (CUDAGlobalEntry::thread_local_stream != nullptr) {
-      return *std::static_pointer_cast<MATXScriptStreamHandle>(
-          CUDAGlobalEntry::thread_local_stream);
-    }
-    return GetStream(ctx, cudaDefaultStreams);
-  }
-
-  MATXScriptStreamHandle GetDefaultIOStreamH2D(MATXScriptContext ctx) {
-    if (CUDAGlobalEntry::thread_local_stream != nullptr) {
-      return *std::static_pointer_cast<MATXScriptStreamHandle>(
-          CUDAGlobalEntry::thread_local_stream);
-    }
-    return GetStream(ctx, cudaDefaultH2DStreams);
-  }
-
-  MATXScriptStreamHandle GetDefaultIOStreamD2H(MATXScriptContext ctx) {
-    if (CUDAGlobalEntry::thread_local_stream != nullptr) {
-      return *std::static_pointer_cast<MATXScriptStreamHandle>(
-          CUDAGlobalEntry::thread_local_stream);
-    }
-    return GetStream(ctx, cudaDefaultD2HStreams);
-  }
-
-  void CreateEventSync(MATXScriptStreamHandle stream) final {
-    cudaEvent_t finish_event;
-    CUDA_CALL(cudaEventCreate(&finish_event))
-    CUDA_CALL(cudaEventRecord(finish_event, static_cast<cudaStream_t>(stream)))
-    CUDA_CALL(cudaEventSynchronize(finish_event));
-    CUDA_CALL(cudaEventDestroy(finish_event));
-  }
-
-  MATXScriptStreamHandle GetCopyFromStream(MATXScriptContext ctx,
-                                           MATXScriptContext from_ctx) final {
-    if (from_ctx.device_type == kDLCPU) {
-      return GetDefaultIOStreamH2D(ctx);
-    }
-    return nullptr;
-  }
-
-  MATXScriptStreamHandle GetCopyToStream(MATXScriptContext ctx, MATXScriptContext to_ctx) final {
-    if (to_ctx.device_type == kDLCPU) {
-      return GetDefaultIOStreamD2H(ctx);
-    }
-    return nullptr;
   }
 
  private:
@@ -339,9 +390,9 @@ class CUDADeviceAPI final : public DeviceAPI {
   static void GPUCopy(
       const void* from, void* to, size_t size, cudaMemcpyKind kind, cudaStream_t stream) {
     if (stream != nullptr) {
-      CUDA_CALL(cudaMemcpyAsync(to, from, size, kind, stream));
+      MATXSCRIPT_CUDA_CALL(cudaMemcpyAsync(to, from, size, kind, stream));
     } else {
-      CUDA_CALL(cudaMemcpy(to, from, size, kind));
+      MATXSCRIPT_CUDA_CALL(cudaMemcpy(to, from, size, kind));
     }
   }
 
@@ -371,22 +422,10 @@ class CUDADeviceAPI final : public DeviceAPI {
 
   std::vector<brt::BFCArena*> cudaBFCAllocators;
   std::vector<brt::BFCArena*> cudaPinnedBFCAllocators;
-  std::vector<MATXScriptStreamHandle> cudaDefaultStreams;
-  std::vector<MATXScriptStreamHandle> cudaDefaultH2DStreams;
-  std::vector<MATXScriptStreamHandle> cudaDefaultD2HStreams;
   std::mutex cudaAllocMutex_;
   std::mutex pinAllocMutex_;
   std::mutex streamAllocMutex_;
 };
-
-CUDAGlobalEntry::CUDAGlobalEntry() {
-  CUDADeviceAPI::Global();
-}
-
-CUDAGlobalEntry* CUDAGlobalEntry::Get() {
-  static CUDAGlobalEntry* cuda_entry = new CUDAGlobalEntry();
-  return cuda_entry;
-}
 
 MATXSCRIPT_REGISTER_GLOBAL("device_api.gpu").set_body([](PyArgs args) -> RTValue {
   DeviceAPI* ptr = CUDADeviceAPI::Global();
@@ -398,5 +437,6 @@ MATXSCRIPT_REGISTER_GLOBAL("device_api.cpu_pinned").set_body([](PyArgs args) -> 
   return static_cast<void*>(ptr);
 });
 
+}  // namespace cuda
 }  // namespace runtime
 }  // namespace matxscript

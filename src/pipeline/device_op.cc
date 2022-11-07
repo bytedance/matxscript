@@ -39,7 +39,7 @@ void DeviceOp::Init() {
 
 RTValue DeviceOp::Process(PyArgs inputs) const {
   int session_device_id = device_;
-  MATXScriptStreamHandle compute_stream = nullptr, h2d_stream = nullptr, d2h_stream = nullptr;
+  MATXScriptStreamHandle current_stream = nullptr;
   void* thread_pool = nullptr;
 
   if (device_ == NONE_DEVICE) {
@@ -48,9 +48,7 @@ RTValue DeviceOp::Process(PyArgs inputs) const {
       MATXScriptContext ctx{kDLGPU, device_id_};
       DeviceAPI* api = DeviceAPI::Get(ctx, true);
       if (api != nullptr) {
-        compute_stream = api->GetDefaultComputeStream(ctx);
-        h2d_stream = api->GetDefaultIOStreamH2D(ctx);
-        d2h_stream = api->GetDefaultIOStreamD2H(ctx);
+        current_stream = api->GetCurrentThreadStream(ctx);
       }
     }
   } else {
@@ -59,18 +57,17 @@ RTValue DeviceOp::Process(PyArgs inputs) const {
       MATXScriptContext ctx{kDLGPU, session_device_id};
       DeviceAPI* api = DeviceAPI::Get(ctx, true);
       if (api != nullptr) {
-        compute_stream = api->GetDefaultComputeStream(ctx);  // use global, TODO: use session local
-        h2d_stream = api->GetDefaultIOStreamH2D(ctx);
-        d2h_stream = api->GetDefaultIOStreamD2H(ctx);
+        current_stream = api->GetCurrentThreadStream(ctx);
       }
     }
   }
   thread_pool = belong_to_->GetComputeThreadPool();
+  // TODO: remove h2d and d2h
   return Dict({{"device_id", device_id_},
                {"session_device_id", session_device_id},
-               {"compute_stream", compute_stream},
-               {"h2d_stream", h2d_stream},
-               {"d2h_stream", d2h_stream},
+               {"compute_stream", current_stream},
+               {"h2d_stream", current_stream},
+               {"d2h_stream", current_stream},
                {"thread_pool", thread_pool}});
 }
 

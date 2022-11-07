@@ -99,6 +99,7 @@ class MATX_DLL DeviceAPI {
                       DLDataType type_hint) = 0;
 
   virtual void* Alloc(MATXScriptContext ctx, size_t nbytes) = 0;
+
   /*!
    * \brief Free a data space on device.
    * \param ctx The device context to perform operation.
@@ -106,6 +107,7 @@ class MATX_DLL DeviceAPI {
    */
   virtual void FreeRaw(MATXScriptContext ctx, void* ptr) = 0;
   virtual void Free(MATXScriptContext ctx, void* ptr) = 0;
+
   /*!
    * \brief copy data from one place to another
    * \param from The source array.
@@ -133,25 +135,7 @@ class MATX_DLL DeviceAPI {
    *
    * \param ctx The context of allocation.
    */
-  virtual MATXScriptStreamHandle CreateStream(MATXScriptContext ctx);
-
-  /*!
-   * \brief return default compute stream on ctx
-   *
-   * \param ctx The context to perform operation.
-   */
-  virtual MATXScriptStreamHandle GetDefaultComputeStream(MATXScriptContext ctx);
-  virtual MATXScriptStreamHandle GetDefaultIOStreamH2D(MATXScriptContext ctx);
-  virtual MATXScriptStreamHandle GetDefaultIOStreamD2H(MATXScriptContext ctx);
-
-  /*!
-   * \brief Synchronize default compute stream on ctx
-   */
-  virtual void DefaultComputeStreamSync(MATXScriptContext ctx) = 0;
-  virtual MATXScriptStreamHandle GetCopyFromStream(MATXScriptContext ctx,
-                                                   MATXScriptContext from_ctx) = 0;
-  virtual MATXScriptStreamHandle GetCopyToStream(MATXScriptContext ctx,
-                                                 MATXScriptContext to_ctx) = 0;
+  virtual MATXScriptStreamHandle CreateStream(MATXScriptContext ctx) = 0;
 
   /*!
    * \brief Free a stream of execution
@@ -159,7 +143,29 @@ class MATX_DLL DeviceAPI {
    * \param ctx The context of the stream
    * \param stream The pointer to be freed.
    */
-  virtual void FreeStream(MATXScriptContext ctx, MATXScriptStreamHandle stream);
+  virtual void FreeStream(MATXScriptContext ctx, MATXScriptStreamHandle stream) = 0;
+
+  /*!
+   * \brief return default stream on ctx
+   *
+   * \param ctx The context to perform operation.
+   */
+  virtual MATXScriptStreamHandle GetDefaultStream(MATXScriptContext ctx) = 0;
+
+  /*!
+   * \brief return current stream on ctx
+   *
+   * \param ctx The context to perform operation.
+   */
+  virtual MATXScriptStreamHandle GetCurrentThreadStream(MATXScriptContext ctx) = 0;
+  virtual std::shared_ptr<void> GetSharedCurrentThreadStream(MATXScriptContext ctx) = 0;
+
+  /*!
+   * \brief Set the stream only for current thread
+   * \param ctx The context to set stream.
+   * \param stream The stream to be set.
+   */
+  virtual void SetCurrentThreadStream(MATXScriptContext ctx, std::shared_ptr<void> stream) = 0;
 
   /*!
    * \brief Synchronize the stream
@@ -170,27 +176,8 @@ class MATX_DLL DeviceAPI {
 
   virtual void CreateEventSync(MATXScriptStreamHandle stream) = 0;
 
-  /*!
-   * \brief Set the stream
-   * \param ctx The context to set stream.
-   * \param stream The stream to be set.
-   */
-  virtual void SetStream(MATXScriptContext ctx, MATXScriptStreamHandle stream) {
-  }
-
-  /*!
-   * \brief Set the stream only for current thread
-   * \param ctx The context to set stream.
-   * \param stream The stream to be set.
-   */
-  virtual void SetStreamForCurrentThread(MATXScriptContext ctx, std::shared_ptr<void> stream) {
-  }
-
-  /*!
-   * \brief Reset the stream only for current thread
-   * \param ctx The context to set stream.
-   */
-  virtual void ResetStreamForCurrentThread(MATXScriptContext ctx) {
+  inline void CurrentThreadStreamSync(MATXScriptContext ctx) {
+    this->CreateEventSync(this->GetCurrentThreadStream(ctx));
   }
 
   /*!
@@ -226,6 +213,17 @@ class MATX_DLL DeviceAPI {
   static bool NeedSetDeviceContext(int device_type) {
     return device_type != kDLCPU;
   }
+};
+
+class DeviceStreamGuard {
+  DeviceStreamGuard(MATXScriptContext ctx, std::shared_ptr<void> stream);
+  virtual ~DeviceStreamGuard();
+
+ private:
+  MATXScriptContext ctx_;
+  DeviceAPI* device_api_;
+  std::shared_ptr<void> old_stream_;
+  std::shared_ptr<void> new_stream_;
 };
 
 /*! \brief The device type bigger than this is RPC device */

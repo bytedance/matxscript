@@ -43,6 +43,7 @@
 
 namespace matxscript {
 namespace runtime {
+
 class CPUDeviceAPI final : public DeviceAPI {
  public:
   void SetDevice(MATXScriptContext ctx) final {
@@ -107,27 +108,41 @@ class CPUDeviceAPI final : public DeviceAPI {
                       MATXScriptContext ctx_to,
                       DLDataType type_hint,
                       MATXScriptStreamHandle stream) final {
-    memcpy(static_cast<char*>(to) + to_offset, static_cast<const char*>(from) + from_offset, size);
+    std::memcpy(
+        static_cast<char*>(to) + to_offset, static_cast<const char*>(from) + from_offset, size);
+  }
+
+  MATXScriptStreamHandle CreateStream(MATXScriptContext ctx) final {
+    return nullptr;
+  }
+
+  void FreeStream(MATXScriptContext ctx, MATXScriptStreamHandle stream) final {
+  }
+
+  MATXScriptStreamHandle GetDefaultStream(MATXScriptContext ctx) final {
+    return nullptr;
+  }
+
+  MATXScriptStreamHandle GetCurrentThreadStream(MATXScriptContext ctx) final {
+    return nullptr;
+  }
+
+  std::shared_ptr<void> GetSharedCurrentThreadStream(MATXScriptContext ctx) final {
+    return nullptr;
+  }
+
+  void SetCurrentThreadStream(MATXScriptContext ctx, std::shared_ptr<void> stream) final {
   }
 
   void StreamSync(MATXScriptContext ctx, MATXScriptStreamHandle stream) final {
   }
 
-  void DefaultComputeStreamSync(MATXScriptContext ctx) final {
-  }
-
   void CreateEventSync(MATXScriptStreamHandle stream) final {
   }
 
-  MATXScriptStreamHandle GetCopyFromStream(MATXScriptContext ctx,
-                                           MATXScriptContext from_ctx) final {
-    MXCHECK_EQ(from_ctx.device_type, kDLCPU) << "cpu device only support copy from cpu";
-    return nullptr;
-  }
-
-  MATXScriptStreamHandle GetCopyToStream(MATXScriptContext ctx, MATXScriptContext to_ctx) final {
-    MXCHECK_EQ(to_ctx.device_type, kDLCPU) << "cpu device only support copy to cpu";
-    return nullptr;
+  void SyncStreamFromTo(MATXScriptContext ctx,
+                        MATXScriptStreamHandle event_src,
+                        MATXScriptStreamHandle event_dst) final {
   }
 
   static CPUDeviceAPI* Global() {

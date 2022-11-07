@@ -111,13 +111,10 @@ struct TXSession {
    * @return
    */
   std::vector<std::pair<std::string, RTValue>> Run(
-      const std::unordered_map<std::string, RTValue>& feed_dict,
-      std::shared_ptr<void> cuda_stream = nullptr) const;
+      const std::unordered_map<std::string, RTValue>& feed_dict) const;
 
   std::vector<std::pair<std::string, RTValue>> Run(
-      const std::unordered_map<std::string, RTValue>& feed_dict,
-      TXSessionRunMeta* meta,
-      std::shared_ptr<void> cuda_stream = nullptr) const;
+      const std::unordered_map<std::string, RTValue>& feed_dict, TXSessionRunMeta* meta) const;
 
   /**
    * Each task thread will execute a session run at once
@@ -212,7 +209,9 @@ struct TXSession {
                  List& generic_ops) const;
 
  private:
+  DLDeviceType device_type_ = kDLCPU;
   int device_ = NONE_DEVICE;
+  DeviceAPI* device_api_ = nullptr;
   std::shared_ptr<Graph> graph_;
   std::vector<NodePtr> serial_nodes_;
   std::vector<std::vector<NodePtr>> parallel_nodes_;
