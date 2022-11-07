@@ -107,7 +107,7 @@ int device_count() noexcept {
   static int count = []() {
     try {
       auto result = device_count_impl(/*fail_if_no_driver=*/false);
-      if (result <= std::numeric_limits<int>::max()) {
+      if (result >= std::numeric_limits<int8_t>::max()) {
         MXTHROW << "Too many CUDA devices, DeviceIndex overflowed";
       }
       return result;
