@@ -68,10 +68,10 @@ class TestDeviceOpDict(unittest.TestCase):
 
         session = matx.pipeline.Trace(process, b"haha")
         session.save("device_op_session")
-        t_session = matx.pipeline.Load("device_op_session", 1)
+        t_session = matx.load("device_op_session", -1)
         gpu_prefix, cpu_prefix = t_session.run({"prefix": b"xixi"})
-        self.assertEqual(b"xixi:0:1", gpu_prefix)
-        self.assertEqual(b"xixi:-1:1", cpu_prefix)
+        self.assertEqual(b"xixi:0:-1", gpu_prefix)
+        self.assertEqual(b"xixi:-1:-1", cpu_prefix)
 
     def test_script_device(self):
         def _make_device() -> Any:
