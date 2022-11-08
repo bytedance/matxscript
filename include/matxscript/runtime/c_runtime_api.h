@@ -661,7 +661,9 @@ MATX_DLL int MATXScriptStreamFree(int device_type, int device_id, MATXScriptStre
  * \param handle The stream handle.
  * \return 0 when success, -1 when failure happens
  */
-MATX_DLL int MATXScriptSetStream(int device_type, int device_id, MATXScriptStreamHandle handle);
+MATX_DLL int MATXScriptSetCurrentThreadStream(int device_type,
+                                              int device_id,
+                                              MATXScriptStreamHandle handle);
 
 /*!
  * \brief Wait until all computations on stream completes.

@@ -139,6 +139,8 @@ TXSession::TXSession(TXSessionOptions opt) {
   ud_cache_local_ = std::make_shared<UserDataScopedCache>(local_scope);
   // set default devices is cpu
   device_ = NONE_DEVICE;
+  device_type_ = kDLCPU;
+  device_api_ = DeviceAPI::Get(MATXScriptContext{device_type_, 0});
   if (this->options_.enable_graph_parallel) {
     SetOpParallelismThreads(
         options_.scheduling_pool_thread_nums > 0 ? options_.scheduling_pool_thread_nums : 0,
@@ -337,6 +339,8 @@ bool IsDevicesOp(const OpKernel* op) {
 
 void TXSession::SetDevice(int device) {
   device_ = device;
+  device_type_ = device_ < 0 ? kDLCPU : kDLGPU;
+  device_api_ = DeviceAPI::Get(MATXScriptContext{device_type_, device_});
   if (graph_) {
     auto& nodes = graph_->get_topo_nodes();
     for (auto& node : nodes) {
@@ -534,37 +538,22 @@ void TXSession::BuildOutputKeys() {
 }
 
 std::vector<std::pair<std::string, RTValue>> TXSession::Run(
-    const std::unordered_map<std::string, RTValue>& feed_dict,
-    std::shared_ptr<void> cuda_stream) const {
+    const std::unordered_map<std::string, RTValue>& feed_dict) const {
   MXCHECK(graph_) << "forget trace? run must after trace!!!";
-  if (cuda_stream) {
-    MATXScriptContext ctx{kDLGPU, device_};
-    DeviceAPI::Get(ctx)->SetStreamForCurrentThread(ctx, cuda_stream);
-  }
   std::vector<std::pair<std::string, RTValue>> result;
   if (options_.enable_graph_parallel && options_.enable_scheduling_pool && scheduling_pool_) {
     RunImplMultiThread(feed_dict, result);
   } else {
     RunImpl(feed_dict, result);
   }
-  if (cuda_stream) {
-    MATXScriptContext ctx{kDLGPU, device_};
-    DeviceAPI::Get(ctx)->ResetStreamForCurrentThread(ctx);
-  }
   return result;
 }
 
 std::vector<std::pair<std::string, RTValue>> TXSession::Run(
-    const std::unordered_map<std::string, RTValue>& feed_dict,
-    TXSessionRunMeta* meta,
-    std::shared_ptr<void> cuda_stream) const {
+    const std::unordered_map<std::string, RTValue>& feed_dict, TXSessionRunMeta* meta) const {
   ProfilingHelper ph(meta ? &meta->time_line : nullptr);
   MXCHECK(graph_) << "forget trace? run must after trace!!!";
   std::vector<std::pair<std::string, RTValue>> result;
-  if (cuda_stream) {
-    MATXScriptContext ctx{kDLGPU, device_};
-    DeviceAPI::Get(ctx)->SetStreamForCurrentThread(ctx, cuda_stream);
-  }
   if (meta) {
     meta->step_stats.reserve(serial_nodes_.size());
   }
@@ -572,10 +561,6 @@ std::vector<std::pair<std::string, RTValue>> TXSession::Run(
     RunImplMultiThread(feed_dict, result, meta);
   } else {
     RunImpl(feed_dict, result, meta);
-  }
-  if (cuda_stream) {
-    MATXScriptContext ctx{kDLGPU, device_};
-    DeviceAPI::Get(ctx)->ResetStreamForCurrentThread(ctx);
   }
   return result;
 }
@@ -809,9 +794,20 @@ class TXSession::TXSessionWarmupRunnable : public internal::LockBasedRunnable {
         worker_num_(worker_num),
         sess_(sess),
         feed_dict_(feed_dict) {
+    ctx_.device_type = sess->device_type_;
+    ctx_.device_id = sess_->device_;
+    auto* dev_api = sess_->device_api_;
+    stream_ = dev_api->GetSharedCurrentThreadStream(ctx_);
   }
 
   void RunImpl() override {
+    // follow main thread stream
+    auto* dev_api = sess_->device_api_;
+    auto stream = dev_api->GetSharedCurrentThreadStream(ctx_);
+    if (stream.get() != stream_.get()) {
+      dev_api->SetCurrentThreadStream(ctx_, stream_);
+    }
+
     auto tid = std::this_thread::get_id();
     std::this_thread::sleep_for(
         std::chrono::microseconds(std::hash<std::thread::id>{}(tid) % 1000));
@@ -838,6 +834,8 @@ class TXSession::TXSessionWarmupRunnable : public internal::LockBasedRunnable {
   int32_t* p_num_finish_;
   int32_t worker_num_;
   const TXSession* sess_;
+  MATXScriptContext ctx_;
+  std::shared_ptr<void> stream_;
 };
 
 class TXSession::TXSessionRunnable : public internal::LockBasedRunnable {
@@ -847,19 +845,31 @@ class TXSession::TXSessionRunnable : public internal::LockBasedRunnable {
                     const std::unordered_map<std::string, RTValue>& feed_dict,
                     const ska::flat_hash_map<string_view, RTValue>& datapack,
                     ska::flat_hash_map<string_view, RTValue>* output_dict,
-                    TXSessionStepStat* step_stat)
+                    TXSessionStepStat* step_stat,
+                    const TXSession* sess)
       : p_node_(node),
         node_num_(node_num),
         p_feed_dict_(&feed_dict),
         p_datapack_(&datapack),
         p_output_dict_(output_dict),
         step_stat_(step_stat) {
+    sess_ = sess;
+    ctx_.device_type = sess_->device_type_;
+    ctx_.device_id = sess_->device_;
+    stream_ = sess_->device_api_->GetSharedCurrentThreadStream(ctx_);
+
     if (node_num < 1) {
       MXCHECK_GT(node_num, 1);
     }
   }
 
   void RunImpl() override {
+    // follow main thread stream
+    auto stream = sess_->device_api_->GetSharedCurrentThreadStream(ctx_);
+    if (stream.get() != stream_.get()) {
+      sess_->device_api_->SetCurrentThreadStream(ctx_, stream_);
+    }
+
     if (node_num_ == 1) {
       p_output_dict_->reserve(p_node_[0]->outputs.size());
       TXSessionRunOneNode(p_node_[0], *p_feed_dict_, *p_datapack_, p_output_dict_, step_stat_);
@@ -885,6 +895,9 @@ class TXSession::TXSessionRunnable : public internal::LockBasedRunnable {
   const ska::flat_hash_map<string_view, RTValue>* p_datapack_;
   ska::flat_hash_map<string_view, RTValue>* p_output_dict_;
   TXSessionStepStat* step_stat_ = nullptr;
+  MATXScriptContext ctx_;
+  std::shared_ptr<void> stream_;
+  const TXSession* sess_;
 };
 
 void TXSession::RunImplMultiThread(const std::unordered_map<std::string, RTValue>& feed_dict,
@@ -942,7 +955,8 @@ void TXSession::RunImplMultiThread(const std::unordered_map<std::string, RTValue
                                                           feed_dict,
                                                           datapack,
                                                           &output_dicts[i],
-                                                          step_stats);
+                                                          step_stats,
+                                                          this);
         runnables.push_back(std::dynamic_pointer_cast<internal::IRunnable>(runner));
         if (step_stats) {
           step_stats += real_step;

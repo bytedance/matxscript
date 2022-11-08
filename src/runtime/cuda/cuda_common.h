@@ -24,22 +24,20 @@
  * \file cuda_common.h
  * \brief Common utilities for CUDA
  */
-#ifndef MATXSCRIPT_RUNTIME_CUDA_CUDA_COMMON_H_
-#define MATXSCRIPT_RUNTIME_CUDA_CUDA_COMMON_H_
+#pragma once
 
 #include <cuda_runtime.h>
 
 #include <string>
 
-#include "core/device/cuda/cuda_allocator.h"
-#include "core/framework/allocator.h"
-#include "core/framework/arena.h"
-#include "core/framework/bfc_arena.h"
+#include <matxscript/runtime/logging.h>
+#include <matxscript/runtime/runtime_port.h>
 
 namespace matxscript {
 namespace runtime {
+namespace cuda {
 
-#define CUDA_DRIVER_CALL(x)                                             \
+#define MATXSCRIPT_CUDA_DRIVER_CALL(x)                                  \
   {                                                                     \
     CUresult result = x;                                                \
     if (result != CUDA_SUCCESS && result != CUDA_ERROR_DEINITIALIZED) { \
@@ -49,25 +47,23 @@ namespace runtime {
     }                                                                   \
   }
 
-#define CUDA_CALL(func)                                        \
+#define MATXSCRIPT_CUDA_CALL(func)                             \
   {                                                            \
     cudaError_t e = (func);                                    \
     MXCHECK(e == cudaSuccess || e == cudaErrorCudartUnloading) \
         << "CUDA: " << cudaGetErrorString(e);                  \
   }
 
-/*! \brief simple lock workspace */
-class CUDAGlobalEntry {
- public:
-  /*! \brief cuda stream map*/
-  static thread_local std::shared_ptr<void> thread_local_stream;
-  /*! \brief constructor */
-  CUDAGlobalEntry();
-  // get the workspace
-  static CUDAGlobalEntry* Get();
-};
-thread_local std::shared_ptr<void> CUDAGlobalEntry::thread_local_stream =
-    0;  // 0 presents the default cuda stream
+// Intentionally ignore a CUDA error
+#define MATXSCRIPT_CUDA_IGNORE_ERROR(EXPR)           \
+  do {                                               \
+    const cudaError_t __err = EXPR;                  \
+    if (MATXSCRIPT_UNLIKELY(__err != cudaSuccess)) { \
+      cudaError_t error_unused = cudaGetLastError(); \
+      (void)error_unused;                            \
+    }                                                \
+  } while (0)
+
+}  // namespace cuda
 }  // namespace runtime
 }  // namespace matxscript
-#endif  // MATXSCRIPT_RUNTIME_CUDA_CUDA_COMMON_H_

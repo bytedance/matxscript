@@ -238,60 +238,24 @@ bool NDArray::IsContiguous() const {
 
 void NDArray::CopyFrom(const DLTensor* other) {
   MXCHECK(data_ != nullptr);
-  if (other->ctx.device_type == kDLCPU) {
-    MATXScriptContext ctx = (get_mutable()->dl_tensor).ctx;
-    MATXScriptStreamHandle stream = DeviceAPI::Get(ctx)->GetCopyFromStream(ctx, other->ctx);
-    CopyFromTo(other, &(get_mutable()->dl_tensor), stream);
-    // DeviceAPI::Get(ctx)->CreateEventSync(stream);
-    DeviceAPI::Get(ctx)->StreamSync(ctx, stream);
-  } else {
-    // DeviceAPI::Get(other->ctx)->DefaultComputeStreamSync(other->ctx);
-    CopyFromTo(other, &(get_mutable()->dl_tensor));
-  }
+  CopyFromTo(other, &(get_mutable()->dl_tensor));
 }
 
 void NDArray::CopyFrom(const NDArray& other) {
   MXCHECK(data_ != nullptr);
   MXCHECK(other.data_ != nullptr);
-  if (other->ctx.device_type == kDLCPU) {
-    MATXScriptContext ctx = (get_mutable()->dl_tensor).ctx;
-    MATXScriptStreamHandle stream = DeviceAPI::Get(ctx)->GetCopyFromStream(ctx, other->ctx);
-    CopyFromTo(&(other.get_mutable()->dl_tensor), &(get_mutable()->dl_tensor), stream);
-    // DeviceAPI::Get(ctx)->CreateEventSync(stream);
-    DeviceAPI::Get(ctx)->StreamSync(ctx, stream);
-  } else {
-    // DeviceAPI::Get(other->ctx)->DefaultComputeStreamSync(other->ctx);
-    CopyFromTo(&(other.get_mutable()->dl_tensor), &(get_mutable()->dl_tensor));
-  }
+  CopyFromTo(&(other.get_mutable()->dl_tensor), &(get_mutable()->dl_tensor));
 }
 
 void NDArray::CopyTo(DLTensor* other) const {
   MXCHECK(data_ != nullptr);
-  MATXScriptContext ctx = (get_mutable()->dl_tensor).ctx;
-  if (ctx.device_type == kDLCPU) {
-    MATXScriptStreamHandle stream = DeviceAPI::Get(other->ctx)->GetCopyFromStream(other->ctx, ctx);
-    CopyFromTo(&(get_mutable()->dl_tensor), other, stream);
-    // DeviceAPI::Get(other->ctx)->CreateEventSync(stream);
-    DeviceAPI::Get(other->ctx)->StreamSync(other->ctx, stream);
-  } else {
-    // DeviceAPI::Get(ctx)->DefaultComputeStreamSync(ctx);
-    CopyFromTo(&(get_mutable()->dl_tensor), other);
-  }
+  CopyFromTo(&(get_mutable()->dl_tensor), other);
 }
 
 void NDArray::CopyTo(const NDArray& other) const {
   MXCHECK(data_ != nullptr);
   MXCHECK(other.data_ != nullptr);
-  MATXScriptContext ctx = (get_mutable()->dl_tensor).ctx;
-  if (ctx.device_type == kDLCPU) {
-    MATXScriptStreamHandle stream = DeviceAPI::Get(other->ctx)->GetCopyFromStream(other->ctx, ctx);
-    CopyFromTo(&(get_mutable()->dl_tensor), &(other.get_mutable()->dl_tensor), stream);
-    // DeviceAPI::Get(other->ctx)->CreateEventSync(stream);
-    DeviceAPI::Get(other->ctx)->StreamSync(other->ctx, stream);
-  } else {
-    // DeviceAPI::Get(ctx)->DefaultComputeStreamSync(ctx);
-    CopyFromTo(&(get_mutable()->dl_tensor), &(other.get_mutable()->dl_tensor));
-  }
+  CopyFromTo(&(get_mutable()->dl_tensor), &(other.get_mutable()->dl_tensor));
 }
 
 NDArray NDArray::CopyTo(const DLContext& ctx) const {
@@ -375,42 +339,26 @@ inline size_t GetDataAlignment(const DLTensor& arr) {
   return align;
 }
 
-void ArrayCopyFromBytes(DLTensor* handle,
-                        const void* data,
-                        size_t nbytes,
-                        MATXScriptContext from_ctx) {
+void ArrayCopyFromBytes(DLTensor* handle, const void* data, size_t nbytes) {
   size_t arr_size = GetDataSize(*handle);
   MXCHECK(IsContiguous(*handle)) << "ArrayCopyFromBytes only support contiguous array for now";
   MXCHECK_EQ(arr_size, nbytes) << "ArrayCopyFromBytes: size mismatch";
-  if (from_ctx.device_type == kDLCPU) {
-    MATXScriptStreamHandle stream =
-        DeviceAPI::Get(handle->ctx)->GetCopyFromStream(handle->ctx, from_ctx);
-    DeviceAPI::Get(handle->ctx)
-        ->CopyDataFromTo(data,
-                         0,
-                         handle->data,
-                         static_cast<size_t>(handle->byte_offset),
-                         nbytes,
-                         from_ctx,
-                         handle->ctx,
-                         handle->dtype,
-                         stream);
-    // DeviceAPI::Get(handle->ctx)->CreateEventSync(stream);
-    DeviceAPI::Get(handle->ctx)->StreamSync(handle->ctx, stream);
-  } else {
-    // DeviceAPI::Get(from_ctx)->DefaultComputeStreamSync(from_ctx);
-    DeviceAPI::Get(from_ctx)->CopyDataFromTo(data,
-                                             0,
-                                             handle->data,
-                                             static_cast<size_t>(handle->byte_offset),
-                                             nbytes,
-                                             from_ctx,
-                                             handle->ctx,
-                                             handle->dtype,
-                                             nullptr);
-    // Synchronize in case data become unavailable later.
-    DeviceAPI::Get(from_ctx)->StreamSync(handle->ctx, nullptr);
-  }
+  MATXScriptContext cpu_ctx;
+  cpu_ctx.device_type = kDLCPU;
+  cpu_ctx.device_id = 0;
+  auto* device_api = DeviceAPI::Get(handle->ctx);
+  auto stream = device_api->GetCurrentThreadStream(handle->ctx);
+  device_api->CopyDataFromTo(data,
+                             0,
+                             handle->data,
+                             static_cast<size_t>(handle->byte_offset),
+                             nbytes,
+                             cpu_ctx,
+                             handle->ctx,
+                             handle->dtype,
+                             stream);
+  // Synchronize in case data become unavailable later.
+  device_api->CreateEventSync(stream);
 }
 
 void ArrayCopyToBytes(const DLTensor* handle, void* data, size_t nbytes) {
@@ -420,19 +368,21 @@ void ArrayCopyToBytes(const DLTensor* handle, void* data, size_t nbytes) {
   size_t arr_size = GetDataSize(*handle);
   MXCHECK(IsContiguous(*handle)) << "ArrayCopyToBytes only support contiguous array for now";
   MXCHECK_EQ(arr_size, nbytes) << "ArrayCopyToBytes: size mismatch";
-  // DeviceAPI::Get(handle->ctx)->DefaultComputeStreamSync(handle->ctx);
-  DeviceAPI::Get(handle->ctx)
-      ->CopyDataFromTo(handle->data,
-                       static_cast<size_t>(handle->byte_offset),
-                       data,
-                       0,
-                       nbytes,
-                       handle->ctx,
-                       cpu_ctx,
-                       handle->dtype,
-                       nullptr);
+
+  auto* device_api = DeviceAPI::Get(handle->ctx);
+  auto stream = device_api->GetCurrentThreadStream(handle->ctx);
+
+  device_api->CopyDataFromTo(handle->data,
+                             static_cast<size_t>(handle->byte_offset),
+                             data,
+                             0,
+                             nbytes,
+                             handle->ctx,
+                             cpu_ctx,
+                             handle->dtype,
+                             stream);
   // Synchronize in case data become unavailable later.
-  DeviceAPI::Get(handle->ctx)->StreamSync(handle->ctx, nullptr);
+  device_api->CreateEventSync(stream);
 }
 
 namespace {
@@ -708,16 +658,7 @@ void NDArray::CopyToBytes(void* data, size_t nbytes) const {
 void NDArray::CopyFromBytes(const void* data, size_t nbytes) {
   MXCHECK(data != nullptr);
   MXCHECK(data_ != nullptr);
-  MATXScriptContext cpu_ctx;
-  cpu_ctx.device_type = kDLCPU;
-  cpu_ctx.device_id = 0;
-  ArrayCopyFromBytes(&get_mutable()->dl_tensor, data, nbytes, cpu_ctx);
-}
-
-void NDArray::CopyFromBytes(const void* data, size_t nbytes, MATXScriptContext from_ctx) {
-  MXCHECK(data != nullptr);
-  MXCHECK(data_ != nullptr);
-  ArrayCopyFromBytes(&get_mutable()->dl_tensor, data, nbytes, from_ctx);
+  ArrayCopyFromBytes(&get_mutable()->dl_tensor, data, nbytes);
 }
 
 void NDArray::CopyFromTo(const DLTensor* from, DLTensor* to, MATXScriptStreamHandle stream) {
@@ -743,6 +684,13 @@ void NDArray::CopyFromTo(const DLTensor* from, DLTensor* to, MATXScriptStreamHan
                                       to->ctx,
                                       from->dtype,
                                       stream);
+}
+
+void NDArray::CopyFromTo(const DLTensor* from, DLTensor* to) {
+  MATXScriptContext ctx = from->ctx.device_type != kDLCPU ? from->ctx : to->ctx;
+  auto* device_api = DeviceAPI::Get(ctx);
+  auto stream = device_api->GetCurrentThreadStream(ctx);
+  return CopyFromTo(from, to, stream);
 }
 
 std::vector<int64_t> NDArray::Shape() const {
@@ -1581,7 +1529,8 @@ static inline void PrintNDArray(const NDArray& tensor, std::ostream& ss, int dep
   ss << "(" << tensor->ctx.device_id << ")>\n";
   ss << "array([";
   const int64_t* strides = tensor.GetStridesPtr();
-  if (tensor->ctx.device_type == DLDeviceType::kDLGPU) {
+  if (tensor->ctx.device_type != DLDeviceType::kDLCPU &&
+      tensor->ctx.device_type != DLDeviceType::kDLCPUPinned) {
     int64_t max_bytes = 0;
     for (int i = 0; i < tensor->ndim; ++i) {
       max_bytes += (tensor->shape[i] - 1) * strides[i];
@@ -1590,9 +1539,7 @@ static inline void PrintNDArray(const NDArray& tensor, std::ostream& ss, int dep
     DeviceAPI* cpu_device = DeviceAPI::Get(DLContext{kDLCPU, 0});
     void* to = cpu_device->Alloc(DLContext{kDLCPU, 0}, max_bytes);
     DeviceAPI* gpu_device = DeviceAPI::Get(tensor->ctx);
-
-    // sync default stream
-    gpu_device->DefaultComputeStreamSync(tensor->ctx);
+    auto stream = gpu_device->GetCurrentThreadStream(tensor->ctx);
 
     gpu_device->CopyDataFromTo(tensor->data,
                                tensor->byte_offset,
@@ -1602,7 +1549,8 @@ static inline void PrintNDArray(const NDArray& tensor, std::ostream& ss, int dep
                                tensor->ctx,
                                DLContext{kDLCPU, 0},
                                tensor->dtype,
-                               nullptr);
+                               stream);
+    gpu_device->CreateEventSync(stream);
     MATX_NDARRAY_TYPE_SWITCH_WITH_BOOL(dtype, DT, {
       PrintNDArray(tensor->ndim, static_cast<DT*>(to), tensor->shape, strides, ss, depth);
     });
@@ -1717,10 +1665,7 @@ void MATXScriptDLManagedTensorCallDeleter(DLManagedTensor* dltensor) {
 
 int MATXScriptArrayCopyFromBytes(MATXScriptTensorHandle handle, void* data, size_t nbytes) {
   API_BEGIN();
-  MATXScriptContext cpu_ctx;
-  cpu_ctx.device_type = kDLCPU;
-  cpu_ctx.device_id = 0;
-  ArrayCopyFromBytes(handle, data, nbytes, cpu_ctx);
+  ArrayCopyFromBytes(handle, data, nbytes);
   API_END();
 }
 

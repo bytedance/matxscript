@@ -57,7 +57,8 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.GetDeviceAttr").set_body([](PyArgs args) -> 
   return ret;
 });
 
-MATXSCRIPT_REGISTER_GLOBAL("runtime.MATXScriptSetStream").set_body_typed(MATXScriptSetStream);
+MATXSCRIPT_REGISTER_GLOBAL("runtime.MATXScriptSetCurrentThreadStream")
+    .set_body_typed(MATXScriptSetCurrentThreadStream);
 
 // create stream
 MATXSCRIPT_REGISTER_GLOBAL("runtime.DefaultStream").set_body([](PyArgs args) -> RTValue {
@@ -93,14 +94,14 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.StreamSync").set_body([](PyArgs args) -> RTV
 });
 
 // StreamSync
-MATXSCRIPT_REGISTER_GLOBAL("runtime.DefaultComputeStreamSync").set_body([](PyArgs args) -> RTValue {
-  MXCHECK(args.size() == 1) << "DefaultComputeStreamSync expect 1 args, bug get " << args.size();
+MATXSCRIPT_REGISTER_GLOBAL("runtime.CurrentThreadStreamSync").set_body([](PyArgs args) -> RTValue {
+  MXCHECK(args.size() == 1) << "CurrentThreadStreamSync expect 1 args, bug get " << args.size();
   MXCHECK(args[0].type_code() == TypeIndex::kRuntimeInteger)
-      << "DefaultComputeStreamSync first arg must be integer. ";
+      << "CurrentThreadStreamSync first arg must be integer. ";
   int device_id = args[0].As<int64_t>();
   if (device_id >= 0) {
     MATXScriptContext ctx{kDLGPU, device_id};
-    DeviceAPI::Get(ctx)->DefaultComputeStreamSync(ctx);
+    DeviceAPI::Get(ctx)->CurrentThreadStreamSync(ctx);
   }
   return None;
 });

@@ -84,7 +84,6 @@ class NDArray : public ObjectRef {
    * \note The copy always triggers a TVMSynchronize.
    */
   MATX_DLL void CopyFromBytes(const void* data, size_t nbytes);
-  MATX_DLL void CopyFromBytes(const void* data, size_t nbytes, MATXScriptContext from_ctx);
   /*!
    * \brief Copy data content into another array.
    * \param other The source array to be copied from.
@@ -163,7 +162,14 @@ class NDArray : public ObjectRef {
    */
   MATX_DLL static void CopyFromTo(const DLTensor* from,
                                   DLTensor* to,
-                                  MATXScriptStreamHandle stream = nullptr);
+                                  MATXScriptStreamHandle stream);
+
+  /*!
+   * \brief Function to copy data from one array to another use current stream.
+   * \param from The source array.
+   * \param to The target array.
+   */
+  MATX_DLL static void CopyFromTo(const DLTensor* from, DLTensor* to);
 
   MATX_DLL std::vector<int64_t> Shape() const;
   MATX_DLL ::matxscript::runtime::DataType DataType() const;
