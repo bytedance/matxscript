@@ -1937,6 +1937,7 @@ class MATXScriptParser(ast.NodeVisitor):
         AST abstract grammar:
             Name(identifier id, expr_context ctx)
         """
+        # TODO: replace name by instance
 
         name = node.id
         symbol = self.context.lookup_symbol(name)
@@ -1970,6 +1971,11 @@ class MATXScriptParser(ast.NodeVisitor):
         # fix from xx import A as Alias
         global_dep = self.custom_ast_node.module.globals.get(name, NAME_NOT_FOUND)
         if global_dep is not NAME_NOT_FOUND:
+            if inspect.ismodule(global_dep):
+                return global_dep
+            symbol = Builtin2Op.lookup(global_dep)
+            if symbol is not None:
+                return symbol
             dep_node = self.custom_ast_node.get_dep_cls_by_raw_type(global_dep)
             if dep_node is not None:
                 return dep_node

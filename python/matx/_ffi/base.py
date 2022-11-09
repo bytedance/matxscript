@@ -83,7 +83,7 @@ def _load_cuda_lib(base_lib):
     cwd = os.getcwd()
     try:
         os.chdir(lib_pp)
-        lib = ctypes.CDLL(lib_path[0], ctypes.RTLD_GLOBAL)
+        lib = ctypes.CDLL(lib_path[0], ctypes.RTLD_LOCAL)
         with open(lib_path[0], 'rb') as lib_f:
             lib_sha1 = hashlib.sha1(lib_f.read()).hexdigest()
         lib.MATXScriptAPIGetLastError.restype = ctypes.c_char_p
@@ -113,6 +113,30 @@ _RUNTIME_ONLY = "runtime" in _LIB_NAME
 
 def USE_CXX11_ABI():
     return _LIB.MATXScriptAPI_USE_CXX11_ABI()
+
+
+def load_lib_by_name(libname):
+    """Load library by searching possible path."""
+    if sys.platform.startswith('win32'):
+        libname += ".dll"
+    elif sys.platform.startswith('darwin'):
+        libname += ".dylib"
+    else:
+        libname += ".so"
+    lib_path = libinfo.find_lib_path(name=libname, optional=True)
+    if lib_path is None or len(lib_path) == 0:
+        msg = f"{libname} is not compiled!!!"
+        raise RuntimeError(msg)
+    lib_pp = os.path.abspath(os.path.dirname(lib_path[0]))
+    cwd = os.getcwd()
+    try:
+        os.chdir(lib_pp)
+        lib = ctypes.CDLL(lib_path[0], ctypes.RTLD_LOCAL)
+        with open(lib_path[0], 'rb') as lib_f:
+            lib_sha1 = hashlib.sha1(lib_f.read()).hexdigest()
+    finally:
+        os.chdir(cwd)
+    return lib, os.path.basename(lib_path[0]), lib_sha1
 
 
 # ----------------------------
