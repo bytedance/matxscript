@@ -25,6 +25,7 @@ from . import toolchain
 from . import pipeline
 from .toolchain import ToolChain
 from . import extension
+from . import text
 
 # APIs
 __all__ = [

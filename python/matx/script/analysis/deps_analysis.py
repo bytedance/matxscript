@@ -30,7 +30,8 @@ from .. import context
 
 
 class DepsAnalysis(ast.NodeVisitor):
-    SKIP_MODULES = set([sys.modules['matx']] + BUILTIN_MODULES)
+    MATX_MODULE = sys.modules['matx']
+    SKIP_MODULES = set([MATX_MODULE] + BUILTIN_MODULES)
     SKIP_OBJECTS = [None, False, True, open]
     if 'torch' in sys.modules:
         SKIP_MODULES.add(sys.modules['torch'])
@@ -105,6 +106,20 @@ class DepsAnalysis(ast.NodeVisitor):
             else:
                 return sys.modules['__main__']
 
+        def belong_to_module(dep, belong_to):
+            mod = inspect.getmodule(dep)
+            if mod is None:
+                return False
+            mod_name = mod.__name__
+            mods = mod_name.split('.')
+            root_mod = sys.modules[mods[0]]
+            for i in range(1, len(mods)):
+                name = mods[i]
+                root_mod = getattr(root_mod, name)
+                if root_mod is belong_to:
+                    return True
+            return False
+
         if isinstance(dep, (str, int, float, bool)):
             return False
         if isinstance(dep, types.BuiltinFunctionType):
@@ -113,7 +128,8 @@ class DepsAnalysis(ast.NodeVisitor):
             raw_type = dep.__RAW_TYPE_2_71828182846___
             if not any(raw_type == _dep for _dep, _ in self.dependencies):
                 self.dependencies.append((raw_type, dep_node))
-        if get_root_module(dep) in self.SKIP_MODULES:
+        if (get_root_module(dep) in self.SKIP_MODULES
+                and not belong_to_module(dep, self.MATX_MODULE.text)):
             return False
         if dep in self.SKIP_OBJECTS:
             return False

@@ -72,6 +72,7 @@ class _AnnTypeConvert(ast.NodeVisitor):
             "{}.OpaqueObject".format(_MODULE_NAME_): lambda: _ty.OpaqueObjectType(),
             "bytes": lambda: _ty.StringType(),
             "str": lambda: _ty.UnicodeType(),
+            "AnyStr": lambda: _ty.ObjectType(),
             "object": lambda: _ty.ObjectType(),
             "Any": lambda: _ty.ObjectType(),
             "iter": lambda: _ty.ObjectType(),  # TODO fix me

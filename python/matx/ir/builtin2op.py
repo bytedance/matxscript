@@ -16,6 +16,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+import sys
 
 from . import _ffi_api
 from . import op as _ir_op
@@ -316,6 +317,8 @@ _register_builtin_container_cons("set", "Set", _type.SetType())
 _register_builtin_container_cons("dict", "Dict", _type.DictType())
 
 # matx.xx_func
+from ..native import make_native_object
+_register_op(make_native_object, _ir_op.matx_make_native_object)
 _register_op("{}.native._native_object.make_native_object".format(
     _module_name_), _ir_op.matx_make_native_object)
 _register_op("{}.native.make_native_op".format(_module_name_), _ir_op.matx_make_native_op)
