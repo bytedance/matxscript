@@ -203,12 +203,55 @@ class NDArray(Object):
         return str(self.tensor_handle.contents.dtype)
 
     def dim(self):
+        """Returns the number of array dimensions. Unlike numpy, this is a method and not a property.
+
+        Returns:
+            int
+
+        Examples:
+            >>> import matx
+            >>> x = matx.NDArray([], [3,2], "int32")
+            >>> x.dim()
+            2
+
+        """
         return self.tensor_handle.contents.ndim
 
     def is_contiguous(self):
+        """Returns a int indicating if the underlying data is contiguous in memory.
+        The continuity of array changes when its stride changes.
+
+        Returns:
+            int
+
+        Examples:
+            >>> import matx
+            >>> x = matx.NDArray([1,2,3,4], [2,2], "int32")
+            >>> y = x.transpose()
+            >>> y.is_contiguous()
+            0
+
+        """
         return _ffi_api.NDArrayIsContiguous(self)
 
     def contiguous(self):
+        """Returns a copy of the ndarray with contiguous memory if the adarray is not contiguous.
+        Otherwise, the original one is returned.
+
+        Returns:
+            matx.NDArray
+
+        Examples:
+            >>> import matx
+            >>> x = matx.NDArray([1,2,3,4], [2,2], "int32")
+            >>> y = x.transpose()
+            >>> z = y.contiguous()
+            [[1, 3],
+             [2, 4]]
+            >>> z.is_contiguous()
+            1
+
+        """
         return _ffi_api.NDArrayContiguous(self)
 
     def device(self):
@@ -220,6 +263,18 @@ class NDArray(Object):
             self.tensor_handle.contents.ctx.device_id)
 
     def stride(self):
+        """Returns List of bytes to step in each dimension when traversing an array.
+
+        Returns
+             matx.List
+
+        Examples:
+            >>> import matx
+            >>> x = matx.NDArray([1,2,3,4], [2,2], "int32")
+            >>> y = x.transpose()
+            >>> y.stride()
+            [1, 2]
+        """
         return _ffi_api.NDArrayStride(self)
 
     def __len__(self):
@@ -446,6 +501,15 @@ class NDArray(Object):
             return _ffi_api.NDArraySetItem(self, idx, item)
 
     def transpose(self, axes=None):
+        """Reverse or permute the axes of an array
+
+        Args:
+            axes (list of ints)
+
+        Returns :
+            the given with its axes permuted. A view is returned whenever possible
+
+        """
         return _ffi_api.NDArrayTranspose(self, axes)
 
     def as_type(self, dtype: str):

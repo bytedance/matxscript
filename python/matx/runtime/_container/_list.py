@@ -307,9 +307,33 @@ class List(Object):
         return _ffi_api.ListPop(self, index)
 
     def insert(self, index, value):
+        """Insert an item at a given position. The first argument is the index of the element before which to insert
+
+        Args:
+            index (int)
+            value (value type)
+
+        Returns:
+            None
+
+        """
         return _ffi_api.ListInsert(self, index, value)
 
     def index(self, x, start=None, end=None):
+        """Return zero-based index in the list of the first item whose value is equal to x.
+
+        Args:
+            x (value type)
+            start (int)
+            end (int)
+
+        Raises:
+            a ValueError if there is no such item.
+
+        Returns:
+            None
+
+        """
         if start is None:
             start = 0
         if end is None:
