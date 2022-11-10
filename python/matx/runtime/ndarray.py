@@ -503,10 +503,11 @@ class NDArray(Object):
     def transpose(self, axes=None):
         """Reverse or permute the axes of an array
 
-        Parameters
-        axes : list of ints
+        Args:
+            axes (list of ints)
 
-        Returns : the given with its axes permuted. A view is returned whenever possible
+        Returns :
+            the given with its axes permuted. A view is returned whenever possible
 
         """
         return _ffi_api.NDArrayTranspose(self, axes)
