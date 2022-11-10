@@ -2597,20 +2597,28 @@ def matx_make_native_object(span, native_cls_name, *args):
     return call_extern(_type.UserDataType(), b"make_native_userdata", span, native_cls_name, *args)
 
 
-def matx_make_native_op(span, native_cls_name, args_dict):
-    def convert_to_str_imm(name):
-        if isinstance(name, str):
-            name = name.encode()
-        if isinstance(name, (bytes, bytearray)):
-            name = StringImm(name)
-        if isinstance(name, UnicodeImm):
-            name = StringImm(name.value)
-        return name
+def matx_make_native_op(span, op_cls, *args, **kwargs):
+    op_name = op_cls.__name__
+    init_info = inspect.getfullargspec(op_cls.__init__)
+    init_arg_num = len(init_info.args)
+    init_arg_names = set(init_info.args[1:])
+    err_msg = "Parameters of %s does not match" % op_name
+    args_dict = {}
+    for i, arg in enumerate(args):
+        if i + 1 >= init_arg_num:
+            raise TypeError(err_msg)
+        args_dict[init_info.args[i + 1]] = arg
+    for k, arg in kwargs.items():
+        if k not in init_arg_names:
+            raise TypeError(err_msg)
+        if k in args_dict:
+            raise TypeError(err_msg)
+        args_dict[k] = arg
 
     args = []
-    args.append(convert_to_str_imm(native_cls_name))
+    args.append(StringImm(op_name))
     for k, v in args_dict.items():
-        args.append(convert_to_str_imm(k))
+        args.append(StringImm(k))
         args.append(v)
     return call_extern(_type.ObjectType(), b"make_native_op", span, *args)
 

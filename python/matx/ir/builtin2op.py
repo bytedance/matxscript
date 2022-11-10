@@ -16,7 +16,12 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+import inspect
 import sys
+
+from ..native import make_native_object
+from ..native import make_native_function
+from ..native import call_native_function
 
 from . import _ffi_api
 from . import op as _ir_op
@@ -33,10 +38,40 @@ class Builtin2Op(object):
     registrations = dict()
 
     @staticmethod
-    def lookup(name):
-        if name in Builtin2Op.registrations:
-            return Builtin2Op.registrations[name]
+    def lookup(name_or_type):
+        if name_or_type in Builtin2Op.registrations:
+            return Builtin2Op.registrations[name_or_type]
+        if not isinstance(name_or_type, (str, bytes, bytearray)):
+            mod = inspect.getmodule(name_or_type)
+            if mod is not None:
+                module_name = mod.__name__
+                absolute_name = module_name + "." + name_or_type.__name__
+                if absolute_name in Builtin2Op.registrations:
+                    return Builtin2Op.registrations[absolute_name]
         return None
+
+    @staticmethod
+    def lookup_with_dynamic_type(name_or_type, expect_ret_type):
+        symbol = Builtin2Op.lookup(name_or_type)
+        if (expect_ret_type is not None
+                and expect_ret_type.is_full_typed()
+                and isinstance(symbol, _ir_adt.Constructor)):
+            if (isinstance(symbol.checked_type, _type.ListType)
+                    and isinstance(expect_ret_type, _type.ListType)):
+                symbol = _ir_adt.Constructor("FTList",
+                                             inputs=[expect_ret_type.item_type],
+                                             ret_type=expect_ret_type)
+            elif (isinstance(symbol.checked_type, _type.SetType)
+                  and isinstance(expect_ret_type, _type.SetType)):
+                symbol = _ir_adt.Constructor("FTSet",
+                                             inputs=[expect_ret_type.item_type],
+                                             ret_type=expect_ret_type)
+            elif (isinstance(symbol.checked_type, _type.DictType)
+                  and isinstance(expect_ret_type, _type.DictType)):
+                symbol = _ir_adt.Constructor("FTDict",
+                                             inputs=[expect_ret_type.key_type, expect_ret_type.value_type],
+                                             ret_type=expect_ret_type)
+        return symbol
 
 
 def _register_op(builtin_func, _op):
@@ -96,7 +131,21 @@ def _register_python_builtin(method, _method=None):
     Builtin2Op.registrations[method] = getattr(_ir_op, base_func_name)
 
 
-# Builtin Generic
+###############################################################################
+# Python builtin functions
+###############################################################################
+_register_python_builtin("len")
+_register_python_builtin("open", "builtins_open")
+_register_python_builtin("ord", "builtins_ord")
+_register_python_builtin("chr", "builtins_chr")
+_register_python_builtin("enumerate", "builtins_enumerate")
+_register_python_builtin("zip", "builtins_zip")
+_register_python_builtin("isinstance", "builtins_isinstance")
+_register_python_builtin("sorted", "builtins_sorted")
+
+###############################################################################
+# Any object.method
+###############################################################################
 _register_object_builtin_op("append")
 _register_object_builtin_op("add")
 _register_object_builtin_op("extend")
@@ -164,22 +213,16 @@ _register_object_builtin_op("union")
 _register_object_builtin_op("sort")
 _register_object_builtin_op("contiguous")
 
-# Python raw builtin
-_register_python_builtin("len")
-_register_python_builtin("open", "builtins_open")
+###############################################################################
+# Python builtin modules
+###############################################################################
 _register_python_builtin("unicodedata.normalize", "unicodedata_normalize")
 _register_python_builtin("unicodedata.category", "unicodedata_category")
 _register_python_builtin("json.loads", "json_loads")
 _register_python_builtin("json.load", "json_load")
 _register_python_builtin("json.dumps", "json_dumps")
-_register_python_builtin("ord", "builtins_ord")
-_register_python_builtin("chr", "builtins_chr")
 _register_python_builtin("time.time", "time_time")
 _register_python_builtin("os.getenv", "os_getenv")
-_register_python_builtin("enumerate", "builtins_enumerate")
-_register_python_builtin("zip", "builtins_zip")
-_register_python_builtin("isinstance", "builtins_isinstance")
-_register_python_builtin("sorted", "builtins_sorted")
 _register_python_builtin("base64.b64encode", "base64_b64encode")
 _register_python_builtin("base64.b64decode", "base64_b64decode")
 
@@ -246,6 +289,10 @@ _register_python_builtin("math.pow", "power")
 _register_python_builtin("math.fmod", "fmod")
 _register_python_builtin("print", "builtins_print")
 
+###############################################################################
+# runtime extension
+###############################################################################
+
 # ndarray
 _register_python_builtin("{}.runtime.ndarray.add".format("matx"), "nd_module_add")
 _register_python_builtin("{}.runtime.ndarray.sub".format("matx"), "nd_module_sub")
@@ -255,6 +302,7 @@ _register_python_builtin("{}.runtime.ndarray.rand".format("matx"), "nd_module_ra
 _register_python_builtin("{}.runtime.ndarray.concatenate".format("matx"), "nd_module_concatenate")
 _register_python_builtin("{}.runtime.ndarray.stack".format("matx"), "nd_module_stack")
 
+# TODO: support heapq
 _register_python_builtin("{}.list_sort".format("matx"), "list_module_sort")
 _register_python_builtin(
     "{}.runtime._container._list.heapify".format("matx"),
@@ -317,15 +365,10 @@ _register_builtin_container_cons("set", "Set", _type.SetType())
 _register_builtin_container_cons("dict", "Dict", _type.DictType())
 
 # matx.xx_func
-from ..native import make_native_object
 _register_op(make_native_object, _ir_op.matx_make_native_object)
-_register_op("{}.native._native_object.make_native_object".format(
-    _module_name_), _ir_op.matx_make_native_object)
 _register_op("{}.native.make_native_op".format(_module_name_), _ir_op.matx_make_native_op)
-_register_op("{}.native._native_func.make_native_function".format(
-    _module_name_), _ir_op.matx_make_native_function)
-_register_op("{}.native.call_native_function".format(
-    _module_name_), _ir_op.matx_call_native_function)
+_register_op(make_native_function, _ir_op.matx_make_native_function)
+_register_op(call_native_function, _ir_op.matx_call_native_function)
 _register_op("{}.pmap".format(_module_name_), _ir_op.matx_pmap)
 _register_op("{}.pstarmap".format(_module_name_), _ir_op.matx_pstarmap)
 _register_op("{}.apply_async".format(_module_name_), _ir_op.matx_apply_async)
