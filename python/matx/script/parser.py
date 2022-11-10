@@ -1240,8 +1240,6 @@ class MATXScriptParser(ast.NodeVisitor):
         pos_args = [user_function_wrapper(arg, self.current_handle_var, span) for arg in pos_args]
         if is_call_self_pmap(node):
             pos_args.append(self.current_handle_var)
-        if inspect.isbuiltin(func):
-            self.report_error(f"{func} is not supported", NotImplementedError)
         try:
             return func(span, *pos_args, **kw_args)
         except BaseException as e:
@@ -1485,6 +1483,8 @@ class MATXScriptParser(ast.NodeVisitor):
                     return _ir.op.matx_make_native_op(span, module_attr, *args, **kwargs)
                 return wrapped_native_op
             op = Builtin2Op.lookup(module_attr)
+            if op is None:
+                op = Builtin2Op.lookup(symbol.__name__ + "." + node.attr)
             if op is None:
                 self.report_error('{}()'.format(module_attr), NotImplementedError)
             return op
@@ -1947,7 +1947,10 @@ class MATXScriptParser(ast.NodeVisitor):
         symbol = Builtin2Op.lookup_with_dynamic_type(name, self.current_ann_type)
         if symbol is not None:
             return symbol
-        self.report_error(f"name '{name}' was not declared in this scope", SyntaxError)
+        if global_dep is None:
+            self.report_error(f"name '{name}' was not declared in this scope", SyntaxError)
+        else:
+            self.report_error(f"'{global_dep}' is not supported", NotImplementedError)
 
     # note that after Python3.8, ast.NameConstant, ast.Num, ast.Str are no longer used
     def visit_Constant(self, node):
