@@ -1478,40 +1478,19 @@ class MATXScriptParser(ast.NodeVisitor):
                     return op(span, name, *args)
                 return wrappped_op
 
-            def native_op_wrapper(op, name, op_cls):
-                init_info = inspect.getfullargspec(op_cls.__init__)
-                init_arg_num = len(init_info.args)
-                init_arg_names = set(init_info.args[1:])
-                err_msg = "Parameters of %s does not match" % op_cls.__name__
-
-                def wrapped_native_op(span, *args, **kwargs):
-                    args_dict = {}
-                    for i, arg in enumerate(args):
-                        if i + 1 >= init_arg_num:
-                            self.report_error(err_msg)
-                        args_dict[init_info.args[i + 1]] = arg
-                    for k, arg in kwargs.items():
-                        if k not in init_arg_names:
-                            self.report_error(err_msg)
-                        if k in args_dict:
-                            self.report_error(err_msg)
-                        args_dict[k] = arg
-                    return op(span, name, args_dict)
-                return wrapped_native_op
-
             if inspect.isclass(module_attr) and issubclass(module_attr, NativeClass):
-                return op_wrapper(
-                    Builtin2Op.lookup("matx.native._native_object.make_native_object"),
-                    node.attr)
+                return op_wrapper(_ir.op.matx_make_native_object, node.attr)
             if isinstance(module_attr, NativeFunction):
-                return op_wrapper(Builtin2Op.lookup("matx.native.call_native_function"), node.attr)
+                return op_wrapper(_ir.op.matx_call_native_function, node.attr)
             if inspect.isclass(module_attr) and issubclass(module_attr, OpKernel):
                 op_cls_name = module_attr.__name__
                 plugin_loader = PluginLoader.lookup(op_cls_name)
                 if plugin_loader:
                     plugin_loader()
-                return native_op_wrapper(
-                    Builtin2Op.lookup("matx.native.make_native_op"), op_cls_name, module_attr)
+
+                def wrapped_native_op(span, *args, **kwargs):
+                    return _ir.op.matx_make_native_op(span, module_attr, *args, **kwargs)
+                return wrapped_native_op
             op = Builtin2Op.lookup(module_attr)
             if op is None:
                 self.report_error('{}()'.format(module_attr), NotImplementedError)
@@ -1952,8 +1931,7 @@ class MATXScriptParser(ast.NodeVisitor):
                 plugin_loader()
 
                 def wrapped_native_op(span, *args, **kwargs):
-                    make_native_op = Builtin2Op.lookup("matx.native.make_native_op")
-                    return make_native_op(span, global_dep, *args, **kwargs)
+                    return _ir.op.matx_make_native_op(span, global_dep, *args, **kwargs)
                 return wrapped_native_op
             dep_node = self.custom_ast_node.get_dep_cls_by_raw_type(global_dep)
             if dep_node is not None:
