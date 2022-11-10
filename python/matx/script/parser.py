@@ -1512,16 +1512,9 @@ class MATXScriptParser(ast.NodeVisitor):
                     plugin_loader()
                 return native_op_wrapper(
                     Builtin2Op.lookup("matx.native.make_native_op"), op_cls_name, module_attr)
-            module_name = getattr(module_attr, "__module__", None)
-            if module_name is None:
-                module_name = symbol.__name__
-            absolute_name = module_name + "." + module_attr.__name__
-            op = Builtin2Op.lookup(absolute_name)
+            op = Builtin2Op.lookup(module_attr)
             if op is None:
-                self.report_error(
-                    'Unknown module.attribute {}()'.format(absolute_name),
-                    NotImplementedError)
-
+                self.report_error('{}()'.format(module_attr), NotImplementedError)
             return op
         elif isinstance(symbol, _ir.BaseExpr):
             if _type_rel.is_type_of(symbol, _ir.adt.ClassType):
@@ -1937,8 +1930,6 @@ class MATXScriptParser(ast.NodeVisitor):
         AST abstract grammar:
             Name(identifier id, expr_context ctx)
         """
-        # TODO: replace name by instance
-
         name = node.id
         symbol = self.context.lookup_symbol(name)
         if symbol is not None:
@@ -1946,75 +1937,38 @@ class MATXScriptParser(ast.NodeVisitor):
         raw_name_or_none = getattr(node, 'raw_id', None)
         if raw_name_or_none is not None:
             name = raw_name_or_none
-        symbol = Builtin2Op.lookup(name)
-        cur_exp_ty = self.current_ann_type
-        if (cur_exp_ty is not None
-                and cur_exp_ty.is_full_typed()
-                and isinstance(symbol, _ir.Constructor)):
-            if (isinstance(symbol.checked_type, _ir.ListType)
-                    and isinstance(cur_exp_ty, _ir.ListType)):
-                symbol = _ir.Constructor("FTList",
-                                         inputs=[cur_exp_ty.item_type],
-                                         ret_type=cur_exp_ty)
-            elif (isinstance(symbol.checked_type, _ir.SetType)
-                    and isinstance(cur_exp_ty, _ir.SetType)):
-                symbol = _ir.Constructor("FTSet",
-                                         inputs=[cur_exp_ty.item_type],
-                                         ret_type=cur_exp_ty)
-            elif (isinstance(symbol.checked_type, _ir.DictType)
-                  and isinstance(cur_exp_ty, _ir.DictType)):
-                symbol = _ir.Constructor("FTDict",
-                                         inputs=[cur_exp_ty.key_type, cur_exp_ty.value_type],
-                                         ret_type=cur_exp_ty)
-        if symbol is not None:
-            return symbol
-        # fix from xx import A as Alias
+
+        # lookup by instance
         global_dep = self.custom_ast_node.module.globals.get(name, NAME_NOT_FOUND)
         if global_dep is not NAME_NOT_FOUND:
             if inspect.ismodule(global_dep):
                 return global_dep
-            symbol = Builtin2Op.lookup(global_dep)
-            if symbol is not None:
-                return symbol
-            dep_node = self.custom_ast_node.get_dep_cls_by_raw_type(global_dep)
-            if dep_node is not None:
-                return dep_node
-        dep_node = self.custom_ast_node.get_dep_cls_by_name(name)
-        if dep_node is not None:
-            return dep_node
-        mod = self.custom_ast_node.module.globals.get(name, NAME_NOT_FOUND)
-
-        def native_op_wrapper(op, name, op_cls):
-            init_info = inspect.getfullargspec(op_cls.__init__)
-            init_arg_num = len(init_info.args)
-            init_arg_names = set(init_info.args[1:])
-            err_msg = "Parameters of %s does not match" % op_cls.__name__
-
-            def wrapped_native_op(span, *args, **kwargs):
-                args_dict = {}
-                for i, arg in enumerate(args):
-                    if i + 1 >= init_arg_num:
-                        self.report_error(err_msg)
-                    args_dict[init_info.args[i + 1]] = arg
-                for k, arg in kwargs.items():
-                    if k not in init_arg_names:
-                        self.report_error(err_msg)
-                    if k in args_dict:
-                        self.report_error(err_msg)
-                    args_dict[k] = arg
-                return op(span, name, args_dict)
-            return wrapped_native_op
-
-        if mod is not NAME_NOT_FOUND:
-            if isinstance(mod, (type(None), int, float, bool, str, bytes, bytearray)):
-                return _ir.generic_const(mod)
-            if getattr(mod, "__MATX_NATIVE_OP__", None):
+            if isinstance(global_dep, (type(None), int, float, bool, str, bytes, bytearray)):
+                return _ir.generic_const(global_dep)
+            if isinstance(global_dep, OpKernel):
                 plugin_loader = PluginLoader.lookup(name)
                 if not plugin_loader:
                     self.report_error("%s is not registered" % name)
                 plugin_loader()
-                return native_op_wrapper(Builtin2Op.lookup("matx.native.make_native_op"), name, mod)
-            return mod
+
+                def wrapped_native_op(span, *args, **kwargs):
+                    make_native_op = Builtin2Op.lookup("matx.native.make_native_op")
+                    return make_native_op(span, global_dep, *args, **kwargs)
+                return wrapped_native_op
+            dep_node = self.custom_ast_node.get_dep_cls_by_raw_type(global_dep)
+            if dep_node is not None:
+                return dep_node
+            symbol = Builtin2Op.lookup_with_dynamic_type(global_dep, self.current_ann_type)
+            if symbol is not None:
+                return symbol
+
+        # lookup by name
+        dep_node = self.custom_ast_node.get_dep_cls_by_name(name)
+        if dep_node is not None:
+            return dep_node
+        symbol = Builtin2Op.lookup_with_dynamic_type(name, self.current_ann_type)
+        if symbol is not None:
+            return symbol
         self.report_error(f"name '{name}' was not declared in this scope", SyntaxError)
 
     # note that after Python3.8, ast.NameConstant, ast.Num, ast.Str are no longer used
