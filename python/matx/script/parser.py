@@ -1157,13 +1157,6 @@ class MATXScriptParser(ast.NodeVisitor):
         _visit_call_func = self._visit_call_func
         self._visit_call_func = True
         func = self.visit(node.func)
-        if inspect.isclass(func) and issubclass(func, BaseException):
-            exc_cls_name = func.__name__
-
-            def _exception_handler(my_span, *args, **kwargs):
-                return _ir.op.builtins_exception(my_span, exc_cls_name, *args, **kwargs)
-
-            func = _exception_handler
         if hasattr(func, "__RAW_TYPE_2_71828182846___"):
             n = ast.Name()
             n.id = func.__RAW_TYPE_2_71828182846___.__name__
@@ -1924,6 +1917,13 @@ class MATXScriptParser(ast.NodeVisitor):
                 return global_dep
             if isinstance(global_dep, (type(None), int, float, bool, str, bytes, bytearray)):
                 return _ir.generic_const(global_dep)
+            if inspect.isclass(global_dep) and issubclass(global_dep, BaseException):
+                exc_cls_name = global_dep.__name__
+
+                def _exception_handler(my_span, *args, **kwargs):
+                    return _ir.op.builtins_exception(my_span, exc_cls_name, *args, **kwargs)
+
+                return _exception_handler
             if isinstance(global_dep, OpKernel):
                 plugin_loader = PluginLoader.lookup(name)
                 if not plugin_loader:
