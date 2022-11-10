@@ -25,13 +25,13 @@ import inspect
 import sys
 from typed_ast import ast3 as ast
 
-from ._python_builtin_module import BUILTIN_MODULES
 from .. import context
+from ._python_builtin_module import is_builtin_module
 
 
 class DepsAnalysis(ast.NodeVisitor):
     MATX_MODULE = sys.modules['matx']
-    SKIP_MODULES = set([MATX_MODULE] + BUILTIN_MODULES)
+    SKIP_MODULES = {MATX_MODULE}
     SKIP_OBJECTS = [None, False, True, open]
     if 'torch' in sys.modules:
         SKIP_MODULES.add(sys.modules['torch'])
@@ -95,8 +95,8 @@ class DepsAnalysis(ast.NodeVisitor):
         return len(new_deps) > 0
 
     def try_to_add_dependency(self, dep, dep_node) -> bool:
-        def get_root_module(dep):
-            mod = inspect.getmodule(dep)
+        def get_root_module(dep_cls):
+            mod = inspect.getmodule(dep_cls)
             if mod is None:
                 return builtins
             name = mod.__name__
@@ -106,17 +106,17 @@ class DepsAnalysis(ast.NodeVisitor):
             else:
                 return sys.modules['__main__']
 
-        def belong_to_module(dep, belong_to):
-            mod = inspect.getmodule(dep)
+        def belong_to_module(dep_cls, belong_to):
+            mod = inspect.getmodule(dep_cls)
             if mod is None:
                 return False
             mod_name = mod.__name__
             mods = mod_name.split('.')
-            root_mod = sys.modules[mods[0]]
+            dep_root_mod = sys.modules[mods[0]]
             for i in range(1, len(mods)):
                 name = mods[i]
-                root_mod = getattr(root_mod, name)
-                if root_mod is belong_to:
+                dep_root_mod = getattr(dep_root_mod, name)
+                if dep_root_mod is belong_to:
                     return True
             return False
 
@@ -128,7 +128,10 @@ class DepsAnalysis(ast.NodeVisitor):
             raw_type = dep.__RAW_TYPE_2_71828182846___
             if not any(raw_type == _dep for _dep, _ in self.dependencies):
                 self.dependencies.append((raw_type, dep_node))
-        if (get_root_module(dep) in self.SKIP_MODULES
+        root_mod = get_root_module(dep)
+        if is_builtin_module(root_mod):
+            return False
+        if (root_mod in self.SKIP_MODULES
                 and not belong_to_module(dep, self.MATX_MODULE.text)):
             return False
         if dep in self.SKIP_OBJECTS:
