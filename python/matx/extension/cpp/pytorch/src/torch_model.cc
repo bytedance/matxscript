@@ -29,6 +29,21 @@ void TorchEngine::forward(const std::vector<torch::jit::IValue>& inputs,
   output = module_.forward(inputs);
 }
 
+int TorchModel::Bundle(string_view folder) {
+  auto new_loc = BundlePath(location, folder);
+  std::string example_file = folder.operator std::string() + "/" +
+                             std::string(new_loc.data(), new_loc.size()) + ".example.json";
+  if (!example.is_nullptr()) {
+    auto example_json = pickle::Serialize(example);
+    std::ofstream fc(example_file);
+    MXCHECK(!fc.fail()) << "save " << example << " failed!";
+    fc << example_json.view();
+    fc.close();
+  }
+  SetAttr("location", std::move(new_loc));
+  return 0;
+}
+
 TorchEnginePtr TorchModel::RegisterOrGetEngine(int device) {
   char key[4096] = {0};
   snprintf(key, 4096, "%d", device);

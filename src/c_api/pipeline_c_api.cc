@@ -22,6 +22,7 @@
 
 #include <matxscript/pipeline/global_unique_index.h>
 #include <matxscript/pipeline/op_kernel.h>
+#include <matxscript/pipeline/python_base_op.h>
 #include <matxscript/pipeline/symbolic_executor.h>
 #include <matxscript/pipeline/tx_session.h>
 #include <matxscript/runtime/container/ndarray_helper.h>
@@ -541,6 +542,22 @@ MATXSCRIPT_REGISTER_GLOBAL("pipeline.ApplyAsync").set_body([](PyArgs args) -> RT
   auto* sess = args[args.size() - 1].As<void*>();
   return ApplyAsync(func, PyArgs(args.begin() + 1, args.size() - 2), sess);
 });
+
+MATXSCRIPT_REGISTER_GLOBAL("pipeline.PythonBaseOp_UpdatePassOpOptions")
+    .set_body([](PyArgs args) -> RTValue {
+      MXCHECK_GE(args.size(), 2) << "[UpdatePythonBaseOp] Expect 2 or more arguments but get "
+                                 << args.size();
+      UserDataRef ud = args[0].As<UserDataRef>();
+      OpKernelPtr op_ptr = check_get_op_kernel(ud);
+      MXCHECK(op_ptr->ClassName() == "PythonBaseOp") << "internal error";
+      auto py_op = std::static_pointer_cast<PythonBaseOp>(op_ptr);
+      auto new_op_options = args[1].As<Dict>();
+      auto items = new_op_options.items();
+      for (auto kv : items) {
+        py_op->pass_op_options.set_item(kv.first, kv.second);
+      }
+      return None;
+    });
 
 }  // namespace runtime
 }  // namespace matxscript

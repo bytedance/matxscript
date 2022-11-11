@@ -66,6 +66,13 @@ std::string GetMetaFilePath(string_view file_name);
 std::string GetFileBasename(string_view file_name);
 
 /*!
+ * \brief Get file directory
+ * \param file_name The name of the file.
+ * \return the dir
+ */
+std::string GetFileDirectory(string_view file_name);
+
+/*!
  * \brief Load binary file into a in-memory buffer.
  * \param file_name The name of the file.
  * \param data The data to be loaded.
