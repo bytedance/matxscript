@@ -34,3 +34,4 @@ from .registry import _init_api, get_global_func
 from ._selector import matx_script_api
 from ._selector import op_kernel_call
 from ._selector import to_packed_func
+from ._selector import void_p_to_runtime

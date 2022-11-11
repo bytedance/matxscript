@@ -32,5 +32,6 @@ from ._c_ext.packed_func import _set_class_object_generic
 from ._c_ext.packed_func import _register_input_callback
 from ._c_ext.types import _set_class_symbol
 from ._c_ext.types import _set_fast_pipeline_object_converter
+from ._c_ext.types import void_p_to_runtime
 
 op_kernel_call = matx_script_api.op_kernel_call
