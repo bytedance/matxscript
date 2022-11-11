@@ -23,6 +23,7 @@ import sys
 import warnings
 from .._ffi.base import string_types
 from .._ffi.error import trans_exception_from_c_to_py
+from .._ffi import void_p_to_runtime
 from . import _ffi_api
 from .symbol import Variable
 from .symbol import Symbol
@@ -44,9 +45,11 @@ class Module(object):
         else:
             self._handle = handle
         self.__holder = sys.modules['matx']
+        self.__native_free_func = _ffi_api.FreeTXSessionHandle
+        self.__backend_sess_handle = void_p_to_runtime(self._handle)
 
     def __del__(self):
-        _ffi_api.FreeTXSessionHandle(self._handle)
+        self.__native_free_func(self.__backend_sess_handle)
 
     def SetDevice(self, device):
         """Set devices used by Module tensor forward

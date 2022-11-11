@@ -24,6 +24,7 @@ import traceback
 import warnings
 from .._ffi.base import string_types
 from .._ffi import op_kernel_call
+from .._ffi import void_p_to_runtime
 from . import _ffi_api
 from ._base import TXObject
 from ._base import handle_trace_warning
@@ -61,6 +62,7 @@ class OpKernel(TXObject):
         self.__native_free_func = _ffi_api.FreeNativeOp
         self._native_class_name = class_name
         self.sess_handle = TXObject.default_sess_handle
+        self.__backend_sess_handle = void_p_to_runtime(self.sess_handle)
         attrs = dict()
         for k, v in kwargs.items():
             attrs[k.encode()] = v
@@ -79,10 +81,7 @@ class OpKernel(TXObject):
 
     def __del__(self):
         if hasattr(self, "native_op"):
-            if self.__native_free_func is None:
-                # TODO: check why ?
-                return
-            self.__native_free_func(self.sess_handle, self.native_op)
+            self.__native_free_func(self.__backend_sess_handle, self.native_op)
 
     @property
     def name(self):

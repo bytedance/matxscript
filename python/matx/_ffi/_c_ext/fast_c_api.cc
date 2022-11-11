@@ -723,6 +723,9 @@ static int PyObjectToMATXScriptAny(PyObject* arg_0, MATXScriptAny* value) {
       PyErr_SetString(PyExc_TypeError, "internal error: failed to add ref count");
       return -1;
     }
+  } else if (PyObject_IsInstance(arg_0, (PyObject*)&PyType_MATXScriptAny)) {
+    PyObjectMATXScriptAny* tx_pod_value = (PyObjectMATXScriptAny*)(arg_0);
+    *value = tx_pod_value->value;
   } else {
     if (PyObject* result = matx_script_api__exe_input_instance_callback(arg_0)) {
       if (PyObject_IsInstance(result, (PyObject*)&PyType_MATXScriptAny)) {

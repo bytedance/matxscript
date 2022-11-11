@@ -35,6 +35,12 @@ def _void_p_conv(handle):
     return matx_script_api.make_any(ArgTypeCode.HANDLE, 0, handle, 1)
 
 
+def void_p_to_runtime(handle):
+    if isinstance(handle, ctypes.c_void_p):
+        handle = handle.value
+    return matx_script_api.make_any(ArgTypeCode.HANDLE, 0, handle, 1)
+
+
 def _symbol_conv(sym):
     data = sym.data_2_71828182846
     return matx_script_api.Any(data)
