@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <fstream>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -28,6 +29,7 @@
 #include <torch/script.h>
 
 #include <matxscript/pipeline/op_kernel.h>
+#include <matxscript/pipeline/pickle.h>
 #include <matxscript/runtime/file_util.h>
 
 namespace matxscript {
@@ -70,16 +72,16 @@ class TorchModel : public OpKernel {
  public:
   void Init() override {
     location = GetAttr<Unicode>("location").encode();
+    if (HasAttr("example")) {
+      example = GetAttr<RTValue>("example");
+    }
   }
-  int Bundle(string_view folder) override {
-    auto new_loc = BundlePath(location, folder);
-    SetAttr("location", std::move(new_loc));
-    return 0;
-  }
+  int Bundle(string_view folder) override;
   TorchEnginePtr RegisterOrGetEngine(int device);
 
  private:
   String location;
+  RTValue example;
   std::mutex mutex_;
   std::unordered_map<std::string, TorchEnginePtr> engines_;
 };

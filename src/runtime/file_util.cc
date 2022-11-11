@@ -55,10 +55,15 @@ std::string GetFileFormat(string_view file_name, string_view format) {
 }
 
 std::string GetFileBasename(string_view file_name) {
-  size_t last_slash = file_name.find_last_of("/");
-  if (last_slash == std::string::npos)
-    return std::string(file_name);
-  return std::string(file_name.substr(last_slash + 1));
+  namespace fs = ghc::filesystem;
+  fs::path p{std::string(file_name)};
+  return p.filename();
+}
+
+std::string GetFileDirectory(string_view file_name) {
+  namespace fs = ghc::filesystem;
+  fs::path p{std::string(file_name)};
+  return p.parent_path();
 }
 
 std::string GetMetaFilePath(string_view file_name) {

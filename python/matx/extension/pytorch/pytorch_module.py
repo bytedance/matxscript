@@ -289,6 +289,14 @@ class PytorchModule(object):
             if self._already_traced or not tracing():
                 return res
             self._already_traced = True
+            if "example" not in self._pass_r_options:
+                model_args = [self._reverse_trans_(_arg) for _arg in args_data]
+                example = matx.to_runtime_object(tuple(model_args))
+                self._pass_r_options["example"] = example
+                _ffi_api.PythonBaseOp_UpdatePassOpOptions(
+                    self._py_base_r.native_op,
+                    self._pass_r_options,
+                )
             if self._need_trace:
                 model_jit = self.Trace(args_data)
             else:
