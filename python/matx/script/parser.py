@@ -1036,7 +1036,7 @@ class MATXScriptParser(ast.NodeVisitor):
                         self.report_error("name '%s' is redefined in AutoFor" % elt.id)
                     origin_var_ty = _type_rel.infer_nth_item_type(loop_vars_ty, index)
                     var_is_view, new_var_ty = False, origin_var_ty
-                    if unroll and not isinstance(iter_expr_type, (_ir.FileType, _ir.UnicodeType)):
+                    if unroll and not isinstance(origin_var_ty, (_ir.FileType, _ir.UnicodeType)):
                         var_is_view, new_var_ty = try_to_view_type(origin_var_ty)
                     loop_var = _ir.HLOVar(elt.id, new_var_ty)
                     self.context.update_symbol(elt.id, loop_var)
