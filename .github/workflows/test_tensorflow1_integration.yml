@@ -15,9 +15,11 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
-        python-version: '3.8'
+        python-version: '3.7'
     - name: Prepare TensorFlow 1.15
-      run: pip3 install tensorflow-cpu==1.15
+      run: pip3 install tensorflow-cpu==1.15.0
+    - name: Echo GCC version
+      run: gcc --version
     - name: Install MATXScript Requirements
       run: pip3 install -r python/requirements.txt
     - name: Build MATXScript
