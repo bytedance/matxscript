@@ -1,0 +1,26 @@
+name: TensorFlow2 Integration
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+    - name: Prepare TensorFlow 2.5
+      run: pip3 install tensorflow-cpu==2.5.3
+    - name: Install MATXScript Requirements
+      run: pip3 install -r python/requirements.txt
+    - name: Build MATXScript
+      run: BUILD_TESTING=OFF BUILD_BENCHMARK=OFF CPPFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" bash ci/build_lib.sh
+    - name: TensorFlow 2.5 Extension Test
+      run: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python PYTHONPATH=python python3 test/extension_tf/test_tensorflow_module_2_xx.py
