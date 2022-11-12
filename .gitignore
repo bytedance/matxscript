@@ -19,7 +19,7 @@ build
 *.so
 /**/dso
 /**/*.py_dso/
-3rdparty/pcre_build/
+3rdparty/pcre*
 
 
 # for local ci test
