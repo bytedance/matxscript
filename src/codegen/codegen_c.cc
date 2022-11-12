@@ -1579,6 +1579,7 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
       os << ";";
       PrintSpanWithNewLine(op->span, os);
     }
+    MXCHECK_EQ(iter_var_reprs.size(), iter_end_var_reprs.size());
     for (auto ii = 0; ii < iter_var_reprs.size(); ++ii) {
       bool has_begin_end = op->eval_containers[ii]->checked_type()->HasBeginEnd();
       // print begin or make_iterable

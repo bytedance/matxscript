@@ -307,7 +307,7 @@ Stmt StmtMutator::VisitStmt_(const AutoForNode* op) {
   for (auto i = 0; i < op->iter_end_vars.size(); ++i) {
     BaseExpr iter_end_var = this->VisitExpr(op->iter_end_vars[i]);
     same &= iter_end_var.same_as(op->iter_end_vars[i]);
-    iter_vars.push_back(std::move(iter_end_var));
+    iter_end_vars.push_back(std::move(iter_end_var));
   }
 
   runtime::Array<BaseExpr> eval_containers;
