@@ -81,11 +81,17 @@ void StmtVisitor::VisitStmt_(const AutoForNode* op) {
   for (auto& loop_var : op->loop_vars) {
     this->VisitExpr(loop_var);
   }
+  for (auto& loop_var_holder : op->loop_vars_holder) {
+    this->VisitExpr(loop_var_holder);
+  }
   for (auto& temp_var : op->temp_vars) {
     this->VisitExpr(temp_var.second);
   }
   for (auto& iter_var : op->iter_vars) {
     this->VisitExpr(iter_var);
+  }
+  for (auto& iter_end_var : op->iter_end_vars) {
+    this->VisitExpr(iter_end_var);
   }
   for (auto& cons_var : op->eval_containers) {
     this->VisitExpr(cons_var);
@@ -268,57 +274,66 @@ Stmt StmtMutator::VisitStmt_(const ForNode* op) {
 }
 
 Stmt StmtMutator::VisitStmt_(const AutoForNode* op) {
+  bool same = true;
+
   BaseExpr raw_container = this->VisitExpr(op->raw_container);
+  same &= raw_container.same_as(op->raw_container);
+
   Stmt body = this->VisitStmt(op->body);
+  same &= body.same_as(op->body);
 
   runtime::Array<BaseExpr> loop_vars;
-  bool loop_var_same = true;
   for (auto i = 0; i < op->loop_vars.size(); ++i) {
     BaseExpr loop_var = this->VisitExpr(op->loop_vars[i]);
-    if (!loop_var.same_as(op->loop_vars[i])) {
-      loop_var_same = false;
-    }
+    same &= loop_var.same_as(op->loop_vars[i]);
     loop_vars.push_back(std::move(loop_var));
   }
 
+  runtime::Array<BaseExpr> loop_vars_holder;
+  for (auto i = 0; i < op->loop_vars_holder.size(); ++i) {
+    BaseExpr loop_var_holder = this->VisitExpr(op->loop_vars_holder[i]);
+    same &= loop_var_holder.same_as(op->loop_vars_holder[i]);
+    loop_vars_holder.push_back(std::move(loop_var_holder));
+  }
+
   runtime::Array<BaseExpr> iter_vars;
-  bool iter_vars_same = true;
   for (auto i = 0; i < op->iter_vars.size(); ++i) {
     BaseExpr iter_var = this->VisitExpr(op->iter_vars[i]);
-    if (!iter_var.same_as(op->iter_vars[i])) {
-      iter_vars_same = false;
-    }
+    same &= iter_var.same_as(op->iter_vars[i]);
     iter_vars.push_back(std::move(iter_var));
   }
 
+  runtime::Array<BaseExpr> iter_end_vars;
+  for (auto i = 0; i < op->iter_end_vars.size(); ++i) {
+    BaseExpr iter_end_var = this->VisitExpr(op->iter_end_vars[i]);
+    same &= iter_end_var.same_as(op->iter_end_vars[i]);
+    iter_end_vars.push_back(std::move(iter_end_var));
+  }
+
   runtime::Array<BaseExpr> eval_containers;
-  bool eval_containers_same = true;
   for (auto i = 0; i < op->eval_containers.size(); ++i) {
     BaseExpr eval_cons = this->VisitExpr(op->eval_containers[i]);
-    if (!eval_cons.same_as(op->eval_containers[i])) {
-      eval_containers_same = false;
-    }
+    same &= eval_cons.same_as(op->eval_containers[i]);
     eval_containers.push_back(std::move(eval_cons));
   }
 
   runtime::Map<StringRef, BaseExpr> temp_vars;
-  bool temp_var_same = true;
   for (auto temp_var_iter : op->temp_vars) {
     BaseExpr new_temp_var = this->VisitExpr(temp_var_iter.second);
-    if (!new_temp_var.same_as(temp_var_iter.second)) {
-      temp_var_same = false;
-    }
+    same &= new_temp_var.same_as(temp_var_iter.second);
     temp_vars.Set(temp_var_iter.first, new_temp_var);
   }
 
-  if (loop_var_same && temp_var_same && iter_vars_same && eval_containers_same &&
-      raw_container.same_as(op->raw_container) && body.same_as(op->body)) {
+  if (same) {
     return GetRef<Stmt>(op);
   } else {
     auto n = CopyOnWrite(op);
+    n->yield_mode = op->yield_mode;
     n->loop_vars = std::move(loop_vars);
+    n->loop_vars_holder = std::move(loop_vars_holder);
     n->temp_vars = std::move(temp_vars);
     n->iter_vars = std::move(iter_vars);
+    n->iter_end_vars = std::move(iter_end_vars);
     n->eval_containers = std::move(eval_containers);
     n->raw_container = std::move(raw_container);
     n->body = std::move(body);

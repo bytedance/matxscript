@@ -155,6 +155,21 @@ class CallArgumentReader(object):
         return []
 
 
+def try_to_view_type(origin_type: _ir.Type):
+    new_type = origin_type
+    success = False
+    if isinstance(origin_type, _ir.UnicodeType):
+        new_type = _ir.UnicodeType(is_view=True)
+        success = True
+    if isinstance(origin_type, _ir.StringType):
+        new_type = _ir.StringType(is_view=True)
+        success = True
+    if isinstance(origin_type, _ir.ObjectType):
+        new_type = _ir.ObjectType(is_view=True)
+        success = True
+    return success, new_type
+
+
 class MATXScriptParser(ast.NodeVisitor):
     """Python AST visitor pass which finally lowers it to MATX's IR
     Notes for extension:
@@ -895,19 +910,6 @@ class MATXScriptParser(ast.NodeVisitor):
             # AutoFor
             iter_expr = self.visit(node.iter)
             iter_expr_type = iter_expr.checked_type
-            origin_var_ty = _type_rel.infer_iterator_value_type(iter_expr_type)
-            new_var_ty = origin_var_ty
-            var_is_view = False
-            if not isinstance(iter_expr_type, (_ir.FileType, _ir.UnicodeType)):
-                if isinstance(new_var_ty, _ir.UnicodeType):
-                    new_var_ty = _ir.UnicodeType(is_view=True)
-                    var_is_view = True
-                if isinstance(new_var_ty, _ir.StringType):
-                    new_var_ty = _ir.StringType(is_view=True)
-                    var_is_view = True
-            if isinstance(new_var_ty, _ir.ObjectType):
-                new_var_ty = _ir.ObjectType(is_view=True)
-                var_is_view = True
             self.context.new_scope(nodes=node.body)
             if isinstance(node.target, ast.Name):
                 symbol = self.context.lookup_symbol(node.target.id)
@@ -995,6 +997,11 @@ class MATXScriptParser(ast.NodeVisitor):
                     else:
                         return if_stmt
                 else:
+                    origin_var_ty = _type_rel.infer_iterator_value_type(iter_expr_type)
+                    if not isinstance(iter_expr_type, (_ir.FileType, _ir.UnicodeType)):
+                        var_is_view, new_var_ty = try_to_view_type(origin_var_ty)
+                    else:
+                        var_is_view, new_var_ty = False, origin_var_ty
                     var = _ir.HLOVar(node.target.id, new_var_ty)
                     self.context.update_symbol(node.target.id, var)
                     alloc_holder_var = None
@@ -1015,6 +1022,9 @@ class MATXScriptParser(ast.NodeVisitor):
                     return _ir.AutoFor([var], iter_expr, forbody, span)
             elif isinstance(node.target, ast.Tuple):
                 self.check_loop_vars(node.target, iter_expr)
+                unroll = isinstance(iter_expr, (_ir.expr.HLOEnumerate, _ir.expr.HLOZip))
+                loop_vars_ty = _type_rel.infer_iterator_value_type(iter_expr_type)
+                all_var_infos = []
                 loop_vars = []
                 for index, elt in enumerate(node.target.elts):
                     if not isinstance(elt, ast.Name):
@@ -1024,10 +1034,25 @@ class MATXScriptParser(ast.NodeVisitor):
                     symbol = self.context.lookup_symbol(elt.id)
                     if symbol is not None:
                         self.report_error("name '%s' is redefined in AutoFor" % elt.id)
-                    loop_var = _ir.HLOVar(elt.id, _type_rel.infer_nth_item_type(new_var_ty, index))
+                    origin_var_ty = _type_rel.infer_nth_item_type(loop_vars_ty, index)
+                    var_is_view, new_var_ty = False, origin_var_ty
+                    if unroll and not isinstance(origin_var_ty, (_ir.FileType, _ir.UnicodeType)):
+                        var_is_view, new_var_ty = try_to_view_type(origin_var_ty)
+                    loop_var = _ir.HLOVar(elt.id, new_var_ty)
                     self.context.update_symbol(elt.id, loop_var)
                     loop_vars.append(loop_var)
-                forbody = self.to_seq_stmt(self.parse_body(), span)
+                    if var_is_view:
+                        holder_name = '{}_holder_{}'.format(
+                            elt.id, self.gen_random()
+                        )
+                        alloc_holder_var = _ir.AllocaVarStmt(holder_name, origin_var_ty, span=span)
+                        ref_and_usage = self.context.bind_reference(loop_var, alloc_holder_var.var)
+                        all_var_infos.append([alloc_holder_var, ref_and_usage])
+                for_stmts = self.parse_body()
+                for var_info in all_var_infos:
+                    if var_info[1][1] > 0:
+                        for_stmts.insert(0, var_info[0])
+                forbody = self.to_seq_stmt(for_stmts, span)
                 self.context.pop_scope()
                 return _ir.AutoFor(loop_vars, iter_expr, forbody, span)
             else:

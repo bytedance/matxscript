@@ -751,24 +751,29 @@ class For : public Stmt {
 
 class AutoForNode : public StmtNode {
  public:
-  /*! \brief The loop iter variable. */
-  runtime::Array<BaseExpr> iter_vars;
   /*! \brief The container value of iteration. */
   BaseExpr raw_container;
   /*! \brief The temp container value of iteration. */
   runtime::Array<BaseExpr> eval_containers;
-
+  /*! \brief The loop iter variable. */
+  runtime::Array<BaseExpr> iter_vars;  // make_iterable or iter_begin
+  /*! \brief The loop iter end variable. */
+  runtime::Array<BaseExpr> iter_end_vars;  // has_next or iter_end
+  /*! \brief The loop var holder. */
+  runtime::Array<BaseExpr> loop_vars_holder;  // for view optimizer
+  /*! \brief The loop variable. */
+  runtime::Array<BaseExpr> loop_vars;  // x, y, z...
   /*! \brief The body of the for loop. */
   Stmt body;
 
   /*! \brief internal use, only for yield. */
   bool yield_mode = false;
-  /*! \brief The loop variable. */
-  runtime::Array<BaseExpr> loop_vars;
   runtime::Map<StringRef, BaseExpr> temp_vars;
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("iter_var", &iter_vars);
+    v->Visit("iter_end_vars", &iter_end_vars);
+    v->Visit("loop_vars_holder", &loop_vars_holder);
     v->Visit("loop_var", &loop_vars);
     v->Visit("raw_container", &raw_container);
     v->Visit("container", &eval_containers);
@@ -779,7 +784,10 @@ class AutoForNode : public StmtNode {
 
   bool SEqualReduce(const AutoForNode* other, SEqualReducer equal) const {
     return equal.DefEqual(iter_vars, other->iter_vars) &&
+           equal.DefEqual(iter_end_vars, other->iter_end_vars) &&
+           equal.DefEqual(loop_vars_holder, other->loop_vars_holder) &&
            equal.DefEqual(loop_vars, other->loop_vars) &&
+           equal.DefEqual(temp_vars, other->temp_vars) &&
            equal(raw_container, other->raw_container) &&
            equal(eval_containers, other->eval_containers) && equal(body, other->body) &&
            equal(yield_mode, other->yield_mode);
@@ -787,7 +795,10 @@ class AutoForNode : public StmtNode {
 
   void SHashReduce(SHashReducer hash_reduce) const {
     hash_reduce.DefHash(iter_vars);
+    hash_reduce.DefHash(iter_end_vars);
+    hash_reduce.DefHash(loop_vars_holder);
     hash_reduce.DefHash(loop_vars);
+    hash_reduce.DefHash(temp_vars);
     hash_reduce(raw_container);
     hash_reduce(eval_containers);
     hash_reduce(yield_mode);
@@ -805,8 +816,6 @@ class AutoForNode : public StmtNode {
 class AutoFor : public Stmt {
  public:
   static const char* TEMP_VALUE_VAR_KEY;
-  static const char* TEMP_HAS_NEXT_VAR_KEY;
-  static const char* TEMP_NEXT_VALUE_HOLDER_VAR_KEY;
   static const char* TEMP_ENUMERATE_POS_VAR_KEY;
 
   MATX_DLL AutoFor(BaseExpr loop_var, BaseExpr container, Stmt body, Span span = Span())
