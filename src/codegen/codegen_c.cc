@@ -1424,7 +1424,9 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
   };
 
   std::vector<VarInfo> loop_var_reprs = FuncGetVarReprs(op->loop_vars);
+  std::vector<VarInfo> loop_var_holder_reprs = FuncGetVarReprs(op->loop_vars_holder);
   std::vector<VarInfo> iter_var_reprs = FuncGetVarReprs(op->iter_vars);
+  std::vector<VarInfo> iter_end_var_reprs = FuncGetVarReprs(op->iter_end_vars);
   std::vector<VarInfo> eval_cons_reprs = FuncGetVarReprs(op->eval_containers);
   String raw_container = PrintExpr(op->raw_container);
   std::unordered_map<String, VarInfo> temp_vars;
@@ -1463,7 +1465,7 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
   }();
   bool value_is_std_tuple = false;
   if (op->raw_container.as<HLOEnumerateNode>() || op->raw_container.as<HLOZipNode>()) {
-    value_is_std_tuple = true;
+    value_is_std_tuple = !(unroll_zip_state || unroll_enumerate_state);
   }
 
   /**
@@ -1555,22 +1557,15 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
 
   // step2: make iter var
   {
-    if (op->temp_vars.contains(AutoFor::TEMP_HAS_NEXT_VAR_KEY)) {
-      String vid_iter_has_next = temp_vars[AutoFor::TEMP_HAS_NEXT_VAR_KEY].name;
-      PrintIndent(os);
-      if (!op->yield_mode) {
-        os << "bool ";
+    // cache loop var holder
+    if (!op->yield_mode) {
+      for (auto& loop_var_holder_repr : loop_var_holder_reprs) {
+        PrintIndent(os);
+        os << loop_var_holder_repr.type << " " << loop_var_holder_repr.name << ";";
+        PrintSpanWithNewLine(op->span, os);
       }
-      os << vid_iter_has_next << " = true;";
-      PrintSpanWithNewLine(op->span, os);
     }
-    if (op->temp_vars.contains(AutoFor::TEMP_NEXT_VALUE_HOLDER_VAR_KEY) && !op->yield_mode) {
-      String vid_iter_next_holder = temp_vars[AutoFor::TEMP_NEXT_VALUE_HOLDER_VAR_KEY].name;
-      String ty_iter_next_holder = temp_vars[AutoFor::TEMP_NEXT_VALUE_HOLDER_VAR_KEY].type;
-      PrintIndent(os);
-      os << ty_iter_next_holder << " " << vid_iter_next_holder << ";";
-      PrintSpanWithNewLine(op->span, os);
-    }
+    // cache enumerate pos
     if (unroll_enumerate_state) {
       MXCHECK(op->temp_vars.contains(AutoFor::TEMP_ENUMERATE_POS_VAR_KEY));
       auto* enum_node_ptr = op->raw_container.as<HLOEnumerateNode>();
@@ -1585,13 +1580,14 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
       PrintSpanWithNewLine(op->span, os);
     }
     for (auto ii = 0; ii < iter_var_reprs.size(); ++ii) {
+      bool has_begin_end = op->eval_containers[ii]->checked_type()->HasBeginEnd();
+      // print begin or make_iterable
       PrintIndent(os);
       if (!op->yield_mode) {
         os << "auto ";
       }
-      if (op->eval_containers[ii]->checked_type()->HasBeginEnd()) {
+      if (has_begin_end) {
         os << iter_var_reprs[ii].name << " = " << eval_cons_reprs[ii].name << ".begin();";
-        PrintSpanWithNewLine(op->span, os);
       } else {
         if (IsIteratorType(op->eval_containers[ii])) {
           os << iter_var_reprs[ii].name << " = " << eval_cons_reprs[ii].name << ";";
@@ -1599,13 +1595,19 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
           os << iter_var_reprs[ii].name << " = Kernel_Iterable::make(" << eval_cons_reprs[ii].name
              << ");";
         }
-        PrintSpanWithNewLine(op->span, os);
-        MXCHECK(op->temp_vars.contains(AutoFor::TEMP_HAS_NEXT_VAR_KEY));
-        String vid_iter_has_next = temp_vars[AutoFor::TEMP_HAS_NEXT_VAR_KEY].name;
-        PrintIndent(os);
-        os << vid_iter_has_next << " &= " << iter_var_reprs[ii].name << ".HasNext();";
-        PrintSpanWithNewLine(op->span, os);
       }
+      PrintSpanWithNewLine(op->span, os);
+      // print end or has_next
+      PrintIndent(os);
+      if (!op->yield_mode) {
+        os << "auto ";
+      }
+      if (has_begin_end) {
+        os << iter_end_var_reprs[ii].name << " = " << eval_cons_reprs[ii].name << ".end();";
+      } else {
+        os << iter_end_var_reprs[ii].name << " = " << iter_var_reprs[ii].name << ".HasNext();";
+      }
+      PrintSpanWithNewLine(op->span, os);
     }
   }
 
@@ -1614,18 +1616,14 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
     bool not_first = false;
     PrintIndent(os);
     os << "while (";
-    if (op->temp_vars.contains(AutoFor::TEMP_HAS_NEXT_VAR_KEY)) {
-      String vid_iter_has_next = temp_vars[AutoFor::TEMP_HAS_NEXT_VAR_KEY].name;
-      os << vid_iter_has_next;
-      not_first = true;
-    }
     for (int ii = 0; ii < iter_var_reprs.size(); ++ii) {
+      if (ii > 0) {
+        os << " && ";
+      }
       if (op->eval_containers[ii]->checked_type()->HasBeginEnd()) {
-        if (not_first) {
-          os << " && ";
-        }
-        os << "(" << iter_var_reprs[ii].name << " != " << eval_cons_reprs[ii].name << ".end())";
-        not_first = true;
+        os << "(" << iter_var_reprs[ii].name << " != " << iter_end_var_reprs[ii].name << ")";
+      } else {
+        os << iter_end_var_reprs[ii].name;
       }
     }
     os << ") {";
@@ -1655,6 +1653,7 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
       li_start = 1;
     }
     if (unroll_zip_state || unroll_enumerate_state || op->loop_vars.size() == 1) {
+      int loop_var_holder_ii = 0;
       for (auto li = li_start; li < loop_var_reprs.size(); ++li) {
         auto iter_idx = li - li_start;
         PrintIndent(os);
@@ -1701,11 +1700,12 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
           os << "++" << iter_var_reprs[iter_idx].name << ";";
           PrintSpanWithNewLine(op->span, os);
         } else {
-          MXCHECK(op->temp_vars.contains(AutoFor::TEMP_HAS_NEXT_VAR_KEY));
-          MXCHECK(op->temp_vars.contains(AutoFor::TEMP_NEXT_VALUE_HOLDER_VAR_KEY));
-          String vid_iter_has_next = temp_vars[AutoFor::TEMP_HAS_NEXT_VAR_KEY].name;
-          String vid_iter_next_holder = temp_vars[AutoFor::TEMP_NEXT_VALUE_HOLDER_VAR_KEY].name;
-          if (value_is_std_tuple) {
+          MXCHECK(loop_var_holder_ii < loop_var_holder_reprs.size()) << "internal error";
+          auto loop_var_holder = loop_var_holder_reprs[loop_var_holder_ii++];
+          String vid_iter_has_next = iter_end_var_reprs[iter_idx].name;
+          String vid_iter_next_holder = loop_var_holder.name;
+          auto* loop_var_type_li = RemoveReference(loop_var_reprs[li].ir_type).as<ObjectTypeNode>();
+          if (value_is_std_tuple || (loop_var_type_li && !loop_var_type_li->is_view)) {
             os << loop_var_reprs[li].name << " = " << iter_var_reprs[iter_idx].name << ".Next(&"
                << vid_iter_has_next << ");";
           } else {
@@ -1731,7 +1731,7 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
       MXCHECK(op->temp_vars.contains(AutoFor::TEMP_VALUE_VAR_KEY));
       const String& vid_value = temp_vars[AutoFor::TEMP_VALUE_VAR_KEY].name;
       const String& vid_type = temp_vars[AutoFor::TEMP_VALUE_VAR_KEY].type;
-      const Type& vid_ir_type = temp_vars[AutoFor::TEMP_VALUE_VAR_KEY].ir_type;
+      const Type& vid_ir_type = RemoveReference(temp_vars[AutoFor::TEMP_VALUE_VAR_KEY].ir_type);
       // cache tmp value
       PrintIndent(os);
       if (!op->yield_mode) {
@@ -1776,10 +1776,10 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
         os << "++" << iter_var_reprs[0].name << ";";
         PrintSpanWithNewLine(op->span, os);
       } else {
-        MXCHECK(op->temp_vars.contains(AutoFor::TEMP_HAS_NEXT_VAR_KEY));
-        MXCHECK(op->temp_vars.contains(AutoFor::TEMP_NEXT_VALUE_HOLDER_VAR_KEY));
-        String vid_iter_has_next = temp_vars[AutoFor::TEMP_HAS_NEXT_VAR_KEY].name;
-        String vid_iter_next_holder = temp_vars[AutoFor::TEMP_NEXT_VALUE_HOLDER_VAR_KEY].name;
+        MXCHECK(!loop_var_holder_reprs.empty()) << "internal error";
+        auto loop_var_holder = loop_var_holder_reprs[0];
+        String vid_iter_has_next = iter_end_var_reprs[0].name;
+        String vid_iter_next_holder = loop_var_holder.name;
         os << vid_value << " = " << iter_var_reprs[0].name << ".NextView(&" << vid_iter_has_next
            << ", &" << vid_iter_next_holder << ");";
         PrintSpanWithNewLine(op->span, os);

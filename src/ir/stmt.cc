@@ -353,8 +353,6 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 
 // AutoFor
 const char* AutoFor::TEMP_VALUE_VAR_KEY = "value_var";
-const char* AutoFor::TEMP_HAS_NEXT_VAR_KEY = "has_next_var";
-const char* AutoFor::TEMP_NEXT_VALUE_HOLDER_VAR_KEY = "next_value_holder_var";
 const char* AutoFor::TEMP_ENUMERATE_POS_VAR_KEY = "enumerate_pos_var";
 AutoFor::AutoFor(runtime::Array<BaseExpr> loop_vars, BaseExpr container, Stmt body, Span span) {
   MXCHECK(loop_vars.defined() && !loop_vars.empty());
@@ -389,28 +387,25 @@ AutoFor::AutoFor(runtime::Array<BaseExpr> loop_vars, BaseExpr container, Stmt bo
     loop_var_types.push_back(loop_vars[i]->checked_type());
   }
 
-  bool has_begin_end = container->checked_type()->HasBeginEnd();
-  // unroll zip
+  // unroll zip container
   bool unroll_zip_state = false;
   if (auto* cons_ptr = container.as<HLOZipNode>()) {
     if (cons_ptr->values.size() == loop_vars.size()) {
       unroll_zip_state = true;
       // eval zip args
       for (auto i = 0; i < cons_ptr->values.size(); ++i) {
-        has_begin_end &= cons_ptr->values[i]->checked_type()->HasBeginEnd();
         String zip_arg_i_name = gen_var_name("reserved_eval_zip_arg", temp_name, i);
         auto eval_var = HLOVar(zip_arg_i_name, cons_ptr->values[i]->checked_type());
         node->eval_containers.push_back(eval_var);
       }
     }
   }
-  // unroll zip
+  // unroll enumerate container
   bool unroll_enumerate_state = false;
   if (auto* cons_ptr = container.as<HLOEnumerateNode>()) {
     if (2 == loop_vars.size()) {
       unroll_enumerate_state = true;
       // eval enumerate args
-      has_begin_end &= cons_ptr->value->checked_type()->HasBeginEnd();
       String enumerate_arg_name = gen_var_name("reserved_eval_enumerate_arg", temp_name, 0);
       auto eval_var = HLOVar(enumerate_arg_name, cons_ptr->value->checked_type());
       node->eval_containers.push_back(eval_var);
@@ -423,49 +418,56 @@ AutoFor::AutoFor(runtime::Array<BaseExpr> loop_vars, BaseExpr container, Stmt bo
   }
 
   // cache iter vars
+  auto FuncCacheIterVar = [&](const BaseExpr& current_container, int index) {
+    IteratorType iter_var_type(current_container->checked_type());
+    String temp_iter_var_name = gen_var_name("reserved_iter", temp_name, index);
+    auto iter_var = HLOVar(temp_iter_var_name, iter_var_type);
+    node->iter_vars.push_back(iter_var);
+    if (current_container->checked_type()->HasBeginEnd()) {
+      // cache iter_end
+      String temp_iter_end_var_name = gen_var_name("reserved_iter_end", temp_name, index);
+      auto iter_end_var = HLOVar(temp_iter_end_var_name, iter_var_type);
+      node->iter_end_vars.push_back(iter_end_var);
+    } else {
+      // cache has_next
+      String has_next_var_name = gen_var_name("reserved_has_next", temp_name, index);
+      auto has_next_var = PrimVar(has_next_var_name, runtime::DataType::Bool());
+      node->iter_end_vars.push_back(has_next_var);
+      // cache next_var_holder
+      String next_holder_var_name = gen_var_name("reserved_next_holder", temp_name, index);
+      auto next_holder_var = HLOVar(next_holder_var_name, ObjectType(false));
+      node->loop_vars_holder.push_back(next_holder_var);
+    }
+  };
   if (unroll_zip_state) {
     auto* cons_ptr = container.as<HLOZipNode>();
     for (auto i = 0; i < cons_ptr->values.size(); ++i) {
-      String temp_iter_var_name = gen_var_name("reserved_iter", temp_name, i);
-      auto iter_var = HLOVar(temp_iter_var_name, IteratorType(cons_ptr->values[i]->checked_type()));
-      node->iter_vars.push_back(iter_var);
+      FuncCacheIterVar(cons_ptr->values[i], i);
     }
   } else if (unroll_enumerate_state) {
     auto* cons_ptr = container.as<HLOEnumerateNode>();
-    String temp_iter_var_name = gen_var_name("reserved_iter", temp_name, 0);
-    auto iter_var = HLOVar(temp_iter_var_name, IteratorType(cons_ptr->value->checked_type()));
-    node->iter_vars.push_back(iter_var);
+    FuncCacheIterVar(cons_ptr->value, 0);
+    // cache pos
     String pos_var_name = gen_var_name("reserved_enum_pos", temp_name, 0);
     auto pos_var = PrimVar(pos_var_name, runtime::DataType::Int(64));
     node->temp_vars.Set(TEMP_ENUMERATE_POS_VAR_KEY, pos_var);
   } else {
-    String temp_iter_var_name = gen_var_name("reserved_iter", temp_name, 0);
-    auto iter_var = HLOVar(temp_iter_var_name, IteratorType(container->checked_type()));
-    node->iter_vars.push_back(iter_var);
-  }
-
-  // temp vars
-  if (!has_begin_end) {
-    String has_next_var_name = gen_var_name("reserved_has_next", temp_name, 0);
-    auto has_next_var = PrimVar(has_next_var_name, runtime::DataType::Bool());
-    node->temp_vars.Set(TEMP_HAS_NEXT_VAR_KEY, has_next_var);
-
-    String next_holder_var_name = gen_var_name("reserved_next_holder", temp_name, 0);
-    auto next_holder_var = HLOVar(next_holder_var_name, ObjectType(false));
-    node->temp_vars.Set(TEMP_NEXT_VALUE_HOLDER_VAR_KEY, next_holder_var);
-  }
-  if (loop_vars.size() > 1) {
-    // cache value
-    String temp_value_var_name = gen_var_name("reserved_value_tup", temp_name, 0);
-    Type temp_value_var_type;
-    if (value_is_std_tuple) {
-      temp_value_var_type = TupleType(std::move(loop_var_types), value_is_std_tuple);
-    } else {
-      temp_value_var_type = InferIteratorValueType(container->checked_type());
+    FuncCacheIterVar(container, 0);
+    // cache loop vars
+    if (loop_vars.size() > 1) {
+      // cache value
+      String temp_value_var_name = gen_var_name("reserved_value_tup", temp_name, 0);
+      Type temp_value_var_type;
+      if (value_is_std_tuple) {
+        temp_value_var_type = TupleType(std::move(loop_var_types), value_is_std_tuple);
+      } else {
+        temp_value_var_type = InferIteratorValueType(container->checked_type());
+      }
+      auto value_var = HLOVar(temp_value_var_name, std::move(temp_value_var_type));
+      node->temp_vars.Set(TEMP_VALUE_VAR_KEY, value_var);
     }
-    auto value_var = HLOVar(temp_value_var_name, std::move(temp_value_var_type));
-    node->temp_vars.Set(TEMP_VALUE_VAR_KEY, value_var);
   }
+
   node->loop_vars = std::move(loop_vars);
   node->raw_container = std::move(container);
   node->body = std::move(body);
