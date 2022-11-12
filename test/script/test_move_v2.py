@@ -72,11 +72,11 @@ class TestAutoMoveV2(unittest.TestCase):
 
         func = matx.ir_module(test_auto_for_move)["test_auto_for_move"]
         info = get_move_var_lineno(func)
-        self.assertEqual(len(info), 2)
-        self.assertEqual(info[0][0], b'x')
-        self.assertEqual(info[0][1], 68)
-        self.assertEqual(info[1][0], b'd')
-        self.assertEqual(info[1][1], 69)
+        self.assertEqual(len(info), 1)
+        # self.assertEqual(info[0][0], b'x')  # x is view
+        # self.assertEqual(info[0][1], 68)
+        self.assertEqual(info[0][0], b'd')
+        self.assertEqual(info[0][1], 69)
 
         def test_for_range_move() -> List[str]:
             a = "hello"
