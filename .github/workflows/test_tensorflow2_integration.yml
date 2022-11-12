@@ -25,4 +25,4 @@ jobs:
     - name: Build MATXScript
       run: BUILD_TESTING=OFF BUILD_BENCHMARK=OFF CPPFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" bash ci/build_lib.sh
     - name: TensorFlow 2.5 Extension Test
-      run: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python PYTHONPATH=python python3 test/extension_tf/test_tensorflow_module_2_xx.py
+      run: PYTHONPATH=python python3 test/extension_tf/test_tensorflow_module_2_xx.py

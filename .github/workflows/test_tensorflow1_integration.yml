@@ -17,7 +17,7 @@ jobs:
       with:
         python-version: '3.7'
     - name: Prepare TensorFlow 1.15
-      run: pip3 install tensorflow-cpu==1.15.0
+      run: pip3 install tensorflow-cpu==1.15.0 protobuf==3.8.0
     - name: Echo GCC version
       run: gcc --version
     - name: Install MATXScript Requirements
@@ -25,4 +25,4 @@ jobs:
     - name: Build MATXScript
       run: BUILD_TESTING=OFF BUILD_BENCHMARK=OFF CPPFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" bash ci/build_lib.sh
     - name: TensorFlow 1.15 Extension Test
-      run: PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python PYTHONPATH=python python3 test/extension_tf/test_tensorflow_module_1_15.py
+      run: PYTHONPATH=python python3 test/extension_tf/test_tensorflow_module_1_15.py
