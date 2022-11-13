@@ -65,8 +65,11 @@ def build_with_cmake():
     build_dir = tempfile.TemporaryDirectory(prefix="matxscript_tensorflow_build")
     print(f"[BUILD DIRECTORY]: {build_dir}")
     os.chdir(build_dir.name)
+    tf_rpath = tf.sysconfig.get_lib()
+    if tf_rpath:
+        tf_rpath = '-Wl,-rpath,' + tf_rpath
     tf_compile_flags = ' '.join(tf.sysconfig.get_compile_flags())
-    tf_link_flags = ' '.join(tf.sysconfig.get_link_flags())
+    tf_link_flags = ' '.join(tf.sysconfig.get_link_flags()) + ' ' + tf_rpath
     cmake_cmd = f'''
     cmake \
     -DCMAKE_MATX_COMPILE_FLAGS="{tx_compile_flags}" \
