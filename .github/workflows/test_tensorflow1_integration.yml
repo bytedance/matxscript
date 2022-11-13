@@ -17,7 +17,7 @@ jobs:
       with:
         python-version: '3.7'
     - name: Prepare TensorFlow 1.15
-      run: pip3 install tensorflow-cpu==1.15.0 protobuf==3.8.0
+      run: pip3 install tensorflow==1.15.5 protobuf==3.8.0
     - name: Echo GCC version
       run: gcc --version
     - name: Install MATXScript Requirements
