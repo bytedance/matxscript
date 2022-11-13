@@ -16,13 +16,13 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: '3.8'
-    - name: Prepare TensorFlow 2.5
-      run: pip3 install tensorflow-cpu==2.5.3
+    - name: Prepare TensorFlow 2.9
+      run: pip3 install tensorflow-cpu==2.9.2
     - name: Echo GCC version
       run: gcc --version
     - name: Install MATXScript Requirements
       run: pip3 install -r python/requirements.txt
     - name: Build MATXScript
       run: BUILD_TESTING=OFF BUILD_BENCHMARK=OFF CPPFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" bash ci/build_lib.sh
-    - name: TensorFlow 2.5 Extension Test
+    - name: TensorFlow Extension Test
       run: PYTHONPATH=python python3 test/extension_tf/test_tensorflow_module_2_xx.py
