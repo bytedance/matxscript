@@ -82,7 +82,7 @@ def build_with_cmake():
     try:
         ret = os.system(cmake_cmd)
         assert ret == 0, "Failed to execute with cmake."
-        ret = os.system('make -j4')
+        ret = os.system('make VERBOSE=1 -j4')
         os.system(f'ls -l --color {build_dir.name}')
         errmsg = 'internal error: build libmatx_tensorflow failed!!!'
         assert ret == 0 and os.path.exists(MATX_TF_LIB_NAME), errmsg
