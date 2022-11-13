@@ -63,9 +63,15 @@ def compile_or_load_lib(silent=True):
                 from .build import build_with_cmake
                 try:
                     build_with_cmake()
+                except Exception as e:
+                    print(f'[WARNING] matxscript tensorflow extension build failed: {e}',
+                          file=sys.stderr)
+                    if not silent:
+                        raise
+                try:
                     _load_lib()
-                except:
-                    print('[WARNING] matxscript tensorflow extension built failed.',
+                except Exception as e:
+                    print(f'[WARNING] load matxscript tensorflow extension failed: {e}',
                           file=sys.stderr)
                     if not silent:
                         raise
