@@ -20,11 +20,7 @@ jobs:
       run: pip3 install tensorflow-cpu==2.9.2
     - name: Echo Toolchains Version
       run: gcc --version && cmake --version
-    - name: SET ENV CXX11_ABI_FLAG
-      run: export CXX11_ABI_FLAG=$(python -c 'import tensorflow as tf; print(tf.sysconfig.CXX11_ABI_FLAG)') && echo ${CXX11_ABI_FLAG}
     - name: Install MATXScript Requirements
       run: pip3 install -r python/requirements.txt
-    - name: Build MATXScript
-      run: BUILD_TESTING=OFF BUILD_BENCHMARK=OFF CPPFLAGS="-D_GLIBCXX_USE_CXX11_ABI=${CXX11_ABI_FLAG}" bash ci/build_lib.sh
     - name: TensorFlow Extension Test
-      run: PYTHONPATH=python python3 test/extension_tf/test_tensorflow_module_2_xx.py
+      run: bash ci/run_py_extension_tf2_test.sh
