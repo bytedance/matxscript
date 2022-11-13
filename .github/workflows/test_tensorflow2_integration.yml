@@ -18,8 +18,8 @@ jobs:
         python-version: '3.8'
     - name: Prepare TensorFlow 2.9
       run: pip3 install tensorflow-cpu==2.9.2
-    - name: Echo GCC version
-      run: gcc --version
+    - name: Echo GCC/CMake version
+      run: gcc --version && cmake --version
     - name: Install MATXScript Requirements
       run: pip3 install -r python/requirements.txt
     - name: Build MATXScript

@@ -18,8 +18,8 @@ jobs:
         python-version: '3.7'
     - name: Prepare TensorFlow 1.15
       run: pip3 install tensorflow==1.15.5 protobuf==3.8.0
-    - name: Echo GCC version
-      run: gcc --version
+    - name: Echo GCC/CMake version
+      run: gcc --version && cmake --version
     - name: Install MATXScript Requirements
       run: pip3 install -r python/requirements.txt
     - name: Build MATXScript
