@@ -86,7 +86,7 @@ def build_with_cmake():
         os.system(f'ls -l --color {build_dir.name}')
         errmsg = 'internal error: build libmatx_tensorflow failed!!!'
         assert ret == 0 and os.path.exists(MATX_TF_LIB_NAME), errmsg
-        os.system(f'ldd {MATX_TF_LIB_NAME}')
+        os.system(f'readelf -d {MATX_TF_LIB_NAME}')
         cp_cmd = 'cp {} {}'.format(MATX_TF_LIB_NAME, MATX_USER_DIR)
         ret = os.system(cp_cmd)
         assert ret == 0, 'failed to execute: {}'.format(cp_cmd)

@@ -19,10 +19,10 @@ jobs:
     - name: Prepare TensorFlow 2.9
       run: pip3 install tensorflow-cpu==2.9.2
     - name: Set CC/CXX and Echo Version
-      run: export CC=/usr/bin/gcc && export CXX=/usr/bin/g++ && gcc --version && cmake --version
+      run: export CC=/usr/bin/gcc && export CXX=/usr/bin/g++ && c++ --version gcc --version && cmake --version
     - name: Install MATXScript Requirements
       run: pip3 install -r python/requirements.txt
     - name: Build MATXScript
       run: BUILD_TESTING=OFF BUILD_BENCHMARK=OFF CPPFLAGS="-D_GLIBCXX_USE_CXX11_ABI=0" bash ci/build_lib.sh
     - name: TensorFlow Extension Test
-      run: PYTHONPATH=python python3 test/extension_tf/test_tensorflow_module_2_xx.py
+      run: PYTHONPATH=python CC=/usr/bin/gcc CXX=/usr/bin/g++ python3 test/extension_tf/test_tensorflow_module_2_xx.py
