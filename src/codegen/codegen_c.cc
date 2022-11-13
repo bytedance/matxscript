@@ -1664,8 +1664,13 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
         const auto& cons_ty = RemoveReference(op->eval_containers[iter_idx]->checked_type_);
         if (cons_ty->HasBeginEnd()) {
           if (IsUnicodeType(cons_ty)) {
-            os << loop_var_reprs[li].name << " = Unicode(1, *" << iter_var_reprs[iter_idx].name
-               << ");";
+            auto* var_ty_n = RemoveReference(loop_var_reprs[li].ir_type).as<UnicodeTypeNode>();
+            os << loop_var_reprs[li].name << " = ";
+            if (var_ty_n && var_ty_n->is_view) {
+              os << "unicode_view(" << iter_var_reprs[iter_idx].name << ", 1);";
+            } else {
+              os << "Unicode(1, *" << iter_var_reprs[iter_idx].name << ");";
+            }
           } else if (cons_ty->IsFullTyped()) {
             os << loop_var_reprs[li].name << " = *" << iter_var_reprs[iter_idx].name << ";";
           } else {
@@ -1741,7 +1746,12 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
       const auto& cons_ty = RemoveReference(op->eval_containers[0]->checked_type_);
       if (cons_ty->HasBeginEnd()) {
         if (IsUnicodeType(cons_ty)) {
-          os << vid_value << " = Unicode(1, *" << iter_var_reprs[0].name << ");";
+          auto* vid_ir_ty_n = vid_ir_type.as<UnicodeTypeNode>();
+          if (vid_ir_ty_n && vid_ir_ty_n->is_view) {
+            os << vid_value << " = unicode_view(" << iter_var_reprs[0].name << ", 1);";
+          } else {
+            os << vid_value << " = Unicode(1, *" << iter_var_reprs[0].name << ");";
+          }
         } else if (cons_ty->IsFullTyped()) {
           os << vid_value << " = *" << iter_var_reprs[0].name << ";";
         } else {
