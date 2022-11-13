@@ -58,3 +58,5 @@ bash build_pcre.sh "${BUILD_PATH}/pcre"
 cd "${BUILD_PATH}"
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ../
 make -j8
+
+ldd ${BUILD_PATH}/libmatx_text_ops.so
