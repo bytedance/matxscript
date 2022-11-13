@@ -29,6 +29,7 @@ ROOT_PATH=${THIS_PATH}/../
 ###############################################################################
 export CXX11_ABI_FLAG=$(python -c 'import tensorflow as tf; print(tf.sysconfig.CXX11_ABI_FLAG)')
 echo "_GLIBCXX_USE_CXX11_ABI=${CXX11_ABI_FLAG}"
+export SERVER_CXX=/usr/bin/g++
 
 ###############################################################################
 # build all shared target
