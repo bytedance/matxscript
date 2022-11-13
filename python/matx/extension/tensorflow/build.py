@@ -66,7 +66,7 @@ def build_with_cmake():
     print(f"[BUILD DIRECTORY]: {build_dir}")
     os.chdir(build_dir.name)
     tf_compile_flags = ' '.join(tf.sysconfig.get_compile_flags())
-    tf_link_flags = ' '.join(tf.sysconfig.get_link_flags())
+    tf_link_flags = ' '.join(tf.sysconfig.get_link_flags()) + ' '
     cmake_cmd = f'''
     cmake \
     -DCMAKE_MATX_COMPILE_FLAGS="{tx_compile_flags}" \
@@ -79,7 +79,8 @@ def build_with_cmake():
     try:
         ret = os.system(cmake_cmd)
         assert ret == 0, "Failed to execute with cmake."
-        ret = os.system('make -j4')
+        ret = os.system('make VERBOSE=1 -j4')
+        os.system(f'ls -l --color {build_dir.name}')
         errmsg = 'internal error: build libmatx_tensorflow failed!!!'
         assert ret == 0 and os.path.exists(MATX_TF_LIB_NAME), errmsg
         cp_cmd = 'cp {} {}'.format(MATX_TF_LIB_NAME, MATX_USER_DIR)
