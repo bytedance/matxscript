@@ -16,8 +16,8 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: '3.8'
-    - name: Prepare TensorFlow 2.9
-      run: pip3 install tensorflow-cpu==2.9.2
+    - name: Prepare TensorFlow 2.8
+      run: pip3 install tensorflow-cpu==2.8.3
     - name: Echo Toolchains Version
       run: gcc --version && cmake --version
     - name: Install MATXScript Requirements
