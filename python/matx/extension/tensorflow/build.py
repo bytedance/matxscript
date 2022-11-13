@@ -68,6 +68,7 @@ def build_with_cmake():
     tf_rpath = tf.sysconfig.get_lib()
     if tf_rpath:
         tf_rpath = '-Wl,-rpath,' + tf_rpath
+    tf_framework_lib = 'libtensorflow_framework.so.2'
     tf_compile_flags = ' '.join(tf.sysconfig.get_compile_flags())
     tf_link_flags = ' '.join(tf.sysconfig.get_link_flags()) + ' ' + tf_rpath
     cmake_cmd = f'''
@@ -86,6 +87,8 @@ def build_with_cmake():
         os.system(f'ls -l --color {build_dir.name}')
         errmsg = 'internal error: build libmatx_tensorflow failed!!!'
         assert ret == 0 and os.path.exists(MATX_TF_LIB_NAME), errmsg
+        os.system(f'readelf -d {MATX_TF_LIB_NAME}')
+        os.system(f'patchelf --add-needed {tf_framework_lib} {MATX_TF_LIB_NAME}')
         os.system(f'readelf -d {MATX_TF_LIB_NAME}')
         cp_cmd = 'cp {} {}'.format(MATX_TF_LIB_NAME, MATX_USER_DIR)
         ret = os.system(cp_cmd)
