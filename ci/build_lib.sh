@@ -48,7 +48,7 @@ fi
 # init submodule
 cd "${ROOT_PATH}"
 git submodule init
-git submodule update --recursive
+git submodule update --init --recursive
 
 # build pcre
 cd "${THIS_PATH}"
