@@ -57,15 +57,28 @@ def compile_or_load_lib(silent=True):
 
     try:
         with contrib.util.filelock(_MATX_TF_LIB_PATH, timeout=300):
-            try:
-                _load_lib()
-            except:
+            success = False
+            if os.path.exists(_MATX_TF_LIB_PATH):
+                try:
+                    _load_lib()
+                    success = True
+                except Exception as e:
+                    success = False
+                    print(f'[WARNING] matxscript tensorflow extension: load failed: {e}, try rebuild and reload...',
+                          file=sys.stderr)
+            if not success:
                 from .build import build_with_cmake
                 try:
                     build_with_cmake()
+                except Exception as e:
+                    print(f'[WARNING] matxscript tensorflow extension: build failed: {e}',
+                          file=sys.stderr)
+                    if not silent:
+                        raise
+                try:
                     _load_lib()
-                except:
-                    print('[WARNING] matxscript tensorflow extension built failed.',
+                except Exception as e:
+                    print(f'[WARNING] matxscript tensorflow extension: reload failed: {e}',
                           file=sys.stderr)
                     if not silent:
                         raise

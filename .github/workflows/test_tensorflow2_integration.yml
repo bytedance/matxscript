@@ -1,0 +1,26 @@
+name: TensorFlow2 Integration
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+    - name: Prepare TensorFlow 2.8
+      run: pip3 install tensorflow-cpu==2.8.3
+    - name: Echo Toolchains Version
+      run: gcc --version && cmake --version
+    - name: Install MATXScript Requirements
+      run: pip3 install -r python/requirements.txt
+    - name: TensorFlow Extension Test
+      run: bash ci/run_py_extension_tf2_test.sh
