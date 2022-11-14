@@ -197,7 +197,6 @@ ELSE ()
     INSTALL(DIRECTORY include DESTINATION matx/)
     INSTALL(DIRECTORY 3rdparty/rapidjson/include DESTINATION matx/)
     INSTALL(DIRECTORY ${PCRE_INCLUDE_DIR} DESTINATION matx/)
-    INSTALL(DIRECTORY 3rdparty/cppjieba/include DESTINATION matx/)
 
     IF (USE_CUDA)
         SET(targets matx matx_cuda)

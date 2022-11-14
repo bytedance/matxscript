@@ -37,7 +37,7 @@ THIRD_PATH=${ROOT_PATH}/3rdparty
 # init submodule
 cd "${ROOT_PATH}"
 git submodule init
-git submodule update
+git submodule update --recursive
 
 # mkdir lib
 if [ ! -d "${BUILD_PATH}" ]; then

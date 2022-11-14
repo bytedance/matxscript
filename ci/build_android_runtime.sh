@@ -47,7 +47,7 @@ mkdir -p "${OUTPUT_PATH}"
 # init submodule
 cd "${ROOT_PATH}"
 git submodule init
-git submodule update
+git submodule update --recursive
 
 # build matx
 cd "${BUILD_PATH}"
