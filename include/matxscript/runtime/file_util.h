@@ -73,6 +73,13 @@ std::string GetFileBasename(string_view file_name);
 std::string GetFileDirectory(string_view file_name);
 
 /*!
+ * \brief Get file extension
+ * \param file_name The name of the file.
+ * \return the dir
+ */
+std::string GetFileExtension(string_view file_name);
+
+/*!
  * \brief Load binary file into a in-memory buffer.
  * \param file_name The name of the file.
  * \param data The data to be loaded.
