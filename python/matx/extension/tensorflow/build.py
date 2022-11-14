@@ -18,6 +18,8 @@
 # under the License.
 import os
 import sys
+import re
+import copy
 import subprocess
 import tempfile
 import tensorflow as tf
@@ -54,25 +56,54 @@ def get_cmake_version():
 def build_with_cmake():
     try:
         cmake_version = get_cmake_version()
+        print("cmake_version: ", cmake_version)
     except:
         raise RuntimeError(
-            "cmake not found by matxscript TensorFlow extension, please install it!!!"
+            "cmake not found by MATXScript TensorFlow extension, please install it!!!"
         ) from None
     tx_module = sys.modules['matx']
-    tx_compile_flags = ' '.join(tx_module.get_cflags())
-    tx_link_flags = ' '.join(tx_module.get_link_flags())
+    tx_compile_flags = tx_module.cpp_extension.get_cflags()
+    tx_lib_paths = tx_module.cpp_extension.library_paths()
+    TX_CXX11_ABI_FLAG = tx_module.cpp_extension.USE_CXX11_ABI()
+    TF_CXX11_ABI_FLAG = tf.sysconfig.CXX11_ABI_FLAG
+    if TX_CXX11_ABI_FLAG != TF_CXX11_ABI_FLAG:
+        raise RuntimeError(
+            f"TensorFlow define _GLIBCXX_USE_CXX11_ABI={TF_CXX11_ABI_FLAG}, "
+            f"but MATXScript define _GLIBCXX_USE_CXX11_ABI={TX_CXX11_ABI_FLAG}"
+        ) from None
+    tf_compile_flags = tf.sysconfig.get_compile_flags()
+    all_compile_flags = copy.copy(tf_compile_flags)
+    for flag in tx_compile_flags:
+        flag = flag.strip()
+        if flag not in all_compile_flags:
+            all_compile_flags.append(flag)
+
+    all_lib_names = ['matx', 'pcre']
+    all_lib_paths = copy.copy(tx_lib_paths)
+    tf_link_flags = tf.sysconfig.get_link_flags()
+    for flag in tf_link_flags:
+        flag = flag.strip()
+        if flag.startswith('-L'):
+            all_lib_paths.append(flag[2:])
+        elif flag.startswith('-l'):
+            all_lib_names.append(flag[2:])
+        else:
+            all_compile_flags.append(flag)
+    print("all_compile_flags: ", all_compile_flags)
+    print("all_lib_paths: ", all_lib_paths)
+    print("all_lib_names: ", all_lib_names)
+    all_compile_flags = ' '.join(all_compile_flags)
+    all_lib_paths = ' '.join(all_lib_paths)
+    all_lib_names = ' '.join(all_lib_names)
     curdir = os.getcwd()
     build_dir = tempfile.TemporaryDirectory(prefix="matxscript_tensorflow_build")
     print(f"[BUILD DIRECTORY]: {build_dir}")
     os.chdir(build_dir.name)
-    tf_compile_flags = ' '.join(tf.sysconfig.get_compile_flags())
-    tf_link_flags = ' '.join(tf.sysconfig.get_link_flags()) + ' '
     cmake_cmd = f'''
     cmake \
-    -DCMAKE_MATX_COMPILE_FLAGS="{tx_compile_flags}" \
-    -DCMAKE_MATX_LINK_FLAGS="{tx_link_flags}" \
-    -DCMAKE_TENSORFLOW_COMPILE_FLAGS="{tf_compile_flags}" \
-    -DCMAKE_TENSORFLOW_LINK_FLAGS="{tf_link_flags}" \
+    -DCMAKE_MATX_TF_COMPILE_FLAGS="{all_compile_flags}" \
+    -DCMAKE_MATX_TF_LIB_PATHS="{all_lib_paths}" \
+    -DCMAKE_MATX_TF_LIB_NAMES="{all_lib_names}" \
     -DCMAKE_TENSORFLOW_VERSION="{tf.__version__}" \
     {CMAKE_DIR}
     '''

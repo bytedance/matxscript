@@ -89,14 +89,6 @@ def get_link_flags():
     ldflags.append("-L" + pcre_dir)
     ldflags.append("-lpcre")
 
-    sopath = lib_path[0]
-    sofile = os.path.basename(sopath)
-    assert sofile.startswith("lib")
-
-    libdir = os.path.dirname(sopath)
-    ldflags.append("-Wl,-rpath," + libdir)
-    ldflags.append("-Wl,-rpath," + pcre_dir)
-
     return ldflags
 
 
@@ -104,3 +96,26 @@ def include_paths():
     incs = find_include_path()
     incs.append(get_json_inc_path())
     return incs
+
+
+def library_paths():
+    lib_paths = []
+    # ---------libmatx.so-------------------#
+    lib_location = find_lib_path()
+    lib_dir = os.path.dirname(lib_location[0])
+    lib_paths.append(lib_dir)
+
+    # -------libpcre.so-------------------#
+    if sys.platform.startswith('win32'):
+        pcre_soname = "libpcre.dll"
+    elif sys.platform.startswith('darwin'):
+        pcre_soname = "libpcre.dylib"
+    else:
+        pcre_soname = "libpcre.so"
+    pcre_lib_location = find_lib_path(pcre_soname, [lib_dir, os.path.join(lib_dir, "pcre/lib")])
+    pcre_dir = os.path.dirname(pcre_lib_location[0])
+
+    if pcre_dir != lib_paths:
+        lib_paths.append(pcre_dir)
+
+    return lib_paths

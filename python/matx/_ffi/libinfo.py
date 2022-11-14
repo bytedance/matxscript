@@ -49,7 +49,7 @@ def find_lib_path(name=None, search_path=None, optional=False):
 
     Parameters
     ----------
-    name : list of str
+    name : str or list of str
         List of names to be found.
 
     Returns
