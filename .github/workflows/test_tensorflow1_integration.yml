@@ -1,0 +1,26 @@
+name: TensorFlow1 Integration
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.7'
+    - name: Prepare TensorFlow 1.15
+      run: pip3 install tensorflow==1.15.5 protobuf==3.8.0
+    - name: Echo Toolchains Version
+      run: gcc --version && cmake --version
+    - name: Install MATXScript Requirements
+      run: pip3 install -r python/requirements.txt
+    - name: TensorFlow 1.15 Extension Test
+      run: bash ci/run_py_extension_tf1_test.sh
