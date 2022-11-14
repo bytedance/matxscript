@@ -27,6 +27,7 @@ ROOT_PATH=${THIS_PATH}/../
 ###############################################################################
 # check _GLIBCXX_USE_CXX11_ABI
 ###############################################################################
+export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 export CXX11_ABI_FLAG=$(python -c 'import tensorflow as tf; print(tf.sysconfig.CXX11_ABI_FLAG)')
 echo "_GLIBCXX_USE_CXX11_ABI=${CXX11_ABI_FLAG}"
 export CC=/usr/bin/gcc
