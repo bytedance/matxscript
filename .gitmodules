@@ -8,3 +8,6 @@
 [submodule "3rdparty/filesystem"]
 	path = 3rdparty/filesystem
 	url = https://github.com/gulrak/filesystem.git
+[submodule "3rdparty/cppjieba"]
+	path = 3rdparty/cppjieba
+	url = https://github.com/yanyiwu/cppjieba.git

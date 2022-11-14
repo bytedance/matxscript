@@ -69,6 +69,25 @@ class TestBuiltinTextOps(unittest.TestCase):
         print(tx_ret3)
         self.assertEqual(tx_ret3, expect)
 
+    def test_jieba(self):
+        test_content = "这是一个伸手不见五指的黑夜。我叫孙悟空，我爱北京，我爱Python和C++。"
+        jieba = matx.text.Jieba()
+        print(jieba.cut(test_content))
+        print(jieba.cut(test_content, cut_all=True))
+        print(jieba.cut(test_content, HMM=False))
+
+        class MyCutter:
+            def __init__(self):
+                self.op: Callable = matx.text.Jieba()
+
+            def __call__(self, a: str, cut_all: bool, HMM: bool) -> Any:
+                return self.op(a, cut_all, HMM)
+
+        op = matx.script(MyCutter)()
+        print(op(test_content, False, True))
+        print(op(test_content, True, False))
+        print(op(test_content, False, False))
+
 
 if __name__ == '__main__':
     import logging
