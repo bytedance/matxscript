@@ -66,6 +66,12 @@ std::string GetFileDirectory(string_view file_name) {
   return p.parent_path();
 }
 
+std::string GetFileExtension(string_view file_name) {
+  namespace fs = ghc::filesystem;
+  fs::path p{std::string(file_name)};
+  return p.extension();
+}
+
 std::string GetMetaFilePath(string_view file_name) {
   size_t pos = file_name.find_last_of(".");
   if (pos != std::string::npos) {

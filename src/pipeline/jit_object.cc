@@ -274,13 +274,20 @@ RTValue* JsonPathGetter(RTValue& obj, unicode_view jsonpath) {
 
 int JitObject::Bundle(string_view folder) {
   Options new_opt = options_;
-  String src_path_cxx11 = options_.dso_path_cxx11 + ".enc_cc";
-  String src_dso_path = options_.dso_path + ".enc_cc";
+  auto ReplaceSuffixFunc = [](const String& p) {
+    auto dir = FileUtil::GetFileDirectory(p);
+    auto fn = FileUtil::GetFileBasename(p);
+    auto ext = FileUtil::GetFileExtension(fn);
+    return dir + "/" + fn.substr(0, fn.size() - ext.size()) + ".cc";
+  };
+  auto src_path_cxx11 = ReplaceSuffixFunc(options_.dso_path_cxx11);
+  auto src_path = ReplaceSuffixFunc(options_.dso_path);
+  std::cout << src_path << std::endl;
   if (FileUtil::Exists(src_path_cxx11)) {
     BundlePath(src_path_cxx11, folder);
   }
-  if (FileUtil::Exists(src_dso_path)) {
-    BundlePath(src_dso_path, folder);
+  if (FileUtil::Exists(src_path)) {
+    BundlePath(src_path, folder);
   }
   new_opt.dso_path_cxx11 = BundlePath(new_opt.dso_path_cxx11, folder);
   new_opt.dso_path = BundlePath(new_opt.dso_path, folder);
