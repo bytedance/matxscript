@@ -59,7 +59,7 @@ class JiebaImpl(object):
                  stopWordPath: AnyStr = DICT_PATH + "/stop_words.utf8",
                  ) -> None:
         self.jieba: Any = make_native_object(
-            "text_CPPJieba",
+            "text_cutter_CPPJieba",
             dict_path,
             model_path,
             user_dict_path,

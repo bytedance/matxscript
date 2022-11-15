@@ -147,8 +147,8 @@ RTValue CPPJieba::lcut_for_search(string_view sentence, bool HMM) {
   return details::std_string_list_to_String_List(list_of_words_std);
 }
 
-using text_CPPJieba = CPPJieba;
-MATX_REGISTER_NATIVE_OBJECT(text_CPPJieba)
+using text_cutter_CPPJieba = CPPJieba;
+MATX_REGISTER_NATIVE_OBJECT(text_cutter_CPPJieba)
     .SetConstructor([](PyArgs args) -> std::shared_ptr<void> {
       MXCHECK_EQ(args.size(), 5) << "[CPPJieba] Expect 5 arguments but get "
                                  << args.size();
