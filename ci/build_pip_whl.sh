@@ -66,7 +66,7 @@ function set_cuda_home() {
     return 0
   fi
 
-  TOOLKIT_VERSION=$(${CUDA_HOME}/bin/nvcc --version | grep -Po "release \K([0-9]{1,}\.)+[0-9]{1,}" )
+  TOOLKIT_VERSION=$(${CUDA_HOME}/bin/nvcc --version | grep -Eo "release ([0-9]{1,}\.)+[0-9]{1,}" | cut -c 8- )
   echo ${TOOLKIT_VERSION}
 
   if [[ "x${TOOLKIT_VERSION}" == "x11.1" ]]; then
