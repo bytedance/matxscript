@@ -51,6 +51,74 @@ class PyTorchDeviceNotSetError(ValueError):
         return f"Loss the device parameter, model: '{self.model}'"
 
 
+class TorchModel(pipeline.ops.OpKernel):
+    """Create TorchModel
+
+    Parameters
+    ----------
+    location : str
+        PyTorch jit model path
+
+    """
+
+    def __init__(self,
+                 *,
+                 location,
+                 example):
+        compile_or_load_lib(silent=False)
+        super().__init__(
+            "TorchModel",
+            location=location,
+            example=example,
+        )
+
+    def __call__(self, *args, **kwargs):
+        raise RuntimeError("TorchModel is not a Callable Op")
+
+
+class TorchInferOp(pipeline.ops.OpKernel):
+    """Create TorchInferOp
+
+    Parameters
+    ----------
+    model : TorchModel
+    device: int
+    output_to_cpu: bool
+    """
+
+    def __init__(self,
+                 *,
+                 model=None,
+                 device=None,
+                 output_to_cpu=True):
+        compile_or_load_lib(silent=False)
+        super().__init__(
+            "TorchInferOp",
+            model=model,
+            device=device,
+            output_to_cpu=output_to_cpu,
+        )
+
+    def __call__(self, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        args : Tuple(Dict[str, Tensor], ...)
+            input TensorMaps
+
+        kwargs : Optional
+            Not supported currently
+
+        Returns
+        -------
+        result : Dict[str, Tensor]
+            the result TensorMap
+
+        """
+        return super(TorchInferOp, self).__call__(*args, **kwargs)
+
+
 class PyTorchInferOp(pipeline.ops.OpKernel):
     """Create PyTorchInferOp
 
@@ -88,6 +156,15 @@ class PyTorchInferOp(pipeline.ops.OpKernel):
 
         """
         return super(PyTorchInferOp, self).__call__(*args, **kwargs)
+
+
+def make_pipeline_op_from_location(location=None,
+                                   device=None,
+                                   output_to_cpu=True,
+                                   **kwargs):
+    mod = TorchModel(location=location, example=None)
+    op = TorchInferOp(model=mod.name, device=device, output_to_cpu=output_to_cpu)
+    return PyTorchInferOp(impl=op)
 
 
 class PytorchModule(object):

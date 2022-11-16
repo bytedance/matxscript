@@ -323,24 +323,30 @@ void TorchInferOp::Init() {
       MXLOG(INFO) << "[TorchInferOp] use session devices: " << use_device;
     }
   }
-  auto engines = std::dynamic_pointer_cast<TorchModel>(belong_to_->FindOp("TorchModel", model));
-  sub_ops_.push_back(engines);
-  MXCHECK(engines != nullptr) << "cnn't find model: " << model;
+  th_model_ = std::dynamic_pointer_cast<TorchModel>(belong_to_->FindOp("TorchModel", model));
+  MXCHECK(th_model_ != nullptr) << "cnn't find model: " << model;
+  sub_ops_ = {th_model_};
   if (use_device >= 0) {
     ctx_.device_type = kDLGPU;
     ctx_.device_id = internal::cuda_device_offset(use_device);
     device_api_ = DeviceAPI::Get(ctx_);
-    engine_ = engines->RegisterOrGetEngine(internal::cuda_device_offset(use_device));
+    engine_ = th_model_->RegisterOrGetEngine(internal::cuda_device_offset(use_device));
   } else {
     ctx_.device_type = kDLCPU;
     ctx_.device_id = 0;
     device_api_ = DeviceAPI::Get(ctx_);
-    engine_ = engines->RegisterOrGetEngine(use_device);
+    engine_ = th_model_->RegisterOrGetEngine(use_device);
   }
   MXCHECK(engine_ != nullptr) << "init engine failed!";
 }
 
 RTValue TorchInferOp::Process(PyArgs inputs) const {
+#ifdef MATXSCRIPT_PYTHON_MODE
+  if (th_model_ && th_model_->example.is_nullptr()) {
+    // for bundle example data
+    th_model_->example = Tuple(inputs.begin(), inputs.end());
+  }
+#endif  // MATXSCRIPT_PYTHON_MODE
 #ifdef MATX_ENABLE_TORCH_MODEL_AUTO_SYNCHRONIZATION_WITH_PREPROCESS
   if (ctx_.device_type == kDLGPU) {
     cudaStream_t preprocessStream =
