@@ -39,6 +39,7 @@ class TorchInferOp : public OpKernel {
 
  protected:
   String model;
+  std::shared_ptr<TorchModel> th_model_;
   TorchEnginePtr engine_;
   bool output_to_cpu_ = true;
   DeviceAPI* device_api_ = nullptr;

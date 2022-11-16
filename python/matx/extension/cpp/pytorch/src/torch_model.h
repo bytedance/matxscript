@@ -84,6 +84,7 @@ class TorchModel : public OpKernel {
   RTValue example;
   std::mutex mutex_;
   std::unordered_map<std::string, TorchEnginePtr> engines_;
+  friend class TorchInferOp;
 };
 
 }  // namespace runtime

@@ -37,7 +37,7 @@ def _torch_script_module_trace(mod, *args, **kwargs):
 
 def script(compiling_obj, *, trace_func=None, **kwargs):
     import torch
-    from .pytorch_module import PytorchModule
+    from .pytorch_module import PytorchModule, make_pipeline_op_from_location
     if inspect.isclass(compiling_obj) and issubclass(compiling_obj, torch.nn.Module):
         raise NotImplementedError('type of torch.nn.Module')
         # from .pytorch_module import TorchModuleMixin
@@ -49,9 +49,8 @@ def script(compiling_obj, *, trace_func=None, **kwargs):
         # return new_obj
     else:
         if isinstance(compiling_obj, str):
-            mod = PytorchModule(location=compiling_obj, trace_func=trace_func, **kwargs)
-            return mod.make_pipeline_op()
-        if isinstance(compiling_obj, torch.jit.ScriptModule):
+            return make_pipeline_op_from_location(location=compiling_obj, **kwargs)
+        if isinstance(compiling_obj, (torch.jit.ScriptModule, torch.jit.ScriptFunction)):
             if trace_func is None:
                 trace_func = _torch_script_module_trace
         mod = PytorchModule(model=compiling_obj, trace_func=trace_func, **kwargs)
