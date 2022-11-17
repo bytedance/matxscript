@@ -52,6 +52,36 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayContiguous").set_body([](PyArgs args)
   return data.Contiguous();
 });
 
+MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayReshape").set_body([](PyArgs args) -> RTValue {
+  NDArray data = args[0].As<NDArray>();
+  std::vector<int64_t> shape;
+  switch (args[1].type_code()) {
+    case TypeIndex::kRuntimeList: {
+       auto it = args[1].AsObjectRefNoCheck<List>();
+       for(auto &e:it){
+          shape.push_back(e.As<int64_t>());
+       }
+    }break;
+    case TypeIndex::kRuntimeFTList: {
+       auto it = args[1].AsObjectRefNoCheck<FTObjectBase>();
+       int64_t size = it.generic_call_attr("__len__", {}).As<int64_t>();
+       for(int64_t i = 0; i<size; i++){
+          shape.push_back(it.generic_call_attr("__getitem__", {i}).As<int64_t>());
+       }
+    }break;
+    case TypeIndex::kRuntimeTuple: {
+       auto it = args[1].AsObjectRefNoCheck<Tuple>();
+       for(auto &e:it){
+          shape.push_back(e.As<int64_t>());
+       }
+    }break;
+    default: {
+      MXTHROW << "expect 'list' but get '" << TypeIndex2Str(args[0].type_code());
+    } break;
+  }
+  return data.Reshape(shape);
+});
+
 MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayStride").set_body([](PyArgs args) -> RTValue {
   NDArray data = args[0].As<NDArray>();
   const int64_t* strides = data.GetStridesPtr();

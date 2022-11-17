@@ -566,6 +566,35 @@ struct NDArray::Internal {
   }
 };
 
+NDArray NDArray::Reshape(std::vector<int64_t> shape) const {
+  MXCHECK(IsContiguous()) << "only support contiguous ndarray";
+  auto curr_shape = Shape();
+  size_t curr_size = 1;
+  for(size_t i=0; i<curr_shape.size(); i++){
+     curr_size *= curr_shape[i];
+  }
+  size_t given_size = 1;
+  int64_t newaxis = -1;
+  bool has_zero = false;
+  for(size_t i=0; i<shape.size(); i++){
+    if(shape[i] <0){
+      MXCHECK(newaxis==-1) << "ValueError: can only specify one unknown dimension";
+      newaxis = i;
+      continue;
+    }
+    given_size *= shape[i];
+    has_zero = has_zero || (shape[i]==0);
+  }
+
+  MXCHECK(!(newaxis==-1 && given_size!=curr_size)) << "cannot reshape array of size "<<curr_size<<" into the given shape";
+  MXCHECK(!(has_zero && newaxis!=-1)) << "cannot reshape array of size "<<curr_size<<" into the given shape";
+
+  if(newaxis!=-1){
+    shape[newaxis] = curr_size/given_size;
+  }
+  return CreateView(shape, (*this)->dtype);
+}
+
 NDArray NDArray::CreateView(std::vector<int64_t> shape, DLDataType dtype) const {
   MXCHECK(data_ != nullptr);
   MXCHECK(get_mutable()->dl_tensor.strides == nullptr) << "Can only create view for compact tensor";

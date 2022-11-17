@@ -111,6 +111,8 @@ class NDArray : public ObjectRef {
    * \return a contiguous copy of current NDArray.
    */
   NDArray Contiguous() const;
+
+  NDArray Reshape(std::vector<int64_t> shape) const;
   /*!
    * \brief Create a NDArray that shares the data memory with the current one.
    * \param shape The shape of the new array.
