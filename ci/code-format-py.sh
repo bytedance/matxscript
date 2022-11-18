@@ -31,7 +31,7 @@ if [ -f "${THIS_PATH}/pre-commit" ];then
 fi
 
 base="--cached"
-target="origin/master"
+target="origin/main"
 
 fail_on_diff=0
 has_diff=0

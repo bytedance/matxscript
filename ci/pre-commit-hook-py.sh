@@ -28,14 +28,14 @@ function run_autopep8_diff() {
 }
 
 base='--cached'
-target='origin/master'
+target='origin/main'
 show_only=0
 fail_on_diff=0
 
 while [ "$#" -gt 0 ]; do
     case $1 in
         -h|--help)
-            echo "Usage: $0 [--fail-on-diff] [--show-only] [--base|-b <base(=--cached)>] [--target|-t <target(=origin/master)>]"
+            echo "Usage: $0 [--fail-on-diff] [--show-only] [--base|-b <base(=--cached)>] [--target|-t <target(=origin/main)>]"
             exit 0
         ;;
         --fail-on-diff)

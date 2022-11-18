@@ -570,34 +570,36 @@ NDArray NDArray::Reshape(std::vector<int64_t> newshape) const {
   MXCHECK(IsContiguous()) << "only support contiguous ndarray";
   auto curr_shape = Shape();
   size_t curr_size = 1;
-  for(size_t i=0; i<curr_shape.size(); i++){
-     curr_size *= curr_shape[i];
+  for (size_t i = 0; i < curr_shape.size(); i++) {
+    curr_size *= curr_shape[i];
   }
   size_t given_size = 1;
   int64_t newaxis = -1;
   bool has_zero = false;
-  for(size_t i=0; i<newshape.size(); i++){
-    if(newshape[i] <0){
-      MXCHECK(newaxis==-1) << "ValueError: can only specify one unknown dimension";
+  for (size_t i = 0; i < newshape.size(); i++) {
+    if (newshape[i] < 0) {
+      MXCHECK(newaxis == -1) << "ValueError: can only specify one unknown dimension";
       newaxis = i;
       continue;
     }
     given_size *= newshape[i];
-    has_zero = has_zero || (newshape[i]==0);
+    has_zero = has_zero || (newshape[i] == 0);
   }
 
-  MXCHECK(!(newaxis==-1 && given_size!=curr_size)) << "cannot reshape array of size "<<curr_size<<" into the given shape";
-  MXCHECK(!(has_zero && newaxis!=-1)) << "cannot reshape array of size "<<curr_size<<" into the given shape";
+  MXCHECK(!(newaxis == -1 && given_size != curr_size))
+      << "cannot reshape array of size " << curr_size << " into the given shape";
+  MXCHECK(!(has_zero && newaxis != -1))
+      << "cannot reshape array of size " << curr_size << " into the given shape";
 
-  if(newaxis!=-1){
-    newshape[newaxis] = curr_size/given_size;
+  if (newaxis != -1) {
+    newshape[newaxis] = curr_size / given_size;
   }
   return CreateView(std::move(newshape), (*this)->dtype);
 }
 
-NDArray NDArray::Reshape(const FTList<int64_t>& newshape) const{
+NDArray NDArray::Reshape(const FTList<int64_t>& newshape) const {
   std::vector<int64_t> shape;
-  for(auto &e:newshape){
+  for (auto& e : newshape) {
     shape.push_back(e);
   }
   return Reshape(std::move(shape));
@@ -605,7 +607,7 @@ NDArray NDArray::Reshape(const FTList<int64_t>& newshape) const{
 
 NDArray NDArray::Reshape(const List& newshape) const {
   std::vector<int64_t> shape;
-  for(auto &e:newshape){
+  for (auto& e : newshape) {
     shape.push_back(e.As<int64_t>());
   }
   return Reshape(std::move(shape));
@@ -613,7 +615,7 @@ NDArray NDArray::Reshape(const List& newshape) const {
 
 NDArray NDArray::Reshape(const Tuple& newshape) const {
   std::vector<int64_t> shape;
-  for(auto &e:newshape){
+  for (auto& e : newshape) {
     shape.push_back(e.As<int64_t>());
   }
   return Reshape(std::move(shape));
@@ -622,24 +624,23 @@ NDArray NDArray::Reshape(const Tuple& newshape) const {
 NDArray NDArray::Reshape(const Any& newshape) const {
   switch (newshape.type_code()) {
     case TypeIndex::kRuntimeList: {
-       auto it = newshape.AsObjectRefNoCheck<List>();
-       return Reshape(it);
-    }break;
+      auto it = newshape.AsObjectRefNoCheck<List>();
+      return Reshape(it);
+    } break;
     case TypeIndex::kRuntimeFTList: {
-       auto it = newshape.As<FTList<int64_t>>();
-       return Reshape(it);
-    }break;
+      auto it = newshape.As<FTList<int64_t>>();
+      return Reshape(it);
+    } break;
     case TypeIndex::kRuntimeTuple: {
-       auto it = newshape.AsObjectRefNoCheck<Tuple>();
-       return Reshape(it);
-    }break;
+      auto it = newshape.AsObjectRefNoCheck<Tuple>();
+      return Reshape(it);
+    } break;
     default: {
       MXTHROW << "expect 'list' but get '" << TypeIndex2Str(newshape.type_code());
     } break;
   }
   return NDArray();
 }
-
 
 NDArray NDArray::CreateView(std::vector<int64_t> shape, DLDataType dtype) const {
   MXCHECK(data_ != nullptr);

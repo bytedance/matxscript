@@ -185,7 +185,7 @@ def check_public_stability():
     proc = subprocess.Popen(['git',
                              'diff',
                              '--cached',
-                             'origin/master',
+                             'origin/main',
                              '--numstat',
                              '--diff-filter=ACMRT'],
                             stdout=subprocess.PIPE,
