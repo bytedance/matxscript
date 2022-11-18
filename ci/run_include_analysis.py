@@ -207,10 +207,11 @@ def check_public_stability():
 
 def main():
     # skip main branch
-    proc = subprocess.Popen(['git', 'branch', '--show-current'],
+    proc = subprocess.Popen(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
     (branch, _) = proc.communicate()
+    branch = branch.decode().strip()
     if branch == 'main':
         print("skip main branch...", file=sys.stdout)
         sys.exit(0)
