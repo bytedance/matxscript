@@ -13,5 +13,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: checkout
+      run: |
+        commits=${{ github.event.pull_request.commits }}
+        if [[ -n "$commits" ]]; then
+          # Prepare enough depth for diffs with master
+          git fetch --depth="$(( commits + 1 ))"
+        fi
     - name: Check C++ Codestyle
-      run: bash ci/code-format-cxx.sh --show-only --fail-on-diff -t $GITLAB_MASTER_COMMIT_SHA -b $GITLAB_COMMIT_SHA
+      run: bash ci/code-format-cxx.sh --show-only --fail-on-diff

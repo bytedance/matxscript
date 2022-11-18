@@ -13,8 +13,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: checkout
+      run: |
+        commits=${{ github.event.pull_request.commits }}
+        if [[ -n "$commits" ]]; then
+          # Prepare enough depth for diffs with master
+          git fetch --depth="$(( commits + 1 ))"
+        fi
     - uses: actions/setup-python@v4
       with:
         python-version: '3.8'
+    - name: install requirements
+      run: pip3 install autopep8
     - name: Check Python Codestyle
-      run: bash ci/pre-commit-hook-py.sh --show-only --fail-on-diff -t $GITLAB_MASTER_COMMIT_SHA -b $GITLAB_COMMIT_SHA
+      run: bash ci/pre-commit-hook-py.sh --show-only --fail-on-diff

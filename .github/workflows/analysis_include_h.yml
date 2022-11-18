@@ -10,9 +10,17 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
     - uses: actions/checkout@v3
+    - name: checkout
+      run: |
+        commits=${{ github.event.pull_request.commits }}
+        if [[ -n "$commits" ]]; then
+          # Prepare enough depth for diffs with master
+          git fetch --depth="$(( commits + 1 ))"
+        fi
     - uses: actions/setup-python@v4
       with:
         python-version: '3.8'
