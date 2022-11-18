@@ -212,6 +212,7 @@ _register_object_builtin_op("reverse")
 _register_object_builtin_op("union")
 _register_object_builtin_op("sort")
 _register_object_builtin_op("contiguous")
+_register_object_builtin_op("reshape")
 
 ###############################################################################
 # Python builtin modules

@@ -254,6 +254,9 @@ class NDArray(Object):
         """
         return _ffi_api.NDArrayContiguous(self)
 
+    def reshape(self, newshape:Union[tuple, list]):
+        return _ffi_api.NDArrayReshape(self, newshape)
+
     def device(self):
         """Returns the current NDArray device as a string"""
         if self.tensor_handle.contents.ctx.device_type == 1:

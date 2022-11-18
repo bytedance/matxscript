@@ -1771,6 +1771,23 @@ RTValue kernel_object_contiguous(const Any& self, PyArgs args) {
   return None;
 }
 
+RTValue kernel_object_reshape(const Any& self, PyArgs args) {
+  switch (self.type_code()) {
+    case TypeIndex::kRuntimeNDArray: {
+      MXCHECK_EQ(args.size(), 1) << "ndarray.reshape Expect 1 arguments but get " << args.size();
+      return self.AsObjectViewNoCheck<NDArray>().data().Reshape(args[0]);
+    } break;
+    case TypeIndex::kRuntimeUserData: {
+      auto ud_view = self.AsObjectViewNoCheck<UserDataRef>();
+      return ud_view.data().generic_call_attr("reshape", args);
+    } break;
+    default: {
+      MXTHROW << "\"" << self.type_name() << "\" object has no method \"is_contiguous\"";
+    } break;
+  }
+  return None;
+}
+
 RTValue kernel_object_shape(const Any& self, PyArgs args) {
   switch (self.type_code()) {
     case TypeIndex::kRuntimeNDArray: {

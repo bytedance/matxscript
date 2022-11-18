@@ -1986,6 +1986,16 @@ def object_contiguous(span, container_expr, *args, **kwargs):
     return hlo_call_intrin(ret_type, func_name, span, container_expr, *args, **kwargs)
 
 
+def object_reshape(span, container_expr, *args, **kwargs):
+    ret_type = _type.ObjectType()
+    func_name = _builtin_func_name(container_expr, "reshape")
+    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+        ty = container_expr.py_type_name()
+        assert len(kwargs) == 0, f"{ty}.reshape() takes no keyword arguments"
+        ret_type = container_expr.checked_type
+    return hlo_call_intrin(ret_type, func_name, span, container_expr, *args, **kwargs)
+
+
 def object_shape(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "shape")

@@ -47,6 +47,11 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_contiguous, Contiguous)
     .set_num_inputs(1)
     .add_argument("self", "matx.NDArray", "");
 
+MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_reshape, Reshape)
+    .set_num_inputs(2)
+    .add_argument("self", "matx.NDArray", "")
+    .add_argument("shape", "List|Tuple|Any|any_view", "");
+
 MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_shape, ShapeList)
     .set_num_inputs(1)
     .add_argument("self", "matx.NDArray", "");
