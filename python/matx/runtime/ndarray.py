@@ -211,7 +211,7 @@ class NDArray(Object):
     def contiguous(self):
         return _ffi_api.NDArrayContiguous(self)
 
-    def reshape(self, newshape:tuple):
+    def reshape(self, newshape:Union[tuple, list]):
         return _ffi_api.NDArrayReshape(self, newshape)
 
     def device(self):

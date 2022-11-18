@@ -1991,7 +1991,7 @@ def object_reshape(span, container_expr, *args, **kwargs):
     func_name = _builtin_func_name(container_expr, "reshape")
     if _type_rel.is_type_of(container_expr, _type.NDArrayType):
         ty = container_expr.py_type_name()
-        assert len(kwargs) == 0, f"{ty}.transpose() takes no keyword arguments"
+        assert len(kwargs) == 0, f"{ty}.reshape() takes no keyword arguments"
         ret_type = container_expr.checked_type
     return hlo_call_intrin(ret_type, func_name, span, container_expr, *args, **kwargs)
 

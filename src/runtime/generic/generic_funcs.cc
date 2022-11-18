@@ -1775,34 +1775,8 @@ RTValue kernel_object_reshape(const Any& self, PyArgs args) {
   switch (self.type_code()) {
     case TypeIndex::kRuntimeNDArray: {
       MXCHECK_EQ(args.size(), 1) << "ndarray.reshape Expect 1 arguments but get " << args.size();
-      std::vector<int64_t> shape;
-
-      switch (args[0].type_code()) {
-        case TypeIndex::kRuntimeList: {
-           auto it = args[0].AsObjectRefNoCheck<List>();
-           for(auto &e:it){
-              shape.push_back(e.As<int64_t>());
-           }
-        }break;
-        case TypeIndex::kRuntimeFTList: {
-           auto it = args[0].AsObjectRefNoCheck<FTObjectBase>();
-           int64_t size = it.generic_call_attr("__len__", {}).As<int64_t>();
-           for(int64_t i = 0; i<size; i++){
-              shape.push_back(it.generic_call_attr("__getitem__", {i}).As<int64_t>());
-           }
-        }break;
-        case TypeIndex::kRuntimeTuple: {
-           auto it = args[0].AsObjectRefNoCheck<Tuple>();
-           for(auto &e:it){
-              shape.push_back(e.As<int64_t>());
-           }
-        }break;
-        default: {
-          MXTHROW << "expect 'list' but get '" << TypeIndex2Str(args[0].type_code());
-        } break;
-      }
-
-      return self.AsObjectViewNoCheck<NDArray>().data().Reshape(shape);
+      Any newshape = args[0];
+      return self.AsObjectViewNoCheck<NDArray>().data().Reshape(newshape);
     } break;
     case TypeIndex::kRuntimeUserData: {
       auto ud_view = self.AsObjectViewNoCheck<UserDataRef>();
