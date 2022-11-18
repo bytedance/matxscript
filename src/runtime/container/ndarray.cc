@@ -566,7 +566,7 @@ struct NDArray::Internal {
   }
 };
 
-NDArray NDArray::Reshape(std::vector<int64_t>& newshape) const {
+NDArray NDArray::Reshape(std::vector<int64_t> newshape) const {
   MXCHECK(IsContiguous()) << "only support contiguous ndarray";
   auto curr_shape = Shape();
   size_t curr_size = 1;
@@ -592,7 +592,7 @@ NDArray NDArray::Reshape(std::vector<int64_t>& newshape) const {
   if(newaxis!=-1){
     newshape[newaxis] = curr_size/given_size;
   }
-  return CreateView(newshape, (*this)->dtype);
+  return CreateView(std::move(newshape), (*this)->dtype);
 }
 
 NDArray NDArray::Reshape(const FTList<int64_t>& newshape) const{
@@ -600,7 +600,7 @@ NDArray NDArray::Reshape(const FTList<int64_t>& newshape) const{
   for(auto &e:newshape){
     shape.push_back(e);
   }
-  return Reshape(shape);
+  return Reshape(std::move(shape));
 }
 
 NDArray NDArray::Reshape(const List& newshape) const {
@@ -608,7 +608,7 @@ NDArray NDArray::Reshape(const List& newshape) const {
   for(auto &e:newshape){
     shape.push_back(e.As<int64_t>());
   }
-  return Reshape(shape);
+  return Reshape(std::move(shape));
 }
 
 NDArray NDArray::Reshape(const Tuple& newshape) const {
@@ -616,7 +616,7 @@ NDArray NDArray::Reshape(const Tuple& newshape) const {
   for(auto &e:newshape){
     shape.push_back(e.As<int64_t>());
   }
-  return Reshape(shape);
+  return Reshape(std::move(shape));
 }
 
 NDArray NDArray::Reshape(const Any& newshape) const {

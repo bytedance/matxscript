@@ -112,7 +112,7 @@ class NDArray : public ObjectRef {
    */
   NDArray Contiguous() const;
 
-  NDArray Reshape(std::vector<int64_t>& newshape) const;
+  NDArray Reshape(std::vector<int64_t> newshape) const;
   NDArray Reshape(const FTList<int64_t>& newshape) const;
   NDArray Reshape(const List& newshape) const;
   NDArray Reshape(const Tuple& newshape) const;

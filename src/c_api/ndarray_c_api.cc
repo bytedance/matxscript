@@ -54,8 +54,7 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayContiguous").set_body([](PyArgs args)
 
 MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayReshape").set_body([](PyArgs args) -> RTValue {
   NDArray data = args[0].As<NDArray>();
-  Any newshape = args[1];
-  return data.Reshape(newshape);
+  return data.Reshape(args[1]);
 });
 
 MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayStride").set_body([](PyArgs args) -> RTValue {

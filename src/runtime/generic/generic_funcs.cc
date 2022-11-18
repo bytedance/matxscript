@@ -1775,8 +1775,7 @@ RTValue kernel_object_reshape(const Any& self, PyArgs args) {
   switch (self.type_code()) {
     case TypeIndex::kRuntimeNDArray: {
       MXCHECK_EQ(args.size(), 1) << "ndarray.reshape Expect 1 arguments but get " << args.size();
-      Any newshape = args[0];
-      return self.AsObjectViewNoCheck<NDArray>().data().Reshape(newshape);
+      return self.AsObjectViewNoCheck<NDArray>().data().Reshape(args[0]);
     } break;
     case TypeIndex::kRuntimeUserData: {
       auto ud_view = self.AsObjectViewNoCheck<UserDataRef>();
