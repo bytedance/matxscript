@@ -194,6 +194,9 @@ def check_public_stability():
     git_diff = git_diff.decode().strip().split('\n')
     unstable_changes = []
     for diff in git_diff:
+        diff = diff.strip(' \r\n\t')
+        if len(diff) == 0:
+            continue
         add, minus, f = diff.split(maxsplit=2)
         if f.startswith('include/'):
             f = f[8:]
@@ -202,7 +205,18 @@ def check_public_stability():
     return unstable_changes
 
 
-if __name__ == '__main__':
+def main():
+    # skip main branch
+    proc = subprocess.Popen(['git', 'branch', '--show-current'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    (branch, _) = proc.communicate()
+    if branch == 'main':
+        print("skip main branch...", file=sys.stdout)
+        sys.exit(0)
+
+    print(f"check branch diff: {branch} vs main", file=sys.stdout)
+
     includes, dependencies = analysis_include(main_entry)
 
     if len(sys.argv) != 2:
@@ -218,16 +232,20 @@ if __name__ == '__main__':
     elif mode == '--check-dependency':
         non_public_headers = includes.difference(public_headers)
         if non_public_headers:
-            print('[ERROR] Non-public headers found:', non_public_headers)
-            print('details:')
+            print('[ERROR] Non-public headers found:', non_public_headers, file=sys.stderr)
+            print('details:', file=sys.stderr)
             for header in non_public_headers:
                 for h, incs in dependencies.items():
                     if header in incs:
-                        print('"{}" includes "{}"'.format(h, header))
-            sys.exit(1)
+                        print('"{}" includes "{}"'.format(h, header), file=sys.stderr)
+            sys.exit(-1)
 
     elif mode == '--check-stability':
         unstable_changes = check_public_stability()
         if unstable_changes:
-            print('[WARNING] Minus changes on public headers:', unstable_changes)
-            sys.exit(1)
+            print('[WARNING] Minus changes on public headers:', unstable_changes, file=sys.stderr)
+            sys.exit(0)
+
+
+if __name__ == '__main__':
+    main()
