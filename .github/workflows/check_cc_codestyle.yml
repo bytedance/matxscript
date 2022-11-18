@@ -14,4 +14,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Check C++ Codestyle
-      run: bash ci/code-format-cxx.sh --show-only --fail-on-diff -t $GITLAB_MASTER_COMMIT_SHA -b $GITLAB_COMMIT_SHA
+      run: bash ci/code-format-cxx.sh --show-only --fail-on-diff

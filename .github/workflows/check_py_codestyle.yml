@@ -17,4 +17,4 @@ jobs:
       with:
         python-version: '3.8'
     - name: Check Python Codestyle
-      run: bash ci/pre-commit-hook-py.sh --show-only --fail-on-diff -t $GITLAB_MASTER_COMMIT_SHA -b $GITLAB_COMMIT_SHA
+      run: bash ci/pre-commit-hook-py.sh --show-only --fail-on-diff
