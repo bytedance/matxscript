@@ -24,5 +24,7 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: '3.8'
-    - name: runtime include analysis
+    - name: runtime include analysis - check-dependency
+      run: python3 ci/run_include_analysis.py --check-dependency
+    - name: runtime include analysis - check-stability
       run: python3 ci/run_include_analysis.py --check-stability
