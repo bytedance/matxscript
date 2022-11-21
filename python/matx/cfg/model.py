@@ -166,7 +166,7 @@ class BasicBlock(Block):
                 c.scope = parent_block
             else:
                 assert (
-                        c.scope == parent_block
+                    c.scope == parent_block
                 ), "code lineno: {} in the same blocks does not refer to the same scope".format(stmt.lineno)
         for attr, value in kwargs.items():
             setattr(c, attr, value)
