@@ -430,8 +430,11 @@ DLDevice NDArrayHelper::GetDevice(const Unicode& device) {
 }
 
 Unicode NDArrayHelper::GetDeviceStr(const DLDevice& device) {
+  if (device.device_type == DLDeviceType::kDLCPU) {
+    return U"cpu";
+  }
   static string_view unk("Unknown");
-  auto dev_name = DeviceTypeToName(device.device_id);
+  auto dev_name = DeviceTypeToName(device.device_type);
   if (dev_name == unk) {
     MXTHROW << "unknown device_type: " << device.device_type << ", device_id: " << device.device_id;
   }
