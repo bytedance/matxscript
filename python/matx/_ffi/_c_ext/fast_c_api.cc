@@ -458,7 +458,7 @@ static PyObject* PyObjectMATXScriptAny_repr(PyObject* self0) {
     } break;
     case ::matxscript::runtime::TypeIndex::kRuntimeContext: {
       return PyUnicode_FromFormat(
-          "Any(code: %d, pad: %d, value: MATXContext(device_type: %d, device_id: %d))",
+          "Any(code: %d, pad: %d, value: MATXScriptDevice(device_type: %d, device_id: %d))",
           self->value.code,
           self->value.pad,
           self->value.data.v_device.device_type,

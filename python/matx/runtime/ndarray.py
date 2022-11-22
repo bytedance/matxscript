@@ -23,7 +23,7 @@ import numpy as np
 from .. import _ffi
 
 from .._ffi.base import _LIB, check_call, c_array, string_types
-from .._ffi.runtime_ctypes import DataType, MATXContext, MATXArray, MATXArrayHandle
+from .._ffi.runtime_ctypes import DataType, MATXScriptDevice, MATXArray, MATXArrayHandle
 from .._ffi.runtime_ctypes import DataTypeCode, matx_shape_index_t
 
 # pylint: disable=wrong-import-position
@@ -114,14 +114,14 @@ class NDArray(Object):
                  arr: Union[int, float, list, container.List],
                  shape: Union[list, container.List],
                  dtype: str,
-                 ctx: str = "cpu"):
+                 device: str = "cpu"):
         new_shape = [x for x in shape]
         self.__init_handle_by_constructor__(
             _ffi_api.NDArray,
             arr,
             new_shape,
             dtype,
-            ctx)
+            device)
         self.__init_self__()
 
     def __init_self__(self):
@@ -259,11 +259,11 @@ class NDArray(Object):
 
     def device(self):
         """Returns the current NDArray device as a string"""
-        if self.tensor_handle.contents.ctx.device_type == 1:
+        if self.tensor_handle.contents.device.device_type == 1:
             return "cpu"
         return "%s:%s" % (
-            MATXContext.MASK2STR[self.tensor_handle.contents.ctx.device_type],
-            self.tensor_handle.contents.ctx.device_id)
+            MATXScriptDevice.MASK2STR[self.tensor_handle.contents.device.device_type],
+            self.tensor_handle.contents.device.device_id)
 
     def stride(self):
         """Returns List of bytes to step in each dimension when traversing an array.
@@ -286,14 +286,9 @@ class NDArray(Object):
     # -------------------- [end] methods can be used in script --------------------
 
     # @property
-    # def ctx(self):
+    # def device(self):
     #    """context of this array"""
-    #    return self.tensor_handle.contents.ctx
-
-    # @property
-    # def context(self):
-    #    """context of this array"""
-    #    return self.ctx
+    #    return self.tensor_handle.contents.device
 
     # def __hash__(self):
     #    return ctypes.cast(self.tensor_handle, ctypes.c_void_p).value
@@ -306,7 +301,7 @@ class NDArray(Object):
 
     def __repr__(self):
         res = "<matx.NDArray shape={0}, {1}>\n".format(
-            tuple(self.shape()), self.tensor_handle.contents.ctx)
+            tuple(self.shape()), self.tensor_handle.contents.device)
         res += self.asnumpy().__repr__()
         return res
 
@@ -442,7 +437,7 @@ class NDArray(Object):
 #        """
 #        if isinstance(target, NDArray):
 #            return self._copyto(target)
-#        if isinstance(target, MATXContext):
+#        if isinstance(target, MATXScriptDevice):
 #            res = empty(tuple(self.shape()), self.dtype(), target)
 #            return self._copyto(res)
 #        raise ValueError("Unsupported target type %s" % str(type(target)))
@@ -526,9 +521,9 @@ class NDArray(Object):
 
     def _copy_torch(self):
         import torch
-        device_str = MATXContext.MASK2STR[self.tensor_handle.contents.ctx.device_type]
+        device_str = MATXScriptDevice.MASK2STR[self.tensor_handle.contents.device.device_type]
         if device_str == "gpu":
-            device_str = "cuda:%d" % self.tensor_handle.contents.ctx.device_id
+            device_str = "cuda:%d" % self.tensor_handle.contents.device.device_id
         t_dtype = {
             "float32": torch.float32,
             "float64": torch.float64,
@@ -548,8 +543,8 @@ class NDArray(Object):
         return ret
 
     def _torch(self):
-        # if MATXContext.MASK2STR[self.tensor_handle.contents.ctx.device_type] == "gpu":
-        #    _ffi_api.DefaultComputeStreamSync(self.tensor_handle.contents.ctx.device_id)
+        # if MATXScriptDevice.MASK2STR[self.tensor_handle.contents.device.device_type] == "gpu":
+        #    _ffi_api.DefaultComputeStreamSync(self.tensor_handle.contents.device.device_id)
         import torch.utils.dlpack
         return torch.utils.dlpack.from_dlpack(self.to_dlpack())
 
@@ -994,7 +989,7 @@ def stack(seq, axes=0):
     return _ffi_api.NDArrayStack(seq, axes)
 
 
-# def context(dev_type, dev_id=0):
+# def device(dev_type, dev_id=0):
 #    """Constructs the MATX context with the given dev_type dev_id.
 #       Note! This method cannot be compiled for use in matx.script
 #
@@ -1004,7 +999,7 @@ def stack(seq, axes=0):
 #        dev_id (int, optional): The integer device id
 #
 #    Returns
-#        MATXContext
+#        MATXScriptDevice
 #
 #    Examples
 #        >>> import matx
@@ -1014,13 +1009,13 @@ def stack(seq, axes=0):
 #    """
 #    if isinstance(dev_type, string_types):
 #        if '-device=micro_dev' in dev_type:
-#            dev_type = MATXContext.STR2MASK['micro_dev']
+#            dev_type = MATXScriptDevice.STR2MASK['micro_dev']
 #        else:
 #            dev_type = dev_type.split()[0]
-#            if dev_type not in MATXContext.STR2MASK:
+#            if dev_type not in MATXScriptDevice.STR2MASK:
 #                raise ValueError("Unknown device type %s" % dev_type)
-#            dev_type = MATXContext.STR2MASK[dev_type]
-#    return MATXContext(dev_type, dev_id)
+#            dev_type = MATXScriptDevice.STR2MASK[dev_type]
+#    return MATXScriptDevice(dev_type, dev_id)
 #
 #
 # def cpu(dev_id=0):
@@ -1031,9 +1026,9 @@ def stack(seq, axes=0):
 #        dev_id (int, optional): Construct cpu device, device_id is 0 by default
 #
 #    Returns
-#        MATXContext
+#        MATXScriptDevice
 #    """
-#    return MATXContext(1, dev_id)
+#    return MATXScriptDevice(1, dev_id)
 #
 #
 # def gpu(dev_id=0):
@@ -1046,7 +1041,7 @@ def stack(seq, axes=0):
 #    Returns:
 #        [type]: [description]
 #    """
-#    return MATXContext(2, dev_id)
+#    return MATXScriptDevice(2, dev_id)
 #
 #
 # def ndarray(arr: List, shape: List, dtype: str):
@@ -1064,13 +1059,13 @@ def stack(seq, axes=0):
 #    return _ffi_api.NDArray(arr, shape, dtype)
 #
 
-def from_numpy(arr, ctx="cpu"):
+def from_numpy(arr, device="cpu"):
     """Construct a module method for matx.NDArray from numpy.ndarray.
        Note! This method cannot be compiled for use in matx.script
 
     Args:
         arr (numpy.ndarray)
-        ctx (MATXContext, optional
+        device (MATXScriptDevice, optional
              The device context to create the array)
 
     Returns:
@@ -1087,7 +1082,7 @@ def from_numpy(arr, ctx="cpu"):
         ]
     """
     return NDArray(
-        container.List(), container.List(arr.shape), str(arr.dtype), ctx
+        container.List(), container.List(arr.shape), str(arr.dtype), device
     ).from_numpy(arr)
 
 # def numpyasarray(np_data):
@@ -1103,11 +1098,11 @@ def from_numpy(arr, ctx="cpu"):
 #    arr.dtype = DataType(np.dtype(data.dtype).name)
 #    arr.ndim = data.ndim
 #    # CPU device
-#    arr.ctx = context(1, 0)
+#    arr.device = context(1, 0)
 #    return arr, shape
 
 
-# def empty(shape, dtype="float32", ctx=context(1, 0)):
+# def empty(shape, dtype="float32", device=context(1, 0)):
 #    """Create an empty array given shape and device
 #
 #    Parameters
@@ -1118,7 +1113,7 @@ def from_numpy(arr, ctx="cpu"):
 #    dtype : type or str
 #        The data type of the array.
 #
-#    ctx : MATXContext
+#    device : MATXScriptDevice
 #        The context of the array
 #
 #    Returns
@@ -1135,8 +1130,8 @@ def from_numpy(arr, ctx="cpu"):
 #        ctypes.c_int(dtype.type_code),
 #        ctypes.c_int(dtype.bits),
 #        ctypes.c_int(dtype.lanes),
-#        ctx.device_type,
-#        ctx.device_id,
+#        device.device_type,
+#        device.device_id,
 #        ctypes.byref(handle)))
 #    obj = NDArray.__new__(NDArray)
 #    obj.handle = handle
@@ -1163,7 +1158,7 @@ def from_dlpack(dltensor):
     return _ffi.matx_script_api._from_dlpack(dltensor)
 
 
-# def array(arr, ctx=cpu(0)):
+# def array(arr, device=cpu(0)):
 #    """Create an array from source arr.
 #
 #    Parameters
@@ -1171,7 +1166,7 @@ def from_dlpack(dltensor):
 #    arr : numpy.ndarray
 #        The array to be copied from
 #
-#    ctx : MATXContext, optional
+#    device : MATXScriptDevice, optional
 #        The device context to create the array
 #
 #    Returns
@@ -1181,7 +1176,7 @@ def from_dlpack(dltensor):
 #    """
 #    if not isinstance(arr, (np.ndarray, NDArray)):
 #        arr = np.array(arr)
-#    return empty(arr.shape, arr.dtype, ctx).copyfrom(arr)
+#    return empty(arr.shape, arr.dtype, device).copyfrom(arr)
 
 
 # Register back to FFI

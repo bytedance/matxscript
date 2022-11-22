@@ -441,10 +441,10 @@ def _register_nd_array_construct():
                            arr,
                            shape,
                            dtype,
-                           ctx="cpu"):
-        if not isinstance(ctx, _expr.BaseExpr):
-            assert isinstance(ctx, str), "internal error"
-            ctx = _expr.UnicodeImm(ctx, span=span)
+                           device="cpu"):
+        if not isinstance(device, _expr.BaseExpr):
+            assert isinstance(device, str), "internal error"
+            device = _expr.UnicodeImm(device, span=span)
         # ndim = -1
         # if isinstance(shape, _expr.Call) and isinstance(shape.op, _ir_adt.Constructor):
         #     if len(shape.args) == 1:
@@ -461,7 +461,7 @@ def _register_nd_array_construct():
             arr,
             shape,
             dtype,
-            ctx
+            device
         )
 
     nd_array_construct.checked_type = _type.NDArrayType()
