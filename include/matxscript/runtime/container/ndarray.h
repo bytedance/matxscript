@@ -71,7 +71,7 @@ class NDArray : public ObjectRef {
   /*!
    * \brief Copy data content from another array.
    * \param other The source array to be copied from.
-   * \note The copy may happen asynchronously if it involves a GPU context.
+   * \note The copy may happen asynchronously if it involves a GPU device.
    *       TVMSynchronize is necessary.
    */
   void CopyFrom(const DLTensor* other);
@@ -87,7 +87,7 @@ class NDArray : public ObjectRef {
   /*!
    * \brief Copy data content into another array.
    * \param other The source array to be copied from.
-   * \note The copy may happen asynchronously if it involves a GPU context.
+   * \note The copy may happen asynchronously if it involves a GPU device.
    *       TVMSynchronize is necessary.
    */
   void CopyTo(DLTensor* other) const;
@@ -101,11 +101,11 @@ class NDArray : public ObjectRef {
    */
   MATX_DLL void CopyToBytes(void* data, size_t nbytes) const;
   /*!
-   * \brief Copy the data to another context.
-   * \param ctx The target context.
-   * \return The array under another context.
+   * \brief Copy the data to another device.
+   * \param device The target device.
+   * \return The array under another device.
    */
-  NDArray CopyTo(const DLContext& ctx) const;
+  NDArray CopyTo(const DLDevice& device) const;
   /*!
    * \brief get a contiguous copy of current NDArray.
    * \return a contiguous copy of current NDArray.
@@ -143,11 +143,11 @@ class NDArray : public ObjectRef {
    * \brief Create an empty NDArray.
    * \param shape The shape of the new array.
    * \param dtype The data type of the new array.
-   * \param ctx The context of the Array.
+   * \param device The device of the Array.
    * \return The created Array
    */
-  MATX_DLL static NDArray Empty(std::vector<int64_t> shape, DLDataType dtype, DLContext ctx);
-  MATX_DLL static NDArray Empty(const int64_t* shape, int64_t dim, DLDataType dtype, DLContext ctx);
+  MATX_DLL static NDArray Empty(std::vector<int64_t> shape, DLDataType dtype, DLDevice ctx);
+  MATX_DLL static NDArray Empty(const int64_t* shape, int64_t dim, DLDataType dtype, DLDevice ctx);
   /*!
    * \brief Create a NDArray backed by a dlpack tensor.
    *

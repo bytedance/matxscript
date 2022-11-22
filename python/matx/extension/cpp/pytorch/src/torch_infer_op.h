@@ -43,7 +43,7 @@ class TorchInferOp : public OpKernel {
   TorchEnginePtr engine_;
   bool output_to_cpu_ = true;
   DeviceAPI* device_api_ = nullptr;
-  MATXScriptContext ctx_;
+  MATXScriptDevice dl_device_;
 
  public:
   RTValue FromIValue(const torch::jit::IValue& i_val) const;

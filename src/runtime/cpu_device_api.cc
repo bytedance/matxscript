@@ -46,25 +46,25 @@ namespace runtime {
 
 class CPUDeviceAPI final : public DeviceAPI {
  public:
-  void SetDevice(MATXScriptContext ctx) final {
+  void SetDevice(MATXScriptDevice ctx) final {
   }
-  void GetAttr(MATXScriptContext ctx, DeviceAttrKind kind, RTValue* rv) final {
+  void GetAttr(MATXScriptDevice ctx, DeviceAttrKind kind, RTValue* rv) final {
     if (kind == kExist) {
       *rv = 1;
     }
   }
 
-  void* Alloc(MATXScriptContext ctx, size_t nbytes) final {
+  void* Alloc(MATXScriptDevice ctx, size_t nbytes) final {
     MXCHECK(cpuBFCAllocator != nullptr);
     void* ptr = cpuBFCAllocator->Alloc(nbytes);
     return ptr;
   }
 
-  void* Alloc(MATXScriptContext ctx, size_t nbytes, size_t alignment, DLDataType type_hint) final {
+  void* Alloc(MATXScriptDevice ctx, size_t nbytes, size_t alignment, DLDataType type_hint) final {
     return Alloc(ctx, nbytes);
   }
 
-  void* AllocRaw(MATXScriptContext ctx,
+  void* AllocRaw(MATXScriptDevice ctx,
                  size_t nbytes,
                  size_t alignment,
                  DLDataType type_hint) final {
@@ -86,12 +86,12 @@ class CPUDeviceAPI final : public DeviceAPI {
     return ptr;
   }
 
-  void Free(MATXScriptContext ctx, void* ptr) final {
+  void Free(MATXScriptDevice ctx, void* ptr) final {
     MXCHECK(cpuBFCAllocator != nullptr);
     cpuBFCAllocator->Free(ptr);
   }
 
-  void FreeRaw(MATXScriptContext ctx, void* ptr) final {
+  void FreeRaw(MATXScriptDevice ctx, void* ptr) final {
 #if _MSC_VER
     _aligned_free(ptr);
 #else
@@ -104,43 +104,43 @@ class CPUDeviceAPI final : public DeviceAPI {
                       void* to,
                       size_t to_offset,
                       size_t size,
-                      MATXScriptContext ctx_from,
-                      MATXScriptContext ctx_to,
+                      MATXScriptDevice ctx_from,
+                      MATXScriptDevice ctx_to,
                       DLDataType type_hint,
                       MATXScriptStreamHandle stream) final {
     std::memcpy(
         static_cast<char*>(to) + to_offset, static_cast<const char*>(from) + from_offset, size);
   }
 
-  MATXScriptStreamHandle CreateStream(MATXScriptContext ctx) final {
+  MATXScriptStreamHandle CreateStream(MATXScriptDevice ctx) final {
     return nullptr;
   }
 
-  void FreeStream(MATXScriptContext ctx, MATXScriptStreamHandle stream) final {
+  void FreeStream(MATXScriptDevice ctx, MATXScriptStreamHandle stream) final {
   }
 
-  MATXScriptStreamHandle GetDefaultStream(MATXScriptContext ctx) final {
+  MATXScriptStreamHandle GetDefaultStream(MATXScriptDevice ctx) final {
     return nullptr;
   }
 
-  MATXScriptStreamHandle GetCurrentThreadStream(MATXScriptContext ctx) final {
+  MATXScriptStreamHandle GetCurrentThreadStream(MATXScriptDevice ctx) final {
     return nullptr;
   }
 
-  std::shared_ptr<void> GetSharedCurrentThreadStream(MATXScriptContext ctx) final {
+  std::shared_ptr<void> GetSharedCurrentThreadStream(MATXScriptDevice ctx) final {
     return nullptr;
   }
 
-  void SetCurrentThreadStream(MATXScriptContext ctx, std::shared_ptr<void> stream) final {
+  void SetCurrentThreadStream(MATXScriptDevice ctx, std::shared_ptr<void> stream) final {
   }
 
-  void StreamSync(MATXScriptContext ctx, MATXScriptStreamHandle stream) final {
+  void StreamSync(MATXScriptDevice ctx, MATXScriptStreamHandle stream) final {
   }
 
   void CreateEventSync(MATXScriptStreamHandle stream) final {
   }
 
-  void SyncStreamFromTo(MATXScriptContext ctx,
+  void SyncStreamFromTo(MATXScriptDevice ctx,
                         MATXScriptStreamHandle event_src,
                         MATXScriptStreamHandle event_dst) final {
   }

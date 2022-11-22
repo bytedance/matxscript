@@ -93,21 +93,21 @@ class TensorAPI {
     return NDArray::FromDLPack(at::toDLPack(at::stack(tsr_vec, dim)));
   }
 
-  NDArray to_type(const NDArray& x, Unicode ctx) {
-    auto it = str2tsr_type.find(ctx);
-    MXCHECK(it != str2tsr_type.end()) << "to_type failed, unknown type: " << ctx;
+  NDArray to_type(const NDArray& x, Unicode type) {
+    auto it = str2tsr_type.find(type);
+    MXCHECK(it != str2tsr_type.end()) << "to_type failed, unknown type: " << type;
     auto src_code = UTF8Decode(DLDataType2String(x.DataType()));
-    if (src_code == ctx) {
+    if (src_code == type) {
       return x;
     }
     at::Tensor x_tsr = at::fromDLPack(x.ToDLPack());
     return NDArray::FromDLPack(at::toDLPack(x_tsr.to(it->second)));
   }
 
-  NDArray to_device(const NDArray& x, Unicode ctx) {
-    DLContext nd_device = NDArrayHelper::GetDevice(ctx);
-    if (nd_device.device_id == (x->ctx).device_id &&
-        nd_device.device_type == (x->ctx).device_type) {
+  NDArray to_device(const NDArray& x, Unicode dev) {
+    DLDevice nd_device = NDArrayHelper::GetDevice(dev);
+    if (nd_device.device_id == (x->device).device_id &&
+        nd_device.device_type == (x->device).device_type) {
       return x;
     }
     at::Tensor x_tsr = at::fromDLPack(x.ToDLPack());
@@ -169,9 +169,9 @@ MATX_REGISTER_NATIVE_OBJECT(TensorAPI)
            return reinterpret_cast<TensorAPI*>(self)->stack(args);
          })
     .def("to_type",
-         [](void* self, NDArray x, Unicode ctx) -> NDArray {
-           return reinterpret_cast<TensorAPI*>(self)->to_type(x, ctx);
+         [](void* self, NDArray x, Unicode type) -> NDArray {
+           return reinterpret_cast<TensorAPI*>(self)->to_type(x, type);
          })
-    .def("to_device", [](void* self, NDArray x, Unicode ctx) -> NDArray {
-      return reinterpret_cast<TensorAPI*>(self)->to_device(x, ctx);
+    .def("to_device", [](void* self, NDArray x, Unicode device) -> NDArray {
+      return reinterpret_cast<TensorAPI*>(self)->to_device(x, device);
     });

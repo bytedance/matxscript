@@ -741,19 +741,19 @@ int MATXScriptFuncListGlobalNames(int* out_size, const char*** out_array) {
 
 int MATXScriptStreamCreate(int device_type, int device_id, MATXScriptStreamHandle* out) {
   API_BEGIN();
-  MATXScriptContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(device_type);
-  ctx.device_id = device_id;
-  *out = DeviceAPI::Get(ctx)->CreateStream(ctx);
+  MATXScriptDevice device;
+  device.device_type = static_cast<DLDeviceType>(device_type);
+  device.device_id = device_id;
+  *out = DeviceAPI::Get(device)->CreateStream(device);
   API_END();
 }
 
 int MATXScriptStreamFree(int device_type, int device_id, MATXScriptStreamHandle stream) {
   API_BEGIN();
-  MATXScriptContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(device_type);
-  ctx.device_id = device_id;
-  DeviceAPI::Get(ctx)->FreeStream(ctx, stream);
+  MATXScriptDevice device;
+  device.device_type = static_cast<DLDeviceType>(device_type);
+  device.device_id = device_id;
+  DeviceAPI::Get(device)->FreeStream(device, stream);
   API_END();
 }
 
@@ -761,19 +761,20 @@ int MATXScriptSetCurrentThreadStream(int device_type,
                                      int device_id,
                                      MATXScriptStreamHandle handle) {
   API_BEGIN();
-  MATXScriptContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(device_type);
-  ctx.device_id = device_id;
-  DeviceAPI::Get(ctx)->SetCurrentThreadStream(ctx, std::shared_ptr<void>(handle, [](void*) {}));
+  MATXScriptDevice device;
+  device.device_type = static_cast<DLDeviceType>(device_type);
+  device.device_id = device_id;
+  DeviceAPI::Get(device)->SetCurrentThreadStream(device,
+                                                 std::shared_ptr<void>(handle, [](void*) {}));
   API_END();
 }
 
 int MATXScriptSynchronize(int device_type, int device_id, MATXScriptStreamHandle stream) {
   API_BEGIN();
-  MATXScriptContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(device_type);
-  ctx.device_id = device_id;
-  DeviceAPI::Get(ctx)->StreamSync(ctx, stream);
+  MATXScriptDevice device;
+  device.device_type = static_cast<DLDeviceType>(device_type);
+  device.device_id = device_id;
+  DeviceAPI::Get(device)->StreamSync(device, stream);
   API_END();
 }
 
@@ -782,23 +783,23 @@ int MATXScriptStreamStreamSynchronize(int device_type,
                                       MATXScriptStreamHandle src,
                                       MATXScriptStreamHandle dst) {
   API_BEGIN();
-  MATXScriptContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(device_type);
-  ctx.device_id = device_id;
-  DeviceAPI::Get(ctx)->SyncStreamFromTo(ctx, src, dst);
+  MATXScriptDevice device;
+  device.device_type = static_cast<DLDeviceType>(device_type);
+  device.device_id = device_id;
+  DeviceAPI::Get(device)->SyncStreamFromTo(device, src, dst);
   API_END();
 }
 
 int MATXScriptDeviceAllocDataSpace(
-    DLContext ctx, size_t nbytes, size_t alignment, DLDataType type_hint, void** out_data) {
+    DLDevice device, size_t nbytes, size_t alignment, DLDataType type_hint, void** out_data) {
   API_BEGIN();
-  out_data[0] = DeviceAPI::Get(ctx)->Alloc(ctx, nbytes, alignment, type_hint);
+  out_data[0] = DeviceAPI::Get(device)->Alloc(device, nbytes, alignment, type_hint);
   API_END();
 }
 
-int MATXScriptDeviceFreeDataSpace(DLContext ctx, void* ptr) {
+int MATXScriptDeviceFreeDataSpace(DLDevice device, void* ptr) {
   API_BEGIN();
-  DeviceAPI::Get(ctx)->Free(ctx, ptr);
+  DeviceAPI::Get(device)->Free(device, ptr);
   API_END();
 }
 
@@ -819,9 +820,9 @@ int MATXScriptNDArrayFromDLPack(void* dlpack, MATXScriptAny* value) {
 
 int MATXScriptSetDeviceDriverError(int device_type, const char* msg) {
   API_BEGIN();
-  MATXScriptContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(device_type);
-  ctx.device_id = 0;
-  DeviceAPI::SetErrorMessage(ctx, String(msg));
+  MATXScriptDevice device;
+  device.device_type = static_cast<DLDeviceType>(device_type);
+  device.device_id = 0;
+  DeviceAPI::SetErrorMessage(device, String(msg));
   API_END();
 }

@@ -130,7 +130,7 @@ NDArray broadcast_binary_nd(const NDArray& nd1, const NDArray& nd2, const DataTy
       broadcast_stride(broadcast_shape, nd1.GetShapePtr(), nd1.GetStridesPtr(), nd1.GetDim());
   std::vector<int64_t> nd2_strides =
       broadcast_stride(broadcast_shape, nd2.GetShapePtr(), nd2.GetStridesPtr(), nd2.GetDim());
-  NDArray ret = NDArray::Empty(broadcast_shape, data_type, nd1->ctx);
+  NDArray ret = NDArray::Empty(broadcast_shape, data_type, nd1->device);
   MATX_NDARRAY_TYPE_SWITCH(ret.DataType(), DType, {
     MATX_NDARRAY_TYPE_SWITCH(nd1.DataType(), LDType, {
       MATX_NDARRAY_TYPE_SWITCH(nd2.DataType(), RDType, {
@@ -171,7 +171,7 @@ void broadcast_binary_scalar(const NDArray& nd1, SType s, NDArray& ret) {
 
 template <typename OP>
 NDArray contiguous_binary_nd(const NDArray& nd1, const NDArray& nd2, const DataType& data_type) {
-  NDArray ret = NDArray::Empty(nd1.Shape(), data_type, nd1->ctx);
+  NDArray ret = NDArray::Empty(nd1.Shape(), data_type, nd1->device);
   int64_t element_num = NDArrayHelper::GetItemNum(ret.GetShapePtr(), ret.GetDim());
   MATX_NDARRAY_TYPE_SWITCH(ret.DataType(), DType, {
     MATX_NDARRAY_TYPE_SWITCH(nd1.DataType(), LDType, {

@@ -469,15 +469,15 @@ MATXSCRIPT_REGISTER_GLOBAL("pipeline.LoadTXSession").set_body([](PyArgs args) ->
   switch (args[2].type_code()) {
     case TypeIndex::kRuntimeUnicode: {
       auto ctx = NDArrayHelper::GetDevice(args[2].AsNoCheck<Unicode>());
-      MXCHECK(ctx.device_type == kDLCPU || ctx.device_type == kDLGPU);
-      if (ctx.device_type == kDLGPU) {
+      MXCHECK(ctx.device_type == kDLCPU || ctx.device_type == kDLCUDA);
+      if (ctx.device_type == kDLCUDA) {
         device = ctx.device_id;
       }
     } break;
     case TypeIndex::kRuntimeString: {
       auto ctx = NDArrayHelper::GetDevice(args[2].AsNoCheck<String>().decode());
-      MXCHECK(ctx.device_type == kDLCPU || ctx.device_type == kDLGPU);
-      if (ctx.device_type == kDLGPU) {
+      MXCHECK(ctx.device_type == kDLCPU || ctx.device_type == kDLCUDA);
+      if (ctx.device_type == kDLCUDA) {
         device = ctx.device_id;
       }
     } break;

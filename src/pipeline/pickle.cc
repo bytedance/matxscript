@@ -374,11 +374,8 @@ NDArray FromJsonStructNDArray(const rapidjson::Value& val) {
     shape_list.push_back(itr->GetInt64());
   }
 
-  DLContext ctx;
-  ctx.device_type = kDLCPU;
-  ctx.device_id = 0;
-
-  auto tensor = NDArray::Empty(shape_list, dtype, ctx);
+  DLDevice device{kDLCPU, 0};
+  auto tensor = NDArray::Empty(shape_list, dtype, device);
   MATX_NDARRAY_TYPE_SWITCH(dtype, DType, {
     auto* data_ptr = tensor.Data<DType>();
     GetNumericDataFromJson<DType>(val["data"], const_cast<DType*>(data_ptr), tensor.ElementSize());

@@ -51,7 +51,7 @@ typedef int64_t matx_script_index_t;
 /*!
  * \brief The Device information, abstract away common device types.
  */
-typedef DLContext MATXScriptContext;
+typedef DLDevice MATXScriptDevice;
 
 /*! \brief the array handle */
 typedef DLTensor* MATXScriptTensorHandle;
@@ -80,7 +80,7 @@ typedef union {
   void* v_handle;
   const char* v_str;
   DLDataType v_type;
-  MATXScriptContext v_ctx;
+  MATXScriptDevice v_device;
   MATXScriptStringStorage v_str_store;
 } MATXScriptValue;
 
@@ -736,7 +736,7 @@ MATX_DLL int MATXScriptObjectFree(MATXScriptObjectHandle obj);
  * \return 0 when success, -1 when failure happens
  */
 MATX_DLL int MATXScriptDeviceAllocDataSpace(
-    DLContext ctx, size_t nbytes, size_t alignment, DLDataType type_hint, void** out_data);
+    DLDevice device, size_t nbytes, size_t alignment, DLDataType type_hint, void** out_data);
 
 /*!
  * \brief Free a data space on device.
@@ -744,7 +744,7 @@ MATX_DLL int MATXScriptDeviceAllocDataSpace(
  * \param ptr The data space.
  * \return 0 when success, -1 when failure happens
  */
-MATX_DLL int MATXScriptDeviceFreeDataSpace(MATXScriptContext ctx, void* ptr);
+MATX_DLL int MATXScriptDeviceFreeDataSpace(DLDevice device, void* ptr);
 
 /*!
  * \brief Check that an object is derived from another.

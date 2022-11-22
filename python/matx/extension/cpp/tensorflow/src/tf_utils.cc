@@ -113,10 +113,10 @@ NDArray FromTFTensor(const tensorflow::Tensor& tf_tsr) {
   for (auto i = 0; i < tf_shape.dims(); ++i) {
     tx_shape.push_back(tf_shape.dim_size(i));
   }
-  DLContext ctx;
-  ctx.device_type = kDLCPU;
-  ctx.device_id = 0;
-  auto tx_tsr = NDArray::Empty(tx_shape, tx_dtype, ctx);
+  DLDevice device;
+  device.device_type = kDLCPU;
+  device.device_id = 0;
+  auto tx_tsr = NDArray::Empty(tx_shape, tx_dtype, device);
   tx_tsr.CopyFromBytes(tf_tsr.tensor_data().data(), tf_tsr.tensor_data().size());
   return tx_tsr;
 }

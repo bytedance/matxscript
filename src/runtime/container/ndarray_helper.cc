@@ -207,11 +207,11 @@ int64_t NDArrayHelper::GetItemNum(const int64_t* shape, int dim) {
   return ret;
 }
 
-DLContext NDArrayHelper::GetCPUDevice() {
-  DLContext ctx;
-  ctx.device_type = DLDeviceType::kDLCPU;
-  ctx.device_id = 0;
-  return ctx;
+DLDevice NDArrayHelper::GetCPUDevice() {
+  DLDevice device;
+  device.device_type = DLDeviceType::kDLCPU;
+  device.device_id = 0;
+  return device;
 }
 
 NDArray NDArrayOperate::Rand(const std::vector<int64_t>& shape) {
@@ -284,7 +284,7 @@ NDArray NDArrayOperate::Concatenate(const Any& seq, int64_t axis) {
   }
 
   DLDataType dtype = arrays[0].get_mutable()->dl_tensor.dtype;
-  auto ret = NDArray::Empty(shape, dtype, arrays[0].get_mutable()->dl_tensor.ctx);
+  auto ret = NDArray::Empty(shape, dtype, arrays[0].get_mutable()->dl_tensor.device);
   auto sliding_view = ret.CreateView(shape, dtype);
   auto sliding_view_container = sliding_view.get_mutable();
   DLTensor* sliding_view_tensor = &(sliding_view_container->dl_tensor);
@@ -354,7 +354,7 @@ NDArray NDArrayOperate::Stack(const Any& seq, int64_t axis) {
   }
 
   const auto& dtype = arrays[0].get_mutable()->dl_tensor.dtype;
-  const auto& ctx = arrays[0].get_mutable()->dl_tensor.ctx;
+  const auto& ctx = arrays[0].get_mutable()->dl_tensor.device;
   const int64_t* arg_shape = arrays[0].get_mutable()->dl_tensor.shape;
   NDArray ret = NDArray::Empty(shape, dtype, ctx);
   std::vector<int64_t> shrink_target_strides(ret.GetStridesPtr(),
@@ -384,8 +384,8 @@ NDArray NDArrayOperate::Stack(const Any& seq, int64_t axis) {
   return ret;
 }
 
-DLContext NDArrayHelper::GetDevice(const Unicode& device) {
-  DLContext ret;
+DLDevice NDArrayHelper::GetDevice(const Unicode& device) {
+  DLDevice ret;
   if (device == U"cpu" || device.empty()) {
     return {DLDeviceType::kDLCPU, 0};
   }
@@ -405,15 +405,15 @@ DLContext NDArrayHelper::GetDevice(const Unicode& device) {
   }
 }
 
-Unicode NDArrayHelper::GetContextStr(const DLContext& ctx) {
-  if (ctx.device_type == DLDeviceType::kDLCPU) {
+Unicode NDArrayHelper::GetDeviceStr(const DLDevice& device) {
+  if (device.device_type == DLDeviceType::kDLCPU) {
     return U"cpu";
   }
-  auto it = dt2str_.find(ctx.device_type);
+  auto it = dt2str_.find(device.device_type);
   if (it == dt2str_.end()) {
-    MXTHROW << "unknown device_type: " << ctx.device_type;
+    MXTHROW << "unknown device_type: " << device.device_type;
   }
-  return it->second + U":" + UTF8Decode(std::to_string(ctx.device_id));
+  return it->second + U":" + UTF8Decode(std::to_string(device.device_id));
 }
 
 std::unordered_map<Unicode, DLDeviceType> NDArrayHelper::str2device_type_ = {
@@ -421,9 +421,9 @@ std::unordered_map<Unicode, DLDeviceType> NDArrayHelper::str2device_type_ = {
     {Unicode(U"stackvm"), DLDeviceType::kDLCPU},
     {Unicode(U"cpu"), DLDeviceType::kDLCPU},
     {Unicode(U"c"), DLDeviceType::kDLCPU},
-    {Unicode(U"gpu"), DLDeviceType::kDLGPU},
-    {Unicode(U"cuda"), DLDeviceType::kDLGPU},
-    {Unicode(U"nvptx"), DLDeviceType::kDLGPU},
+    {Unicode(U"gpu"), DLDeviceType::kDLCUDA},
+    {Unicode(U"cuda"), DLDeviceType::kDLCUDA},
+    {Unicode(U"nvptx"), DLDeviceType::kDLCUDA},
     {Unicode(U"cl"), DLDeviceType::kDLOpenCL},
     {Unicode(U"opencl"), DLDeviceType::kDLOpenCL},
     {Unicode(U"vulkan"), DLDeviceType::kDLVulkan},
@@ -431,23 +431,23 @@ std::unordered_map<Unicode, DLDeviceType> NDArrayHelper::str2device_type_ = {
     {Unicode(U"vpi"), DLDeviceType::kDLVPI},
     {Unicode(U"rocm"), DLDeviceType::kDLROCM}};
 
-std::unordered_map<Unicode, DLContext> NDArrayHelper::str2device_ = {
+std::unordered_map<Unicode, DLDevice> NDArrayHelper::str2device_ = {
     {Unicode(U"cpu"), {DLDeviceType::kDLCPU, 0}},
     {Unicode(U"cpu:0"), {DLDeviceType::kDLCPU, 0}},
-    {Unicode(U"gpu:0"), {DLDeviceType::kDLGPU, 0}},
-    {Unicode(U"gpu:1"), {DLDeviceType::kDLGPU, 1}},
-    {Unicode(U"gpu:2"), {DLDeviceType::kDLGPU, 2}},
-    {Unicode(U"gpu:3"), {DLDeviceType::kDLGPU, 3}},
-    {Unicode(U"gpu:4"), {DLDeviceType::kDLGPU, 4}},
-    {Unicode(U"gpu:5"), {DLDeviceType::kDLGPU, 5}},
-    {Unicode(U"gpu:6"), {DLDeviceType::kDLGPU, 6}},
-    {Unicode(U"gpu:7"), {DLDeviceType::kDLGPU, 7}},
-    {Unicode(U"gpu:8"), {DLDeviceType::kDLGPU, 8}},
+    {Unicode(U"gpu:0"), {DLDeviceType::kDLCUDA, 0}},
+    {Unicode(U"gpu:1"), {DLDeviceType::kDLCUDA, 1}},
+    {Unicode(U"gpu:2"), {DLDeviceType::kDLCUDA, 2}},
+    {Unicode(U"gpu:3"), {DLDeviceType::kDLCUDA, 3}},
+    {Unicode(U"gpu:4"), {DLDeviceType::kDLCUDA, 4}},
+    {Unicode(U"gpu:5"), {DLDeviceType::kDLCUDA, 5}},
+    {Unicode(U"gpu:6"), {DLDeviceType::kDLCUDA, 6}},
+    {Unicode(U"gpu:7"), {DLDeviceType::kDLCUDA, 7}},
+    {Unicode(U"gpu:8"), {DLDeviceType::kDLCUDA, 8}},
 };
 
 std::unordered_map<int64_t, Unicode> NDArrayHelper::dt2str_ = {
     {DLDeviceType::kDLCPU, U"cpu"},
-    {DLDeviceType::kDLGPU, U"gpu"},
+    {DLDeviceType::kDLCUDA, U"gpu"},
     {DLDeviceType::kDLOpenCL, U"opencl"},
     {DLDeviceType::kDLVulkan, U"vulkan"},
     {DLDeviceType::kDLMetal, U"metal"},
