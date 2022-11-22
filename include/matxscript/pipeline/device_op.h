@@ -31,7 +31,6 @@ class DeviceOp : public OpKernel {
 
  private:
   int device_id_;
-  static std::unordered_map<Unicode, int> name2id_;
 };
 }  // namespace runtime
 }  // namespace matxscript

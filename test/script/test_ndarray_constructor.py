@@ -92,7 +92,7 @@ class TestMatxNDArrayConstructor(unittest.TestCase):
 
     def test_construct_kwargs(self):
         def test_ndarray_kwargs() -> matx.NDArray:
-            return matx.NDArray([1, 2, 3, 4], [2, 2], dtype="int32", ctx="cpu:0")
+            return matx.NDArray([1, 2, 3, 4], [2, 2], dtype="int32", device="cpu:0")
         py_ret = test_ndarray_kwargs()
         tx_ret = matx.script(test_ndarray_kwargs)()
         self.assertTrue(numpy.all(tx_ret.asnumpy() == py_ret.asnumpy()))

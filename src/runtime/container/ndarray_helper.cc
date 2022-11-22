@@ -27,6 +27,7 @@
 #include <matxscript/runtime/container/list_ref.h>
 #include <matxscript/runtime/container/ndarray_private.h>
 #include <matxscript/runtime/container/tuple_ref.h>
+#include <matxscript/runtime/device_api.h>
 #include <matxscript/runtime/runtime_value.h>
 
 namespace matxscript {
@@ -384,24 +385,47 @@ NDArray NDArrayOperate::Stack(const Any& seq, int64_t axis) {
   return ret;
 }
 
+static std::unordered_map<Unicode, DLDevice> InitCommonDeviceMapping() {
+  constexpr int max_id = 32;
+  std::unordered_map<Unicode, DLDevice> str2device;
+  str2device.reserve(max_id * 3 + 2);
+
+  constexpr int dev_buf_size = 32;
+  char dev_buf[dev_buf_size];
+  // cpu
+  str2device.emplace(Unicode(U"cpu"), DLDevice{DLDeviceType::kDLCPU, 0});
+  str2device.emplace(Unicode(U"cpu:0"), DLDevice{DLDeviceType::kDLCPU, 0});
+  for (int i = 0; i < max_id; ++i) {
+    auto n = snprintf(dev_buf, dev_buf_size, "gpu:%d", i);
+    str2device.emplace(UTF8Decode(dev_buf, n), DLDevice{DLDeviceType::kDLCUDA, i});
+
+    n = snprintf(dev_buf, dev_buf_size, "cuda:%d", i);
+    str2device.emplace(UTF8Decode(dev_buf, n), DLDevice{DLDeviceType::kDLCUDA, i});
+
+    n = snprintf(dev_buf, dev_buf_size, "cuda_host:%d", i);
+    str2device.emplace(UTF8Decode(dev_buf, n), DLDevice{DLDeviceType::kDLCUDAHost, i});
+  }
+  return str2device;
+}
+
 DLDevice NDArrayHelper::GetDevice(const Unicode& device) {
+  static auto str2device = InitCommonDeviceMapping();
   DLDevice ret;
   if (device == U"cpu" || device.empty()) {
     return {DLDeviceType::kDLCPU, 0};
   }
-  auto device_it = str2device_.find(device);
-  if (device_it != str2device_.end()) {
+  auto device_it = str2device.find(device);
+  if (device_it != str2device.end()) {
     return device_it->second;
   } else {
-    auto pos = device.find_last_of(U':');
-    if (pos == Unicode::npos) {
+    auto bin_device = UTF8Encode(device);
+    string_view device_view = bin_device.view();
+    auto pos = device_view.find_last_of(':');
+    if (pos == string_view::npos) {
       MXTHROW << "unsupported device:" << device;
     }
-    auto it = str2device_type_.find(device.substr(0, pos));
-    if (it == str2device_type_.end()) {
-      MXTHROW << "unsupported device:" << device;
-    }
-    return {it->second, std::atoi(UTF8Encode(device.substr(pos + 1)).c_str())};
+    auto dev_type = DeviceNameToType(device_view.substr(0, pos));
+    return {DLDeviceType(dev_type), std::atoi(device_view.substr(pos + 1).data())};
   }
 }
 
@@ -409,51 +433,19 @@ Unicode NDArrayHelper::GetDeviceStr(const DLDevice& device) {
   if (device.device_type == DLDeviceType::kDLCPU) {
     return U"cpu";
   }
-  auto it = dt2str_.find(device.device_type);
-  if (it == dt2str_.end()) {
-    MXTHROW << "unknown device_type: " << device.device_type;
+  static string_view unk("Unknown");
+  auto dev_name = DeviceTypeToName(device.device_type);
+  if (dev_name == unk) {
+    MXTHROW << "unknown device_type: " << device.device_type << ", device_id: " << device.device_id;
   }
-  return it->second + U":" + UTF8Decode(std::to_string(device.device_id));
+  constexpr int dev_buf_size = 256;
+  char device_buf[dev_buf_size];
+  auto n = snprintf(device_buf, dev_buf_size, "%s:%d", dev_name, device.device_id);
+  if (n < 0 || n >= dev_buf_size) {
+    MXTHROW << "unknown device_type: " << device.device_type << ", device_id: " << device.device_id;
+  }
+  return UTF8Decode(device_buf, n);
 }
-
-std::unordered_map<Unicode, DLDeviceType> NDArrayHelper::str2device_type_ = {
-    {Unicode(U"llvm"), DLDeviceType::kDLCPU},
-    {Unicode(U"stackvm"), DLDeviceType::kDLCPU},
-    {Unicode(U"cpu"), DLDeviceType::kDLCPU},
-    {Unicode(U"c"), DLDeviceType::kDLCPU},
-    {Unicode(U"gpu"), DLDeviceType::kDLCUDA},
-    {Unicode(U"cuda"), DLDeviceType::kDLCUDA},
-    {Unicode(U"nvptx"), DLDeviceType::kDLCUDA},
-    {Unicode(U"cl"), DLDeviceType::kDLOpenCL},
-    {Unicode(U"opencl"), DLDeviceType::kDLOpenCL},
-    {Unicode(U"vulkan"), DLDeviceType::kDLVulkan},
-    {Unicode(U"metal"), DLDeviceType::kDLMetal},
-    {Unicode(U"vpi"), DLDeviceType::kDLVPI},
-    {Unicode(U"rocm"), DLDeviceType::kDLROCM}};
-
-std::unordered_map<Unicode, DLDevice> NDArrayHelper::str2device_ = {
-    {Unicode(U"cpu"), {DLDeviceType::kDLCPU, 0}},
-    {Unicode(U"cpu:0"), {DLDeviceType::kDLCPU, 0}},
-    {Unicode(U"gpu:0"), {DLDeviceType::kDLCUDA, 0}},
-    {Unicode(U"gpu:1"), {DLDeviceType::kDLCUDA, 1}},
-    {Unicode(U"gpu:2"), {DLDeviceType::kDLCUDA, 2}},
-    {Unicode(U"gpu:3"), {DLDeviceType::kDLCUDA, 3}},
-    {Unicode(U"gpu:4"), {DLDeviceType::kDLCUDA, 4}},
-    {Unicode(U"gpu:5"), {DLDeviceType::kDLCUDA, 5}},
-    {Unicode(U"gpu:6"), {DLDeviceType::kDLCUDA, 6}},
-    {Unicode(U"gpu:7"), {DLDeviceType::kDLCUDA, 7}},
-    {Unicode(U"gpu:8"), {DLDeviceType::kDLCUDA, 8}},
-};
-
-std::unordered_map<int64_t, Unicode> NDArrayHelper::dt2str_ = {
-    {DLDeviceType::kDLCPU, U"cpu"},
-    {DLDeviceType::kDLCUDA, U"gpu"},
-    {DLDeviceType::kDLOpenCL, U"opencl"},
-    {DLDeviceType::kDLVulkan, U"vulkan"},
-    {DLDeviceType::kDLMetal, U"metal"},
-    {DLDeviceType::kDLVPI, U"vpi"},
-    {DLDeviceType::kDLROCM, U"rocm"},
-};
 
 }  // namespace runtime
 }  // namespace matxscript

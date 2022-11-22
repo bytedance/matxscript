@@ -70,7 +70,7 @@ class DeviceAPIManager {
 
   DeviceAPI* GetAPIImpl(int type, bool allow_missing) {
     String factory("device_api.");
-    auto dev_name = DeviceName(type);
+    auto dev_name = DeviceTypeToName(type);
     factory.append(dev_name);
     auto* f = FunctionRegistry::Get(factory);
     if (f == nullptr) {
@@ -141,6 +141,43 @@ DeviceStreamGuard::DeviceStreamGuard(MATXScriptDevice device, std::shared_ptr<vo
 
 DeviceStreamGuard::~DeviceStreamGuard() {
   this->device_api_->SetCurrentThreadStream(this->device_, this->old_stream_);
+}
+
+const char* DeviceTypeToName(int type) {
+  switch (type) {
+    case kDLCPU:
+      return "cpu";
+    case kDLCUDA:
+      return "cuda";
+    case kDLCUDAHost:
+      return "cuda_host";
+    default:
+      return "Unknown";
+  }
+}
+
+int DeviceNameToType(const string_view& name) {
+  static ska::flat_hash_map<string_view, DLDeviceType> name2type = {
+      {"cpu", DLDeviceType::kDLCPU},
+      {"gpu", DLDeviceType::kDLCUDA},
+      {"cuda", DLDeviceType::kDLCUDA},
+      {"cuda_host", DLDeviceType::kDLCUDAHost},
+  };
+  auto iter = name2type.find(name);
+  if (iter == name2type.end()) {
+    MXTHROW << "unsupported device name:" << name;
+  }
+  return iter->second;
+}
+
+std::ostream& operator<<(std::ostream& os, DLDevice dev) {  // NOLINT(*)
+  int device_type = static_cast<int>(dev.device_type);
+  if (device_type > kRPCSessMask) {
+    os << "remote[" << (device_type / kRPCSessMask) << "]-";
+    device_type = device_type % kRPCSessMask;
+  }
+  os << runtime::DeviceTypeToName(device_type) << "(" << dev.device_id << ")";
+  return os;
 }
 
 }  // namespace runtime

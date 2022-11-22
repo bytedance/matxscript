@@ -22,7 +22,7 @@
 from .packed_func import PackedFunc
 from .object import Object
 from .object_generic import ObjectGeneric, ObjectTypes, to_runtime_object
-from .ndarray import NDArray, DataType, DataTypeCode, MATXContext
+from .ndarray import NDArray, DataType, DataTypeCode, MATXScriptDevice
 from .module import Module
 
 # function exposures

@@ -49,11 +49,6 @@ class NDArrayHelper {
                         const std::vector<int64_t>& strides);
   static DLDevice GetDevice(const Unicode& device);
   static Unicode GetDeviceStr(const DLDevice& device);
-
- private:
-  static std::unordered_map<Unicode, DLDeviceType> str2device_type_;
-  static std::unordered_map<Unicode, DLDevice> str2device_;
-  static std::unordered_map<int64_t, Unicode> dt2str_;
 };
 
 class NDArrayOperate {

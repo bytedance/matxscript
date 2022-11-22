@@ -190,13 +190,14 @@ class DataType(ctypes.Structure):
 RPC_SESS_MASK = 128
 
 
-class MATXContext(ctypes.Structure):
-    """MATX context strucure."""
+class MATXScriptDevice(ctypes.Structure):
+    """MATXScriptDevice strucure."""
     _fields_ = [("device_type", ctypes.c_int),
                 ("device_id", ctypes.c_int)]
     MASK2STR = {
         1: 'cpu',
-        2: 'gpu',
+        2: 'cuda',
+        3: 'cuda_host',
         4: 'opencl',
         5: 'aocl',
         6: 'sdaccel',
@@ -217,6 +218,7 @@ class MATXContext(ctypes.Structure):
         'gpu': 2,
         'cuda': 2,
         'nvptx': 2,
+        'cuda_host': 3,
         'cl': 4,
         'opencl': 4,
         'aocl': 5,
@@ -233,15 +235,15 @@ class MATXContext(ctypes.Structure):
     }
 
     def __init__(self, device_type, device_id):
-        super(MATXContext, self).__init__()
+        super(MATXScriptDevice, self).__init__()
         self.device_type = device_type
         self.device_id = device_id
 
     def _GetDeviceAttr(self, device_type, device_id, attr_id):
         """Internal helper function to invoke runtime.GetDeviceAttr"""
         # pylint: disable=import-outside-toplevel
-        import runtime._ffi_api
-        return runtime._ffi_api.GetDeviceAttr(
+        import matx.runtime._ffi_api
+        return matx.runtime._ffi_api.GetDeviceAttr(
             device_type, device_id, attr_id)
 
     @property
@@ -317,7 +319,7 @@ class MATXContext(ctypes.Structure):
         check_call(_LIB.MATXSynchronize(self.device_type, self.device_id, None))
 
     def __eq__(self, other):
-        return (isinstance(other, MATXContext) and
+        return (isinstance(other, MATXScriptDevice) and
                 self.device_id == other.device_id and
                 self.device_type == other.device_type)
 
@@ -332,15 +334,15 @@ class MATXContext(ctypes.Structure):
             tbl_id = self.device_type / RPC_SESS_MASK - 1
             dev_type = self.device_type % RPC_SESS_MASK
             return "remote[%d]:%s(%d)" % (
-                tbl_id, MATXContext.MASK2STR[dev_type], self.device_id)
+                tbl_id, MATXScriptDevice.MASK2STR[dev_type], self.device_id)
         return "%s(%d)" % (
-            MATXContext.MASK2STR[self.device_type], self.device_id)
+            MATXScriptDevice.MASK2STR[self.device_type], self.device_id)
 
 
 class MATXArray(ctypes.Structure):
     """MATXValue in C API"""
     _fields_ = [("data", ctypes.c_void_p),
-                ("ctx", MATXContext),
+                ("device", MATXScriptDevice),
                 ("ndim", ctypes.c_int),
                 ("dtype", DataType),
                 ("shape", ctypes.POINTER(matx_shape_index_t)),
