@@ -69,7 +69,7 @@ class MATX_DLL DeviceAPI {
    * \brief Set the environment device id to ctx
    * \param ctx The context to be set.
    */
-  virtual void SetDevice(MATXScriptContext ctx) = 0;
+  virtual void SetDevice(MATXScriptDevice ctx) = 0;
   /*!
    * \brief Get attribute of specified device.
    * \param ctx The device context
@@ -77,7 +77,7 @@ class MATX_DLL DeviceAPI {
    * \param rv The return value.
    * \sa DeviceAttrKind
    */
-  virtual void GetAttr(MATXScriptContext ctx, DeviceAttrKind kind, RTValue* rv) = 0;
+  virtual void GetAttr(MATXScriptDevice ctx, DeviceAttrKind kind, RTValue* rv) = 0;
   /*!
    * \brief Allocate a data space on device.
    * \param ctx The device context to perform operation.
@@ -88,25 +88,25 @@ class MATX_DLL DeviceAPI {
    * \return The allocated device pointer.
    */
 
-  virtual void* AllocRaw(MATXScriptContext ctx,
+  virtual void* AllocRaw(MATXScriptDevice ctx,
                          size_t nbytes,
                          size_t alignment,
                          DLDataType type_hint) = 0;
 
-  virtual void* Alloc(MATXScriptContext ctx,
+  virtual void* Alloc(MATXScriptDevice ctx,
                       size_t nbytes,
                       size_t alignment,
                       DLDataType type_hint) = 0;
 
-  virtual void* Alloc(MATXScriptContext ctx, size_t nbytes) = 0;
+  virtual void* Alloc(MATXScriptDevice ctx, size_t nbytes) = 0;
 
   /*!
    * \brief Free a data space on device.
    * \param ctx The device context to perform operation.
    * \param ptr The data space.
    */
-  virtual void FreeRaw(MATXScriptContext ctx, void* ptr) = 0;
-  virtual void Free(MATXScriptContext ctx, void* ptr) = 0;
+  virtual void FreeRaw(MATXScriptDevice ctx, void* ptr) = 0;
+  virtual void Free(MATXScriptDevice ctx, void* ptr) = 0;
 
   /*!
    * \brief copy data from one place to another
@@ -126,8 +126,8 @@ class MATX_DLL DeviceAPI {
                               void* to,
                               size_t to_offset,
                               size_t num_bytes,
-                              MATXScriptContext ctx_from,
-                              MATXScriptContext ctx_to,
+                              MATXScriptDevice ctx_from,
+                              MATXScriptDevice ctx_to,
                               DLDataType type_hint,
                               MATXScriptStreamHandle stream) = 0;
   /*!
@@ -135,7 +135,7 @@ class MATX_DLL DeviceAPI {
    *
    * \param ctx The context of allocation.
    */
-  virtual MATXScriptStreamHandle CreateStream(MATXScriptContext ctx) = 0;
+  virtual MATXScriptStreamHandle CreateStream(MATXScriptDevice ctx) = 0;
 
   /*!
    * \brief Free a stream of execution
@@ -143,40 +143,40 @@ class MATX_DLL DeviceAPI {
    * \param ctx The context of the stream
    * \param stream The pointer to be freed.
    */
-  virtual void FreeStream(MATXScriptContext ctx, MATXScriptStreamHandle stream) = 0;
+  virtual void FreeStream(MATXScriptDevice ctx, MATXScriptStreamHandle stream) = 0;
 
   /*!
    * \brief return default stream on ctx
    *
    * \param ctx The context to perform operation.
    */
-  virtual MATXScriptStreamHandle GetDefaultStream(MATXScriptContext ctx) = 0;
+  virtual MATXScriptStreamHandle GetDefaultStream(MATXScriptDevice ctx) = 0;
 
   /*!
    * \brief return current stream on ctx
    *
    * \param ctx The context to perform operation.
    */
-  virtual MATXScriptStreamHandle GetCurrentThreadStream(MATXScriptContext ctx) = 0;
-  virtual std::shared_ptr<void> GetSharedCurrentThreadStream(MATXScriptContext ctx) = 0;
+  virtual MATXScriptStreamHandle GetCurrentThreadStream(MATXScriptDevice ctx) = 0;
+  virtual std::shared_ptr<void> GetSharedCurrentThreadStream(MATXScriptDevice ctx) = 0;
 
   /*!
    * \brief Set the stream only for current thread
    * \param ctx The context to set stream.
    * \param stream The stream to be set.
    */
-  virtual void SetCurrentThreadStream(MATXScriptContext ctx, std::shared_ptr<void> stream) = 0;
+  virtual void SetCurrentThreadStream(MATXScriptDevice ctx, std::shared_ptr<void> stream) = 0;
 
   /*!
    * \brief Synchronize the stream
    * \param ctx The context to perform operation.
    * \param stream The stream to be sync.
    */
-  virtual void StreamSync(MATXScriptContext ctx, MATXScriptStreamHandle stream) = 0;
+  virtual void StreamSync(MATXScriptDevice ctx, MATXScriptStreamHandle stream) = 0;
 
   virtual void CreateEventSync(MATXScriptStreamHandle stream) = 0;
 
-  inline void CurrentThreadStreamSync(MATXScriptContext ctx) {
+  inline void CurrentThreadStreamSync(MATXScriptDevice ctx) {
     this->CreateEventSync(this->GetCurrentThreadStream(ctx));
   }
 
@@ -192,7 +192,7 @@ class MATX_DLL DeviceAPI {
    * \param event_src The source stream to synchronize.
    * \param event_dst The destination stream to synchronize.
    */
-  virtual void SyncStreamFromTo(MATXScriptContext ctx,
+  virtual void SyncStreamFromTo(MATXScriptDevice ctx,
                                 MATXScriptStreamHandle event_src,
                                 MATXScriptStreamHandle event_dst);
 
@@ -202,8 +202,8 @@ class MATX_DLL DeviceAPI {
    * \param allow_missing Whether allow missing
    * \return The corresponding device API.
    */
-  static DeviceAPI* Get(MATXScriptContext ctx, bool allow_missing = false);
-  static void SetErrorMessage(MATXScriptContext ctx, String msg);
+  static DeviceAPI* Get(MATXScriptDevice ctx, bool allow_missing = false);
+  static void SetErrorMessage(MATXScriptDevice ctx, String msg);
 
   /*!
    * \brief Whether a certian device type requires set device context
@@ -216,11 +216,11 @@ class MATX_DLL DeviceAPI {
 };
 
 class DeviceStreamGuard {
-  DeviceStreamGuard(MATXScriptContext ctx, std::shared_ptr<void> stream);
+  DeviceStreamGuard(MATXScriptDevice ctx, std::shared_ptr<void> stream);
   virtual ~DeviceStreamGuard();
 
  private:
-  MATXScriptContext ctx_;
+  MATXScriptDevice device_;
   DeviceAPI* device_api_;
   std::shared_ptr<void> old_stream_;
   std::shared_ptr<void> new_stream_;
@@ -238,22 +238,22 @@ inline const char* DeviceName(int type) {
   switch (type) {
     case kDLCPU:
       return "cpu";
-    case kDLGPU:
-      return "gpu";
-    case kDLCPUPinned:
-      return "cpu_pinned";
+    case kDLCUDA:
+      return "cuda";
+    case kDLCUDAHost:
+      return "cuda_host";
     default:
       return "Unknown";
   }
 }
 
-inline std::ostream& operator<<(std::ostream& os, DLContext ctx) {  // NOLINT(*)
-  int device_type = static_cast<int>(ctx.device_type);
+inline std::ostream& operator<<(std::ostream& os, DLDevice dev) {  // NOLINT(*)
+  int device_type = static_cast<int>(dev.device_type);
   if (device_type > kRPCSessMask) {
     os << "remote[" << (device_type / kRPCSessMask) << "]-";
     device_type = device_type % kRPCSessMask;
   }
-  os << runtime::DeviceName(device_type) << "(" << ctx.device_id << ")";
+  os << runtime::DeviceName(device_type) << "(" << dev.device_id << ")";
   return os;
 }
 }  // namespace runtime

@@ -211,8 +211,8 @@ bool NDArray::operator==(const NDArray& other) const {
 
   auto ldt = lhs->dl_tensor.dtype;
   auto rdt = rhs->dl_tensor.dtype;
-  MXCHECK_EQ(lhs->dl_tensor.ctx.device_type, kDLCPU) << "can only compare CPU tensor";
-  MXCHECK_EQ(rhs->dl_tensor.ctx.device_type, kDLCPU) << "can only compare CPU tensor";
+  MXCHECK_EQ(lhs->dl_tensor.device.device_type, kDLCPU) << "can only compare CPU tensor";
+  MXCHECK_EQ(rhs->dl_tensor.device.device_type, kDLCPU) << "can only compare CPU tensor";
   MXCHECK(::matxscript::runtime::IsContiguous(lhs->dl_tensor))
       << "Can only compare contiguous tensor";
   MXCHECK(::matxscript::runtime::IsContiguous(rhs->dl_tensor))
@@ -258,11 +258,11 @@ void NDArray::CopyTo(const NDArray& other) const {
   CopyFromTo(&(get_mutable()->dl_tensor), &(other.get_mutable()->dl_tensor));
 }
 
-NDArray NDArray::CopyTo(const DLContext& ctx) const {
+NDArray NDArray::CopyTo(const DLDevice& device) const {
   MXCHECK(data_ != nullptr);
   const DLTensor* dptr = operator->();
   NDArray ret =
-      Empty(std::vector<int64_t>(dptr->shape, dptr->shape + dptr->ndim), dptr->dtype, ctx);
+      Empty(std::vector<int64_t>(dptr->shape, dptr->shape + dptr->ndim), dptr->dtype, device);
   this->CopyTo(ret);
   return ret;
 }
@@ -343,18 +343,16 @@ void ArrayCopyFromBytes(DLTensor* handle, const void* data, size_t nbytes) {
   size_t arr_size = GetDataSize(*handle);
   MXCHECK(IsContiguous(*handle)) << "ArrayCopyFromBytes only support contiguous array for now";
   MXCHECK_EQ(arr_size, nbytes) << "ArrayCopyFromBytes: size mismatch";
-  MATXScriptContext cpu_ctx;
-  cpu_ctx.device_type = kDLCPU;
-  cpu_ctx.device_id = 0;
-  auto* device_api = DeviceAPI::Get(handle->ctx);
-  auto stream = device_api->GetCurrentThreadStream(handle->ctx);
+  DLDevice cpu_dev{kDLCPU, 0};
+  auto* device_api = DeviceAPI::Get(handle->device);
+  auto stream = device_api->GetCurrentThreadStream(handle->device);
   device_api->CopyDataFromTo(data,
                              0,
                              handle->data,
                              static_cast<size_t>(handle->byte_offset),
                              nbytes,
-                             cpu_ctx,
-                             handle->ctx,
+                             cpu_dev,
+                             handle->device,
                              handle->dtype,
                              stream);
   // Synchronize in case data become unavailable later.
@@ -362,23 +360,21 @@ void ArrayCopyFromBytes(DLTensor* handle, const void* data, size_t nbytes) {
 }
 
 void ArrayCopyToBytes(const DLTensor* handle, void* data, size_t nbytes) {
-  MATXScriptContext cpu_ctx;
-  cpu_ctx.device_type = kDLCPU;
-  cpu_ctx.device_id = 0;
+  DLDevice cpu_dev{kDLCPU, 0};
   size_t arr_size = GetDataSize(*handle);
   MXCHECK(IsContiguous(*handle)) << "ArrayCopyToBytes only support contiguous array for now";
   MXCHECK_EQ(arr_size, nbytes) << "ArrayCopyToBytes: size mismatch";
 
-  auto* device_api = DeviceAPI::Get(handle->ctx);
-  auto stream = device_api->GetCurrentThreadStream(handle->ctx);
+  auto* device_api = DeviceAPI::Get(handle->device);
+  auto stream = device_api->GetCurrentThreadStream(handle->device);
 
   device_api->CopyDataFromTo(handle->data,
                              static_cast<size_t>(handle->byte_offset),
                              data,
                              0,
                              nbytes,
-                             handle->ctx,
-                             cpu_ctx,
+                             handle->device,
+                             cpu_dev,
                              handle->dtype,
                              stream);
   // Synchronize in case data become unavailable later.
@@ -409,7 +405,7 @@ List ToListImpl(int64_t ndim, DType* data, const int64_t* shape, const int64_t* 
 
 List NDArray::ToList() const {
   const DLTensor* dl_tensor = &(get_mutable()->dl_tensor);
-  MXCHECK(dl_tensor->ctx.device_type == kDLCPU) << "Only CPU NDArray supports ToList method.";
+  MXCHECK(dl_tensor->device.device_type == kDLCPU) << "Only CPU NDArray supports ToList method.";
   int64_t ndim = dl_tensor->ndim;
   const int64_t* shape = dl_tensor->shape;
   const int64_t* strides = get_mutable()->StridesBegin();
@@ -427,8 +423,8 @@ struct NDArray::Internal {
     if (ptr->manager_ctx != nullptr) {
       static_cast<NDArray::Container*>(ptr->manager_ctx)->DecRef();
     } else if (ptr->dl_tensor.data != nullptr) {
-      ::matxscript::runtime::DeviceAPI::Get(ptr->dl_tensor.ctx)
-          ->Free(ptr->dl_tensor.ctx, ptr->dl_tensor.data);
+      ::matxscript::runtime::DeviceAPI::Get(ptr->dl_tensor.device)
+          ->Free(ptr->dl_tensor.device, ptr->dl_tensor.data);
     }
     delete ptr;
   }
@@ -450,7 +446,7 @@ struct NDArray::Internal {
   static NDArray Create(std::vector<int64_t> shape,
                         std::vector<int64_t> strides,
                         DLDataType dtype,
-                        DLContext ctx,
+                        DLDevice device,
                         bool contiguous = true) {
     VerifyDataType(dtype);
 
@@ -469,8 +465,8 @@ struct NDArray::Internal {
     data->strides_ = std::move(strides);
     // setup dtype
     data->dl_tensor.dtype = dtype;
-    // setup ctx
-    data->dl_tensor.ctx = ctx;
+    // setup device
+    data->dl_tensor.device = device;
     if (!contiguous) {
       data->dl_tensor.strides = ::matxscript::runtime::BeginPtr(data->strides_);
     }
@@ -478,7 +474,7 @@ struct NDArray::Internal {
   }
 
   static NDArray Create(
-      const int64_t* shape, int ndim, const int64_t* strides, DLDataType dtype, DLContext ctx) {
+      const int64_t* shape, int ndim, const int64_t* strides, DLDataType dtype, DLDevice device) {
     VerifyDataType(dtype);
 
     // critical zone: construct header
@@ -505,8 +501,8 @@ struct NDArray::Internal {
     }
     // setup dtype
     data->dl_tensor.dtype = dtype;
-    // setup ctx
-    data->dl_tensor.ctx = ctx;
+    // setup device
+    data->dl_tensor.device = device;
     return ret;
   }
 
@@ -646,8 +642,8 @@ NDArray NDArray::CreateView(std::vector<int64_t> shape, DLDataType dtype) const 
   MXCHECK(data_ != nullptr);
   MXCHECK(get_mutable()->dl_tensor.strides == nullptr) << "Can only create view for compact tensor";
   auto strides = GenStridesFromShape(shape);
-  NDArray ret =
-      Internal::Create(std::move(shape), std::move(strides), dtype, get_mutable()->dl_tensor.ctx);
+  NDArray ret = Internal::Create(
+      std::move(shape), std::move(strides), dtype, get_mutable()->dl_tensor.device);
   ret.get_mutable()->dl_tensor.byte_offset = this->get_mutable()->dl_tensor.byte_offset;
   size_t curr_size = GetDataSize(this->get_mutable()->dl_tensor);
   size_t view_size = GetDataSize(ret.get_mutable()->dl_tensor);
@@ -666,7 +662,7 @@ NDArray NDArray::CreateViewWithStrides(std::vector<int64_t> shape,
   MXCHECK(data_ != nullptr);
   bool contiguous = ::matxscript::runtime::IsContiguous(shape, strides, shape.size());
   NDArray ret = Internal::Create(
-      std::move(shape), std::move(strides), dtype, get_mutable()->dl_tensor.ctx, contiguous);
+      std::move(shape), std::move(strides), dtype, get_mutable()->dl_tensor.device, contiguous);
   Container* ret_container = ret.get_mutable();
   Container* this_container = this->get_mutable();
   ret_container->dl_tensor.byte_offset = this_container->dl_tensor.byte_offset;
@@ -700,24 +696,24 @@ std::vector<int64_t> NDArray::GenStridesFromShape(const std::vector<int64_t>& sh
   return strides;
 }
 
-NDArray NDArray::Empty(std::vector<int64_t> shape, DLDataType dtype, DLContext ctx) {
+NDArray NDArray::Empty(std::vector<int64_t> shape, DLDataType dtype, DLDevice device) {
   auto strides = GenStridesFromShape(shape);
-  NDArray ret = Internal::Create(std::move(shape), std::move(strides), dtype, ctx);
+  NDArray ret = Internal::Create(std::move(shape), std::move(strides), dtype, device);
   // setup memory content
   size_t size = GetDataSize(ret.get_mutable()->dl_tensor);
   size_t alignment = GetDataAlignment(ret.get_mutable()->dl_tensor);
   ret.get_mutable()->dl_tensor.data =
-      DeviceAPI::Get(ret->ctx)->Alloc(ret->ctx, size, alignment, ret->dtype);
+      DeviceAPI::Get(ret->device)->Alloc(ret->device, size, alignment, ret->dtype);
   return ret;
 }
 
-NDArray NDArray::Empty(const int64_t* shape, int64_t dim, DLDataType dtype, DLContext ctx) {
-  NDArray ret = Internal::Create(shape, dim, nullptr, dtype, ctx);
+NDArray NDArray::Empty(const int64_t* shape, int64_t dim, DLDataType dtype, DLDevice device) {
+  NDArray ret = Internal::Create(shape, dim, nullptr, dtype, device);
   // setup memory content
   size_t size = GetDataSize(ret.get_mutable()->dl_tensor);
   size_t alignment = GetDataAlignment(ret.get_mutable()->dl_tensor);
   ret.get_mutable()->dl_tensor.data =
-      DeviceAPI::Get(ret->ctx)->Alloc(ret->ctx, size, alignment, ret->dtype);
+      DeviceAPI::Get(ret->device)->Alloc(ret->device, size, alignment, ret->dtype);
   return ret;
 }
 
@@ -742,30 +738,30 @@ void NDArray::CopyFromTo(const DLTensor* from, DLTensor* to, MATXScriptStreamHan
   size_t to_size = GetDataSize(*to);
   MXCHECK_EQ(from_size, to_size) << "MATXScriptArrayCopyFromTo: The size must exactly match";
 
-  MXCHECK(from->ctx.device_type == to->ctx.device_type || from->ctx.device_type == kDLCPU ||
-          to->ctx.device_type == kDLCPU || from->ctx.device_type == kDLCPUPinned ||
-          to->ctx.device_type == kDLCPUPinned)
-      << "Can not copy across different ctx types directly";
+  MXCHECK(from->device.device_type == to->device.device_type ||
+          from->device.device_type == kDLCPU || to->device.device_type == kDLCPU ||
+          from->device.device_type == kDLCUDAHost || to->device.device_type == kDLCUDAHost)
+      << "Can not copy across different device types directly";
 
-  // Use the context that is *not* a cpu context to get the correct device
+  // Use the context that is *not* a cpu device to get the correct device
   // api manager.
-  MATXScriptContext ctx = from->ctx.device_type != kDLCPU ? from->ctx : to->ctx;
+  DLDevice device = from->device.device_type != kDLCPU ? from->device : to->device;
 
-  DeviceAPI::Get(ctx)->CopyDataFromTo(from->data,
-                                      static_cast<size_t>(from->byte_offset),
-                                      to->data,
-                                      static_cast<size_t>(to->byte_offset),
-                                      from_size,
-                                      from->ctx,
-                                      to->ctx,
-                                      from->dtype,
-                                      stream);
+  DeviceAPI::Get(device)->CopyDataFromTo(from->data,
+                                         static_cast<size_t>(from->byte_offset),
+                                         to->data,
+                                         static_cast<size_t>(to->byte_offset),
+                                         from_size,
+                                         from->device,
+                                         to->device,
+                                         from->dtype,
+                                         stream);
 }
 
 void NDArray::CopyFromTo(const DLTensor* from, DLTensor* to) {
-  MATXScriptContext ctx = from->ctx.device_type != kDLCPU ? from->ctx : to->ctx;
-  auto* device_api = DeviceAPI::Get(ctx);
-  auto stream = device_api->GetCurrentThreadStream(ctx);
+  DLDevice device = from->device.device_type != kDLCPU ? from->device : to->device;
+  auto* device_api = DeviceAPI::Get(device);
+  auto stream = device_api->GetCurrentThreadStream(device);
   return CopyFromTo(from, to, stream);
 }
 
@@ -785,7 +781,7 @@ Unicode NDArray::DTypeUnicode() const {
 }
 
 Unicode NDArray::Device() const {
-  return NDArrayHelper::GetContextStr(get_mutable()->dl_tensor.ctx);
+  return NDArrayHelper::GetDeviceStr(get_mutable()->dl_tensor.device);
 }
 
 size_t NDArray::DataSize() const {
@@ -829,7 +825,7 @@ RTValue NDArray::get_item(int64_t index) const {
       << dl_tensor->shape[0];
   void* p = static_cast<void*>(static_cast<char*>(dl_tensor->data) + dl_tensor->byte_offset);
   if (dl_tensor->ndim == 1) {
-    MXCHECK(dl_tensor->ctx.device_type == kDLCPU)
+    MXCHECK(dl_tensor->device.device_type == kDLCPU)
         << "[NDArray]: get item from gpu is not supported";
     MATX_NDARRAY_TYPE_SWITCH(dl_tensor->dtype, DT, {
       return ElementData2AnyValue(static_cast<DT*>(p)[idx * get_mutable()->Strides(0)]);
@@ -839,7 +835,7 @@ RTValue NDArray::get_item(int64_t index) const {
                                    dl_tensor->ndim - 1,
                                    get_mutable()->StridesBegin() + 1,
                                    dl_tensor->dtype,
-                                   dl_tensor->ctx);
+                                   dl_tensor->device);
     get_mutable()->IncRef();
     ret.get_mutable()->dl_tensor.byte_offset = dl_tensor->byte_offset;
     ret.get_mutable()->manager_ctx = get_mutable();
@@ -877,7 +873,8 @@ int64_t NDArray::get_item_as_int64(int64_t index) const {
       << "[NDArray.get_item] index " << index << " is out of bounds for axis 0 with size "
       << dl_tensor->shape[0];
   MXCHECK(dl_tensor->ndim == 1) << "can not convert ndarray as int type";
-  MXCHECK(dl_tensor->ctx.device_type == kDLCPU) << "[NDArray]: get item from gpu is not supported";
+  MXCHECK(dl_tensor->device.device_type == kDLCPU)
+      << "[NDArray]: get item from gpu is not supported";
   MATX_NDARRAY_TYPE_SWITCH(dl_tensor->dtype, DT, {
     auto* p = reinterpret_cast<DT*>(static_cast<char*>(dl_tensor->data) + dl_tensor->byte_offset);
     return (int64_t)(p[idx * d_ptr->Strides(0)]);
@@ -894,7 +891,8 @@ double NDArray::get_item_as_double(int64_t index) const {
       << "[NDArray.get_item] index " << index << " is out of bounds for axis 0 with size "
       << dl_tensor->shape[0];
   MXCHECK(dl_tensor->ndim == 1) << "can not convert ndarray as int type";
-  MXCHECK(dl_tensor->ctx.device_type == kDLCPU) << "[NDArray]: get item from gpu is not supported";
+  MXCHECK(dl_tensor->device.device_type == kDLCPU)
+      << "[NDArray]: get item from gpu is not supported";
   MATX_NDARRAY_TYPE_SWITCH(dl_tensor->dtype, DT, {
     auto* p = reinterpret_cast<DT*>(static_cast<char*>(dl_tensor->data) + dl_tensor->byte_offset);
     return (double)(p[idx * d_ptr->Strides(0)]);
@@ -953,16 +951,16 @@ RTValue NDArray::fused_get_item(const int64_t* indexes, size_t num_indexes) cons
       ++i;
     }
     if (dl_tensor->ndim == num_indexes) {
-      MXCHECK(dl_tensor->ctx.device_type == kDLCPU)
+      MXCHECK(dl_tensor->device.device_type == kDLCPU)
           << "[NDArray]: get scalar value is only supported for cpu array, but get "
-          << dl_tensor->ctx.device_type;
+          << dl_tensor->device.device_type;
       return ElementData2AnyValue(*p);
     } else {
       NDArray ret = Internal::Create(dl_tensor->shape + i,
                                      dl_tensor->ndim - i,
                                      get_mutable()->StridesBegin() + i,
                                      dl_tensor->dtype,
-                                     dl_tensor->ctx);
+                                     dl_tensor->device);
       get_mutable()->IncRef();
       ret.get_mutable()->dl_tensor.byte_offset = 0;
       ret.get_mutable()->manager_ctx = get_mutable();
@@ -993,9 +991,9 @@ int64_t NDArray::fused_get_item_as_int64(const int64_t* indexes, size_t num_inde
       p += strides[i] * index;
       ++i;
     }
-    MXCHECK(dl_tensor->ctx.device_type == kDLCPU)
+    MXCHECK(dl_tensor->device.device_type == kDLCPU)
         << "[NDArray]: get scalar value is only supported for cpu array, but get "
-        << dl_tensor->ctx.device_type;
+        << dl_tensor->device.device_type;
     return int64_t(*p);
   });
   return 0;
@@ -1021,9 +1019,9 @@ double NDArray::fused_get_item_as_double(const int64_t* indexes, size_t num_inde
       p += strides[i] * index;
       ++i;
     }
-    MXCHECK(dl_tensor->ctx.device_type == kDLCPU)
+    MXCHECK(dl_tensor->device.device_type == kDLCPU)
         << "[NDArray]: get scalar value is only supported for cpu array, but get "
-        << dl_tensor->ctx.device_type;
+        << dl_tensor->device.device_type;
     return double(*p);
   });
   return 0;
@@ -1345,7 +1343,7 @@ NDArray NDArray::get_slice(int64_t begin, int64_t end, int64_t step) const {
     std::vector<int64_t> shape = get_mutable()->ShapeVec();
     shape[0] = 0;
     NDArray ret =
-        Internal::Create(shape, get_mutable()->StridesVec(), dl_tensor->dtype, dl_tensor->ctx);
+        Internal::Create(shape, get_mutable()->StridesVec(), dl_tensor->dtype, dl_tensor->device);
     ret.get_mutable()->dl_tensor.data = nullptr;
     return ret;
   }
@@ -1355,7 +1353,7 @@ NDArray NDArray::get_slice(int64_t begin, int64_t end, int64_t step) const {
   shape[0] = (end - begin + step - 1) / step;
   strides[0] *= step;
   bool contiguous = ::matxscript::runtime::IsContiguous(shape, strides, shape.size());
-  NDArray ret = Internal::Create(shape, strides, dl_tensor->dtype, dl_tensor->ctx, contiguous);
+  NDArray ret = Internal::Create(shape, strides, dl_tensor->dtype, dl_tensor->device, contiguous);
   get_mutable()->IncRef();
   ret.get_mutable()->dl_tensor.byte_offset = dl_tensor->byte_offset;
   ret.get_mutable()->manager_ctx = get_mutable();
@@ -1444,7 +1442,7 @@ NDArray NDArray::transpose(const Any& axes) const {
   }
 
   bool contiguous = ::matxscript::runtime::IsContiguous(shape, strides, shape.size());
-  NDArray ret = Internal::Create(shape, strides, dl_tensor->dtype, dl_tensor->ctx, contiguous);
+  NDArray ret = Internal::Create(shape, strides, dl_tensor->dtype, dl_tensor->device, contiguous);
   get_mutable()->IncRef();
   ret.get_mutable()->dl_tensor.byte_offset = dl_tensor->byte_offset;
   ret.get_mutable()->dl_tensor.data = dl_tensor->data;
@@ -1458,7 +1456,7 @@ NDArray NDArray::as_type(const unicode_view& dtype_str) const {
   auto src_container = get_mutable();
   const DLTensor* src_tensor = &(src_container->dl_tensor);
   ::matxscript::runtime::DataType dst_dtype(String2DLDataType(UTF8Encode(dtype_str)));
-  auto ret = Empty(src_container->ShapeVec(), dst_dtype, src_tensor->ctx);
+  auto ret = Empty(src_container->ShapeVec(), dst_dtype, src_tensor->device);
   auto dst_container = ret.get_mutable();
   const DLTensor* dst_tensor = &(dst_container->dl_tensor);
   auto src_data =
@@ -1517,12 +1515,12 @@ NDArray NDArray::Contiguous() const {
   }
   MXCHECK(data_ != nullptr);
   const DLTensor* dptr = operator->();
-  const DLContext src_ctx = dptr->ctx;
-  MXCHECK(src_ctx.device_type == kDLCPU);
+  const DLDevice src_dev = dptr->device;
+  MXCHECK(src_dev.device_type == kDLCPU);
   auto container = get_mutable();
   std::vector<int64_t> src_shape(std::move(container->ShapeVec()));
   DLDataType src_dtype = dptr->dtype;
-  NDArray dst_arr = NDArray::Empty(src_shape, src_dtype, src_ctx);
+  NDArray dst_arr = NDArray::Empty(src_shape, src_dtype, src_dev);
   AssignNDArray(*this, dst_arr);
   return dst_arr;
 }
@@ -1601,36 +1599,36 @@ static inline void PrintNDArray(const NDArray& tensor, std::ostream& ss, int dep
     ss << shape_ptr[dim_pos];
   }
   ss << "), ";
-  ss << DeviceName(tensor->ctx.device_type);
-  ss << "(" << tensor->ctx.device_id << ")>\n";
+  ss << DeviceName(tensor->device.device_type);
+  ss << "(" << tensor->device.device_id << ")>\n";
   ss << "array([";
   const int64_t* strides = tensor.GetStridesPtr();
-  if (tensor->ctx.device_type != DLDeviceType::kDLCPU &&
-      tensor->ctx.device_type != DLDeviceType::kDLCPUPinned) {
+  if (tensor->device.device_type != DLDeviceType::kDLCPU &&
+      tensor->device.device_type != DLDeviceType::kDLCUDAHost) {
     int64_t max_bytes = 0;
     for (int i = 0; i < tensor->ndim; ++i) {
       max_bytes += (tensor->shape[i] - 1) * strides[i];
     }
     max_bytes = (max_bytes + 1) * tensor.DataType().bytes();
-    DeviceAPI* cpu_device = DeviceAPI::Get(DLContext{kDLCPU, 0});
-    void* to = cpu_device->Alloc(DLContext{kDLCPU, 0}, max_bytes);
-    DeviceAPI* gpu_device = DeviceAPI::Get(tensor->ctx);
-    auto stream = gpu_device->GetCurrentThreadStream(tensor->ctx);
+    DeviceAPI* cpu_device = DeviceAPI::Get(DLDevice{kDLCPU, 0});
+    void* to = cpu_device->Alloc(DLDevice{kDLCPU, 0}, max_bytes);
+    DeviceAPI* gpu_device = DeviceAPI::Get(tensor->device);
+    auto stream = gpu_device->GetCurrentThreadStream(tensor->device);
 
     gpu_device->CopyDataFromTo(tensor->data,
                                tensor->byte_offset,
                                to,
                                0,
                                max_bytes,
-                               tensor->ctx,
-                               DLContext{kDLCPU, 0},
+                               tensor->device,
+                               DLDevice{kDLCPU, 0},
                                tensor->dtype,
                                stream);
     gpu_device->CreateEventSync(stream);
     MATX_NDARRAY_TYPE_SWITCH_WITH_BOOL(dtype, DT, {
       PrintNDArray(tensor->ndim, static_cast<DT*>(to), tensor->shape, strides, ss, depth);
     });
-    cpu_device->Free(DLContext{kDLCPU, 0}, to);
+    cpu_device->Free(DLDevice{kDLCPU, 0}, to);
   } else {
     MATX_NDARRAY_TYPE_SWITCH_WITH_BOOL(dtype, DT, {
       PrintNDArray(tensor->ndim, static_cast<DT*>(tensor->data), tensor->shape, strides, ss, depth);
@@ -1672,11 +1670,11 @@ int MATXScriptArrayAlloc(const matx_script_index_t* shape,
   dtype.code = static_cast<uint8_t>(dtype_code);
   dtype.bits = static_cast<uint8_t>(dtype_bits);
   dtype.lanes = static_cast<uint16_t>(dtype_lanes);
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(device_type);
-  ctx.device_id = device_id;
+  DLDevice device;
+  device.device_type = static_cast<DLDeviceType>(device_type);
+  device.device_id = device_id;
   *out = NDArray::Internal::MoveToFFIHandle(
-      NDArray::Empty(std::vector<int64_t>(shape, shape + ndim), dtype, ctx));
+      NDArray::Empty(std::vector<int64_t>(shape, shape + ndim), dtype, device));
   API_END();
 }
 
@@ -1693,10 +1691,10 @@ int MATXScriptNDArrayAlloc(const matx_script_index_t* shape,
   dtype.code = static_cast<uint8_t>(dtype_code);
   dtype.bits = static_cast<uint8_t>(dtype_bits);
   dtype.lanes = static_cast<uint16_t>(dtype_lanes);
-  DLContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(device_type);
-  ctx.device_id = device_id;
-  auto nd = NDArray::Empty(std::vector<int64_t>(shape, shape + ndim), dtype, ctx);
+  DLDevice device;
+  device.device_type = static_cast<DLDeviceType>(device_type);
+  device.device_id = device_id;
+  auto nd = NDArray::Empty(std::vector<int64_t>(shape, shape + ndim), dtype, device);
   *out = const_cast<Object*>(nd.get());
   NDArray::Internal::MoveToFFIHandle(nd);
   API_END();

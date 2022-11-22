@@ -78,7 +78,7 @@ class NDArray::Container : public Object, public NDArray::ContainerBase {
     dl_tensor.byte_offset = 0;
   }
 
-  Container(void* data, std::vector<int64_t> shape, DLDataType dtype, DLContext ctx) {
+  Container(void* data, std::vector<int64_t> shape, DLDataType dtype, DLDevice device) {
     // Initialize the type index.
     type_index_ = Container::RuntimeTypeIndex();
     dl_tensor.data = data;
@@ -88,7 +88,7 @@ class NDArray::Container : public Object, public NDArray::ContainerBase {
     dl_tensor.dtype = dtype;
     dl_tensor.strides = nullptr;
     dl_tensor.byte_offset = 0;
-    dl_tensor.ctx = ctx;
+    dl_tensor.device = device;
   }
   /*!
    * \brief Set the deleter field.

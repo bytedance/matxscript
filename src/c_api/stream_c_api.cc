@@ -29,16 +29,16 @@ namespace runtime {
 
 // set device api
 MATXSCRIPT_REGISTER_GLOBAL("runtime.SetDevice").set_body([](PyArgs args) -> RTValue {
-  MATXScriptContext ctx;
-  ctx.device_type = static_cast<DLDeviceType>(args[0].As<int64_t>());
-  ctx.device_id = args[1].As<int64_t>();
-  DeviceAPI::Get(ctx)->SetDevice(ctx);
+  MATXScriptDevice device;
+  device.device_type = static_cast<DLDeviceType>(args[0].As<int64_t>());
+  device.device_id = args[1].As<int64_t>();
+  DeviceAPI::Get(device)->SetDevice(device);
   return None;
 });
 
 // set device api
 MATXSCRIPT_REGISTER_GLOBAL("runtime.GetDeviceAttr").set_body([](PyArgs args) -> RTValue {
-  MATXScriptContext ctx;
+  MATXScriptDevice ctx;
   ctx.device_type = static_cast<DLDeviceType>(args[0].As<int64_t>());
   ctx.device_id = args[1].As<int64_t>();
 
@@ -100,8 +100,8 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.CurrentThreadStreamSync").set_body([](PyArgs
       << "CurrentThreadStreamSync first arg must be integer. ";
   int device_id = args[0].As<int64_t>();
   if (device_id >= 0) {
-    MATXScriptContext ctx{kDLGPU, device_id};
-    DeviceAPI::Get(ctx)->CurrentThreadStreamSync(ctx);
+    MATXScriptDevice device{kDLCUDA, device_id};
+    DeviceAPI::Get(device)->CurrentThreadStreamSync(device);
   }
   return None;
 });

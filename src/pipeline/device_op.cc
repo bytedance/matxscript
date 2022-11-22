@@ -45,7 +45,7 @@ RTValue DeviceOp::Process(PyArgs inputs) const {
   if (device_ == NONE_DEVICE) {
     // no session, use global
     if (device_id_ >= 0) {
-      MATXScriptContext ctx{kDLGPU, device_id_};
+      MATXScriptDevice ctx{kDLCUDA, device_id_};
       DeviceAPI* api = DeviceAPI::Get(ctx, true);
       if (api != nullptr) {
         current_stream = api->GetCurrentThreadStream(ctx);
@@ -54,7 +54,7 @@ RTValue DeviceOp::Process(PyArgs inputs) const {
   } else {
     if (device_ >= 0) {
       session_device_id = internal::cuda_device_offset(device_);
-      MATXScriptContext ctx{kDLGPU, session_device_id};
+      MATXScriptDevice ctx{kDLCUDA, session_device_id};
       DeviceAPI* api = DeviceAPI::Get(ctx, true);
       if (api != nullptr) {
         current_stream = api->GetCurrentThreadStream(ctx);

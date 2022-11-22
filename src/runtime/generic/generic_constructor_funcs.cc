@@ -516,15 +516,15 @@ namespace Kernel_NDArray {
 
 namespace {
 MATXSCRIPT_ALWAYS_INLINE void copy_to(void* data, NDArray& arr) {
-  auto* dev_api = DeviceAPI::Get(arr->ctx);
-  MATXScriptStreamHandle stream = dev_api->GetCurrentThreadStream(arr->ctx);
+  auto* dev_api = DeviceAPI::Get(arr->device);
+  MATXScriptStreamHandle stream = dev_api->GetCurrentThreadStream(arr->device);
   dev_api->CopyDataFromTo(data,
                           0,
                           const_cast<void*>(arr.RawData()),
                           0,
                           arr.DataSize(),
-                          DLContext{kDLCPU, 0},
-                          arr->ctx,
+                          DLDevice{kDLCPU, 0},
+                          arr->device,
                           arr->dtype,
                           stream);
   dev_api->CreateEventSync(stream);

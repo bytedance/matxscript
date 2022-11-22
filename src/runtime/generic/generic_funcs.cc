@@ -862,9 +862,9 @@ RTValue kernel_list_module_heap_pushpop(PyArgs args) {
   }
 }
 
-static void MATXStreamDeleter(void* self) {
+static void MATXCUDAStreamDeleter(void* self) {
   auto stream_info = reinterpret_cast<StreamInfo*>(self);
-  MATXScriptStreamFree(DLDeviceType::kDLGPU,
+  MATXScriptStreamFree(DLDeviceType::kDLCUDA,
                        stream_info->device_id,
                        reinterpret_cast<MATXScriptStreamHandle>(stream_info->device_stream));
 
@@ -881,17 +881,17 @@ OpaqueObject kernel_cuda_module_default_stream(int64_t device_id) {
   StreamInfo* stream_info = new (buffer_ptr)(StreamInfo);
   stream_info->device_id = device_id;
   stream_info->device_stream = stream;
-  opaque_object.update(1, stream_info, MATXStreamDeleter);
+  opaque_object.update(1, stream_info, MATXCUDAStreamDeleter);
   return opaque_object;
 }
 
 OpaqueObject kernel_cuda_module_create_stream(int64_t device_id) {
   MXCHECK(device_id >= 0) << "Device Id must be equal or greater than zeros .";
 
-  MATXScriptContext ctx;
-  ctx.device_id = device_id;
-  ctx.device_type = DLDeviceType::kDLGPU;
-  MATXScriptStreamHandle stream = DeviceAPI::Get(ctx)->CreateStream(ctx);
+  MATXScriptDevice device;
+  device.device_id = device_id;
+  device.device_type = DLDeviceType::kDLCUDA;
+  MATXScriptStreamHandle stream = DeviceAPI::Get(device)->CreateStream(device);
 
   OpaqueObject opaque_object = OpaqueObject();
   unsigned char* buffer_ptr = opaque_object.GetInternalBufferPtr();
@@ -899,7 +899,7 @@ OpaqueObject kernel_cuda_module_create_stream(int64_t device_id) {
   StreamInfo* stream_info = new (buffer_ptr)(StreamInfo);
   stream_info->device_id = device_id;
   stream_info->device_stream = stream;
-  opaque_object.update(1, stream_info, MATXStreamDeleter);
+  opaque_object.update(1, stream_info, MATXCUDAStreamDeleter);
   return opaque_object;
 }
 
@@ -908,7 +908,7 @@ void kernel_cuda_module_stream_sync(const OpaqueObject& stream, int64_t device_i
     THROW_PY_ValueError("stream_sync() Device Id must be equal or greater than zeros.");
   }
   StreamInfo* stream_info = reinterpret_cast<StreamInfo*>(stream.GetOpaquePtr());
-  MATXScriptSynchronize(DLDeviceType::kDLGPU,
+  MATXScriptSynchronize(DLDeviceType::kDLCUDA,
                         stream_info->device_id,
                         reinterpret_cast<MATXScriptStreamHandle>(stream_info->device_stream));
 }

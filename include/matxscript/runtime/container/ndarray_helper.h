@@ -41,18 +41,18 @@ class NDArrayHelper {
   static void IndexesAddOne(const std::vector<int64_t>& shape,
                             size_t dim,
                             std::vector<int64_t>& indexes);
-  static DLContext GetCPUDevice();
+  static DLDevice GetCPUDevice();
   static std::vector<int64_t> ExpandShape(const std::vector<int64_t>& shape, size_t dim);
   static std::vector<int64_t> ExpandStrides(const std::vector<int64_t>& strides, size_t dim);
   static int64_t Offset(const std::vector<int64_t>& indexes,
                         const std::vector<int64_t>& shape,
                         const std::vector<int64_t>& strides);
-  static DLContext GetDevice(const Unicode& device);
-  static Unicode GetContextStr(const DLContext& ctx);
+  static DLDevice GetDevice(const Unicode& device);
+  static Unicode GetDeviceStr(const DLDevice& device);
 
  private:
   static std::unordered_map<Unicode, DLDeviceType> str2device_type_;
-  static std::unordered_map<Unicode, DLContext> str2device_;
+  static std::unordered_map<Unicode, DLDevice> str2device_;
   static std::unordered_map<int64_t, Unicode> dt2str_;
 };
 

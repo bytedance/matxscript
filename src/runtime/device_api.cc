@@ -33,7 +33,7 @@ class DeviceAPIManager {
  public:
   static const int kMaxDeviceAPI = 32;
   // Get API
-  static DeviceAPI* Get(const MATXScriptContext& ctx) {
+  static DeviceAPI* Get(const MATXScriptDevice& ctx) {
     return Get(ctx.device_type);
   }
   static DeviceAPI* Get(int dev_type, bool allow_missing = false) {
@@ -95,8 +95,9 @@ class DeviceAPIManager {
       if (allow_missing) {
         return nullptr;
       }
-      if (!api_load_msg_[kDLGPU].empty()) {
-        MXTHROW << api_load_msg_[kDLGPU];
+      // TODO: fix device_id
+      if (!api_load_msg_[kDLCUDA].empty()) {
+        MXTHROW << api_load_msg_[kDLCUDA];
         return nullptr;
       }
       if (name == "gpu") {
@@ -111,39 +112,39 @@ class DeviceAPIManager {
   }
 };
 
-DeviceAPI* DeviceAPI::Get(MATXScriptContext ctx, bool allow_missing) {
-  return DeviceAPIManager::Get(static_cast<int>(ctx.device_type), allow_missing);
+DeviceAPI* DeviceAPI::Get(MATXScriptDevice device, bool allow_missing) {
+  return DeviceAPIManager::Get(static_cast<int>(device.device_type), allow_missing);
 }
 
-void DeviceAPI::SetErrorMessage(MATXScriptContext ctx, String msg) {
-  return DeviceAPIManager::SetErrorMessage(static_cast<int>(ctx.device_type), std::move(msg));
+void DeviceAPI::SetErrorMessage(MATXScriptDevice device, String msg) {
+  return DeviceAPIManager::SetErrorMessage(static_cast<int>(device.device_type), std::move(msg));
 }
 
-MATXScriptStreamHandle DeviceAPI::CreateStream(MATXScriptContext ctx) {
+MATXScriptStreamHandle DeviceAPI::CreateStream(MATXScriptDevice device) {
   MXTHROW << "Device does not support stream api.";
   return nullptr;
 }
 
-void DeviceAPI::FreeStream(MATXScriptContext ctx, MATXScriptStreamHandle stream) {
+void DeviceAPI::FreeStream(MATXScriptDevice device, MATXScriptStreamHandle stream) {
   MXTHROW << "Device does not support stream api.";
 }
 
-void DeviceAPI::SyncStreamFromTo(MATXScriptContext ctx,
+void DeviceAPI::SyncStreamFromTo(MATXScriptDevice device,
                                  MATXScriptStreamHandle event_src,
                                  MATXScriptStreamHandle event_dst) {
   MXTHROW << "Device does not support stream api.";
 }
 
-DeviceStreamGuard::DeviceStreamGuard(MATXScriptContext ctx, std::shared_ptr<void> stream) {
-  this->ctx_ = ctx;
+DeviceStreamGuard::DeviceStreamGuard(MATXScriptDevice device, std::shared_ptr<void> stream) {
+  this->device_ = device;
   this->new_stream_ = std::move(stream);
-  this->device_api_ = DeviceAPI::Get(ctx_);
-  this->old_stream_ = this->device_api_->GetSharedCurrentThreadStream(ctx);
-  this->device_api_->SetCurrentThreadStream(this->ctx_, this->new_stream_);
+  this->device_api_ = DeviceAPI::Get(device_);
+  this->old_stream_ = this->device_api_->GetSharedCurrentThreadStream(device_);
+  this->device_api_->SetCurrentThreadStream(this->device_, this->new_stream_);
 }
 
 DeviceStreamGuard::~DeviceStreamGuard() {
-  this->device_api_->SetCurrentThreadStream(this->ctx_, this->old_stream_);
+  this->device_api_->SetCurrentThreadStream(this->device_, this->old_stream_);
 }
 
 }  // namespace runtime

@@ -43,10 +43,17 @@ MATX_REGISTER_NATIVE_OP(TorchInferOp).SetThreadSafety(false);
 
 namespace {
 
+static inline constexpr bool IsCPUMemory(const DLDevice& device) {
+  return (device.device_type == kDLCPU) || (device.device_type == kDLCUDAHost);
+}
+
+static inline constexpr bool IsCUDAMemory(const DLDevice& device) {
+  return (device.device_type == kDLCUDA) || (device.device_type == kDLCUDAManaged);
+}
+
 torch::Tensor ToTorchTensor(const NDArray& tx_tsr, at::Device device) {
-  DLContext ctx = tx_tsr->ctx;
-  if ((ctx.device_type == DLDeviceType::kDLGPU and device.is_cuda()) or
-      (ctx.device_type == DLDeviceType::kDLCPU and device.is_cpu())) {
+  if ((IsCUDAMemory(tx_tsr->device) && device.is_cuda()) ||
+      (IsCPUMemory(tx_tsr->device) && device.is_cpu())) {
     return at::fromDLPack(tx_tsr.ToDLPack());
   }
 
@@ -327,14 +334,14 @@ void TorchInferOp::Init() {
   MXCHECK(th_model_ != nullptr) << "cnn't find model: " << model;
   sub_ops_ = {th_model_};
   if (use_device >= 0) {
-    ctx_.device_type = kDLGPU;
-    ctx_.device_id = internal::cuda_device_offset(use_device);
-    device_api_ = DeviceAPI::Get(ctx_);
+    dl_device_.device_type = kDLCUDA;
+    dl_device_.device_id = internal::cuda_device_offset(use_device);
+    device_api_ = DeviceAPI::Get(dl_device_);
     engine_ = th_model_->RegisterOrGetEngine(internal::cuda_device_offset(use_device));
   } else {
-    ctx_.device_type = kDLCPU;
-    ctx_.device_id = 0;
-    device_api_ = DeviceAPI::Get(ctx_);
+    dl_device_.device_type = kDLCPU;
+    dl_device_.device_id = 0;
+    device_api_ = DeviceAPI::Get(dl_device_);
     engine_ = th_model_->RegisterOrGetEngine(use_device);
   }
   MXCHECK(engine_ != nullptr) << "init engine failed!";
@@ -348,13 +355,13 @@ RTValue TorchInferOp::Process(PyArgs inputs) const {
   }
 #endif  // MATXSCRIPT_PYTHON_MODE
 #ifdef MATX_ENABLE_TORCH_MODEL_AUTO_SYNCHRONIZATION_WITH_PREPROCESS
-  if (ctx_.device_type == kDLGPU) {
+  if (device_.device_type == kDLCUDA) {
     cudaStream_t preprocessStream =
-        static_cast<cudaStream_t>(device_api_->GetCurrentThreadStream(ctx_));
-    auto torchModelStream = c10::cuda::getCurrentCUDAStream(ctx_.device_id);
+        static_cast<cudaStream_t>(device_api_->GetCurrentThreadStream(device_));
+    auto torchModelStream = c10::cuda::getCurrentCUDAStream(device_.device_id);
     cudaStream_t torchModelCudaStream = torchModelStream.stream();
     if (preprocessStream != torchModelCudaStream) {
-      device_api_->SyncStreamFromTo(ctx_, preprocessStream, torchModelCudaStream);
+      device_api_->SyncStreamFromTo(device_, preprocessStream, torchModelCudaStream);
     }
   }
 #endif

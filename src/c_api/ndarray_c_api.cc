@@ -33,8 +33,8 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArray").set_body([](PyArgs args) -> RTValu
   RTValue data = args[0].As<RTValue>();
   List shape = args[1].As<List>();
   Unicode dtype_str = args[2].As<Unicode>();
-  Unicode ctx_str = args[3].As<Unicode>();
-  return Kernel_NDArray::make(data, shape, dtype_str, ctx_str);
+  Unicode device_str = args[3].As<Unicode>();
+  return Kernel_NDArray::make(data, shape, dtype_str, device_str);
 });
 
 MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayToList").set_body([](PyArgs args) -> RTValue {
@@ -129,9 +129,17 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayCopyToBytes").set_body([](PyArgs args
   auto& nd = view.data();
   MATXScriptStreamHandle stream = reinterpret_cast<MATXScriptStreamHandle>(args[2].As<int64_t>());
   MXCHECK(nd.IsContiguous()) << "NDArrayCopyToBytes: only support contiguous NDArray";
-  // DeviceAPI::Get(nd->ctx)->DefaultComputeStreamSync(nd->ctx);
-  DeviceAPI::Get(nd->ctx)->CopyDataFromTo(
-      nd->data, nd->byte_offset, to, 0, nd.DataSize(), nd->ctx, nd->ctx, nd->dtype, stream);
+  // DeviceAPI::Get(nd->device)->DefaultComputeStreamSync(nd->device);
+  DeviceAPI::Get(nd->device)
+      ->CopyDataFromTo(nd->data,
+                       nd->byte_offset,
+                       to,
+                       0,
+                       nd.DataSize(),
+                       nd->device,
+                       nd->device,
+                       nd->dtype,
+                       stream);
   return None;
 });
 
