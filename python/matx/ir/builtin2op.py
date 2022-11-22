@@ -68,9 +68,11 @@ class Builtin2Op(object):
                                              ret_type=expect_ret_type)
             elif (isinstance(symbol.checked_type, _type.DictType)
                   and isinstance(expect_ret_type, _type.DictType)):
-                symbol = _ir_adt.Constructor("FTDict",
-                                             inputs=[expect_ret_type.key_type, expect_ret_type.value_type],
-                                             ret_type=expect_ret_type)
+                symbol = _ir_adt.Constructor(
+                    "FTDict",
+                    inputs=[expect_ret_type.key_type,
+                            expect_ret_type.value_type],
+                    ret_type=expect_ret_type)
         return symbol
 
 
