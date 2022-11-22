@@ -461,8 +461,8 @@ static PyObject* PyObjectMATXScriptAny_repr(PyObject* self0) {
           "Any(code: %d, pad: %d, value: MATXContext(device_type: %d, device_id: %d))",
           self->value.code,
           self->value.pad,
-          self->value.data.v_ctx.device_type,
-          self->value.data.v_ctx.device_id);
+          self->value.data.v_device.device_type,
+          self->value.data.v_device.device_id);
     } break;
     case ::matxscript::runtime::TypeIndex::kRuntimeDLTensorHandle: {
       return PyUnicode_FromFormat("Any(code: %d, pad: %d, value: DLTensor(addr: %p))",
