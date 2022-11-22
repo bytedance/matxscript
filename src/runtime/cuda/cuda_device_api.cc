@@ -437,7 +437,17 @@ MATXSCRIPT_REGISTER_GLOBAL("device_api.gpu").set_body([](PyArgs args) -> RTValue
   return static_cast<void*>(ptr);
 });
 
+MATXSCRIPT_REGISTER_GLOBAL("device_api.cuda").set_body([](PyArgs args) -> RTValue {
+  DeviceAPI* ptr = CUDADeviceAPI::Global();
+  return static_cast<void*>(ptr);
+});
+
 MATXSCRIPT_REGISTER_GLOBAL("device_api.cpu_pinned").set_body([](PyArgs args) -> RTValue {
+  DeviceAPI* ptr = CUDADeviceAPI::Global();
+  return static_cast<void*>(ptr);
+});
+
+MATXSCRIPT_REGISTER_GLOBAL("device_api.cuda_host").set_body([](PyArgs args) -> RTValue {
   DeviceAPI* ptr = CUDADeviceAPI::Global();
   return static_cast<void*>(ptr);
 });

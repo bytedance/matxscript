@@ -67,48 +67,44 @@ class DeviceAPIManager {
       rpc_load_msg_ = std::move(msg);
     }
   }
-  // Get or initialize API.
-  DeviceAPI* GetAPI(int type, bool allow_missing) {
-    if (type < kRPCSessMask) {
-      if (api_[type] != nullptr)
-        return api_[type];
-      std::lock_guard<std::mutex> lock(mutex_);
-      if (api_[type] != nullptr)
-        return api_[type];
-      api_[type] = GetAPI(DeviceName(type), allow_missing);
-      return api_[type];
-    } else {
-      if (rpc_api_ != nullptr)
-        return rpc_api_;
-      std::lock_guard<std::mutex> lock(mutex_);
-      if (rpc_api_ != nullptr)
-        return rpc_api_;
-      rpc_api_ = GetAPI("rpc", allow_missing);
-      return rpc_api_;
-    }
-  }
-  DeviceAPI* GetAPI(const string_view& name, bool allow_missing) {
+
+  DeviceAPI* GetAPIImpl(int type, bool allow_missing) {
     String factory("device_api.");
-    factory.append(name);
+    auto dev_name = DeviceName(type);
+    factory.append(dev_name);
     auto* f = FunctionRegistry::Get(factory);
     if (f == nullptr) {
       if (allow_missing) {
         return nullptr;
       }
-      // TODO: fix device_id
-      if (!api_load_msg_[kDLCUDA].empty()) {
+      if (type < api_load_msg_.size() && !api_load_msg_[type].empty()) {
         MXTHROW << api_load_msg_[kDLCUDA];
-        return nullptr;
-      }
-      if (name == "gpu") {
-        MXTHROW << "Can't found CUDA HOME in GPU Runtime, please set CUDA HOME to LD_LIBRARY_PATH";
       } else {
-        MXTHROW << "Device API " << name << " is not enabled.";
+        MXTHROW << dev_name << " device load failed!!!"
+                << " maybe you need to fill env 'LD_LIBRARY_PATH'";
       }
       return nullptr;
     }
     void* ptr = (*f)({}).As<void*>();
     return static_cast<DeviceAPI*>(ptr);
+  }
+
+  // Get or initialize API.
+  DeviceAPI* GetAPI(int type, bool allow_missing) {
+    if (type < api_.size()) {
+      if (api_[type] != nullptr)
+        return api_[type];
+      std::lock_guard<std::mutex> lock(mutex_);
+      if (api_[type] != nullptr)
+        return api_[type];
+      api_[type] = GetAPIImpl(type, allow_missing);
+      return api_[type];
+    } else {
+      if (!allow_missing) {
+        MXTHROW << "device type " << type << " is not supported now!!!";
+      }
+      return nullptr;
+    }
   }
 };
 
