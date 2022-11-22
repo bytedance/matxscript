@@ -229,32 +229,10 @@ class DeviceStreamGuard {
 /*! \brief The device type bigger than this is RPC device */
 constexpr int kRPCSessMask = 128;
 
-/*!
- * \brief The name of Device API factory.
- * \param type The device type.
- * \return the device name.
- */
-inline const char* DeviceName(int type) {
-  switch (type) {
-    case kDLCPU:
-      return "cpu";
-    case kDLCUDA:
-      return "cuda";
-    case kDLCUDAHost:
-      return "cuda_host";
-    default:
-      return "Unknown";
-  }
-}
+const char* DeviceTypeToName(int type);
+int DeviceNameToType(const string_view& name);
 
-inline std::ostream& operator<<(std::ostream& os, DLDevice dev) {  // NOLINT(*)
-  int device_type = static_cast<int>(dev.device_type);
-  if (device_type > kRPCSessMask) {
-    os << "remote[" << (device_type / kRPCSessMask) << "]-";
-    device_type = device_type % kRPCSessMask;
-  }
-  os << runtime::DeviceName(device_type) << "(" << dev.device_id << ")";
-  return os;
-}
+std::ostream& operator<<(std::ostream& os, DLDevice dev);
+
 }  // namespace runtime
 }  // namespace matxscript

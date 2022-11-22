@@ -333,9 +333,6 @@ const T* NDArray::Data() const {
   return static_cast<const T*>(this->RawData());
 }
 
-/*! \brief Magic number for NDArray file */
-constexpr uint64_t kTVMNDArrayMagic = 0xDD5E40F096B4A13F;
-
 std::ostream& operator<<(std::ostream& os, NDArray const& n);
 
 }  // namespace runtime

@@ -1599,7 +1599,7 @@ static inline void PrintNDArray(const NDArray& tensor, std::ostream& ss, int dep
     ss << shape_ptr[dim_pos];
   }
   ss << "), ";
-  ss << DeviceName(tensor->device.device_type);
+  ss << DeviceTypeToName(tensor->device.device_type);
   ss << "(" << tensor->device.device_id << ")>\n";
   ss << "array([";
   const int64_t* strides = tensor.GetStridesPtr();
