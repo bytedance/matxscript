@@ -355,13 +355,13 @@ RTValue TorchInferOp::Process(PyArgs inputs) const {
   }
 #endif  // MATXSCRIPT_PYTHON_MODE
 #ifdef MATX_ENABLE_TORCH_MODEL_AUTO_SYNCHRONIZATION_WITH_PREPROCESS
-  if (device_.device_type == kDLCUDA) {
+  if (dl_device_.device_type == kDLCUDA) {
     cudaStream_t preprocessStream =
-        static_cast<cudaStream_t>(device_api_->GetCurrentThreadStream(device_));
-    auto torchModelStream = c10::cuda::getCurrentCUDAStream(device_.device_id);
+        static_cast<cudaStream_t>(device_api_->GetCurrentThreadStream(dl_device_));
+    auto torchModelStream = c10::cuda::getCurrentCUDAStream(dl_device_.device_id);
     cudaStream_t torchModelCudaStream = torchModelStream.stream();
     if (preprocessStream != torchModelCudaStream) {
-      device_api_->SyncStreamFromTo(device_, preprocessStream, torchModelCudaStream);
+      device_api_->SyncStreamFromTo(dl_device_, preprocessStream, torchModelCudaStream);
     }
   }
 #endif
