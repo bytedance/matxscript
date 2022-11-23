@@ -25,6 +25,7 @@ from ..native import make_native_object
 import sys
 matx = sys.modules['matx']
 
+
 class _CastOpImpl:
     """Impl: Cast image data type to target type, e.g. uint8 to float32
     """
@@ -40,6 +41,7 @@ class _CastOpImpl:
                  beta: float = 0.0,
                  sync: int = ASYNC) -> matx.runtime.NDArray:
         return self.op.process(images, dtype, alpha, beta, sync)
+
 
 class CastOp:
     """ Cast image data type to target type, e.g. uint8 to float32

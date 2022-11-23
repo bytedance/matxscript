@@ -33,8 +33,8 @@ class CvtColor(BaseInterfaceClass):
                  device_id: int = -2,
                  sync: int = ASYNC) -> None:
         super().__init__(device_id=device_id, sync=sync)
-        self.op_name:str = "CvtColor"
-        self.color_code:str = color_code
+        self.op_name: str = "CvtColor"
+        self.color_code: str = color_code
 
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
         return CvtColorImpl(device, device_str, self.color_code, sync)
@@ -45,17 +45,17 @@ class CvtColorImpl(BatchBaseClass):
                  device: Any,
                  device_str: str,
                  color_code: str,
-                 sync: int = ASYNC)-> None:
+                 sync: int = ASYNC) -> None:
         super().__init__()
-        self.device_str:str = device_str
-        self.color_code:str = color_code
-        self.op:Any = CvtColorOp(device, self.color_code)
+        self.device_str: str = device_str
+        self.color_code: str = color_code
+        self.op: Any = CvtColorOp(device, self.color_code)
         self.sync: int = sync
-        self.name:str = "CvtColor"
+        self.name: str = "CvtColor"
 
     def _process(self, imgs: List[matx.NDArray]) -> List[matx.NDArray]:
         return self.op(imgs, sync=self.sync)
 
-    def __repr__(self)->str:
+    def __repr__(self) -> str:
         return self.name + '(color_code={}, device={}, sync={})'.format(
             self.color_code, self.device_str, self.sync)

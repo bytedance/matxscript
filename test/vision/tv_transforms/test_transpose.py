@@ -53,6 +53,7 @@ class TestTranspose(unittest.TestCase):
         assert len(bytedvision_res.shape) == 4
         np.testing.assert_almost_equal(bytedvision_res[0], np.transpose(self.img, (2, 0, 1)))
 
+
 class TestCpuTranspose(unittest.TestCase):
     def setUp(self) -> None:
         image_file = os.path.join(script_path, '..', '..', 'data', 'origin_image.jpeg')
@@ -76,6 +77,7 @@ class TestCpuTranspose(unittest.TestCase):
         bytedvision_res = composed_op(self.img_nd).asnumpy()
         assert len(bytedvision_res.shape) == 4
         np.testing.assert_almost_equal(bytedvision_res[0], np.transpose(self.img, (2, 0, 1)))
+
 
 if __name__ == "__main__":
     import logging

@@ -28,25 +28,24 @@ from ._common import _setup_size
 
 class GaussianBlur(BaseInterfaceClass):
     def __init__(self,
-                 kernel_size: List[int], 
+                 kernel_size: List[int],
                  sigma: List[float] = [0.1, 2.0],
-                 device_id: int = -2, 
+                 device_id: int = -2,
                  sync: int = ASYNC) -> None:
         super().__init__(device_id=device_id, sync=sync)
-        self._kernel_size:Tuple[int, int] = _setup_size(kernel_size )
+        self._kernel_size: Tuple[int, int] = _setup_size(kernel_size)
         for ks in self._kernel_size:
-            assert 0<ks and ks % 2 == 1, "Kernel size value should be an odd and positive number."
-        
+            assert 0 < ks and ks % 2 == 1, "Kernel size value should be an odd and positive number."
+
         if len(sigma) == 1:
             assert sigma[0] > 0, "If sigma is a single number, it must be positive."
-            self._sigma:Tuple[float, float] = (sigma[0], sigma[0])
+            self._sigma: Tuple[float, float] = (sigma[0], sigma[0])
         elif len(sigma) == 2:
-            assert 0. < sigma[0] <= sigma[1], "sigma values should be positive and of the form (min, max)."
-            self._sigma:Tuple[float, float] = (sigma[0], sigma[1])
+            assert 0. < sigma[0] <= sigma[
+                1], "sigma values should be positive and of the form (min, max)."
+            self._sigma: Tuple[float, float] = (sigma[0], sigma[1])
         else:
             assert False, "sigma should be a single number or a list/tuple with length 2."
-
-
 
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
         return GaussianBlurImpl(device, device_str, self._kernel_size, self._sigma, sync)
@@ -60,20 +59,21 @@ class GaussianBlurImpl(BatchBaseClass):
                  sigma: Tuple[float, float] = (0.1, 2.0),
                  sync: int = ASYNC) -> None:
         super().__init__()
-        
+
         self.kernel_size: Tuple[int, int] = kernel_size
 
-        self.sigma:Tuple[float, float] = sigma
+        self.sigma: Tuple[float, float] = sigma
         self.device_str: str = device_str
         self.sync: int = sync
-        self.op: GaussianBlurOp= GaussianBlurOp(device)
+        self.op: GaussianBlurOp = GaussianBlurOp(device)
         self.name: str = "GaussianBlurImpl"
 
     def _process(self, imgs: List[matx.NDArray]) -> List[matx.NDArray]:
-        size:int = len(imgs)
+        size: int = len(imgs)
         ksizes: List[Tuple[int, int]] = [self.kernel_size] * size
         sigmas: List[Tuple[float, float]] = [self.sigma] * size
         return self.op(imgs, ksizes, sigmas, sync=self.sync)
 
-    def __repr__(self)->str:
-        return "{} (kernel_size={},sigma={}, device={}, sync={})".format(self.name, self.kernel_size, self.sigma, self.device_str, self.sync)
+    def __repr__(self) -> str:
+        return "{} (kernel_size={},sigma={}, device={}, sync={})".format(
+            self.name, self.kernel_size, self.sigma, self.device_str, self.sync)

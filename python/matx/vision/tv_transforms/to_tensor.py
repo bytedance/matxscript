@@ -27,7 +27,7 @@ from ._base import BaseInterfaceClass
 class ToTensor(BaseInterfaceClass):
     def __init__(self, device_id: int = -2, sync: int = ASYNC) -> None:
         super().__init__(device_id=device_id, sync=sync)
-    
+
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
         return ToTensorImpl(device, device_str, sync)
 
@@ -38,10 +38,11 @@ class ToTensorImpl:
                  device_str: str,
                  sync: int = ASYNC) -> None:
         super().__init__()
-        self.stack_op:StackOp = StackOp(device)
-        self.transpose_op:TransposeOp = TransposeOp(device, input_layout="NHWC", output_layout="NCHW")
+        self.stack_op: StackOp = StackOp(device)
+        self.transpose_op: TransposeOp = TransposeOp(
+            device, input_layout="NHWC", output_layout="NCHW")
         self.device_str: str = device_str
-        self.sync:int = sync
+        self.sync: int = sync
         self.name: str = "ToTensor"
 
     def __call__(self, imgs: List[matx.NDArray], apply_index: List[int] = []) -> matx.NDArray:
@@ -51,5 +52,5 @@ class ToTensorImpl:
         res = transposed_img
         return res
 
-    def __repr__(self)->str:
-        return  self.name+ '(device={}, sync={})'.format(self.device_str, self.sync)
+    def __repr__(self) -> str:
+        return self.name + '(device={}, sync={})'.format(self.device_str, self.sync)

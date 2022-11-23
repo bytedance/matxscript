@@ -32,9 +32,9 @@ class Decode(BaseInterfaceClass):
                  device_id: int = -2,
                  sync: int = ASYNC) -> None:
         super().__init__(device_id=device_id, sync=sync)
-        self.to_rgb:bool = to_rgb
-        self.pool_size:int = pool_size
-    
+        self.to_rgb: bool = to_rgb
+        self.pool_size: int = pool_size
+
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
         return DecodeImpl(device, device_str, self.to_rgb, self.pool_size, sync)
 
@@ -46,25 +46,25 @@ class DecodeImpl:
                  to_rgb: bool = False,
                  pool_size: int = 8,
                  sync: int = ASYNC):
-        self.device:Any = device
-        self.device_str:str = device_str
-        self.color_format:str = "RGB" if to_rgb else "BGR"
-        self.pool_size:int = pool_size
-        self.op:ImdecodeOp = ImdecodeOp(self.device, self.color_format, self.pool_size)
-        self.sync:int = sync
-        self.name:str = "Decode"
+        self.device: Any = device
+        self.device_str: str = device_str
+        self.color_format: str = "RGB" if to_rgb else "BGR"
+        self.pool_size: int = pool_size
+        self.op: ImdecodeOp = ImdecodeOp(self.device, self.color_format, self.pool_size)
+        self.sync: int = sync
+        self.name: str = "Decode"
 
     def _process(self, imgs: List[bytes]) -> List[matx.NDArray]:
         return self.op(imgs, sync=self.sync)
 
-    def __repr__(self)->str:
+    def __repr__(self) -> str:
         return '{}(format={}, pool_size={}, device={}, sync={})'.format(
-            self.name,self.color_format, self.pool_size, self.device_str, self.sync)
+            self.name, self.color_format, self.pool_size, self.device_str, self.sync)
 
     def __call__(
             self,
             images: List[bytes],
-            apply_index: List[int]=[]) -> List[matx.NDArray]:
+            apply_index: List[int] = []) -> List[matx.NDArray]:
         assert len(apply_index) == 0, "apply_index is not support by jpeg decode."
         new_images: List[matx.NDArray] = self._process(images)
         return new_images

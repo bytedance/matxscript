@@ -72,7 +72,7 @@ class Compose(object):
                 else:
                     op_sync = op.sync()
             self.transforms = [op(op_device, op_device_str, op_sync)] + self.transforms
-    
+
     def _create_device_str(self, device_id: int) -> str:
         if device_id in self.device_str:
             return self.device_str[device_id]
@@ -81,7 +81,7 @@ class Compose(object):
             cur_device_str = "gpu:{}".format(device_id)
         self.device_str[device_id] = cur_device_str
         return cur_device_str
-    
+
     def __call__(self, imgs: Any) -> Any:
         for t in self.transforms:
             imgs = t(imgs, [])

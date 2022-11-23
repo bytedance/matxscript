@@ -37,7 +37,8 @@ class _StackOpImpl:
         self.op: matx.NativeObject = make_native_object(
             "VisionStackGeneralOp", device())
 
-    def __call__(self, images: List[matx.runtime.NDArray], sync: int = ASYNC) -> matx.runtime.NDArray:
+    def __call__(self, images: List[matx.runtime.NDArray],
+                 sync: int = ASYNC) -> matx.runtime.NDArray:
         return self.op.process(images, sync)
 
 
@@ -52,7 +53,8 @@ class StackOp:
         """
         self.op: _StackOpImpl = matx.script(_StackOpImpl)(device)
 
-    def __call__(self, images: List[matx.runtime.NDArray], sync: int = ASYNC) -> matx.runtime.NDArray:
+    def __call__(self, images: List[matx.runtime.NDArray],
+                 sync: int = ASYNC) -> matx.runtime.NDArray:
         """
 
         Args:

@@ -42,14 +42,14 @@ class TestToTensor(unittest.TestCase):
         bytedvision_res = bytedvision_op([self.img_nd, self.img_nd]).asnumpy()
         assert len(bytedvision_res.shape) == 4
         np.testing.assert_almost_equal(bytedvision_res[0], np.transpose(self.img, (2, 0, 1)))
-    
+
     def test_scripted_to_tensor(self):
         op = matx.script(ToTensor)()
         composed_op = matx.script(Compose)(0, [op])
         bytedvision_res = composed_op([self.img_nd, self.img_nd]).asnumpy()
         assert len(bytedvision_res.shape) == 4
         np.testing.assert_almost_equal(bytedvision_res[0], np.transpose(self.img, (2, 0, 1)))
-    
+
 
 if __name__ == "__main__":
     import logging

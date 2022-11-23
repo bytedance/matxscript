@@ -102,7 +102,7 @@ class CenterCropImpl(BatchBaseClass):
             crop_h.append(h)
         imgs = self.crop_op(imgs, crop_x, crop_y, crop_w, crop_h, sync=self.sync)
         return imgs
-    
+
     def _process(self, imgs: List[matx.NDArray]) -> List[matx.NDArray]:
         return self._process_crop_op(imgs)
 
@@ -132,11 +132,14 @@ class RandomCrop(BaseInterfaceClass):
         if padding is None:
             self._padding: Tuple[int, int, int, int] = (0, 0, 0, 0)
         elif len(padding) == 1:
-            self._padding: Tuple[int, int, int, int] = (padding[0], padding[0], padding[0], padding[0])
+            self._padding: Tuple[int, int, int, int] = (
+                padding[0], padding[0], padding[0], padding[0])
         elif len(padding) == 2:
-            self._padding: Tuple[int, int, int, int] = (padding[0], padding[1], padding[0], padding[1])
+            self._padding: Tuple[int, int, int, int] = (
+                padding[0], padding[1], padding[0], padding[1])
         elif len(padding) == 4:
-            self._padding: Tuple[int, int, int, int] = (padding[0], padding[1], padding[2], padding[3])
+            self._padding: Tuple[int, int, int, int] = (
+                padding[0], padding[1], padding[2], padding[3])
         else:
             assert False, "Padding must be None or a 1, 2 or 4 element tuple.."
         self._pad_if_needed: bool = pad_if_needed
@@ -148,11 +151,20 @@ class RandomCrop(BaseInterfaceClass):
         else:
             assert False, "fill value should be a 1 or 3 element tuple."
         # check padding_mode
-        assert padding_mode in ["constant", "edge", "reflect", "symmetric"], "padding_mode should be constant, edge, reflect or symmetric."
+        assert padding_mode in ["constant", "edge", "reflect",
+                                "symmetric"], "padding_mode should be constant, edge, reflect or symmetric."
         self._padding_mode: str = padding_mode
 
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
-        return RandomCropImpl(device, device_str, self._size, self._padding, self._pad_if_needed, self._fill, self._padding_mode, sync)
+        return RandomCropImpl(
+            device,
+            device_str,
+            self._size,
+            self._padding,
+            self._pad_if_needed,
+            self._fill,
+            self._padding_mode,
+            sync)
 
 
 class RandomCropImpl(BatchBaseClass):
@@ -180,7 +192,8 @@ class RandomCropImpl(BatchBaseClass):
             "reflect": BORDER_REFLECT_101,
             "symmetric": BORDER_REFLECT
         }
-        self.pad_op: PadWithBorderOp = PadWithBorderOp(device, self.fill, torch_padding_mode[self.padding_mode])
+        self.pad_op: PadWithBorderOp = PadWithBorderOp(
+            device, self.fill, torch_padding_mode[self.padding_mode])
         self.name: str = "RandomCrop"
 
     def get_crop_params(self, h: int, w: int) -> Tuple[int, int, int, int]:

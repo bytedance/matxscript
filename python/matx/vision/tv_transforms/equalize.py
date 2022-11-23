@@ -22,7 +22,7 @@ import sys
 matx = sys.modules['matx']
 from .. import ASYNC, HistEqualizeOp
 
-from ._base import BaseInterfaceClass,BatchRandomBaseClass
+from ._base import BaseInterfaceClass, BatchRandomBaseClass
 
 
 class RandomEqualize(BaseInterfaceClass):
@@ -30,9 +30,9 @@ class RandomEqualize(BaseInterfaceClass):
                  p: float = 0.5,
                  device_id: int = -2,
                  sync: int = ASYNC) -> None:
-        self._p:float = p
+        self._p: float = p
         super().__init__(device_id=device_id, sync=sync)
-    
+
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
         return RandomEqualizeImpl(device, device_str, self._p, sync)
 
@@ -47,13 +47,13 @@ class RandomEqualizeImpl(BatchRandomBaseClass):
         self.p: float = p
         self.sync: int = sync
         super().__init__(prob=self.p)
-        self.op:HistEqualizeOp = HistEqualizeOp(device)
-        self.sync:int = sync
+        self.op: HistEqualizeOp = HistEqualizeOp(device)
+        self.sync: int = sync
         self.name: str = "RandomEqualize"
 
     def _process(self, imgs: List[matx.NDArray]) -> List[matx.NDArray]:
         return self.op(imgs, sync=self.sync)
 
-    def __repr__(self)->str:
+    def __repr__(self) -> str:
         return self.name + \
             '(p={}, device={}, sync={})'.format(self.p, self.device_str, self.sync)

@@ -66,7 +66,9 @@ class TestCenterCropOp(unittest.TestCase):
         self._helper(op_ret, self.center_crop_res)
 
     def test_script_center_crop_op(self):
-        center_crop_op = matx.script(CenterCropOp)(device=self.device, sizes=(self.height[0], self.width[0]))
+        center_crop_op = matx.script(CenterCropOp)(
+            device=self.device, sizes=(
+                self.height[0], self.width[0]))
         op_ret = center_crop_op(self.image_nds)
         self._helper(op_ret, self.center_crop_res)
 

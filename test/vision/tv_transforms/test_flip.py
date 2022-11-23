@@ -56,7 +56,7 @@ class TestRandomHorizontalFlip(unittest.TestCase):
         bytedvision_res = composed_op([self.img_nd])[0].asnumpy()
         torchvision_op = transforms.RandomHorizontalFlip(p=1.0)
         torchvision_res = np.array(torchvision_op(self.img_tensor))
-        np.testing.assert_almost_equal(bytedvision_res, torchvision_res) 
+        np.testing.assert_almost_equal(bytedvision_res, torchvision_res)
 
 
 class TestRandomVerticalFlip(unittest.TestCase):
@@ -84,7 +84,7 @@ class TestRandomVerticalFlip(unittest.TestCase):
         bytedvision_res = composed_op([self.img_nd])[0].asnumpy()
         torchvision_op = transforms.RandomVerticalFlip(p=1.0)
         torchvision_res = np.array(torchvision_op(self.img_tensor))
-        np.testing.assert_almost_equal(bytedvision_res, torchvision_res) 
+        np.testing.assert_almost_equal(bytedvision_res, torchvision_res)
 
 
 if __name__ == "__main__":

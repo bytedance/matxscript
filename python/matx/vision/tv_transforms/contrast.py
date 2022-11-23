@@ -26,14 +26,15 @@ from .. import ASYNC, AutoContrastOp
 from ._base import BaseInterfaceClass, BatchRandomBaseClass
 from ._common import _setup_size
 
+
 class RandomAutocontrast(BaseInterfaceClass):
     def __init__(self,
                  p: float = 0.5,
-                 device_id: int = -2, 
+                 device_id: int = -2,
                  sync: int = ASYNC) -> None:
         super().__init__(device_id=device_id, sync=sync)
-        self.p:float = p
-    
+        self.p: float = p
+
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
         return RandomAutocontrastImpl(device, device_str, self.p, sync)
 
@@ -45,15 +46,15 @@ class RandomAutocontrastImpl(BatchRandomBaseClass):
                  p: float = 0.5,
                  sync: int = ASYNC) -> None:
         super().__init__(prob=p)
-        self.device:Any = device
-        self.device_str:str = device_str
-        self.p:float = p
-        self.sync:int = sync
-        self.op:AutoContrastOp = AutoContrastOp(self.device)
+        self.device: Any = device
+        self.device_str: str = device_str
+        self.p: float = p
+        self.sync: int = sync
+        self.op: AutoContrastOp = AutoContrastOp(self.device)
         self.name: str = "RandomAutocontrast"
 
-    def _process(self, imgs: List[matx.NDArray])-> List[matx.NDArray]:
+    def _process(self, imgs: List[matx.NDArray]) -> List[matx.NDArray]:
         return self.op(imgs, sync=self.sync)
 
-    def __repr__(self)->str:
+    def __repr__(self) -> str:
         return self.name + '(p={}, device={}, sync={})'.format(self.p, self.device_str, self.sync)

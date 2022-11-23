@@ -24,16 +24,17 @@ from .. import ASYNC, PosterizeOp
 
 from ._base import BaseInterfaceClass, BatchRandomBaseClass
 
+
 class RandomPosterize(BaseInterfaceClass):
-    def __init__(self, 
+    def __init__(self,
                  bits: int,
                  p: float = 0.5,
-                 device_id: int = -2, 
+                 device_id: int = -2,
                  sync: int = ASYNC) -> None:
         super().__init__(device_id=device_id, sync=sync)
-        self._bits:int = bits
-        self._p:float = p
-    
+        self._bits: int = bits
+        self._p: float = p
+
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
         return RandomPosterizeImpl(device, device_str, self._bits, self._p, sync)
 
@@ -45,17 +46,17 @@ class RandomPosterizeImpl(BatchRandomBaseClass):
                  bits: int,
                  p: float = 0.5,
                  sync: int = ASYNC) -> None:
-        self.p:float = p
-        self.device_str:str = device_str
+        self.p: float = p
+        self.device_str: str = device_str
         super().__init__(prob=self.p)
-        self.bits:int = bits
-        self.op:PosterizeOp = PosterizeOp(device, bits)
-        self.sync:int = sync
-        self.name:str = "RandomPosterize"
+        self.bits: int = bits
+        self.op: PosterizeOp = PosterizeOp(device, bits)
+        self.sync: int = sync
+        self.name: str = "RandomPosterize"
 
     def _process(self, imgs: List[matx.NDArray]) -> List[matx.NDArray]:
         return self.op(imgs, sync=self.sync)
 
-    def __repr__(self)->str:
+    def __repr__(self) -> str:
         return self.name + '(bits={}, p={}, device={}, sync={})'.format(
             self.bits, self.p, self.device_str, self.sync)

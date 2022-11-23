@@ -23,7 +23,7 @@ import cv2
 import numpy as np
 import matx
 from torchvision import transforms
-from matx.vision import COLOR_BGR2RGB, SYNC 
+from matx.vision import COLOR_BGR2RGB, SYNC
 from matx.vision.tv_transforms import Compose, CvtColor
 
 
@@ -50,12 +50,13 @@ class TestCvtColor(unittest.TestCase):
 
     def test_scripted_cvt_color(self):
         bytedvision_op = matx.script(CvtColor)(
-                            COLOR_BGR2RGB,
-                            device_id=self.device_id,
-                            sync=SYNC)
+            COLOR_BGR2RGB,
+            device_id=self.device_id,
+            sync=SYNC)
         composed_op = matx.script(Compose)(0, [bytedvision_op])
         bytedvision_res = composed_op([self.img_nd])[0].asnumpy()
         np.testing.assert_almost_equal(bytedvision_res, self.img)
+
 
 if __name__ == "__main__":
     import logging

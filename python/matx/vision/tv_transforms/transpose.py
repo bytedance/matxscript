@@ -47,11 +47,11 @@ class Transpose(BaseInterfaceClass):
     def __init__(self,
                  src_fmt: str = NHWC,
                  dst_fmt: str = NCHW,
-                 device_id: int  = -2,
+                 device_id: int = -2,
                  sync: int = ASYNC) -> None:
         super().__init__(device_id=device_id, sync=sync)
-        self._src_fmt:str = src_fmt
-        self._dst_fmt:str = dst_fmt
+        self._src_fmt: str = src_fmt
+        self._dst_fmt: str = dst_fmt
 
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
         return TransposeImpl(device, device_str, self._src_fmt, self._dst_fmt, sync)
@@ -63,22 +63,22 @@ class TransposeImpl:
                  device_str: str,
                  src_fmt: str = NHWC,
                  dst_fmt: str = NCHW,
-                 sync: int = ASYNC)->None:
+                 sync: int = ASYNC) -> None:
         super().__init__()
         if device_str == "cpu":
             self.op: Any = TransposeCpuOp(device, src_fmt, dst_fmt)
         else:
             self.op: Any = TransposeOp(device, src_fmt, dst_fmt)
         self.device_str: str = device_str
-        self.src_fmt:str = src_fmt
-        self.dst_fmt:str = dst_fmt
-        self.sync:int = sync
+        self.src_fmt: str = src_fmt
+        self.dst_fmt: str = dst_fmt
+        self.sync: int = sync
         self.name: str = "Transpose"
 
-    def __call__(self, imgs: matx.NDArray, apply_index: List[int]=[]) -> matx.NDArray:
+    def __call__(self, imgs: matx.NDArray, apply_index: List[int] = []) -> matx.NDArray:
         assert len(apply_index) == 0, "apply_index is not supported by transpose."
         return self.op(imgs, sync=self.sync)
 
-    def __repr__(self)->str:
+    def __repr__(self) -> str:
         return self.name + '(from={0}, to={1}, device={2}, sync={3})'.format(
             self.src_fmt, self.dst_fmt, self.device_str, self.sync)

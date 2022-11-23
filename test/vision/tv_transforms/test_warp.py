@@ -72,15 +72,15 @@ class TestRandomAffine(unittest.TestCase):
 
     def test_random_affine(self):
         degrees = [90, 90]
-        translate = []#[0.1, 0.1]
+        translate = []  # [0.1, 0.1]
         scale = [1.2, 1.2]
         shear = [1.5, 1.5]
         bytedvision_op = Compose(0, [RandomAffine(degrees,
-                                      translate,
-                                      scale,
-                                      shear,
-                                      device_id=self.device_id,
-                                      sync=SYNC)])
+                                                  translate,
+                                                  scale,
+                                                  shear,
+                                                  device_id=self.device_id,
+                                                  sync=SYNC)])
         bytedvision_res = bytedvision_op([self.img_nd])[0].asnumpy()
         torchvision_op = transforms.RandomAffine(degrees,
                                                  None,
@@ -105,10 +105,10 @@ class TestRandomPerspective(unittest.TestCase):
     def test_random_perspective(self):
         distortion_scale = 0.5
         p = 1.0
-        bytedvision_op = Compose(0, [RandomPerspective(distortion_scale = distortion_scale,
-                                           p = p,
-                                           device_id=self.device_id,
-                                           sync=SYNC)])
+        bytedvision_op = Compose(0, [RandomPerspective(distortion_scale=distortion_scale,
+                                                       p=p,
+                                                       device_id=self.device_id,
+                                                       sync=SYNC)])
         bytedvision_res = bytedvision_op([self.img_nd])[0].asnumpy()
         torchvision_op = transforms.RandomPerspective(distortion_scale, p=p)
         torchvision_res = np.array(torchvision_op(self.img_tensor))

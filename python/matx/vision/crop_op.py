@@ -24,6 +24,7 @@ from ..native import make_native_object
 import sys
 matx = sys.modules['matx']
 
+
 class _CenterCropOpImpl:
     """ CenterCropOp Impl """
 

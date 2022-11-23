@@ -42,7 +42,7 @@ class TestGaussianBlur(unittest.TestCase):
         self.img_nd = matx.array.from_numpy(img, "gpu:{}".format(self.device_id))
         self.img_tensor = Image.open(io.BytesIO(img_binary))
         return super().setUp()
-    
+
     def test_gaussian_blur_with_compose(self):
         bytedvision_op = Compose(0, [GaussianBlur([3], [1])])
         bytedvision_res = bytedvision_op([self.img_nd])[0].asnumpy()
@@ -59,6 +59,7 @@ class TestGaussianBlur(unittest.TestCase):
         torchvision_res = np.array(torchvision_op(self.img_tensor))
         diff = np.abs(bytedvision_res - torchvision_res)
         assert np.sum(diff >= 2) < 10
+
 
 if __name__ == "__main__":
     import logging

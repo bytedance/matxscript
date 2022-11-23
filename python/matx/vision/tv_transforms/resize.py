@@ -46,7 +46,8 @@ class Resize(BaseInterfaceClass):
             assert False, "Resize size value should be an integer or a list/tuple with length 2."
         self._max_size: int = max_size
         # check interpolation mode
-        assert interpolation in ["nearest", "bilinear", "bicubic", "lanczos"], "interpolation_mode should be nearest, bilinear, bicubic or lanczos."
+        assert interpolation in ["nearest", "bilinear", "bicubic",
+                                 "lanczos"], "interpolation_mode should be nearest, bilinear, bicubic or lanczos."
         torch_interp_mode: Dict[str, str] = {
             "nearest": INTER_NEAREST,
             "bilinear": INTER_LINEAR,
@@ -54,10 +55,16 @@ class Resize(BaseInterfaceClass):
             "lanczos": INTER_LANCZOS4
         }
         self._interpolation_mode: str = torch_interp_mode[interpolation]
-        
 
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
-        return ResizeImpl(device, device_str, self._size, self._max_size, self._resize_mode, self._interpolation_mode, sync)
+        return ResizeImpl(
+            device,
+            device_str,
+            self._size,
+            self._max_size,
+            self._resize_mode,
+            self._interpolation_mode,
+            sync)
 
 
 class ResizeImpl(BatchBaseClass):
@@ -76,7 +83,12 @@ class ResizeImpl(BatchBaseClass):
         self.resize_mode: str = resize_mode
         self.interpolation_mode: str = interpolation_mode
         self.sync: int = sync
-        self.op: ResizeOp = ResizeOp(device, self.size, self.max_size, self.interpolation_mode, self.resize_mode)
+        self.op: ResizeOp = ResizeOp(
+            device,
+            self.size,
+            self.max_size,
+            self.interpolation_mode,
+            self.resize_mode)
         self.name: str = "ResizeImpl"
 
     def _process_resize_op(self, imgs: List[matx.NDArray]) -> List[matx.NDArray]:
@@ -120,7 +132,8 @@ class RandomResizedCrop(BaseInterfaceClass):
         else:
             assert False, "Ratio should be a tuple with length 2."
         # check interpolation mode
-        assert interpolation in ["nearest", "bilinear", "bicubic", "lanczos"], "interpolation_mode should be nearest, bilinear, bicubic or lanczos."
+        assert interpolation in ["nearest", "bilinear", "bicubic",
+                                 "lanczos"], "interpolation_mode should be nearest, bilinear, bicubic or lanczos."
         torch_interp_mode: Dict[str, str] = {
             "nearest": INTER_NEAREST,
             "bilinear": INTER_LINEAR,
@@ -130,7 +143,14 @@ class RandomResizedCrop(BaseInterfaceClass):
         self._interpolation_mode: str = torch_interp_mode[interpolation]
 
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
-        return RandomResizedCropImpl(device, device_str, self._size, self._scale, self._ratio, self._interpolation_mode, sync)
+        return RandomResizedCropImpl(
+            device,
+            device_str,
+            self._size,
+            self._scale,
+            self._ratio,
+            self._interpolation_mode,
+            sync)
 
 
 class RandomResizedCropImpl(BatchBaseClass):
@@ -148,7 +168,8 @@ class RandomResizedCropImpl(BatchBaseClass):
         self.ratio: List[float] = ratio
         self.interpolation_mode: str = interpolation_mode
         self.sync: int = sync
-        self.op: RandomResizedCropOp = RandomResizedCropOp(device, self.size, self.scale, self.ratio, self.interpolation_mode)
+        self.op: RandomResizedCropOp = RandomResizedCropOp(
+            device, self.size, self.scale, self.ratio, self.interpolation_mode)
         self.name: str = "RandomResizedCropImpl"
 
     def _process_random_resized_crop_op(self, imgs: List[matx.NDArray]) -> List[matx.NDArray]:

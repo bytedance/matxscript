@@ -30,12 +30,12 @@ class RandomAdjustSharpness(BaseInterfaceClass):
     def __init__(self,
                  sharpness_factor: float,
                  p: float = 0.5,
-                 device_id: int = -2, 
-                 sync: int= ASYNC) -> None:
+                 device_id: int = -2,
+                 sync: int = ASYNC) -> None:
         super().__init__(device_id=device_id, sync=sync)
-        self.p:float = p
+        self.p: float = p
         self.sharpness_factor: float = sharpness_factor
-    
+
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
         return RandomAdjustSharpnessImpl(device, device_str, self.sharpness_factor, self.p, sync)
 
@@ -48,24 +48,27 @@ class RandomAdjustSharpnessImpl(BatchRandomBaseClass):
                  p: float = 0.5,
                  sync: int = ASYNC) -> None:
         self.device_str: str = device_str
-        self.p:float = p
+        self.p: float = p
         self.sync: int = sync
         super().__init__(prob=self.p)
-        _assert(sharpness_factor>=0, "sharpness_factor ({}) is not non-negative.".format(sharpness_factor))
-        self.sharpness_factor:float = sharpness_factor
+        _assert(
+            sharpness_factor >= 0,
+            "sharpness_factor ({}) is not non-negative.".format(sharpness_factor))
+        self.sharpness_factor: float = sharpness_factor
 
-        edge_value:float = (1 - sharpness_factor) / 13.0
-        center_value:float = (1 - sharpness_factor) * 5.0 / 13.0 + sharpness_factor
-        self.kernel:List[List[float]] = [[edge_value] * 3, [edge_value, center_value, edge_value], [edge_value] * 3]
-        self.op:Conv2dOp = Conv2dOp(device, BORDER_REPLICATE)
-        self.sync:int = sync
+        edge_value: float = (1 - sharpness_factor) / 13.0
+        center_value: float = (1 - sharpness_factor) * 5.0 / 13.0 + sharpness_factor
+        self.kernel: List[List[float]] = [[edge_value] * 3,
+                                          [edge_value, center_value, edge_value], [edge_value] * 3]
+        self.op: Conv2dOp = Conv2dOp(device, BORDER_REPLICATE)
+        self.sync: int = sync
         self.name: str = "RandomAdjustSharpness"
 
     def _process(self, imgs: List[matx.NDArray]) -> List[matx.NDArray]:
-        batch_size:int = len(imgs)
-        kernels:List[List[List[float]]] = [self.kernel for _ in range(batch_size)]
+        batch_size: int = len(imgs)
+        kernels: List[List[List[float]]] = [self.kernel for _ in range(batch_size)]
         return self.op(imgs, kernels, sync=self.sync)
 
-    def __repr__(self)->str:
+    def __repr__(self) -> str:
         return self.name + '(sharpness_factor={}, p={}, device={}, sync={})'.format(
             self.sharpness_factor, self.p, self.device_str, self.sync)

@@ -60,6 +60,7 @@ class TestRandomSolarize(unittest.TestCase):
         torchvision_res = np.array(torchvision_op(self.img_tensor))
         np.testing.assert_almost_equal(bytedvision_res, torchvision_res)
 
+
 if __name__ == "__main__":
     import logging
 

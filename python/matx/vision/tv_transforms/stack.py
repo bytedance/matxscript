@@ -34,32 +34,32 @@ class StackOpCpu:
 
 
 class Stack(BaseInterfaceClass):
-    def __init__(self, 
-                 device_id: int = -2, 
+    def __init__(self,
+                 device_id: int = -2,
                  sync: int = ASYNC):
         super().__init__(device_id=device_id, sync=sync)
-    
+
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
-        return StackImpl(device, device_str,  sync)
+        return StackImpl(device, device_str, sync)
 
 
 class StackImpl:
     def __init__(self,
                  device: Any,
                  device_str: str,
-                 sync: int = ASYNC)->None:
+                 sync: int = ASYNC) -> None:
         super().__init__()
         if device_str == "cpu":
             self.op: Any = StackOpCpu(device)
         else:
             self.op: Any = StackOp(device)
         self.device_str: str = device_str
-        self.sync:int = sync
+        self.sync: int = sync
         self.name: str = "Stack"
 
-    def __call__(self, imgs: List[matx.NDArray], apply_index: List[int]=[]) -> matx.NDArray:
+    def __call__(self, imgs: List[matx.NDArray], apply_index: List[int] = []) -> matx.NDArray:
         assert len(apply_index) == 0, "apply_index is not supported by stack."
         return self.op(imgs, sync=self.sync)
 
-    def __repr__(self)->str:
+    def __repr__(self) -> str:
         return self.name + "(device={}, sync={})".format(self.device_str, self.sync)

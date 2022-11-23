@@ -32,7 +32,8 @@ class _SplitOpImpl:
         self.op: matx.NativeObject = make_native_object(
             "VisionSplitGeneralOp", device())
 
-    def __call__(self, image: matx.runtime.NDArray, sync: int = ASYNC) -> List[matx.runtime.NDArray]:
+    def __call__(self, image: matx.runtime.NDArray,
+                 sync: int = ASYNC) -> List[matx.runtime.NDArray]:
         return self.op.process(image, sync)
 
 
@@ -48,7 +49,8 @@ class SplitOp:
         """
         self.op: _SplitOpImpl = matx.script(_SplitOpImpl)(device)
 
-    def __call__(self, image: matx.runtime.NDArray, sync: int = ASYNC) -> List[matx.runtime.NDArray]:
+    def __call__(self, image: matx.runtime.NDArray,
+                 sync: int = ASYNC) -> List[matx.runtime.NDArray]:
         """ split input image along channel dimension.
 
         Args:

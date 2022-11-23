@@ -42,14 +42,15 @@ class TestStack(unittest.TestCase):
         bytedvision_res = bytedvision_op([self.img_nd, self.img_nd]).asnumpy()
         assert len(bytedvision_res.shape) == 4
         np.testing.assert_almost_equal(bytedvision_res[1], self.img)
-    
+
     def test_scripted_stack(self):
         op = matx.script(Stack)()
         composed_op = matx.script(Compose)(0, [op])
         bytedvision_res = composed_op([self.img_nd]).asnumpy()
         assert len(bytedvision_res.shape) == 4
         np.testing.assert_almost_equal(bytedvision_res[0], self.img)
-    
+
+
 class TestCpuStack(unittest.TestCase):
     def setUp(self) -> None:
         image_file = os.path.join(script_path, '..', '..', 'data', 'origin_image.jpeg')
@@ -63,13 +64,14 @@ class TestCpuStack(unittest.TestCase):
         bytedvision_res = bytedvision_op([self.img_nd, self.img_nd]).asnumpy()
         assert len(bytedvision_res.shape) == 4
         np.testing.assert_almost_equal(bytedvision_res[1], self.img)
-    
+
     def test_scripted_stack(self):
         op = matx.script(Stack)()
         composed_op = matx.script(Compose)(0, [op])
         bytedvision_res = composed_op([self.img_nd]).asnumpy()
         assert len(bytedvision_res.shape) == 4
         np.testing.assert_almost_equal(bytedvision_res[0], self.img)
+
 
 if __name__ == "__main__":
     import logging

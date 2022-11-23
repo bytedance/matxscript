@@ -64,19 +64,18 @@ class TestColorJitter(unittest.TestCase):
 
     def test_contrast(self):
         contrast = [0.8, 0.8]
-        bytedvision_op = Compose(0,[ColorJitter(
+        bytedvision_op = Compose(0, [ColorJitter(
             contrast=contrast,
             device_id=self.device_id,
             sync=SYNC)])
         bytedvision_res = bytedvision_op([self.img_nd])[0].asnumpy()
         torchvision_op = transforms.ColorJitter(contrast=contrast)
         torchvision_res = np.array(torchvision_op(self.img_tensor))
-        np.testing.assert_almost_equal(bytedvision_res, torchvision_res, decimal=0) 
-
+        np.testing.assert_almost_equal(bytedvision_res, torchvision_res, decimal=0)
 
     def test_saturation(self):
         saturation = [1.5, 1.5]
-        bytedvision_op = Compose(0,[ColorJitter(
+        bytedvision_op = Compose(0, [ColorJitter(
             saturation=saturation,
             device_id=self.device_id,
             sync=SYNC)])
@@ -85,10 +84,9 @@ class TestColorJitter(unittest.TestCase):
         torchvision_res = np.array(torchvision_op(self.img_tensor))
         np.testing.assert_almost_equal(bytedvision_res, torchvision_res, decimal=0)
 
-
     def test_hue(self):
         hue = [0.05, 0.05]
-        bytedvision_op = Compose(0,[ColorJitter(hue=hue, device_id=self.device_id, sync=SYNC)])
+        bytedvision_op = Compose(0, [ColorJitter(hue=hue, device_id=self.device_id, sync=SYNC)])
         bytedvision_res = bytedvision_op([self.img_nd])[0].asnumpy()
         torchvision_op = transforms.ColorJitter(hue=hue)
         torchvision_res = np.array(torchvision_op(self.img_tensor))
@@ -99,7 +97,7 @@ class TestColorJitter(unittest.TestCase):
         contrast = [0.8, 1.2]
         saturation = [0.8, 1.2]
         hue = [-0.1, 0.1]
-        bytedvision_op = Compose(0,[ColorJitter(
+        bytedvision_op = Compose(0, [ColorJitter(
             brightness,
             contrast,
             saturation,
@@ -110,7 +108,6 @@ class TestColorJitter(unittest.TestCase):
         torchvision_op = transforms.ColorJitter(brightness, contrast, saturation, hue)
         torchvision_res = np.array(torchvision_op(self.img_tensor))
         np.testing.assert_almost_equal(bytedvision_res, torchvision_res)
-
 
 
 if __name__ == "__main__":

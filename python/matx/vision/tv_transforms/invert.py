@@ -24,14 +24,15 @@ from .. import ASYNC, InvertOp
 
 from ._base import BatchRandomBaseClass, BaseInterfaceClass
 
+
 class RandomInvert(BaseInterfaceClass):
-    def __init__(self, 
+    def __init__(self,
                  p: float = 0.5,
-                 device_id: int = -2, 
+                 device_id: int = -2,
                  sync: int = ASYNC) -> None:
         super().__init__(device_id=device_id, sync=sync)
-        self._p:float = p
-    
+        self._p: float = p
+
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
         return RandomInvertImpl(device, device_str, self._p, sync)
 
@@ -46,13 +47,13 @@ class RandomInvertImpl(BatchRandomBaseClass):
         self.device_str: str = device_str
         self.p: float = p
         self.sync: int = sync
-        self.op:InvertOp = InvertOp(device)
-        self.sync:int = sync
+        self.op: InvertOp = InvertOp(device)
+        self.sync: int = sync
         self.name: str = "RandomInvert"
 
     def _process(self, imgs: List[matx.NDArray]) -> List[matx.NDArray]:
         return self.op(imgs, sync=self.sync)
 
-    def __repr__(self)->str:
+    def __repr__(self) -> str:
         return self.name + \
             '(p={}, device={}, sync={})'.format(self.p, self.device_str, self.sync)

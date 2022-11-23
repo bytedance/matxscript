@@ -52,7 +52,7 @@ class TestResize(unittest.TestCase):
         torchvision_res = np.array(torchvision_op(self.img_tensor))
         assert bytedvision_res.shape == torchvision_res.shape
         np.testing.assert_almost_equal(bytedvision_res, torchvision_res)
-    
+
     def test_scripted_resize(self):
         size = [200]
         op = matx.script(Resize)(size, device_id=self.device_id, sync=SYNC)
@@ -63,6 +63,7 @@ class TestResize(unittest.TestCase):
         assert bytedvision_res.shape == torchvision_res.shape
         np.testing.assert_almost_equal(bytedvision_res, torchvision_res)
     """
+
 
 class TestRandomResizedCrop(unittest.TestCase):
     def setUp(self) -> None:
@@ -75,7 +76,7 @@ class TestRandomResizedCrop(unittest.TestCase):
         self.img_nd = matx.array.from_numpy(img, "gpu:{}".format(self.device_id))
         self.img_tensor = Image.open(io.BytesIO(img_binary))
         return super().setUp()
-    
+
     def test_random_resize_crop(self):
         size = [400]
         bytedvision_op = Compose(0, [RandomResizedCrop(size, device_id=self.device_id, sync=SYNC)])

@@ -57,7 +57,6 @@ class TestConvertImageDtype(unittest.TestCase):
         np.testing.assert_almost_equal(bytedvision_res, torchvision_res)
 
 
-
 if __name__ == "__main__":
     import logging
 

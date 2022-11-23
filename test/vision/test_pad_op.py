@@ -23,7 +23,7 @@ import unittest
 import cv2
 import numpy as np
 import matx
-from matx import vision 
+from matx import vision
 
 script_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
 
@@ -66,8 +66,8 @@ class TestPadOp(unittest.TestCase):
         right_pads = [20] * self.batch_size
 
         pad_op = vision.PadWithBorderOp(device=self.device,
-                                              pad_values=(114, 114, 114),
-                                              pad_type=vision.BORDER_CONSTANT)
+                                        pad_values=(114, 114, 114),
+                                        pad_type=vision.BORDER_CONSTANT)
         op_ret = pad_op(self.image_nds, top_pads, bottom_pads, left_pads, right_pads)
         self._helper(op_ret)
 

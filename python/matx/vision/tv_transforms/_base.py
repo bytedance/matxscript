@@ -34,13 +34,13 @@ class BaseInterfaceClass:
         self._device_id: int = device_id
         self._has_sync: bool = True
         self._sync: int = sync
-    
+
     def device_id(self) -> int:
         return self._device_id
 
     def has_sync(self) -> bool:
         return self._has_sync
-    
+
     def sync(self) -> int:
         return self._sync
 
@@ -48,7 +48,7 @@ class BaseInterfaceClass:
 class BatchBaseClass:
     def __init__(self):
         pass
-    
+
     def _process(self, images: List[matx.NDArray]) -> List[matx.NDArray]:
         return images
 
@@ -59,14 +59,15 @@ class BatchBaseClass:
         applied_size: int = len(apply_index)
         applied_images = [images[apply_index[i]] for i in range(applied_size)]
         return applied_images
-    
+
     def _put_back_converted_images(
             self,
             images: List[matx.NDArray],
             apply_index: List[int],
             applied_images: List[matx.NDArray]) -> List[matx.NDArray]:
         applied_size: int = len(apply_index)
-        assert applied_size == len(applied_images), "The size of applied images should be equal to the size of applied index."
+        assert applied_size == len(
+            applied_images), "The size of applied images should be equal to the size of applied index."
         for i in range(applied_size):
             images[apply_index[i]] = applied_images[i]
         return images

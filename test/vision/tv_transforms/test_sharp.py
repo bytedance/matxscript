@@ -64,6 +64,7 @@ class TestRandomAdjustSharpness(unittest.TestCase):
         h, w, c = bytedvision_res.shape
         assert np.sum(diff > 1) / (h * w * c) < 0.001
 
+
 if __name__ == "__main__":
     import logging
 

@@ -42,7 +42,7 @@ class TestCenterCrop(unittest.TestCase):
         self.img_nd = matx.array.from_numpy(img, "gpu:{}".format(self.device_id))
         self.img_tensor = Image.open(io.BytesIO(img_binary))
         return super().setUp()
-    
+
     def test_center_crop(self):
         size = [200]
         bytedvision_op = Compose(0, [CenterCrop(size)])
@@ -56,7 +56,7 @@ class TestCenterCrop(unittest.TestCase):
         torchvision_op = transforms.CenterCrop(size)
         torchvision_res = np.array(torchvision_op(self.img_tensor))
         np.testing.assert_almost_equal(bytedvision_res, torchvision_res)
-    
+
     def test_scripted_center_crop(self):
         size = [200]
         op = matx.script(CenterCrop)(size)
@@ -85,7 +85,7 @@ class TestRandomCrop(unittest.TestCase):
         self.img_nd = matx.array.from_numpy(img, "gpu:{}".format(self.device_id))
         self.img_tensor = Image.open(io.BytesIO(img_binary))
         return super().setUp()
-    
+
     def test_random_crop(self):
         size = [400]
         padding = [10, 4, 8, 2]
@@ -95,7 +95,7 @@ class TestRandomCrop(unittest.TestCase):
         torchvision_op = transforms.RandomCrop(size, padding, pad_if_needed)
         torchvision_res = np.array(torchvision_op(self.img_tensor))
         assert bytedvision_res.shape == torchvision_res.shape
-        
+
     def test_scripted_random_crop(self):
         size = [400]
         padding = [10, 4, 8, 2]
@@ -106,7 +106,7 @@ class TestRandomCrop(unittest.TestCase):
         torchvision_op = transforms.RandomCrop(size, padding, pad_if_needed)
         torchvision_res = np.array(torchvision_op(self.img_tensor))
         assert bytedvision_res.shape == torchvision_res.shape
-    
+
 
 if __name__ == "__main__":
     import logging

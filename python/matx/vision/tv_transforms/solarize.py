@@ -26,15 +26,15 @@ from ._base import BaseInterfaceClass, BatchRandomBaseClass
 
 
 class RandomSolarize(BaseInterfaceClass):
-    def __init__(self, 
+    def __init__(self,
                  threshold: float,
                  p: float = 0.5,
                  device_id: int = -2,
                  sync: int = ASYNC) -> None:
         super().__init__(device_id=device_id, sync=sync)
-        self._threshold:float = threshold
-        self._p:float = p
-    
+        self._threshold: float = threshold
+        self._p: float = p
+
     def __call__(self, device: Any, device_str: str, sync: int) -> Any:
         return RandomSolarizeImpl(device, device_str, self._threshold, self._p, sync)
 
@@ -48,15 +48,15 @@ class RandomSolarizeImpl(BatchRandomBaseClass):
                  sync: int = ASYNC) -> None:
         self.device_str: str = device_str
         self.p: float = p
-        self.threshold:float = threshold
+        self.threshold: float = threshold
         self.sync: int = sync
         super().__init__(prob=self.p)
-        self.op:SolarizeOp = SolarizeOp(device, self.threshold)
+        self.op: SolarizeOp = SolarizeOp(device, self.threshold)
         self.name: str = "RandomSolarize"
 
     def _process(self, imgs: List[matx.NDArray]) -> List[matx.NDArray]:
         return self.op(imgs, sync=self.sync)
 
-    def __repr__(self)->str:
+    def __repr__(self) -> str:
         return self.name + '(threshold={}, p={}, device={}, sync={})'.format(
             self.threshold, self.p, self.device_str, self.sync)

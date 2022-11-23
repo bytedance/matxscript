@@ -53,32 +53,32 @@ class DeviceManagerOp:
     def __call__(self, device_id: int) -> Any:
         return self.devices[device_id]
 
+
 DeviceManager = matx.script(DeviceManagerOp)()
 
 
-def _assert(condition:bool, message:str)->None:
+def _assert(condition: bool, message: str) -> None:
     if not condition:
         print(message)
         assert False, ""
 
 
-def _setup_size(size:List[int])->Tuple[int, int]:
-    assert len(size)==1 or len(size)==2, "Kernel size should be a tuple/list of two integers."
+def _setup_size(size: List[int]) -> Tuple[int, int]:
+    assert len(size) == 1 or len(size) == 2, "Kernel size should be a tuple/list of two integers."
     if len(size) == 1:
         return (size[0], size[0])
     return (size[0], size[1])
-    
 
 
-def _check_sequence_input(x:List[Any], name:str, req_sizes:List[int])->None:
-    msg:str = str(req_sizes[0]) if len(req_sizes) < 2 else " or ".join([str(s) for s in req_sizes])
+def _check_sequence_input(x: List[Any], name: str, req_sizes: List[int]) -> None:
+    msg: str = str(req_sizes[0]) if len(req_sizes) < 2 else " or ".join([str(s) for s in req_sizes])
     if not isinstance(x, Sequence):
         raise TypeError("{} should be a sequence of length {}.".format(name, msg))
     if len(x) not in req_sizes:
         raise ValueError("{} should be sequence of length {}.".format(name, msg))
 
 
-def _setup_angle(x:List[float], name:str, req_sizes:List[int]=[2])->List[float]:
+def _setup_angle(x: List[float], name: str, req_sizes: List[int] = [2]) -> List[float]:
     if len(x) == 1:
         if x[0] < 0:
             raise ValueError("If {} is a single number, it must be positive.".format(name))
@@ -115,6 +115,7 @@ def _uniform_random(rmin: float, rmax: float, size: int) -> List[float]:
         rvalues.append(tmp_value)
     return rvalues
 
+
 def _randint(rmin: int, rmax: int, size: int) -> List[int]:
     rrange: int = rmax - rmin
     rvalues = []
@@ -125,18 +126,20 @@ def _randint(rmin: int, rmax: int, size: int) -> List[int]:
         rvalues.append(tmp_value)
     return rvalues
 
-def _torch_padding_mode(p:str)->str:
+
+def _torch_padding_mode(p: str) -> str:
     if p == "constant":
         return BORDER_CONSTANT
-    elif p=="edge":
+    elif p == "edge":
         return BORDER_REPLICATE
-    elif p=="reflect":
+    elif p == "reflect":
         return BORDER_REFLECT_101
-    elif p=="symmetric":
+    elif p == "symmetric":
         return BORDER_REFLECT
     else:
         _assert(False, "padding_mode not found")
         return ""
+
 
 _torch_interp_mode = {
     "nearest": INTER_NEAREST,
