@@ -26,7 +26,14 @@ from . import pipeline
 from .toolchain import ToolChain
 from . import extension
 from . import text
-from . import vision
+
+try:
+    from . import vision
+except RuntimeError as e:
+    import sys
+    print(e)
+    print("vision sub modules requires manually downloading shared lib to matxscript/vision", file=sys.stderr)
+
 
 # APIs
 __all__ = [
