@@ -25,6 +25,9 @@ from .object_generic import ObjectGeneric, ObjectTypes, to_runtime_object
 from .ndarray import NDArray, DataType, DataTypeCode, MATXScriptDevice
 from .module import Module
 
+from .msgpack import dumps as msgpack_dumps
+from .msgpack import loads as msgpack_loads
+
 # function exposures
 from .container import Array, Map, List, Dict, Set, Tuple
 from .container import Iterator
