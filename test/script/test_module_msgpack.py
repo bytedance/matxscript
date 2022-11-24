@@ -28,7 +28,8 @@ class TestMsgpack(unittest.TestCase):
         pass
 
     def test_runtime_msgpack(self):
-        py_data = [None, 1, 1.1, 'hello', b'hi', [0, "hello"], {"h": 1}]
+        arr = matx.NDArray(1, [2, 3, 8], "int32")
+        py_data = [None, arr, 1, 1.1, 'hello', b'hi', [0, "hello"], {"h": 1}]
         tx_bytes = matx.msgpack_dumps(py_data)
         msgpack_bytes = msgpack.dumps(py_data)
         self.assertEqual(tx_bytes, msgpack_bytes)

@@ -63,6 +63,27 @@ static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_
     return 0;
 }
 
+static inline int msgpack_pack_extend_write_buf(msgpack_packer* pk, size_t l)
+{
+    char* buf = pk->buf;
+    size_t bs = pk->buf_size;
+    size_t len = pk->length;
+
+    if (len + l > bs) {
+        bs = (len + l) * 2;
+        buf = (char*)realloc(buf, bs);
+        if (!buf) {
+            return -1;
+        }
+    }
+    len += l;
+
+    pk->buf = buf;
+    pk->buf_size = bs;
+    pk->length = len;
+    return 0;
+}
+
 #define msgpack_pack_append_buffer(user, buf, len) \
         return msgpack_pack_write(user, (const char*)buf, len)
 
