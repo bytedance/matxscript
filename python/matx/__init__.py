@@ -27,6 +27,15 @@ from .toolchain import ToolChain
 from . import extension
 from . import text
 
+try:
+    from . import vision
+except RuntimeError as e:
+    import sys
+    print(e, file=sys.stderr)
+    print("vision sub modules requires manually downloading shared lib to matxscript/vision", file=sys.stderr)
+    vision = None
+
+
 # APIs
 __all__ = [
     # functions
