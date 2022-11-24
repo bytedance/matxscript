@@ -25,6 +25,7 @@ from . import toolchain
 from . import pipeline
 from .toolchain import ToolChain
 from . import extension
+from .runtime import msgpack_loads, msgpack_dumps
 from . import text
 
 try:
