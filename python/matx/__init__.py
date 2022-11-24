@@ -33,6 +33,7 @@ except RuntimeError as e:
     import sys
     print(e)
     print("vision sub modules requires manually downloading shared lib to matxscript/vision", file=sys.stderr)
+    vision = None
 
 
 # APIs
