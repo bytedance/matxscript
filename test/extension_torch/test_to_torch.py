@@ -66,7 +66,7 @@ class TestToTorch(unittest.TestCase):
         t = arr.torch(copy=True)
         self.assertEqual(t.dtype, torch.int32)
         self.assertEqual(t.device, torch.device("cpu"))
-        self.assertTrue(np.alltrue(t.numpy() == arr.numpy()))
+        self.assertTrue(np.alltrue(t.numpy() == arr.contiguous().numpy()))
 
 
 if __name__ == "__main__":
