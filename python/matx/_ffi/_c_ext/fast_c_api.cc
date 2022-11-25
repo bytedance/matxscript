@@ -1186,7 +1186,7 @@ static PyObject* matx_script_api_steal_object_handle(PyObject* self, PyObject* o
   PyObject* type_code = PyLong_FromLong(super->type_code);
   PyObject* result = PyTuple_Pack(2, handle, type_code);
   super->handle = NULL;
-  super->type_code = ::matxscript::runtime::TypeIndex::kRuntimeObject;
+  super->type_code = ::matxscript::runtime::TypeIndex::kRuntimeNullptr;
   Py_DECREF(handle);
   Py_DECREF(type_code);
   return result;
