@@ -298,7 +298,7 @@ int MessageUnpacker::custom_ext_callback(int8_t typecode,
   switch (typecode) {
     case TypeIndex::kRuntimeSet: {
       auto value = MessageUnpacker::unpackb(string_view(pos, length), false);
-      if (value.IsObjectRef<Tuple>()) {
+      if (!value.IsObjectRef<Tuple>()) {
         THROW_PY_ValueError("Unpack failed: Set Format Error");
       }
       auto tup = value.AsNoCheck<Tuple>();
