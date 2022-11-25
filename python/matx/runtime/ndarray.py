@@ -139,6 +139,7 @@ class NDArray(Object):
         handle, code = _ffi.matx_script_api.steal_object_handle(arr)
         self.handle = handle
         self.type_code = code
+        self.__init_self__()
 
     def __getstate__(self):
         return _ffi_api.msgpack_dumps(self)
