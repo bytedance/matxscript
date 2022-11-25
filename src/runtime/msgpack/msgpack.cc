@@ -218,7 +218,37 @@ int BasicMessagePacker::pack(const Any& o, int nest_limit) {
       CHECK_MSGPACK_CALL(ret, "pack set failed");
     } break;
     case TypeIndex::kRuntimeNDArray: {
-      THROW_PY_TypeError("can not serialize '", o.type_name(), "' object");
+      auto v = o.AsObjectRefNoCheck<NDArray>();
+      const DLTensor* dl_tensor = v.operator->();
+      auto data_size = GetDataSize(*dl_tensor);
+      L = sizeof(DLDataType)                                       // dtype
+          + sizeof(int32_t) + (sizeof(int64_t) * dl_tensor->ndim)  // shape
+          + data_size;                                             // data
+      ret = msgpack_pack_ext(&this->msg_pk_, TypeIndex::kRuntimeNDArray, L);
+      CHECK_MSGPACK_CALL(ret, "pack ndarray failed");
+      ret = msgpack_pack_extend_write_buf(&this->msg_pk_, L);
+      CHECK_MSGPACK_CALL(ret, "pack ndarray failed");
+      char* write_buf = this->msg_pk_.buf + this->msg_pk_.length - L;
+      // dtype
+      std::memcpy(write_buf, &(dl_tensor->dtype.code), 1);
+      write_buf++;
+      std::memcpy(write_buf, &(dl_tensor->dtype.bits), 1);
+      write_buf++;
+      std::memcpy(write_buf, &(dl_tensor->dtype.lanes), 2);
+      write_buf += 2;
+
+      // shape
+      int32_t ndim = dl_tensor->ndim;
+      std::memcpy(write_buf, &ndim, sizeof(int32_t));
+      write_buf += sizeof(int32_t);
+      for (auto i = 0; i < dl_tensor->ndim; ++i) {
+        int64_t shape = dl_tensor->shape[i];
+        std::memcpy(write_buf, &shape, sizeof(int64_t));
+        write_buf += sizeof(int64_t);
+      }
+
+      // data
+      v.CopyToBytes(write_buf, data_size);
     } break;
     default: {
       THROW_PY_TypeError("can not serialize '", o.type_name(), "' object");
@@ -276,7 +306,40 @@ int MessageUnpacker::custom_ext_callback(int8_t typecode,
           .MoveToCHost(o);
     } break;
     case TypeIndex::kRuntimeNDArray: {
-      THROW_PY_ValueError("Unpack failed: unknown ext type code: ", typecode);
+      const char* buf = pos;
+      MXCHECK(length >= (4 + sizeof(int32_t))) << "Msgpack: Invalid NDArray Data Format";
+      // dtype
+      DLDataType dtype;
+      std::memcpy(&dtype.code, buf, 1);
+      buf += 1;
+      std::memcpy(&dtype.bits, buf, 1);
+      buf += 1;
+      std::memcpy(&dtype.lanes, buf, 2);
+      buf += 2;
+      // shape
+      int32_t ndim;
+      std::memcpy(&ndim, buf, sizeof(int32_t));
+      buf += sizeof(int32_t);
+      MXCHECK(length >= (4 + sizeof(int32_t) + ndim * sizeof(int64_t)))
+          << "Msgpack: Invalid NDArray Data Format";
+      std::vector<int64_t> shapes;
+      shapes.reserve(ndim);
+      size_t size = 1;
+      for (int i = 0; i < ndim; ++i) {
+        int64_t shape;
+        std::memcpy(&shape, buf, sizeof(int64_t));
+        buf += sizeof(int64_t);
+        shapes.emplace_back(shape);
+        size *= static_cast<size_t>(shape);
+      }
+      size *= (dtype.bits * dtype.lanes + 7) / 8;
+      MXCHECK_EQ(length, (4 + sizeof(int32_t) + ndim * sizeof(int64_t) + size))
+          << "Msgpack: Invalid NDArray Data Format";
+      // data
+      DLDevice device{kDLCPU, 0};
+      auto arr = NDArray::Empty(std::move(shapes), dtype, device);
+      arr.CopyFromBytes(buf, size);
+      RTValue(std::move(arr)).MoveToCHost(o);
     } break;
     default: {
       THROW_PY_ValueError("Unpack failed: unknown ext type code: ", typecode);

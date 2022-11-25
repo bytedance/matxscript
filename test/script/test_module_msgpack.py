@@ -18,6 +18,7 @@
 # under the License.
 import unittest
 import msgpack
+import numpy as np
 
 import matx
 
@@ -37,6 +38,11 @@ class TestMsgpack(unittest.TestCase):
         msgpack_data = msgpack.loads(tx_bytes)
 
         self.assertEqual(tx_data, msgpack_data)
+
+        arr = matx.NDArray(1, [2, 3, 8], "int32")
+        tx_bytes = matx.msgpack_dumps(arr)
+        arr2 = matx.msgpack_loads(tx_bytes)
+        self.assertTrue(np.alltrue(arr.numpy() == arr2.numpy()))
 
 
 if __name__ == "__main__":
