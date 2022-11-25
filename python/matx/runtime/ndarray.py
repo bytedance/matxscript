@@ -521,32 +521,18 @@ class NDArray(Object):
 
     def _copy_torch(self):
         import torch
-        device_str = MATXScriptDevice.MASK2STR[self.tensor_handle.contents.device.device_type]
-        if device_str == "gpu":
-            device_str = "cuda:%d" % self.tensor_handle.contents.device.device_id
-        t_dtype = {
-            "float32": torch.float32,
-            "float64": torch.float64,
-            "uint8": torch.uint8,
-            "int8": torch.int8,
-            "int16": torch.int16,
-            "int32": torch.int32,
-            "int64": torch.int64,
-            "bool": torch.bool
-        }[self.dtype()]
-        ret = torch.empty(list(self.shape()), dtype=t_dtype, device=torch.device(device_str))
-        raw_stream = 0
-        if ret.is_cuda:
-            stream = torch.cuda.current_stream(ret.get_device())
-            raw_stream = stream.cuda_stream
-        _ffi_api.NDArrayCopyToBytes(ret.data_ptr(), self, raw_stream)
-        return ret
+        with torch.no_grad():
+            return self._torch().clone()
 
     def _torch(self):
-        # if MATXScriptDevice.MASK2STR[self.tensor_handle.contents.device.device_type] == "gpu":
-        #    _ffi_api.DefaultComputeStreamSync(self.tensor_handle.contents.device.device_id)
+        _ffi_api.CurrentThreadStreamSync(
+            self.tensor_handle.contents.device.device_type,
+            self.tensor_handle.contents.device.device_id
+        )
+        import torch
         import torch.utils.dlpack
-        return torch.utils.dlpack.from_dlpack(self.to_dlpack())
+        with torch.no_grad():
+            return torch.utils.dlpack.from_dlpack(self.to_dlpack())
 
     def torch(self, copy=True):
         """convert NDArray to torch.Tensor, make sure NDArray is synchronized
