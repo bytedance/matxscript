@@ -50,6 +50,17 @@ class List(Object):
         new_seqs = [to_runtime_object(x) for x in seq]
         self.__init_handle_by_constructor__(_ffi_api.List, *new_seqs)
 
+    def __setstate__(self, state):
+        assert isinstance(state, (bytes, bytearray))
+        arr = _ffi_api.msgpack_loads(state)
+        assert isinstance(arr, List), "internal error"
+        handle, code = _ffi.matx_script_api.steal_object_handle(arr)
+        self.handle = handle
+        self.type_code = code
+
+    def __getstate__(self):
+        return _ffi_api.msgpack_dumps(self)
+
     def __repr__(self):
         return _ffi_api.RTValue_Repr(self)
 
