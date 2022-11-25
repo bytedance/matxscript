@@ -95,14 +95,15 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.StreamSync").set_body([](PyArgs args) -> RTV
 
 // StreamSync
 MATXSCRIPT_REGISTER_GLOBAL("runtime.CurrentThreadStreamSync").set_body([](PyArgs args) -> RTValue {
-  MXCHECK(args.size() == 1) << "CurrentThreadStreamSync expect 1 args, bug get " << args.size();
+  MXCHECK(args.size() == 2) << "CurrentThreadStreamSync expect 2 args, bug get " << args.size();
   MXCHECK(args[0].type_code() == TypeIndex::kRuntimeInteger)
       << "CurrentThreadStreamSync first arg must be integer. ";
-  int device_id = args[0].As<int64_t>();
-  if (device_id >= 0) {
-    MATXScriptDevice device{kDLCUDA, device_id};
-    DeviceAPI::Get(device)->CurrentThreadStreamSync(device);
-  }
+  MXCHECK(args[1].type_code() == TypeIndex::kRuntimeInteger)
+      << "CurrentThreadStreamSync first arg must be integer. ";
+  int64_t device_type = args[0].AsNoCheck<int64_t>();
+  int64_t device_id = args[1].AsNoCheck<int64_t>();
+  MATXScriptDevice device{DLDeviceType(device_type), DLDeviceType(device_id)};
+  DeviceAPI::Get(device)->CurrentThreadStreamSync(device);
   return None;
 });
 

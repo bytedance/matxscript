@@ -59,6 +59,15 @@ class TestToTorch(unittest.TestCase):
     #    t[0][0] = 2
     #    self.assertEqual(nd.numpy()[0][0], 2)
 
+    def test_cpu_copy_non_continuous(self):
+        arr = matx.NDArray(1, [8, 2, 8], "int32")
+        arr = arr[2:8:2]
+        print(arr.is_contiguous())
+        t = arr.torch(copy=True)
+        self.assertEqual(t.dtype, torch.int32)
+        self.assertEqual(t.device, torch.device("cpu"))
+        self.assertTrue(np.alltrue(t.numpy() == arr.numpy()))
+
 
 if __name__ == "__main__":
     import logging
