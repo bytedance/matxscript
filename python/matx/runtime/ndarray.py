@@ -132,6 +132,17 @@ class NDArray(Object):
         check_call(_LIB.MATXScriptGetDLTensor(handle, ctypes.byref(tensor_handle)))
         self.tensor_handle = tensor_handle
 
+    def __setstate__(self, state):
+        assert isinstance(state, (bytes, bytearray))
+        arr = _ffi_api.msgpack_loads(state)
+        assert isinstance(arr, NDArray), "internal error"
+        handle, code = _ffi.matx_script_api.steal_object_handle(arr)
+        self.handle = handle
+        self.type_code = code
+
+    def __getstate__(self):
+        return _ffi_api.msgpack_dumps(self)
+
     # -------------------- [begin] methods can be used in script --------------------
     def to_list(self):
         """Convert a NDArray to a matx.List corresponding to the shape

@@ -55,10 +55,16 @@ class Dict(Object):
         else:
             self.__init_handle_by_constructor__(_ffi_api.Dict)
 
-    # @staticmethod  # known case of __new__
-    # def __new__(*args, **kwargs):
-    #     """ Create and return a new object.  See help(type) for accurate signature. """
-    #     pass
+    def __setstate__(self, state):
+        assert isinstance(state, (bytes, bytearray))
+        arr = _ffi_api.msgpack_loads(state)
+        assert isinstance(arr, Dict), "internal error"
+        handle, code = _ffi.matx_script_api.steal_object_handle(arr)
+        self.handle = handle
+        self.type_code = code
+
+    def __getstate__(self):
+        return _ffi_api.msgpack_dumps(self)
 
     def __repr__(self):
         return _ffi_api.RTValue_Repr(self)

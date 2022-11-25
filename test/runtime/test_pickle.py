@@ -18,6 +18,7 @@
 # under the License.
 import unittest
 import matx
+import numpy as np
 import pickle
 
 
@@ -31,6 +32,31 @@ class TestPickle(unittest.TestCase):
         pickle_data = pickle.dumps(a1)
         a2 = pickle.loads(pickle_data)
         self.assertEqual(a1, a2)
+
+    def test_pickle_dict(self):
+        a1 = matx.Dict({"hello": "world"})
+        pickle_data = pickle.dumps(a1)
+        a2 = pickle.loads(pickle_data)
+        self.assertEqual(a1, a2)
+
+    def test_pickle_set(self):
+        a1 = matx.Set([1, 2, 3])
+        pickle_data = pickle.dumps(a1)
+        a2 = pickle.loads(pickle_data)
+        self.assertEqual(a1, a2)
+
+    def test_pickle_ndarray(self):
+        a1 = matx.NDArray(1, shape=[2, 3], dtype="int32")
+        pickle_data = pickle.dumps(a1)
+        a2 = pickle.loads(pickle_data)
+        self.assertTrue(np.alltrue(a1.numpy() == a2.numpy()))
+
+    def test_pickle_nested(self):
+        py_data = [None, 1, 1.1, 'hello', b'hi', [0, "hello"], {"h": 1}]
+        tx_data = matx.to_runtime_object(py_data)
+        pickle_data = pickle.dumps(tx_data)
+        new_data = pickle.loads(pickle_data)
+        self.assertEqual(tx_data, new_data)
 
 
 if __name__ == "__main__":
