@@ -24,6 +24,13 @@
 #include <thread>
 #include <vector>
 
+#ifdef _WIN32
+#include <windows.h>
+typedef DWORD pid_t;
+#else
+#include <unistd.h>
+#endif
+
 #include <matxscript/runtime/threadpool/i_thread_pool.h>
 #include <matxscript/runtime/threadpool/mpmc_bounded_queue.h>
 
@@ -72,6 +79,7 @@ class LockFreeThreadPool : public IThreadPool {
   bool stop_ = false;
   std::string name_;
   int64_t intervals_ns_;
+  pid_t belong_to_pid_;
 };
 
 class SPSCLockFreeThreadPool : public IThreadPool {

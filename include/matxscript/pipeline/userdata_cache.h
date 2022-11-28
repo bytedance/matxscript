@@ -166,6 +166,20 @@ class UserDataCache : public Singleton<UserDataCache> {
     }
   }
 
+  std::vector<UserDataRef> GetAll(string_view scope) {
+    std::vector<UserDataRef> uds;
+    auto& scope_map = scope_group_;
+    auto itr = scope_map.find(scope);
+    if (itr != scope_map.end()) {
+      for (auto& cls_to_ins : itr->second) {
+        for (auto& name_to_ins : cls_to_ins.second) {
+          uds.emplace_back(name_to_ins.second);
+        }
+      }
+    }
+    return uds;
+  }
+
  private:
   explicit UserDataCache() = default;
   ~UserDataCache() = default;

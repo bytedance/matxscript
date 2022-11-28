@@ -19,6 +19,8 @@
  */
 #include <matxscript/runtime/threadpool/lock_based_thread_pool.h>
 
+#include <unistd.h>
+
 namespace matxscript {
 namespace runtime {
 namespace internal {
@@ -48,21 +50,40 @@ void LockBasedThreadPool::ThreadEntry(LockBasedThreadPool* pool, const std::stri
 }
 
 LockBasedThreadPool::LockBasedThreadPool(size_t thread_num, const std::string& name) {
+#ifdef _WIN32
+  belong_to_pid_ = GetCurrentProcessId();
+#else
+  belong_to_pid_ = getpid();
+#endif
   for (size_t i = 0; i < thread_num; i++) {
     workers_.emplace_back(ThreadEntry, this, name + "_T" + std::to_string(i));
   }
 }
 
 LockBasedThreadPool::~LockBasedThreadPool() {
-  {
-    Lock lock(mutex_);
-    stop_ = true;
-    cond_.notify_all();
-  }
+#ifdef _WIN32
+  auto cur_pid = GetCurrentProcessId();
+#else
+  auto cur_pid = getpid();
+#endif
+  if (cur_pid == belong_to_pid_) {
+    {
+      Lock lock(mutex_);
+      stop_ = true;
+      cond_.notify_all();
+    }
 
-  for (auto& t : workers_) {
-    if (t.joinable()) {
-      t.join();
+    for (auto& t : workers_) {
+      if (t.joinable()) {
+        t.join();
+      }
+    }
+  } else {
+    // After fork, the child process inherits the data-structures of the parent
+    // process' thread-pool, but since those threads don't exist, the thread-pool
+    // is corrupt. So detach thread here in order to prevent segfaults.
+    for (auto& t : workers_) {
+      t.detach();
     }
   }
 }

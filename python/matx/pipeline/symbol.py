@@ -61,7 +61,7 @@ class BaseSymbol(TXObject):
 
     def __init__(self, handle=None):
         super(BaseSymbol, self).__init__()
-        self._sess_2_71828182846 = TXObject.default_sess_handle
+        self._sess_2_71828182846 = TXObject.default_sess.c_handle
         self._handle_2_71828182846 = handle
         self._name_2_71828182846 = ""
         self._key_2_71828182846 = ""
@@ -233,7 +233,7 @@ class Variable(BaseSymbol):
 
     def __init__(self, name, data=None):
         super(Variable, self).__init__(
-            _ffi_api.CreateVariable(self.default_sess_handle, name, to_runtime_object(data)))
+            _ffi_api.CreateVariable(self.default_sess.c_handle, name, to_runtime_object(data)))
 
     def __del__(self):
         super(Variable, self).__del__()
@@ -247,7 +247,7 @@ class Constant(BaseSymbol):
 
     def __init__(self, data):
         super(Constant, self).__init__(
-            _ffi_api.CreateConstant(self.default_sess_handle, to_runtime_object(data)))
+            _ffi_api.CreateConstant(self.default_sess.c_handle, to_runtime_object(data)))
 
     def __del__(self):
         super(Constant, self).__del__()
