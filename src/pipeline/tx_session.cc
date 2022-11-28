@@ -48,6 +48,10 @@
 namespace matxscript {
 namespace runtime {
 
+static const char ThreadPoolOpClassName[] = "ThreadPoolOp";
+static const char ComputeThreadPoolOpName[] = "ThreadPoolOp_compute_pool_0";
+static const char ScheduleThreadPoolOpName[] = "ThreadPoolOp_scheduling_pool_0";
+
 static TXSessionOptions TXSessionOptionsReadFromDict(const Dict& config) {
   TXSessionOptions sess_opts;
   sess_opts.name = config["name"].As<String>();
@@ -165,10 +169,8 @@ int64_t TXSession::GetSchedulingThreads() {
 }
 
 void TXSession::SetSchedulingThreads(int32_t num, bool share) {
-  static const char ThreadPoolOpClass[] = "ThreadPoolOp";
-  static const char ThreadPoolOpName[] = "ThreadPoolOp_scheduling_pool_0";
   options_.share_scheduling_pool = share;
-  ud_cache_->Remove(ThreadPoolOpClass, ThreadPoolOpName);
+  ud_cache_->Remove(ThreadPoolOpClassName, ScheduleThreadPoolOpName);
   if (num >= 0) {
     options_.enable_scheduling_pool = true;
     if (num == 0) {
@@ -184,7 +186,7 @@ void TXSession::SetSchedulingThreads(int32_t num, bool share) {
       attrs["lock_free"] = false;
       attrs["thread_nums"] = options_.scheduling_pool_thread_nums;
       attrs["thread_name"] = Unicode(U"matx.schedule");
-      auto op = this->CreateOp(ThreadPoolOpClass, attrs, ThreadPoolOpName);
+      auto op = this->CreateOp(ThreadPoolOpClassName, attrs, ScheduleThreadPoolOpName);
       auto pool_op = std::dynamic_pointer_cast<ThreadPoolOp>(op);
       scheduling_pool_ = pool_op->GetPool();
     } else {
@@ -213,9 +215,7 @@ int64_t TXSession::GetOpParallelismThreads() {
 }
 
 void TXSession::SetOpComputeThreads(int32_t num, bool share) {
-  static const char ThreadPoolOpClass[] = "ThreadPoolOp";
-  static const char ThreadPoolOpName[] = "ThreadPoolOp_compute_pool_0";
-  ud_cache_->Remove(ThreadPoolOpClass, ThreadPoolOpName);
+  ud_cache_->Remove(ThreadPoolOpClassName, ComputeThreadPoolOpName);
   options_.share_compute_pool = share;
   if (num >= 0) {
     options_.enable_compute_pool = true;
@@ -232,7 +232,7 @@ void TXSession::SetOpComputeThreads(int32_t num, bool share) {
       attrs["lock_free"] = false;
       attrs["thread_nums"] = options_.compute_pool_thread_nums;
       attrs["thread_name"] = Unicode(U"matx.compute");
-      auto op = this->CreateOp(ThreadPoolOpClass, attrs, ThreadPoolOpName);
+      auto op = this->CreateOp(ThreadPoolOpClassName, attrs, ComputeThreadPoolOpName);
       auto pool_op = std::dynamic_pointer_cast<ThreadPoolOp>(op);
       compute_pool_ = pool_op->GetPool();
     } else {
@@ -1161,6 +1161,38 @@ std::unique_ptr<TXSession> TXSession::Load(string_view folder,
   sess->BuildRunNodes();
   sess->BuildOutputKeys();
   return std::move(sess);
+}
+
+void TXSession::AtFork() {
+  // After fork, the child process inherits the data-structures of the parent
+  // process' thread-pool, but since those threads don't exist, the thread-pool
+  // is corrupt. So reinitialize the thread pool here in order to prevent segfaults.
+  if (scheduling_pool_) {
+    if (options_.share_scheduling_pool) {
+      auto op = this->FindOp(ThreadPoolOpClassName, ScheduleThreadPoolOpName);
+      if (op) {
+        auto pool_op = std::dynamic_pointer_cast<ThreadPoolOp>(op);
+        pool_op->Init();
+      }
+    } else {
+      scheduling_pool_ = std::make_shared<internal::LockBasedThreadPool>(
+          options_.scheduling_pool_thread_nums, "matx.schedule");
+    }
+    scheduling_pool_executor_ = std::make_shared<ThreadPoolExecutor>(scheduling_pool_, false);
+  }
+  if (compute_pool_) {
+    if (options_.share_compute_pool) {
+      auto op = this->FindOp(ThreadPoolOpClassName, ComputeThreadPoolOpName);
+      if (op) {
+        auto pool_op = std::dynamic_pointer_cast<ThreadPoolOp>(op);
+        pool_op->Init();
+      }
+    } else {
+      compute_pool_ = std::make_shared<internal::LockBasedThreadPool>(
+          options_.compute_pool_thread_nums, "matx.compute");
+    }
+    compute_pool_executor_ = std::make_shared<ThreadPoolExecutor>(compute_pool_, false);
+  }
 }
 
 void TXSession::SetAttr(const string_view& key, RTValue value) {

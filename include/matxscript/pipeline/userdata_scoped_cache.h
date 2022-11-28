@@ -48,6 +48,10 @@ class UserDataScopedCache {
     return global_cache_->Get(iso_name_, cls, name);
   }
 
+  std::vector<UserDataRef> GetAll() {
+    return global_cache_->GetAll(iso_name_);
+  }
+
   void Remove(string_view cls, string_view name) {
     global_cache_->Remove(iso_name_, cls, name);
   }

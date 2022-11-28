@@ -28,6 +28,13 @@
 #include <thread>
 #include <vector>
 
+#ifdef _WIN32
+#include <windows.h>
+typedef DWORD pid_t;
+#else
+#include <unistd.h>
+#endif
+
 #include <matxscript/runtime/threadpool/i_thread_pool.h>
 
 namespace matxscript {
@@ -76,6 +83,7 @@ class LockBasedThreadPool : public IThreadPool {
 
   std::mutex mutex_;
   std::condition_variable cond_;
+  pid_t belong_to_pid_;
 };
 
 }  // namespace internal

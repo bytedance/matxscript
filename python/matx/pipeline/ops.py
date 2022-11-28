@@ -61,7 +61,7 @@ class OpKernel(TXObject):
         self.__holder = sys.modules['matx']
         self.__native_free_func = _ffi_api.FreeNativeOp
         self._native_class_name = class_name
-        self.sess_handle = TXObject.default_sess_handle
+        self.sess_handle = TXObject.default_sess.c_handle
         self.__backend_sess_handle = void_p_to_runtime(self.sess_handle)
         attrs = dict()
         for k, v in kwargs.items():

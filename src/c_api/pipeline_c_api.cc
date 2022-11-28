@@ -518,6 +518,14 @@ MATXSCRIPT_REGISTER_GLOBAL("pipeline.TXSessionHasAttr").set_body([](PyArgs args)
   return sess->HasAttr(key.encode());
 });
 
+MATXSCRIPT_REGISTER_GLOBAL("pipeline.TXSessionAtFork").set_body([](PyArgs args) -> RTValue {
+  MXCHECK_EQ(args.size(), 1) << "[TXSessionAtFork] Expect 1 arguments but get " << args.size();
+  void* handle = args[0].As<void*>();
+  auto sess = static_cast<TXSession*>(handle);
+  sess->AtFork();
+  return None;
+});
+
 extern RTValue ParallelMap(const UserDataRef& func, const Any& inputs, void* session_handle);
 extern RTValue ParallelStarMap(const UserDataRef& func, const Any& inputs, void* session_handle);
 extern RTValue ApplyAsync(const UserDataRef& func, const PyArgs& inputs, void* session_handle);

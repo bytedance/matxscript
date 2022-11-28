@@ -24,58 +24,93 @@ import traceback
 import warnings
 from . import _ffi_api
 from .._ffi import libinfo
+from .._ffi import void_p_to_runtime
 
 
-def set_op_parallelism_threads(handle, thread_num=2, share=False):
-    return _ffi_api.TXSessionSetOpParallelismThreads(handle, thread_num, share)
+class TXSession:
 
+    def __init__(self, handle=None, name=None):
+        if name is None:
+            name = "__global__"
+        if handle is None:
+            self.__c_handle = _ffi_api.CreateTXSessionHandle(name)
+        else:
+            self.__c_handle = handle
+        self.__native_free_func = _ffi_api.FreeTXSessionHandle
+        self.__backend_sess_handle = void_p_to_runtime(self.__c_handle)
 
-def get_op_parallelism_threads(handle):
-    return _ffi_api.TXSessionGetOpParallelismThreads(handle)
+    def __del__(self):
+        self.__native_free_func(self.__backend_sess_handle)
 
+    def __getstate__(self):
+        raise TypeError("TXSession is not picklable")
 
-def disable_op_parallelism(handle):
-    return _ffi_api.TXSessionSetOpParallelismThreads(handle, -1)
+    def __setstate__(self, state):
+        raise TypeError("TXSession is not picklable")
 
+    @property
+    def c_handle(self):
+        return self.__c_handle
 
-def set_pmap_threads(handle, thread_num=8, share=False):
-    return _ffi_api.TXSessionSetOpComputeThreads(handle, thread_num, share)
+    def set_device(self, device):
+        return _ffi_api.TXSessionSetDevice(self.__c_handle, device)
 
+    def set_op_parallelism_threads(self, thread_num=2, share=False):
+        return _ffi_api.TXSessionSetOpParallelismThreads(self.__c_handle, thread_num, share)
 
-def get_pmap_threads(handle):
-    return _ffi_api.TXSessionGetOpComputeThreads(handle)
+    def get_op_parallelism_threads(self):
+        return _ffi_api.TXSessionGetOpParallelismThreads(self.__c_handle)
 
+    def disable_op_parallelism(self):
+        return _ffi_api.TXSessionSetOpParallelismThreads(self.__c_handle, -1)
 
-def disable_pmap_threads(handle):
-    return _ffi_api.TXSessionSetOpComputeThreads(handle, -1)
+    def set_pmap_threads(self, thread_num=8, share=False):
+        return _ffi_api.TXSessionSetOpComputeThreads(self.__c_handle, thread_num, share)
 
+    def get_pmap_threads(self):
+        return _ffi_api.TXSessionGetOpComputeThreads(self.__c_handle)
 
-def set_apply_async_threads(handle, thread_num=2, share=False):
-    return _ffi_api.TXSessionSetSchedulingThreads(handle, thread_num, share)
+    def disable_pmap_threads(self):
+        return _ffi_api.TXSessionSetOpComputeThreads(self.__c_handle, -1)
 
+    def set_apply_async_threads(self, thread_num=2, share=False):
+        return _ffi_api.TXSessionSetSchedulingThreads(self.__c_handle, thread_num, share)
 
-def get_apply_async_threads(handle):
-    return _ffi_api.TXSessionGetSchedulingThreads(handle)
+    def get_apply_async_threads(self):
+        return _ffi_api.TXSessionGetSchedulingThreads(self.__c_handle)
 
-
-def disable_apply_async_threads(handle):
-    return _ffi_api.TXSessionSetSchedulingThreads(handle, -1)
+    def disable_apply_async_threads(self):
+        return _ffi_api.TXSessionSetSchedulingThreads(self.__c_handle, -1)
 
 
 def make_default_session():
-    default_sess_handle = _ffi_api.CreateTXSessionHandle()
-    # disable threadpool for fix training
-    # lazy initialize threadpool when using matx.pmap matx.apply_async
-    disable_op_parallelism(default_sess_handle)
-    set_apply_async_threads(default_sess_handle)
-    return default_sess_handle
+    default_sess = TXSession()
+    default_sess.disable_op_parallelism()
+    default_sess.set_apply_async_threads()
+    return default_sess
 
 
 class TXObject(object):
-    default_sess_handle = make_default_session()
+    default_sess = make_default_session()
 
     def __init__(self):
         pass
+
+
+def reset_default_session_after_fork(o):
+    _ffi_api.TXSessionAtFork(o.default_sess.c_handle)
+
+
+# only available on Unix after Python 3.7
+if hasattr(os, 'register_at_fork'):
+    os.register_at_fork(
+        after_in_child=lambda: reset_default_session_after_fork(TXObject)
+    )
+else:
+    # thread is not fork safe
+    TXObject.default_sess.disable_op_parallelism()
+    TXObject.default_sess.disable_pmap_threads()
+    TXObject.default_sess.disable_apply_async_threads()
 
 
 class TracerWarning(Warning):

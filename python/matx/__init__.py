@@ -196,7 +196,7 @@ def list_sort(l, compare=None):
 
 def pmap(func, data):
     from . import pipeline
-    from .pipeline._base import TXObject, get_pmap_threads, set_pmap_threads
+    from .pipeline._base import TXObject
     from .pipeline import _ffi_api
     from .pipeline._tracing_state import tracing
 
@@ -218,13 +218,13 @@ def pmap(func, data):
             return tuple(func(x) for x in data)
         else:
             raise TypeError(f"expect the second argument is list or tuple, but get '{data}'")
-    sess_handle = TXObject.default_sess_handle
+    sess_handle = TXObject.default_sess.c_handle
     return _ffi_api.ParallelMap(func, data, sess_handle)
 
 
 def pstarmap(func, data):
     from . import pipeline
-    from .pipeline._base import TXObject, get_pmap_threads, set_pmap_threads
+    from .pipeline._base import TXObject
     from .pipeline import _ffi_api
     from .pipeline._tracing_state import tracing
 
@@ -246,7 +246,7 @@ def pstarmap(func, data):
             return tuple(func(*x) for x in data)
         else:
             raise TypeError(f"expect the second argument is list or tuple, but get '{data}'")
-    sess_handle = TXObject.default_sess_handle
+    sess_handle = TXObject.default_sess.c_handle
     return _ffi_api.ParallelStarMap(func, data, sess_handle)
 
 
@@ -263,7 +263,7 @@ class Future:
 
 def apply_async(func, *args):
     from . import pipeline
-    from .pipeline._base import TXObject, get_pmap_threads, set_pmap_threads
+    from .pipeline._base import TXObject
     from .pipeline import _ffi_api
     from .pipeline._tracing_state import tracing
 
@@ -276,7 +276,7 @@ def apply_async(func, *args):
     if not isinstance(func, (pipeline.ops.OpKernel, runtime.object.ObjectBase)):
         # Python mode
         return Future(func(*args))
-    sess_handle = TXObject.default_sess_handle
+    sess_handle = TXObject.default_sess.c_handle
     return _ffi_api.ApplyAsync(func, *args, sess_handle)
 
 

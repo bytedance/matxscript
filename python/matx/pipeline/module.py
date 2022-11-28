@@ -27,6 +27,7 @@ from .._ffi import void_p_to_runtime
 from . import _ffi_api
 from .symbol import Variable
 from .symbol import Symbol
+from ._base import TXSession
 import time
 
 
@@ -37,19 +38,8 @@ class Module(object):
     """
 
     def __init__(self, handle=None, name=None):
-        if name is None:
-            name = "__global__"
-        assert isinstance(name, str)
-        if handle is None:
-            self._handle = _ffi_api.CreateTXSessionHandle(name)
-        else:
-            self._handle = handle
+        self._tx_sess = TXSession(handle=handle, name=name)
         self.__holder = sys.modules['matx']
-        self.__native_free_func = _ffi_api.FreeTXSessionHandle
-        self.__backend_sess_handle = void_p_to_runtime(self._handle)
-
-    def __del__(self):
-        self.__native_free_func(self.__backend_sess_handle)
 
     def SetDevice(self, device):
         """Set devices used by Module tensor forward
@@ -64,7 +54,7 @@ class Module(object):
 
         """
         assert isinstance(device, int), "devices is not int"
-        _ffi_api.TXSessionSetDevice(self._handle, device)
+        return self._tx_sess.set_device(device)
 
 
 class JITModule(Module):
@@ -105,7 +95,7 @@ class JITModule(Module):
         import re
         from ..__init__ import __version__
         from ..__init__ import __commit_id__
-        jit_op_instance_names, native_op_instance_names = _ffi_api.GetOpInstanceName(self._handle)
+        jit_op_instance_names, native_op_instance_names = _ffi_api.GetOpInstanceName(self._tx_sess.c_handle)
         jit_op_names = set()
         native_op_names = set()
         for jit_op_instance_name in jit_op_instance_names:
@@ -159,21 +149,21 @@ class JITModule(Module):
         return self.get_sess_attr(key)
 
     def get_sess_attr(self, key):
-        return _ffi_api.TXSessionGetAttr(self._handle, key)
+        return _ffi_api.TXSessionGetAttr(self._tx_sess.c_handle, key)
 
     def SetAttr(self, key, value):
         warnings.warn("The function JITModule.SetAttr is deprecated.", DeprecationWarning)
         return self.set_sess_attr(key, value)
 
     def set_sess_attr(self, key, value):
-        _ffi_api.TXSessionSetAttr(self._handle, key, value)
+        _ffi_api.TXSessionSetAttr(self._tx_sess.c_handle, key, value)
 
     def HasAttr(self, key):
         warnings.warn("The function JITModule.HasAttr is deprecated.", DeprecationWarning)
         return self.has_sess_attr(key)
 
     def has_sess_attr(self, key):
-        return _ffi_api.TXSessionHasAttr(self._handle, key)
+        return _ffi_api.TXSessionHasAttr(self._tx_sess.c_handle, key)
 
     def InputNames(self):
         warnings.warn("The function JITModule.InputNames is deprecated.", DeprecationWarning)
@@ -181,15 +171,15 @@ class JITModule(Module):
 
     @property
     def input_names(self):
-        return _ffi_api.TXSessionGetAttr(self._handle, "input_names")
+        return _ffi_api.TXSessionGetAttr(self._tx_sess.c_handle, "input_names")
 
     def SetInputNames(self, names):
         warnings.warn("The function JITModule.SetInputNames is deprecated.", DeprecationWarning)
-        return _ffi_api.TXSessionSetAttr(self._handle, "input_names", names)
+        return _ffi_api.TXSessionSetAttr(self._tx_sess.c_handle, "input_names", names)
 
     @input_names.setter
     def input_names(self, names):
-        return _ffi_api.TXSessionSetAttr(self._handle, "input_names", names)
+        return _ffi_api.TXSessionSetAttr(self._tx_sess.c_handle, "input_names", names)
 
     def SetOpParallelismThreads(self, thread_num=2, share=False):
         warnings.warn(
@@ -198,10 +188,10 @@ class JITModule(Module):
         return self.set_op_parallelism_threads(thread_num, share)
 
     def set_op_parallelism_threads(self, thread_num=2, share=False):
-        return _ffi_api.TXSessionSetOpParallelismThreads(self._handle, thread_num, share)
+        return self._tx_sess.set_op_parallelism_threads(thread_num=thread_num, share=share)
 
     def get_op_parallelism_threads(self):
-        return _ffi_api.TXSessionGetOpParallelismThreads(self._handle)
+        return self._tx_sess.get_op_parallelism_threads()
 
     def DisableOpParallelism(self):
         warnings.warn(
@@ -210,25 +200,25 @@ class JITModule(Module):
         return self.disable_op_parallelism()
 
     def disable_op_parallelism(self):
-        return _ffi_api.TXSessionSetOpParallelismThreads(self._handle, -1)
+        return self._tx_sess.disable_op_parallelism()
 
     def set_apply_async_threads(self, thread_num=2, share=False):
-        return _ffi_api.TXSessionSetSchedulingThreads(self._handle, thread_num, share)
+        return self._tx_sess.set_apply_async_threads(thread_num=thread_num, share=share)
 
     def get_apply_async_threads(self):
-        return _ffi_api.TXSessionGetSchedulingThreads(self._handle)
+        return self._tx_sess.get_apply_async_threads()
 
     def disable_apply_async_threads(self):
-        return _ffi_api.TXSessionSetSchedulingThreads(self._handle, -1)
+        return self._tx_sess.disable_apply_async_threads()
 
     def set_pmap_threads(self, thread_num=8, share=False):
-        return _ffi_api.TXSessionSetOpComputeThreads(self._handle, thread_num, share)
+        return self._tx_sess.set_pmap_threads(thread_num=thread_num, share=share)
 
     def get_pmap_threads(self):
-        return _ffi_api.TXSessionGetOpComputeThreads(self._handle)
+        return self._tx_sess.get_pmap_threads()
 
     def disable_pmap_threads(self):
-        return _ffi_api.TXSessionSetOpComputeThreads(self._handle, -1)
+        return self._tx_sess.disable_pmap_threads()
 
     def Trace(self, sym):
         warnings.warn("The function JITModule.Trace is deprecated.", DeprecationWarning)
@@ -262,7 +252,7 @@ class JITModule(Module):
                 f"Type {type(sym)} cannot be traced. Only the values returned by matx op can be traced. "
             )
         self._trace_py_module(sym_list)
-        _ffi_api.TXSessionTrace(self._handle, *sym_handle_list)
+        _ffi_api.TXSessionTrace(self._tx_sess.c_handle, *sym_handle_list)
 
     def Save(self, folder, name="model.spec.json"):
         warnings.warn("The function JITModule.Save is deprecated.", DeprecationWarning)
@@ -284,7 +274,7 @@ class JITModule(Module):
 
         """
         self._save_py_module()
-        _ffi_api.TXSessionSave(self._handle, folder, name)
+        _ffi_api.TXSessionSave(self._tx_sess.c_handle, folder, name)
         self._save_code_stat_info(folder)
 
     def Run(self, feed_dict):
@@ -312,7 +302,7 @@ class JITModule(Module):
             feed_dict_v2[k] = v
         fn_run = trans_exception_from_c_to_py(_ffi_api.TXSessionRun)
         try:
-            result = fn_run(self._handle, feed_dict_v2)
+            result = fn_run(self._tx_sess.c_handle, feed_dict_v2)
             if len(result) == 1:
                 return result[0]
             return tuple([obj for obj in result])
@@ -339,7 +329,7 @@ class JITModule(Module):
         for k, v in feed_dict.items():
             k = k.encode()
             feed_dict_v2[k] = v
-        result = _ffi_api.TXSessionWarmup(self._handle, feed_dict_v2)
+        result = _ffi_api.TXSessionWarmup(self._tx_sess.c_handle, feed_dict_v2)
         if len(result) == 1:
             return result[0]
         return tuple([obj for obj in result])
@@ -367,7 +357,7 @@ class JITModule(Module):
         for k, v in feed_dict.items():
             k = k.encode()
             feed_dict_v2[k] = v
-        result, meta = _ffi_api.TXSessionRunWithMeta(self._handle, feed_dict_v2)
+        result, meta = _ffi_api.TXSessionRunWithMeta(self._tx_sess.c_handle, feed_dict_v2)
         return meta
 
     def get_nested_op_attributes(self, op_cls, op_name):
@@ -393,7 +383,7 @@ class JITModule(Module):
             op_name = op_name.encode()
         assert isinstance(op_cls, (bytes, bytearray))
         assert isinstance(op_name, (bytes, bytearray))
-        return _ffi_api.TXSessionGetNestedOpAttributesByName(self._handle, op_cls, op_name)
+        return _ffi_api.TXSessionGetNestedOpAttributesByName(self._tx_sess.c_handle, op_cls, op_name)
 
     def profile(self, feed_dict, warmup_times=10):
         """Execute Pipeline, get step info, generate timeline and show it

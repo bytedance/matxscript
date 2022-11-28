@@ -59,6 +59,11 @@ LockFreeThreadPool::LockFreeThreadPool(size_t threads,
                                        const std::string& name,
                                        int64_t intervals_ns)
     : stop_(false), name_(name), tasks_(4096), intervals_ns_(intervals_ns) {
+#ifdef _WIN32
+  belong_to_pid_ = GetCurrentProcessId();
+#else
+  belong_to_pid_ = getpid();
+#endif
   for (size_t i = 0; i < threads; ++i) {
     char buffer[16] = {0};
     snprintf(buffer, sizeof(buffer), "T%zu.%s", i, name.c_str());
@@ -102,10 +107,24 @@ void LockFreeThreadPool::Enqueue(IRunnablePtr& runner, size_t seq) {
 
 // the destructor joins all threads
 LockFreeThreadPool::~LockFreeThreadPool() {
+#ifdef _WIN32
+  auto cur_pid = GetCurrentProcessId();
+#else
+  auto cur_pid = getpid();
+#endif
   stop_ = true;
-  for (std::thread& worker : workers_) {
-    if (worker.joinable()) {
-      worker.join();
+  if (cur_pid == belong_to_pid_) {
+    for (std::thread& worker : workers_) {
+      if (worker.joinable()) {
+        worker.join();
+      }
+    }
+  } else {
+    // After fork, the child process inherits the data-structures of the parent
+    // process' thread-pool, but since those threads don't exist, the thread-pool
+    // is corrupt. So detach thread here in order to prevent segfaults.
+    for (std::thread& worker : workers_) {
+      worker.detach();
     }
   }
 }
