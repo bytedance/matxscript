@@ -95,7 +95,8 @@ class JITModule(Module):
         import re
         from ..__init__ import __version__
         from ..__init__ import __commit_id__
-        jit_op_instance_names, native_op_instance_names = _ffi_api.GetOpInstanceName(self._tx_sess.c_handle)
+        jit_op_instance_names, native_op_instance_names = _ffi_api.GetOpInstanceName(
+            self._tx_sess.c_handle)
         jit_op_names = set()
         native_op_names = set()
         for jit_op_instance_name in jit_op_instance_names:
@@ -383,7 +384,9 @@ class JITModule(Module):
             op_name = op_name.encode()
         assert isinstance(op_cls, (bytes, bytearray))
         assert isinstance(op_name, (bytes, bytearray))
-        return _ffi_api.TXSessionGetNestedOpAttributesByName(self._tx_sess.c_handle, op_cls, op_name)
+        return _ffi_api.TXSessionGetNestedOpAttributesByName(
+            self._tx_sess.c_handle, op_cls, op_name
+        )
 
     def profile(self, feed_dict, warmup_times=10):
         """Execute Pipeline, get step info, generate timeline and show it
