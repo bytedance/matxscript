@@ -23,7 +23,7 @@ from typing import List
 import builtins
 import inspect
 import sys
-from typed_ast import ast3 as ast
+from matx._typed_ast import ast
 
 from .. import context
 from ._python_builtin_module import is_builtin_module

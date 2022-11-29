@@ -24,7 +24,7 @@ import builtins
 import sys
 
 from typing import Any, Union, List, Optional
-from typed_ast import ast3 as ast
+from matx._typed_ast import ast
 
 from .reporter.script_error import MATXScriptError
 

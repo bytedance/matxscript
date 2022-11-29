@@ -17,7 +17,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from .. import context
-from typed_ast import ast3 as ast
+from matx._typed_ast import ast
 import logging
 import copy
 

@@ -16,7 +16,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from typed_ast import ast3 as ast
+from matx._typed_ast import ast
 from typing import Any
 import inspect
 
