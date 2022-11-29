@@ -38,6 +38,8 @@ def _void_p_conv(handle):
 def void_p_to_runtime(handle):
     if isinstance(handle, ctypes.c_void_p):
         handle = handle.value
+        if handle is None:
+            handle = 0
     return matx_script_api.make_any(ArgTypeCode.HANDLE, 0, handle, 1)
 
 
