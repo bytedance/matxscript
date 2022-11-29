@@ -25,6 +25,7 @@ import warnings
 from . import _ffi_api
 from .._ffi import libinfo
 from .._ffi import void_p_to_runtime
+from ._atfork_register import register_session_at_fork, unregister_session_at_fork
 
 
 class TXSession:
@@ -38,8 +39,10 @@ class TXSession:
             self.__c_handle = handle
         self.__native_free_func = _ffi_api.FreeTXSessionHandle
         self.__backend_sess_handle = void_p_to_runtime(self.__c_handle)
+        register_session_at_fork(self.__c_handle, self)
 
     def __del__(self):
+        unregister_session_at_fork(self.__c_handle)
         self.__native_free_func(self.__backend_sess_handle)
 
     def __getstate__(self):
@@ -95,22 +98,6 @@ class TXObject(object):
 
     def __init__(self):
         pass
-
-
-def reset_default_session_after_fork(o):
-    _ffi_api.TXSessionAtFork(o.default_sess.c_handle)
-
-
-# only available on Unix after Python 3.7
-if hasattr(os, 'register_at_fork'):
-    os.register_at_fork(
-        after_in_child=lambda: reset_default_session_after_fork(TXObject)
-    )
-else:
-    # thread is not fork safe
-    TXObject.default_sess.disable_op_parallelism()
-    TXObject.default_sess.disable_pmap_threads()
-    TXObject.default_sess.disable_apply_async_threads()
 
 
 class TracerWarning(Warning):

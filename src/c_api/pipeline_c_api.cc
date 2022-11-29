@@ -25,11 +25,73 @@
 #include <matxscript/pipeline/python_base_op.h>
 #include <matxscript/pipeline/symbolic_executor.h>
 #include <matxscript/pipeline/tx_session.h>
+#include <matxscript/runtime/at_fork.h>
 #include <matxscript/runtime/container/ndarray_helper.h>
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
 namespace runtime {
+
+/*********************************************************************
+ * AtFork
+ *********************************************************************/
+MATXSCRIPT_REGISTER_GLOBAL("pipeline.os_register_at_fork").set_body([](PyArgs args) -> RTValue {
+  MXCHECK_EQ(args.size(), 4) << "[os_register_at_fork] Expect 4 arguments but get " << args.size();
+  void* handle = args[0].As<void*>();
+  std::function<bool()> prepare;
+  std::function<void()> child;
+  std::function<void()> parent;
+  if (args[1].IsObjectRef<UserDataRef>()) {
+    auto before = args[1].AsObjectRefNoCheck<UserDataRef>();
+    prepare = [before]() -> bool {
+      before.generic_call({});
+      return true;
+    };
+  } else if (args[1].type_code() == TypeIndex::kRuntimePackedFuncHandle) {
+    NativeFunction before = args[1].AsNoCheck<NativeFunction>();
+    prepare = [before]() -> bool {
+      before({});
+      return true;
+    };
+  } else if (!args[1].is_nullptr()) {
+    MXTHROW << "[os_register_at_fork] before is not None or a Callable object";
+  }
+  if (args[2].IsObjectRef<UserDataRef>()) {
+    auto after_in_child = args[2].AsObjectRefNoCheck<UserDataRef>();
+    child = [after_in_child]() -> void { after_in_child.generic_call({}); };
+  } else if (args[2].type_code() == TypeIndex::kRuntimePackedFuncHandle) {
+    NativeFunction after_in_child = args[2].AsNoCheck<NativeFunction>();
+    child = [after_in_child]() -> bool {
+      after_in_child({});
+      return true;
+    };
+  } else if (!args[2].is_nullptr()) {
+    MXTHROW << "[os_register_at_fork] after_in_child is not None or a Callable object";
+  }
+  if (args[3].IsObjectRef<UserDataRef>()) {
+    auto after_in_parent = args[3].AsObjectRefNoCheck<UserDataRef>();
+    parent = [after_in_parent]() -> void { after_in_parent.generic_call({}); };
+  } else if (args[3].type_code() == TypeIndex::kRuntimePackedFuncHandle) {
+    NativeFunction after_in_parent = args[3].AsNoCheck<NativeFunction>();
+    parent = [after_in_parent]() -> bool {
+      after_in_parent({});
+      return true;
+    };
+  } else if (!args[3].is_nullptr()) {
+    MXTHROW << "[os_register_at_fork] after_in_parent is not None or a Callable object";
+  }
+  internal::AtFork::RegisterHandler(
+      handle, std::move(prepare), std::move(parent), std::move(child));
+  return None;
+});
+
+MATXSCRIPT_REGISTER_GLOBAL("pipeline.os_unregister_at_fork").set_body([](PyArgs args) -> RTValue {
+  MXCHECK_EQ(args.size(), 1) << "[os_unregister_at_fork] Expect 1 arguments but get "
+                             << args.size();
+  void* handle = args[0].As<void*>();
+  internal::AtFork::UnregisterHandler(handle);
+  return None;
+});
 
 /*********************************************************************
  * trace state
@@ -518,13 +580,15 @@ MATXSCRIPT_REGISTER_GLOBAL("pipeline.TXSessionHasAttr").set_body([](PyArgs args)
   return sess->HasAttr(key.encode());
 });
 
-MATXSCRIPT_REGISTER_GLOBAL("pipeline.TXSessionAtFork").set_body([](PyArgs args) -> RTValue {
-  MXCHECK_EQ(args.size(), 1) << "[TXSessionAtFork] Expect 1 arguments but get " << args.size();
-  void* handle = args[0].As<void*>();
-  auto sess = static_cast<TXSession*>(handle);
-  sess->AtFork();
-  return None;
-});
+MATXSCRIPT_REGISTER_GLOBAL("pipeline.TXSessionAtForkAfterInChild")
+    .set_body([](PyArgs args) -> RTValue {
+      MXCHECK_EQ(args.size(), 1) << "[TXSessionAtForkAfterInChild] Expect 1 arguments but get "
+                                 << args.size();
+      void* handle = args[0].As<void*>();
+      auto sess = static_cast<TXSession*>(handle);
+      sess->AtForkAfterInChild();
+      return None;
+    });
 
 extern RTValue ParallelMap(const UserDataRef& func, const Any& inputs, void* session_handle);
 extern RTValue ParallelStarMap(const UserDataRef& func, const Any& inputs, void* session_handle);
