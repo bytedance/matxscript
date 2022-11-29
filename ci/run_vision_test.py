@@ -34,6 +34,7 @@ def worker(test_file):
     (out, _) = proc.communicate()
     return test_file, proc.returncode, out
 
+
 for test_file in test_files:
     _, code, out = worker(test_file)
     if code != 0:
