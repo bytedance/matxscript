@@ -22,6 +22,7 @@ import weakref
 from typing import List
 
 from .._ffi import void_p_to_runtime
+from .._ffi import to_packed_func
 from . import _ffi_api
 
 
@@ -114,7 +115,7 @@ else:
 
     _ffi_api.os_register_at_fork(
         void_p_to_runtime(ctypes.c_void_p(0)),
-        atfork_before,
-        atfork_after_in_child,
-        atfork_after_in_parent
+        to_packed_func(atfork_before),
+        to_packed_func(atfork_after_in_child),
+        to_packed_func(atfork_after_in_parent)
     )
