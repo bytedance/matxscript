@@ -1163,7 +1163,7 @@ std::unique_ptr<TXSession> TXSession::Load(string_view folder,
   return std::move(sess);
 }
 
-void TXSession::AtFork() {
+void TXSession::AtForkAfterInChild() {
   // After fork, the child process inherits the data-structures of the parent
   // process' thread-pool, but since those threads don't exist, the thread-pool
   // is corrupt. So reinitialize the thread pool here in order to prevent segfaults.
