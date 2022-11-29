@@ -73,7 +73,7 @@ def register_session_at_fork(addr, sess):
 
     AtForkRegister.register_at_fork(
         handle=addr,
-        before=addr,
+        before=None,
         after_in_child=after_in_child,
         after_in_parent=None
     )
