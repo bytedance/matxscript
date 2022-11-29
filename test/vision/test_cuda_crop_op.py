@@ -36,9 +36,9 @@ class TestCudaCenterCropOp(unittest.TestCase):
         image = cv2.imread(image_file)
         origin_height, origin_width, _ = image.shape
         self.batch_size = 8
-        self.image_nds = [matx.array.from_numpy(image, ctx="gpu:0")
+        self.image_nds = [matx.array.from_numpy(image, device="cuda:0")
                           for _ in range(self.batch_size)]
-        self.image_nds_cpu = [matx.array.from_numpy(image, ctx="cpu")
+        self.image_nds_cpu = [matx.array.from_numpy(image, device="cpu")
                               for _ in range(self.batch_size)]
         images = [image] * self.batch_size
         self.device = matx.Device("gpu:0")
