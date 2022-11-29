@@ -47,19 +47,37 @@ MATXSCRIPT_REGISTER_GLOBAL("pipeline.os_register_at_fork").set_body([](PyArgs ar
       before.generic_call({});
       return true;
     };
+  } else if (args[1].type_code() == TypeIndex::kRuntimePackedFuncHandle) {
+    NativeFunction before = args[1].AsNoCheck<NativeFunction>();
+    prepare = [before]() -> bool {
+      before({});
+      return true;
+    };
   } else if (!args[1].is_nullptr()) {
     MXTHROW << "[os_register_at_fork] before is not None or a Callable object";
   }
   if (args[2].IsObjectRef<UserDataRef>()) {
     auto after_in_child = args[2].AsObjectRefNoCheck<UserDataRef>();
     child = [after_in_child]() -> void { after_in_child.generic_call({}); };
+  } else if (args[2].type_code() == TypeIndex::kRuntimePackedFuncHandle) {
+    NativeFunction after_in_child = args[2].AsNoCheck<NativeFunction>();
+    child = [after_in_child]() -> bool {
+      after_in_child({});
+      return true;
+    };
   } else if (!args[2].is_nullptr()) {
     MXTHROW << "[os_register_at_fork] after_in_child is not None or a Callable object";
   }
   if (args[3].IsObjectRef<UserDataRef>()) {
-    auto after_in_parent = args[1].AsObjectRefNoCheck<UserDataRef>();
+    auto after_in_parent = args[3].AsObjectRefNoCheck<UserDataRef>();
     parent = [after_in_parent]() -> void { after_in_parent.generic_call({}); };
-  } else if (!args[2].is_nullptr()) {
+  } else if (args[3].type_code() == TypeIndex::kRuntimePackedFuncHandle) {
+    NativeFunction after_in_parent = args[3].AsNoCheck<NativeFunction>();
+    parent = [after_in_parent]() -> bool {
+      after_in_parent({});
+      return true;
+    };
+  } else if (!args[3].is_nullptr()) {
     MXTHROW << "[os_register_at_fork] after_in_parent is not None or a Callable object";
   }
   internal::AtFork::RegisterHandler(
