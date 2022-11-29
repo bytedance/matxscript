@@ -53,7 +53,7 @@ class TXSession:
 
     @property
     def c_handle(self):
-        return self.__backend_sess_handle
+        return self.__c_handle
 
     def set_device(self, device):
         return _ffi_api.TXSessionSetDevice(self.__c_handle, device)
