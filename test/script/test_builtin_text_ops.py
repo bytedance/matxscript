@@ -88,6 +88,38 @@ class TestBuiltinTextOps(unittest.TestCase):
         print(op(test_content, True, False))
         print(op(test_content, False, False))
 
+    def test_emoji_filter(self):
+        class MyEmojiFilter:
+            def __init__(self):
+                user_emojis = ['[smile]']
+                self.emoji: matx.text.EmojiFilter = matx.text.EmojiFilter(user_emojis=user_emojis)
+
+            def __call__(self, s: str) -> Any:
+                return self.emoji.filter(s)
+
+        test_s = "hello[love], \U0001F1E6\U0001F1EB[smile]world"
+        py_ret = MyEmojiFilter()(test_s)
+        self.assertEqual(py_ret, "hello[love], world")
+        tx_ret = matx.script(MyEmojiFilter)()(test_s)
+        self.assertEqual(py_ret, tx_ret)
+
+    def test_emoji_replace(self):
+        class MyEmojiReplacer:
+            def __init__(self):
+                user_emojis = ['[smile]']
+                self.emoji: matx.text.EmojiFilter = matx.text.EmojiFilter(user_emojis=user_emojis)
+
+            def __call__(self, s: str, repl: str, keep_all: bool = False) -> Any:
+                return self.emoji.replace(s, repl, keep_all)
+
+        test_s = "hello[love], \U0001F1E6\U0001F1EB[smile]world"
+        test_repl = '=='
+        test_keep_all = False
+        py_ret = MyEmojiReplacer()(test_s, test_repl, test_keep_all)
+        self.assertEqual(py_ret, "hello[love], ==world")
+        tx_ret = matx.script(MyEmojiReplacer)()(test_s, test_repl, test_keep_all)
+        self.assertEqual(py_ret, tx_ret)
+
 
 if __name__ == '__main__':
     import logging

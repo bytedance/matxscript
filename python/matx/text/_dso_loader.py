@@ -16,8 +16,17 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from .._ffi.base import load_lib_by_name
 
-from .wordpiece_tokenizer import WordPieceTokenizer
-from .wordpiece_tokenizer import WordPieceTokenizerWithMeta
-from .jieba import Jieba
-from .emoji import EmojiFilter
+_TEXT_OPS_LIB_LOADER_STATE = False
+
+
+def load_text_ops_lib():
+    global _TEXT_OPS_LIB_LOADER_STATE
+    if _TEXT_OPS_LIB_LOADER_STATE:
+        return
+    _LIB, _LIB_NAME, _LIB_SHA1 = load_lib_by_name("libmatx_text_ops")
+    _TEXT_OPS_LIB_LOADER_STATE = True
+
+
+load_text_ops_lib()

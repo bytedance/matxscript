@@ -24,6 +24,7 @@
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/file_reader.h>
 #include <matxscript/runtime/file_util.h>
+#include "cppjieba/Jieba.hpp"
 #include "matxscript/runtime/container/string_helper.h"
 #include "matxscript/runtime/container/unicode_helper.h"
 #include "matxscript/runtime/container/unicode_view.h"
@@ -31,7 +32,8 @@
 #include "matxscript/runtime/logging.h"
 #include "matxscript/runtime/native_object_registry.h"
 #include "matxscript/runtime/type_helper_macros.h"
-#include "cppjieba/Jieba.hpp"
+
+#include "common_funcs.h"
 
 namespace matxscript {
 namespace runtime {
@@ -39,27 +41,6 @@ namespace extension {
 namespace jieba {
 
 namespace details {
-
-static inline String GetString(const Any& a, const char* file, int line) {
-  switch (a.type_code()) {
-    case TypeIndex::kRuntimeString: {
-      return a.AsNoCheck<String>();
-    } break;
-    case TypeIndex::kRuntimeUnicode: {
-      return UnicodeHelper::Encode(a.AsNoCheck<unicode_view>());
-    } break;
-    default: {
-      auto ty_name = a.type_name();
-      std::string errmsg;
-      errmsg.append("expect type is 'py::str' or 'py::bytes', but get '");
-      errmsg.append(ty_name.data(), ty_name.size());
-      errmsg.append("'");
-      throw TypeError(file, line, std::move(errmsg));
-    }
-  }
-  return {};
-}
-
 List std_string_list_to_Unicode_List(const std::vector<std::string>& list_of_words_std) {
   List list_of_words;
   list_of_words.reserve(list_of_words_std.size());
@@ -87,14 +68,12 @@ class CPPJieba {
            string_view user_dict_path,
            string_view idfPath,
            string_view stopWordPath) {
-            jieba_ptr = std::make_shared<cppjieba::Jieba>(
-              std::string{dict_path},
-              std::string{model_path},
-              std::string{user_dict_path},
-              std::string{idfPath},
-              std::string{stopWordPath}
-            );
-           }
+    jieba_ptr = std::make_shared<cppjieba::Jieba>(std::string{dict_path},
+                                                  std::string{model_path},
+                                                  std::string{user_dict_path},
+                                                  std::string{idfPath},
+                                                  std::string{stopWordPath});
+  }
   virtual ~CPPJieba() = default;
 
  public:
@@ -150,47 +129,42 @@ RTValue CPPJieba::lcut_for_search(string_view sentence, bool HMM) {
 using text_cutter_CPPJieba = CPPJieba;
 MATX_REGISTER_NATIVE_OBJECT(text_cutter_CPPJieba)
     .SetConstructor([](PyArgs args) -> std::shared_ptr<void> {
-      MXCHECK_EQ(args.size(), 5) << "[CPPJieba] Expect 5 arguments but get "
-                                 << args.size();
-      String dict_path = details::GetString(args[0], __FILE__, __LINE__);
-      String model_path = details::GetString(args[1], __FILE__, __LINE__);
-      String user_dict_path = details::GetString(args[2], __FILE__, __LINE__);
-      String idfPath = details::GetString(args[3], __FILE__, __LINE__);
-      String stopWordPath = details::GetString(args[4], __FILE__, __LINE__);
-      return std::make_shared<CPPJieba>(dict_path,
-                                        model_path,
-                                        user_dict_path,
-                                        idfPath,
-                                        stopWordPath);
+      MXCHECK_EQ(args.size(), 5) << "[CPPJieba] Expect 5 arguments but get " << args.size();
+      String dict_path = commons::details::GetString(args[0], __FILE__, __LINE__);
+      String model_path = commons::details::GetString(args[1], __FILE__, __LINE__);
+      String user_dict_path = commons::details::GetString(args[2], __FILE__, __LINE__);
+      String idfPath = commons::details::GetString(args[3], __FILE__, __LINE__);
+      String stopWordPath = commons::details::GetString(args[4], __FILE__, __LINE__);
+      return std::make_shared<CPPJieba>(
+          dict_path, model_path, user_dict_path, idfPath, stopWordPath);
     })
-    .RegisterFunction("lcut",
-      [](void* self, PyArgs args) -> RTValue {
-        switch (args[0].type_code()) {
-          case TypeIndex::kRuntimeUnicode: {
-            return reinterpret_cast<CPPJieba*>(self)->lcut(args[0].AsNoCheck<unicode_view>(),
-                                                            args[1].As<bool>(),
-                                                            args[2].As<bool>());
-          } break;
-          case TypeIndex::kRuntimeString: {
-            return reinterpret_cast<CPPJieba*>(self)->lcut(args[0].AsNoCheck<string_view>(),
-                                                            args[1].As<bool>(),
-                                                            args[2].As<bool>());
-          } break;
-          default: {
-            MXCHECK(false) << "[Jieba] unsupported data type: " << args[0].type_name();
-          } break;
-        }
-        return List{};
-      })
+    .RegisterFunction(
+        "lcut",
+        [](void* self, PyArgs args) -> RTValue {
+          switch (args[0].type_code()) {
+            case TypeIndex::kRuntimeUnicode: {
+              return reinterpret_cast<CPPJieba*>(self)->lcut(
+                  args[0].AsNoCheck<unicode_view>(), args[1].As<bool>(), args[2].As<bool>());
+            } break;
+            case TypeIndex::kRuntimeString: {
+              return reinterpret_cast<CPPJieba*>(self)->lcut(
+                  args[0].AsNoCheck<string_view>(), args[1].As<bool>(), args[2].As<bool>());
+            } break;
+            default: {
+              MXCHECK(false) << "[Jieba] unsupported data type: " << args[0].type_name();
+            } break;
+          }
+          return List{};
+        })
     .RegisterFunction("lcut_for_search", [](void* self, PyArgs args) -> RTValue {
       switch (args[0].type_code()) {
         case TypeIndex::kRuntimeUnicode: {
-          return reinterpret_cast<CPPJieba*>(self)->lcut_for_search(args[0].AsNoCheck<unicode_view>(),
-                                                                    args[1].As<bool>());
+          return reinterpret_cast<CPPJieba*>(self)->lcut_for_search(
+              args[0].AsNoCheck<unicode_view>(), args[1].As<bool>());
         } break;
         case TypeIndex::kRuntimeString: {
-          return reinterpret_cast<CPPJieba*>(self)->lcut_for_search(args[0].AsNoCheck<string_view>(),
-                                                                    args[1].As<bool>());
+          return reinterpret_cast<CPPJieba*>(self)->lcut_for_search(
+              args[0].AsNoCheck<string_view>(), args[1].As<bool>());
         } break;
         default: {
           MXCHECK(false) << "[Jieba] unsupported data type: " << args[0].type_name();

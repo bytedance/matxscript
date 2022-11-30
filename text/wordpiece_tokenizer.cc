@@ -20,6 +20,7 @@
 #include <map>
 
 #include <matxscript/runtime/algorithm/cedar.h>
+#include <matxscript/runtime/algorithm/prefix_mapping.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/file_reader.h>
 #include <matxscript/runtime/file_util.h>
@@ -28,119 +29,12 @@
 #include "matxscript/runtime/native_object_registry.h"
 #include "matxscript/runtime/type_helper_macros.h"
 
+#include "common_funcs.h"
+
 namespace matxscript {
 namespace runtime {
 namespace extension {
 namespace tokenizer {
-
-namespace details {
-// Given a list of strings, finds the longest string which is a
-// prefix of a query.
-class FastPrefixMatcher {
-#if defined(USE_CEDAR_UNORDERED)
-  typedef cedar::da<int, -1, -2, false> cedar_t;
-#else
-  typedef cedar::da<int> cedar_t;
-#endif
- public:
-  explicit FastPrefixMatcher(const std::map<std::string, int>& dic);
-
-  // Finds the longest string in dic, which is a prefix of `w`.
-  // Returns the UTF8 byte length of matched string.
-  // `found` is set if a prefix match exists.
-  // If no entry is found, return 0.
-  int PrefixSearch(const char* w, size_t w_len, int* val) const;
-
- private:
-  std::unique_ptr<cedar_t> trie_;
-};
-
-FastPrefixMatcher::FastPrefixMatcher(const std::map<std::string, int>& dic) {
-  trie_ = std::make_unique<cedar_t>();
-  if (dic.empty())
-    return;
-  std::vector<const char*> key;
-  std::vector<size_t> key_len;
-  std::vector<int> values;
-  key.reserve(dic.size());
-  key_len.reserve(dic.size());
-  values.reserve(dic.size());
-  for (const auto& it : dic) {
-    key.push_back(it.first.data());
-    key_len.push_back(it.first.size());
-    values.push_back(it.second);
-  }
-  auto rc =
-      trie_->build(key.size(), const_cast<const char**>(&key[0]), key_len.data(), values.data());
-  MXCHECK_EQ(rc, 0) << "build trie failed!!!";
-}
-
-int FastPrefixMatcher::PrefixSearch(const char* w, size_t w_len, int* val) const {
-  if (trie_ == nullptr) {
-    return 0;
-  }
-  constexpr int kResultSize = 64;
-  cedar_t::result_pair_type trie_results[kResultSize];
-  const int num_nodes = trie_->commonPrefixSearch(w, trie_results, kResultSize, w_len);
-
-  if (num_nodes == 0) {
-    return 0;
-  }
-  int64_t mblen = 0;
-  for (int i = 0; i < num_nodes; ++i) {
-    if (mblen < (int64_t)trie_results[i].length) {
-      mblen = trie_results[i].length;
-      if (val) {
-        *val = trie_results[i].value;
-      }
-    }
-  }
-  return mblen;
-}
-
-template <int SMALL_SIZE>
-struct SmallBuffer {
- public:
-  explicit SmallBuffer(int size) {
-    if (size > SMALL_SIZE) {
-      large.reset(new char[size]);
-      data = large.get();
-    } else {
-      data = small;
-    }
-  }
-
-  char* Data() const noexcept {
-    return data;
-  }
-
- private:
-  char* data;
-  char small[SMALL_SIZE];
-  std::unique_ptr<char[]> large;
-};
-
-static inline String GetString(const Any& a, const char* file, int line) {
-  switch (a.type_code()) {
-    case TypeIndex::kRuntimeString: {
-      return a.AsNoCheck<String>();
-    } break;
-    case TypeIndex::kRuntimeUnicode: {
-      return UnicodeHelper::Encode(a.AsNoCheck<unicode_view>());
-    } break;
-    default: {
-      auto ty_name = a.type_name();
-      std::string errmsg;
-      errmsg.append("expect type is 'py::str' or 'py::bytes', but get '");
-      errmsg.append(ty_name.data(), ty_name.size());
-      errmsg.append("'");
-      throw TypeError(file, line, std::move(errmsg));
-    }
-  }
-  return {};
-}
-
-}  // namespace details
 
 class WordPieceTokenizer {
  public:
@@ -183,7 +77,7 @@ class WordPieceTokenizer {
   String unk_token_;
   int unk_id_;
   String subwords_prefix_;
-  std::shared_ptr<details::FastPrefixMatcher> prefix_matcher_;
+  std::shared_ptr<PrefixMapping> prefix_matcher_;
 };
 
 WordPieceTokenizer::WordPieceTokenizer(String vocab_path,
@@ -195,7 +89,7 @@ WordPieceTokenizer::WordPieceTokenizer(String vocab_path,
   if (unk_token.is_nullptr()) {
     MXCHECK(!lookup_id) << "unk_token must not be None when lookup_id is True";
   }
-  unk_token_ = details::GetString(unk_token, __FILE__, __LINE__);
+  unk_token_ = commons::details::GetString(unk_token, __FILE__, __LINE__);
   subwords_prefix_ = std::move(subwords_prefix);
   skip_empty_ = skip_empty;
   lookup_id_ = lookup_id;
@@ -203,7 +97,7 @@ WordPieceTokenizer::WordPieceTokenizer(String vocab_path,
   vocab_path_ = std::move(vocab_path);
   MXCHECK(FileUtil::Exists(vocab_path_)) << "vocab file \"" << vocab_path_ << "\" not exists!";
 
-  std::map<std::string, int> tokens;
+  std::map<String, int> tokens;
   FileReader reader(vocab_path_);
   const char* line = nullptr;
   size_t line_len = 0;
@@ -213,10 +107,10 @@ WordPieceTokenizer::WordPieceTokenizer(String vocab_path,
     if (line_len == 0) {
       continue;
     }
-    tokens.emplace(std::string(line, line_len), line_no);
+    tokens.emplace(String(line, line_len), line_no);
     ++line_no;
   }
-  prefix_matcher_ = std::make_shared<details::FastPrefixMatcher>(tokens);
+  prefix_matcher_ = std::make_shared<PrefixMapping>(tokens);
   if (unk_token.is_nullptr()) {
     unk_id_ = -1;
   } else {
@@ -230,7 +124,7 @@ inline void WordPieceTokenizer::TokenizeImplWithPrefix(const char* token_buf,
                                                        int64_t token_len,
                                                        const PostFunction& post_func,
                                                        const List& output_tokens) const {
-  details::SmallBuffer<512> small_subword_buffer(token_len + subwords_prefix_.size());
+  commons::details::SmallBuffer<512> small_subword_buffer(token_len + subwords_prefix_.size());
   char* subword_buf = small_subword_buffer.Data();
 
   auto* sub_prefix_ptr = subwords_prefix_.data();
@@ -457,10 +351,10 @@ MATX_REGISTER_NATIVE_OBJECT(text_tokenizer_WordPieceTokenizer)
     .SetConstructor([](PyArgs args) -> std::shared_ptr<void> {
       MXCHECK_EQ(args.size(), 6) << "[WordPieceTokenizer] Expect 6 arguments but get "
                                  << args.size();
-      String vocab_path = details::GetString(args[0], __FILE__, __LINE__);
+      String vocab_path = commons::details::GetString(args[0], __FILE__, __LINE__);
       bool lookup_id = MATXSCRIPT_TYPE_AS(args[1], int64_t);
       const Any& unk_token = args[2];
-      String subwords_prefix = details::GetString(args[3], __FILE__, __LINE__);
+      String subwords_prefix = commons::details::GetString(args[3], __FILE__, __LINE__);
       bool skip_empty = MATXSCRIPT_TYPE_AS(args[4], int64_t);
       int64_t max_bytes_per_token = MATXSCRIPT_TYPE_AS(args[5], int64_t);
       return std::make_shared<WordPieceTokenizer>(std::move(vocab_path),

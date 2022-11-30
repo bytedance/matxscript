@@ -19,10 +19,10 @@
 import sys
 from typing import List, Tuple, AnyStr, Any
 
-from .._ffi.base import load_lib_by_name
 from ..native import make_native_object
+from ._dso_loader import load_text_ops_lib
 
-_LIB, _LIB_NAME, _LIB_SHA1 = load_lib_by_name("libmatx_text_ops")
+load_text_ops_lib()
 matx = sys.modules['matx']
 
 

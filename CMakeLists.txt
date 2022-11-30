@@ -186,7 +186,7 @@ TARGET_LINK_LIBRARIES(matx_text_ops matx)
 
 IF (BUILD_MICRO_RUNTIME)
     INSTALL(DIRECTORY include DESTINATION matx/)
-    INSTALL(TARGETS matx
+    INSTALL(TARGETS matx matx_text_ops
             RUNTIME DESTINATION matx/bin
             LIBRARY DESTINATION matx/lib
             ARCHIVE DESTINATION matx/lib)
@@ -199,9 +199,9 @@ ELSE ()
     INSTALL(DIRECTORY ${PCRE_INCLUDE_DIR} DESTINATION matx/)
 
     IF (USE_CUDA)
-        SET(targets matx matx_cuda)
+        SET(targets matx matx_text_ops matx_cuda)
     ELSE ()
-        SET(targets matx)
+        SET(targets matx matx_text_ops)
     ENDIF ()
 
     INSTALL(TARGETS ${targets}
