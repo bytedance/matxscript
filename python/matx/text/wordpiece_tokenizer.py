@@ -61,13 +61,7 @@ class WordPieceTokenizer:
                  max_bytes_per_token: int = 100,
                  ) -> None:
         self.tokenizer_op: Any = matx.script(WordPieceTokenizerImpl)(
-            vocab_path,
-            lookup_id,
-            unk_token,
-            subwords_prefix,
-            skip_empty,
-            max_bytes_per_token,
-        )
+            vocab_path, lookup_id, unk_token, subwords_prefix, skip_empty, max_bytes_per_token)
 
     def __call__(self, sentence: List[AnyStr]) -> List[AnyStr]:
         return self.tokenizer_op(sentence)

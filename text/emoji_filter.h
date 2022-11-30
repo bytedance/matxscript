@@ -50,11 +50,11 @@ class EmojiFilter {
   virtual ~EmojiFilter() = default;
 
   // check ptr[pos: return_len] is emoji
-  inline int CheckPos(const char* ptr, size_t len, int64_t pos = 0) const {
-    if (pos) {
-
+  inline int CheckPos(const char* ptr, size_t len, size_t pos = 0) const {
+    if (pos > len) {
+      return 0;
     }
-    return emoji_codes_->PrefixSearch(ptr + pos, len, nullptr);
+    return emoji_codes_->PrefixSearch(ptr + pos, len - pos, nullptr);
   }
 
   String Replace(const string_view& str, const string_view& repl, bool keep_all = true) const;
