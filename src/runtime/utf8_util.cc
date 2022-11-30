@@ -65,15 +65,8 @@ String UTF8Encode(const char32_t* s, size_t len) {
 }
 
 size_t UTF8CharCounts(string_view str) noexcept {
-  size_t count = 0;
-  const char* start = str.data();
-  const char* end = str.data() + str.size();
-  while (start < end) {
-    int char_length = OneCharLen(start);
-    start += char_length;
-    ++count;
-  }
-  return count;
+  auto* s_u_ptr = (const unsigned char*)(str.data());
+  return utf8_details::GreedyTableDecoder::CountUnitSize(s_u_ptr, s_u_ptr + str.size());
 }
 
 String UTF8DoLower(string_view input) {

@@ -19,10 +19,10 @@
 import sys
 from typing import List, Tuple, AnyStr, Any
 
-from .._ffi.base import load_lib_by_name
 from ..native import make_native_object
+from ._dso_loader import load_text_ops_lib
 
-_LIB, _LIB_NAME, _LIB_SHA1 = load_lib_by_name("libmatx_text_ops")
+load_text_ops_lib()
 matx = sys.modules['matx']
 
 
@@ -61,13 +61,7 @@ class WordPieceTokenizer:
                  max_bytes_per_token: int = 100,
                  ) -> None:
         self.tokenizer_op: Any = matx.script(WordPieceTokenizerImpl)(
-            vocab_path,
-            lookup_id,
-            unk_token,
-            subwords_prefix,
-            skip_empty,
-            max_bytes_per_token,
-        )
+            vocab_path, lookup_id, unk_token, subwords_prefix, skip_empty, max_bytes_per_token)
 
     def __call__(self, sentence: List[AnyStr]) -> List[AnyStr]:
         return self.tokenizer_op(sentence)
@@ -108,13 +102,7 @@ class WordPieceTokenizerWithMeta:
                  max_bytes_per_token: int = 100,
                  ) -> None:
         self.tokenizer_op: WordPieceTokenizerWithMetaImpl = matx.script(WordPieceTokenizerWithMetaImpl)(
-            vocab_path,
-            lookup_id,
-            unk_token,
-            subwords_prefix,
-            skip_empty,
-            max_bytes_per_token,
-        )
+            vocab_path, lookup_id, unk_token, subwords_prefix, skip_empty, max_bytes_per_token)
 
     def __call__(self, sentence: List[AnyStr]) -> Tuple[List[AnyStr], List[int]]:
         return self.tokenizer_op(sentence)
