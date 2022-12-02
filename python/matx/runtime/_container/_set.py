@@ -29,7 +29,7 @@ class Set(Object):
     """
     matx.Set: matx.Set implemented refering to python built-in dict, supports common methods of built-in list and some custom methods.
 
-    
+
     Examples:
 
     >>> import matx

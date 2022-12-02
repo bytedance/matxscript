@@ -134,7 +134,7 @@ class SimpleParser(ast.NodeVisitor):
     def visit_BinOp(self, node):
         """
         BinOp visitor
-        
+
         AST abstract grammar:
             BinOp(expr left, operator op, expr right)
         """

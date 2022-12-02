@@ -240,7 +240,7 @@ class IRBuilder(object):
         -------
         expr : Expr
             The expression will likely tag.
-        
+
         """
         return _expr.Call(expr.dtype, "ir.likely", [expr])
 

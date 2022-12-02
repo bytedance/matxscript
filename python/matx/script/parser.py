@@ -1379,7 +1379,7 @@ class MATXScriptParser(ast.NodeVisitor):
         AST abstract grammar:
             Subscript(expr value, slice slice, expr_context ctx)
             slice = Slice(expr? lower, expr? upper, expr? step) | ExtSlice(slice* dims) | Index(expr value)
-        
+
         By now 2 patterns of Subscript are supported:
             1. Var[index] Buffer element access()
             2. meta[type_key][index], Meta info access

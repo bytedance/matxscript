@@ -176,7 +176,7 @@ def isgeneratorfunction(obj):
     """
     Return true if the object is a user-defined generator function. Generator function objects provide the same attributes as functions.
     See help(isfunction) for a list of attributes.
-    
+
     """
     return _has_code_flag(obj, CO_GENERATOR)
 
