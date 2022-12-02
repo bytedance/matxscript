@@ -12,12 +12,12 @@ THIS_PATH=$(
 ROOT_PATH=${THIS_PATH}/..
 
 
-pip3 install sphinx --index=https://bytedpypi.byted.org/simple/ --trusted-host=bytedpypi.byted.org
-pip3 install sphinx_rtd_theme --index=https://bytedpypi.byted.org/simple/ --trusted-host=bytedpypi.byted.org
-pip3 install sphinx_autorun --index=https://bytedpypi.byted.org/simple/ --trusted-host=bytedpypi.byted.org
-pip3 install sphinx-gallery --index=https://bytedpypi.byted.org/simple/ --trusted-host=bytedpypi.byted.org
-pip3 install prettytable --index=https://bytedpypi.byted.org/simple/ --trusted-host=bytedpypi.byted.org
-pip3 install recommonmark --index=https://bytedpypi.byted.org/simple/ --trusted-host=bytedpypi.byted.org
+pip3 install sphinx
+pip3 install sphinx_rtd_theme
+pip3 install sphinx_autorun
+pip3 install sphinx-gallery
+pip3 install prettytable
+pip3 install recommonmark
 
 export PATH=/usr/local/python3.7/bin/:$PATH
 
