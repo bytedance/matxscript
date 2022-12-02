@@ -55,11 +55,12 @@ def get_cflags():
 
 
 def get_link_flags():
-    """ lib layout
-    - lib/
-      - libmatx.so
-      - pcre/
-        libpcre.so
+    """ 
+    lib layout::
+        - lib/
+        - libmatx.so
+        - pcre/
+        |--libpcre.so
     """
     ldflags = []
     ldflags.append("-ldl")

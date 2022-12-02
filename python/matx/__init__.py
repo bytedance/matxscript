@@ -51,7 +51,6 @@ __all__ = [
     "load",
     "get_cflags",
     "get_link_flags",
-
     # alias
     "runtime",
     "toolchain",

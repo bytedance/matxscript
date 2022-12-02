@@ -209,7 +209,9 @@ def find_blocks_involved(root, block_list):
 
 
 class ScopeBlock(Block):
-    """Block that defined another scope within.
+    """
+    Block that defined another scope within.
+    
     def foo(z):     ---> ScopeBlock
         if z:       ---> BasicBlock
             x = 2   ---> BasicBlock

@@ -136,10 +136,8 @@ class ResizeOp:
                                      INTER_LINEAR by default.
             mode (str, optional) : resize mode, could be chosen from RESIZE_DEFAULT, RESIZE_NOT_LARGER, and RESIZE_NOT_SMALLER
                                    RESIZE_DEFAULT -- resize to the target output size
-                                   RESIZE_NOT_LARGER -- keep the width/height ratio, final output size would be one dim equal to target, one dim smaller
-                                                        e.g. original image shape (360, 240), target size (480, 360), output size (480, 320)
-                                   RESIZE_NOT_SMALLER -- keep the width/height ratio, final output size would be one dim equal to target, one dim larger
-                                                        e.g. original image shape (360, 240), target size (480, 360), output size (540, 360)
+                                   RESIZE_NOT_LARGER -- keep the width/height ratio, final output size would be one dim equal to target, one dim smaller. e.g. original image shape (360, 240), target size (480, 360), output size (480, 320)
+                                   RESIZE_NOT_SMALLER -- keep the width/height ratio, final output size would be one dim equal to target, one dim larger. e.g. original image shape (360, 240), target size (480, 360), output size (540, 360)
                                    RESIZE_DEFAULT by default.
         """
         self.op_impl: _ResizeOpImpl = matx.script(_ResizeOpImpl)(device=device,

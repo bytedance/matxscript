@@ -173,17 +173,20 @@ def _has_code_flag(f, flag):
 
 
 def isgeneratorfunction(obj):
-    """Return true if the object is a user-defined generator function.
-
-    Generator function objects provide the same attributes as functions.
-    See help(isfunction) for a list of attributes."""
+    """
+    Return true if the object is a user-defined generator function. Generator function objects provide the same attributes as functions.
+    See help(isfunction) for a list of attributes.
+    
+    """
     return _has_code_flag(obj, CO_GENERATOR)
 
 
 def iscoroutinefunction(obj):
-    """Return true if the object is a coroutine function.
+    """
+    Return true if the object is a coroutine function.
 
     Coroutine functions are defined with "async def" syntax.
+
     """
     return _has_code_flag(obj, CO_COROUTINE)
 
@@ -207,15 +210,12 @@ def isgenerator(object):
 
     Generator objects provide these attributes:
         __iter__        defined to support iteration over container
-        close           raises a new GeneratorExit exception inside the
-                        generator to terminate the iteration
+        close           raises a new GeneratorExit exception inside the generator to terminate the iteration
         gi_code         code object
-        gi_frame        frame object or possibly None once the generator has
-                        been exhausted
+        gi_frame        frame object or possibly None once the generator has been exhausted
         gi_running      set to 1 when generator is executing, 0 otherwise
         next            return the next item from the container
-        send            resumes the generator and "sends" a value that becomes
-                        the result of the current yield-expression
+        send            resumes the generator and "sends" a value that becomes the result of the current yield-expression
         throw           used to raise an exception inside the generator"""
     return isinstance(object, types.GeneratorType)
 
@@ -245,7 +245,8 @@ def istraceback(object):
 
 
 def isframe(object):
-    """Return true if the object is a frame object.
+    """
+    Return true if the object is a frame object.
 
     Frame objects provide these attributes:
         f_back          next outer frame object (this frame's caller)
@@ -255,12 +256,14 @@ def isframe(object):
         f_lasti         index of last attempted instruction in bytecode
         f_lineno        current line number in Python source code
         f_locals        local namespace seen by this frame
-        f_trace         tracing function for this frame, or None"""
+        f_trace         tracing function for this frame, or None
+    """
     return isinstance(object, types.FrameType)
 
 
 def iscode(object):
-    """Return true if the object is a code object.
+    """
+    Return true if the object is a code object.
 
     Code objects provide these attributes:
         co_argcount         number of arguments (not including *, ** args
@@ -270,9 +273,7 @@ def iscode(object):
         co_consts           tuple of constants used in the bytecode
         co_filename         name of file in which this code object was created
         co_firstlineno      number of first line in Python source code
-        co_flags            bitmap: 1=optimized | 2=newlocals | 4=*arg | 8=**arg
-                            | 16=nested | 32=generator | 64=nofree | 128=coroutine
-                            | 256=iterable_coroutine | 512=async_generator
+        co_flags            bitmap: 1=optimized | 2=newlocals | 4=*arg | 8=**arg | 16=nested | 32=generator | 64=nofree | 128=coroutine | 256=iterable_coroutine | 512=async_generator
         co_freevars         tuple of names of free variables
         co_posonlyargcount  number of positional only arguments
         co_kwonlyargcount   number of keyword only arguments (not including ** arg)
@@ -281,7 +282,8 @@ def iscode(object):
         co_names            tuple of names of local variables
         co_nlocals          number of local variables
         co_stacksize        virtual machine stack space required
-        co_varnames         tuple of names of arguments and local variables"""
+        co_varnames         tuple of names of arguments and local variables
+    """
     return isinstance(object, types.CodeType)
 
 
@@ -648,7 +650,9 @@ class EndOfBlock(Exception):
 
 
 class BlockFinder:
-    """Provide a tokeneater() method to detect the end of a code block."""
+    """
+    Provide a tokeneater() method to detect the end of a code block.
+    """
 
     def __init__(self):
         self.indent = 0
