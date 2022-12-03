@@ -1,19 +1,19 @@
-# 生成文档
+# Generate doc
 
-1. 如果文档有变化，需要重新生成注释文档：
+1. if changed, regenerate：
 ```bash
 cd docs
 sphinx-apidoc -f -o source/operators_api/ ../python/byted_vision/ ../python/setup.py ../python/byted_vision/base 
 ```
 
-2. 编译：
+2. compile：
 ```bash
 cd docs
 make clean
 make html
 ```
 
-3. 本地调试启动服务器：
+3. run local server for debugging：
 ```bash
 cd build/html
 python -m http.server
