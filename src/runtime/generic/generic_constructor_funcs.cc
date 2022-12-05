@@ -726,8 +726,9 @@ NDArray make(const List& list,
   if (arg_shape.empty()) {
     arg_shape = list_shape;
   } else {
-    MXCHECK(list_shape.size() == 1 && list_shape[0] == element_num)
-        << "shape of input list is invalid";
+    MXCHECK((list_shape.size() == 1 && list_shape[0] == element_num) ||
+            (list_shape.size() == arg_shape.size() &&
+             std::equal(list_shape.begin(), list_shape.end(), arg_shape.begin())));
   }
   auto arr = NDArray::Empty(arg_shape, dtype, NDArrayHelper::GetDevice(ctx_str));
   if (ctx_str == U"cpu") {
