@@ -22,8 +22,11 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+import copy
+
 from typed_ast import ast3 as ast
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Set, Optional, Union
+from .model import Variable
 from .model import Block, BasicBlock, FunctionLabel
 from .model import ASTNodeContext
 
@@ -114,6 +117,18 @@ class BasicBlocksBuilder(ast.NodeVisitor):
         return [basic_block]
 
 
+class FunctionDeclaration(ast.expr):
+    _fields = ('fn_args',)
+
+    def __init__(self, name: str, fn_args: ast.arguments):
+        super(FunctionDeclaration, self).__init__()
+        self.name = name
+        self.fn_args = fn_args
+
+    def __repr__(self):
+        return "FunctionDeclaration: def {}({}):".format(self.name, repr(self.fn_args))
+
+
 class ForIter(ast.expr):
     _fields = ('target', 'iter')
 
@@ -149,15 +164,26 @@ class ExceptHandlerLabel(ast.expr):
 
 
 class LoadStoreSeparator(ast.NodeVisitor):
-    def __init__(self):
-        self.load = set()
-        self.store = set()
+    def __init__(self, variable_cache):
+        self.variable_cache: Dict[ast.Name, Variable] = variable_cache
+        self.load: Set[Variable] = set()
+        self.store: Set[Variable] = set()
+
+    def _make_var(self, ast_node):
+        if ast_node in self.variable_cache:
+            return self.variable_cache[ast_node]
+        v = Variable(ast_node)
+        self.variable_cache[ast_node] = v
+        return v
 
     def visit_Name(self, node: ast.Name):
         if isinstance(node.ctx, ast.Store):
-            self.store.add(node.id)
+            self.store.add(self._make_var(node))
         else:
-            self.load.add(node.id)
+            self.load.add(self._make_var(node))
+
+    def visit_arg(self, node: ast.arg):
+        self.store.add(self._make_var(node))
 
 
 class CFG(object):
@@ -189,6 +215,11 @@ class CFG(object):
         self.block_set: Dict[ast.AST, Block] = {}
         # build entry block
         self.entry_block, _, _ = self.parse(ast_tree)
+        # define-use and use-define
+        self.use_def_chains: Dict[Variable, Set[Variable]] = dict()
+        self.def_use_chains: Dict[Variable, Set[Variable]] = dict()
+        # variable cache
+        self.variable_cache: Dict[ast.Name, Variable] = {}
 
     def __str__(self) -> str:
         return "CFG for {}".format(self.name)
@@ -236,6 +267,8 @@ class CFG(object):
     def build_FunctionDef(self, func_block: FunctionLabel):
         ast_fn_node = func_block.ast_node
         assert isinstance(ast_fn_node, ast.FunctionDef)
+        func_block.statements.clear()
+        func_block.statements.append(FunctionDeclaration(ast_fn_node.name, ast_fn_node.args))
         head_returned, tail_list, func_tail_list = self.parse(ast_fn_node.body)
         self.connect_2_blocks(func_block, head_returned)
         func_block.func_tail.extend(func_tail_list)
@@ -403,14 +436,15 @@ class CFG(object):
     def init_var_life_info(self):
         for block in self.block_list:
             for stmt in block.get_code_to_analyse():
-                sep = LoadStoreSeparator()
+                sep = LoadStoreSeparator(self.variable_cache)
                 sep.visit(stmt)
                 for load_var in sep.load:
-                    load_var = load_var
+                    load_var = load_var.name
                     if load_var not in block.var_kill:
                         block.ue_var.add(load_var)
                         self.globals_var.add(load_var)
                 for store_var in sep.store:
+                    store_var = store_var.name
                     block.var_kill.add(store_var)
                     self.block_set[store_var] = block
 
@@ -421,3 +455,93 @@ class CFG(object):
             for blocks in self.block_list:
                 if blocks.recompute_live_out_var():
                     changed_flag = True
+
+    def compute_reaching_defines(self):
+        # https://en.wikipedia.org/wiki/Reaching_definition
+        # compute reach_def_gen
+        for block in self.block_list:
+            for stmt in block.get_code_to_analyse():
+                sep = LoadStoreSeparator(self.variable_cache)
+                sep.visit(stmt)
+                for store_var in sep.store:
+                    block.reach_def_gen.add(store_var)
+        # compute reach_def_kill
+        for block in self.block_list:
+            block_gens = {v.name: v for v in block.reach_def_gen}
+            for other_blk in self.block_list:
+                if block == other_blk:
+                    continue
+                for v in other_blk.reach_def_gen:
+                    if v.name in block_gens:
+                        block.reach_def_kill.add(v)
+        # initialize
+        for block in self.block_list:
+            block.reach_def_out = copy.copy(block.reach_def_gen)
+
+        # put all nodes into the changed set
+        changed = {blk for blk in self.block_list}
+
+        # Iterate
+        while changed:
+            # remove it from the changed set
+            block_n = None
+            for ordered_blk in self.block_list:
+                if ordered_blk in changed:
+                    block_n = ordered_blk
+            if block_n is None:
+                # this should not happen
+                block_n = changed.pop()
+                raise RuntimeError("internal error")
+            else:
+                changed.remove(block_n)
+
+            # init IN[n] to be empty
+            block_n.reach_def_in.clear()
+
+            # calculate IN[n] from predecessors' OUT[p]
+            # IN[n] = IN[n] Union OUT[p]
+            for pred in block_n.prev_block_list:
+                block_n.reach_def_in.update(pred.reach_def_out)
+
+            # save old OUT[n]
+            old_out = copy.copy(block_n.reach_def_out)
+
+            # update OUT[n] using transfer function f_n ()
+            # OUT[n] = GEN[n] Union (IN[n] - KILL[n])
+            block_n.reach_def_out = block_n.reach_def_gen.union(
+                block_n.reach_def_in - block_n.reach_def_kill)
+
+            # any change to OUT[n] compared to previous value?
+            if old_out != block_n.reach_def_out:
+                # put all successors of n into the changed set
+                for next_blk in block_n.next_block_list:
+                    changed.add(next_blk)
+
+        # compute use-defines
+        def _update_use_def(load, define):
+            if load not in self.use_def_chains:
+                self.use_def_chains[load] = set()
+            self.use_def_chains[load].add(define)
+
+        for block in self.block_list:
+            block_gens = {}
+            for stmt in block.get_code_to_analyse():
+                sep = LoadStoreSeparator(self.variable_cache)
+                sep.visit(stmt)
+                for load_var in sep.load:
+                    if load_var.name in block_gens:
+                        _update_use_def(load_var, block_gens[load_var.name])
+                    else:
+                        for v in block.reach_def_in:
+                            if v.name == load_var.name:
+                                _update_use_def(load_var, v)
+                for store_var in sep.store:
+                    block_gens[store_var.name] = store_var
+
+        # compute define-use
+        for block in self.block_list:
+            for v in block.reach_def_gen:
+                self.def_use_chains[v] = set()
+        for use, defines in self.use_def_chains.items():
+            for v in defines:
+                self.def_use_chains[v].add(use)
