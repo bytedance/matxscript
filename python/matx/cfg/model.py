@@ -24,7 +24,34 @@
 # under the License.
 from typed_ast import ast3 as ast
 from collections import deque
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Set, Optional, Union
+
+
+class Variable:
+
+    def __init__(self, ast_node: Union[ast.Name, ast.arg]):
+        assert isinstance(ast_node, (ast.Name, ast.arg))
+        self.ast_node = ast_node
+
+    def __repr__(self):
+        if isinstance(self.ast_node, ast.arg):
+            return f"Argument '{self.ast_node.arg}' in line {self.ast_node.lineno}"
+        if isinstance(self.ast_node.ctx, ast.Load):
+            return f"Load Variable '{self.name}' in line {self.ast_node.lineno}"
+        else:
+            assert isinstance(self.ast_node.ctx, ast.Store)
+            return f"Store Variable '{self.name}' in line {self.ast_node.lineno}"
+
+    @property
+    def name(self):
+        if isinstance(self.ast_node, ast.arg):
+            return self.ast_node.arg
+        else:
+            return self.ast_node.id
+
+    @property
+    def lineno(self):
+        return self.ast_node.lineno
 
 
 class Block:
@@ -55,6 +82,11 @@ class Block:
         self.var_kill = set()  # contains all the vars that are defined in this block
         self.ue_var = set()  # contains all the variables that are from upward
         self.live_out = set()  # contains all the vars that lives on exiting this block
+        # reaching definition
+        self.reach_def_in: Set[Variable] = set()
+        self.reach_def_out: Set[Variable] = set()
+        self.reach_def_gen: Set[Variable] = set()
+        self.reach_def_kill: Set[Variable] = set()
         # statements or condition in the block.
         self.statements: List[ast.AST] = []
         # a scope block containing this block
