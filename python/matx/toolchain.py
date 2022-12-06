@@ -101,20 +101,13 @@ class ToolChain:
 
 
 def make_jit_op_creator(sc_ctx: context.ScriptContext, share=True, bundle_args=None):
-    is_function = sc_ctx.build_type == context.BuildType.FUNCTION
-    if is_function:
-        main_func_name = sc_ctx.main_node.context.name
-    else:
-        main_func_name = sc_ctx.main_node.context.methods['__call__'].unbound_name
+    assert sc_ctx.build_type == context.BuildType.FUNCTION
+    main_func_name = sc_ctx.main_node.context.name
     jit_obj_creator = make_jit_object_creator(sc_ctx, share, bundle_args=bundle_args)
 
     def jit_op_creator(*args, **kwargs):
         r = jit_obj_creator(*args, **kwargs)
         jit_op_imp = JitOpImpl(main_func_name=main_func_name, jit_object=r)
-        if not is_function:
-            for k, v in r.function_mapping.items():
-                if k != "__init__":
-                    setattr(jit_op_imp, k, getattr(r, k))
         jit_op_imp.__name__ = sc_ctx.main_node.context.name
         return jit_op_imp
 
@@ -383,36 +376,40 @@ def script(compiling_obj, *, share=True, toolchain=None, bundle_args=None):
         raise ValueError('Unsupported build_type: {}'.format(result.build_type))
 
 
-def make_session(compiling_obj):
+def make_session(compiling_obj, method='__call__'):
     from . import pipeline
 
-    def _has_call_method(cls):
+    def _has_method(cls):
         for name, _ in inspect.getmembers(cls, inspect.isfunction):
-            if name == "__call__":
+            if name == method:
                 return True
         return False
 
     build_type = None
+    sig_obj = compiling_obj
     if inspect.isclass(compiling_obj):
-        assert _has_call_method(compiling_obj)
-        sig_obj = compiling_obj.__call__
-        build_type = context.BuildType.JIT_OP
+        assert _has_method(compiling_obj)
+        build_type = context.BuildType.JIT_OBJECT
+        sig = inspect.signature(getattr(sig_obj, method))
+        if method == '__call__':
+            method = 'native_call_method'
+
     elif inspect.isfunction(compiling_obj):
         build_type = context.BuildType.FUNCTION
-        sig_obj = compiling_obj
+        sig = inspect.signature(sig_obj)
     else:
         raise RuntimeError("Only functions and classes are scriptable.")
-
-    sig = inspect.signature(sig_obj)
 
     signature = [param[0] for param in sig.parameters]
     scripted_obj = script(compiling_obj)
 
     if build_type == context.BuildType.FUNCTION:
         return pipeline.BuildSimpleGraph(scripted_obj, signature, 1)
-    elif build_type == context.BuildType.JIT_OP:
+    elif build_type == context.BuildType.JIT_OBJECT:
         def _session_creator(*args, **kwargs):
-            op = scripted_obj(*args, **kwargs)
+            jit_obj = scripted_obj(*args, **kwargs)
+            # retrieve the JitOpImpl instance for this method
+            op = jit_obj.op_mapping_2_71828182846[method]
             return pipeline.BuildSimpleGraph(op, signature[1:], 1)
 
         return _session_creator

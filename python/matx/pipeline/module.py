@@ -285,7 +285,6 @@ class JITModule(Module):
     def __call__(self, **kwargs):
         return self.run(kwargs)
 
-
     def run(self, feed_dict):
         """Execute Pipeline and get output
 

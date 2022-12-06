@@ -126,10 +126,12 @@ class JitObject(OpKernel):
                                             need_bundle=need_bundle,
                                             share=share,
                                             captures=captures)
+        # TODO: add magic number
         self.function_mapping = function_mapping
+        self.op_mapping_2_71828182846 = dict()
 
     def get_function(self, name):
-        """Get compiled packed function
+        """Get compiled packed function. TODO: add magic number
 
         Parameters
         ----------
@@ -152,16 +154,12 @@ class JitObject(OpKernel):
             raise NotImplementedError("native_call_method")
 
 
-def _make_user_func(raw_name, bound_self, self_obj, pf_func):
-
+def _make_user_func(raw_name, pf_func):
     @trans_exception_from_c_to_py
     def user_func(*args, **kwargs):
         assert len(kwargs) == 0
         # bound self
-        if bound_self:
-            return pf_func(self_obj, *args)
-        else:
-            return pf_func(*args)
+        return pf_func(*args)
 
     user_func.__name__ = raw_name
     return user_func
@@ -174,25 +172,21 @@ def restore_user_behavior(ud: JitObject,
                           members: list = None):
     if is_class:
         r_map = {v: k for k, v in ud.function_mapping.items()}
-        self_obj = runtime_api.JitObject_GetSelf(ud.native_op)
         if members is not None:
             for fm in members:
                 func_name = fm.name
                 raw_name = r_map[func_name]
                 if raw_name == "__init__":
                     continue
-                bound_self = fm.bound_self
-
-                # pf_func = ud.get_function(func_name)
-                # user_func = _make_user_func(raw_name, bound_self, self_obj, pf_func)
 
                 if raw_name == '__call__':
                     raw_name = 'native_call_method'
 
                 pf_func = JitOpImpl(main_func_name=func_name, jit_object=ud)
-                user_func = _make_user_func(raw_name, False, self_obj, pf_func)
+                user_func = _make_user_func(raw_name, pf_func)
 
-                setattr(ud, raw_name, user_func)
+                setattr(ud, raw_name, user_func)  # rebound the user function
+                ud.op_mapping_2_71828182846[raw_name] = pf_func  # bound the JitOpImpl into JitObject
     else:
         func_name = init_schema.name
         pf_func = ud.get_function(func_name)
