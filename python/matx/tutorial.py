@@ -132,8 +132,7 @@ class SimpleParser(ast.NodeVisitor):
         return self.lookup_or_alloca(lhs_name, rhs_value)
 
     def visit_BinOp(self, node):
-        """
-        BinOp visitor
+        """BinOp visitor
 
         AST abstract grammar:
             BinOp(expr left, operator op, expr right)

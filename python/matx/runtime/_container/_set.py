@@ -26,8 +26,7 @@ from ..object_generic import to_runtime_object
 @_ffi.register_object("FTSet")
 @_ffi.register_object("runtime.Set")
 class Set(Object):
-    """
-    matx.Set: matx.Set implemented refering to python built-in dict, supports common methods of built-in list and some custom methods.
+    """matx.Set: matx.Set implemented refering to python built-in dict, supports common methods of built-in list and some custom methods.
 
 
     Examples:
