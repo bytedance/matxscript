@@ -379,8 +379,6 @@ def script(compiling_obj, *, share=True, toolchain=None, bundle_args=None):
         return make_jit_op_creator(result, share, bundle_args=bundle_args)()
     elif result.build_type is context.BuildType.JIT_OBJECT:
         return make_jit_object_creator(result, share, bundle_args=bundle_args)
-    elif result.build_type is context.BuildType.JIT_OP:
-        return make_jit_op_creator(result, share, bundle_args=bundle_args)
     else:
         raise ValueError('Unsupported build_type: {}'.format(result.build_type))
 

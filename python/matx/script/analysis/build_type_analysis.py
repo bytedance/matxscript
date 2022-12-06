@@ -29,10 +29,7 @@ class BuildTypeAnalysis:
         self.change = False
         node_ctx = sc_ctx.main_node.context
         if isinstance(node_ctx, context.ClassContext):
-            if '__call__' in node_ctx.methods:
-                build_type = context.BuildType.JIT_OP
-            else:
-                build_type = context.BuildType.JIT_OBJECT
+            build_type = context.BuildType.JIT_OBJECT
         elif isinstance(node_ctx, context.FunctionContext):
             build_type = context.BuildType.FUNCTION
         else:

@@ -182,9 +182,16 @@ def restore_user_behavior(ud: JitObject,
                 if raw_name == "__init__":
                     continue
                 bound_self = fm.bound_self
-                pf_func = ud.get_function(func_name)
 
-                user_func = _make_user_func(raw_name, bound_self, self_obj, pf_func)
+                # pf_func = ud.get_function(func_name)
+                # user_func = _make_user_func(raw_name, bound_self, self_obj, pf_func)
+
+                if raw_name == '__call__':
+                    raw_name = 'native_call_method'
+
+                pf_func = JitOpImpl(main_func_name=func_name, jit_object=ud)
+                user_func = _make_user_func(raw_name, False, self_obj, pf_func)
+
                 setattr(ud, raw_name, user_func)
     else:
         func_name = init_schema.name

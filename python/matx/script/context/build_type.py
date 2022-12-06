@@ -22,5 +22,5 @@ import enum
 
 class BuildType(enum.Enum):
     FUNCTION = enum.auto()  # pure function
-    JIT_OP = enum.auto()  # class with __call__
+    JIT_OP = enum.auto()  # class with __call__. TODO: deprecate JIT_OP. Only used in toolchain.make_session
     JIT_OBJECT = enum.auto()  # general class
