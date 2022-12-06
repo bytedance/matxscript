@@ -19,7 +19,7 @@
 import inspect
 from typing import Callable, Optional, Tuple, Union, List, Dict, Any, Iterable, Set
 from queue import Queue
-from typed_ast import ast3 as ast
+from matx._typed_ast import ast
 from .class_context import ClassContext
 from .function_context import FunctionContext
 from ... import ir as _ir

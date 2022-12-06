@@ -17,7 +17,7 @@
 # specific language governing permissions and limitations
 # under the License.
 from typing import Dict, List
-from typed_ast import ast3 as ast
+from matx._typed_ast import ast
 from inspect import getmro, isclass
 from .. import context
 from ..reporter import raise_syntax_error

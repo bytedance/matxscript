@@ -28,7 +28,7 @@
 
 from .. import context
 from typing import List
-from typed_ast import ast3 as ast
+from matx._typed_ast import ast
 import logging
 import copy
 
