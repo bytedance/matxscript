@@ -39,11 +39,22 @@ class BasicBlocksBuilder(ast.NodeVisitor):
     """
 
     def __init__(self,
+                 dead_blocks: List[Block],
                  ast_node_ctx: ASTNodeContext,
                  ast_node: Union[ast.stmt, List[ast.stmt]]) -> None:
+        self.dead_blocks = dead_blocks
         self.ast_node_ctx: ASTNodeContext = ast_node_ctx
         self.ast_node = ast_node
         self._cache = []
+        self.dead_stmts = []
+        self.begin_dead_stmt = False
+
+    def __del__(self):
+        if self.dead_stmts:
+            dead_blk = BasicBlock.from_list(self.dead_stmts,
+                                            self.ast_node_ctx)
+            dead_blk.name = "L" + str(dead_blk.start_line)
+            self.dead_blocks.append(dead_blk)
 
     def flush(self, **kwargs):
         """create a BasicBlock from _cache"""
@@ -70,10 +81,14 @@ class BasicBlocksBuilder(ast.NodeVisitor):
             yield from self.visit(self.ast_node)
         else:
             for node in self.ast_node:
-                basic_block_list = self.visit(node)
-                if basic_block_list is not None:
-                    for block in basic_block_list:
-                        yield block
+                if self.begin_dead_stmt:
+                    # remove dead stmts
+                    self.dead_stmts.append(node)
+                else:
+                    basic_block_list = self.visit(node)
+                    if basic_block_list is not None:
+                        for block in basic_block_list:
+                            yield block
             # yield the final block
             if len(self._cache) > 0:
                 basic_block = self.flush()
@@ -114,6 +129,18 @@ class BasicBlocksBuilder(ast.NodeVisitor):
     def visit_Return(self, ast_node: ast.Return):
         self._append_cache(ast_node)
         basic_block = self.flush(block_end_type=ast_node.__class__.__name__)
+        return [basic_block]
+
+    def visit_Break(self, ast_node: ast.Break):
+        self._append_cache(ast_node)
+        basic_block = self.flush(block_end_type=ast_node.__class__.__name__)
+        self.begin_dead_stmt = True
+        return [basic_block]
+
+    def visit_Continue(self, ast_node: ast.Continue):
+        self._append_cache(ast_node)
+        basic_block = self.flush(block_end_type=ast_node.__class__.__name__)
+        self.begin_dead_stmt = True
         return [basic_block]
 
 
@@ -210,11 +237,13 @@ class CFG(object):
         self.entry_block: Optional[Block] = None
         # all blocks
         self.block_list: List[Block] = []
+        # dead blocks
+        self.dead_block_list: List[Block] = []
         # global var
         self.globals_var = set()
         self.block_set: Dict[ast.AST, Block] = {}
         # build entry block
-        self.entry_block, _, _ = self.parse(ast_tree)
+        self.entry_block, _, _, _ = self.parse(ast_tree)
         # define-use and use-define
         self.use_def_chains: Dict[Variable, Set[Variable]] = dict()
         self.def_use_chains: Dict[Variable, Set[Variable]] = dict()
@@ -234,62 +263,92 @@ class CFG(object):
             self.connect_2_blocks(tail, basic_block)
         all_tail_list[:] = []
 
-    def build(self, block, head, all_tail_list, func_tail_list):
+    def build(self, block, head, common_tail_list, loop_tail_list, func_tail_list):
         method_str = "build_" + (block.block_end_type or '')
         build_method = getattr(self, method_str, self.build_generic)
-        tail_list, func_tail = build_method(block)
+        tail_list, loop_tail, func_tail = build_method(block)
         head = head or block
-        self.link_tail_to_cur_block(all_tail_list, block)
-        all_tail_list.extend(tail_list)
+        self.link_tail_to_cur_block(common_tail_list, block)
+        common_tail_list.extend(tail_list)
+        loop_tail_list.extend(loop_tail)
         func_tail_list.extend(func_tail)
         return head
 
     def build_If(self, if_block: BasicBlock):
-        all_tail_list, func_tail_list = [], []
+        common_tail_list, loop_tail_list, func_tail_list = [], [], []
         ast_if_node = if_block.statements[-1]
         assert isinstance(ast_if_node, ast.If)
         if_block.statements[-1] = ast_if_node.test
-        head_returned, tail_list, func_tail = self.parse(ast_if_node.body)
+        head_returned, tail_list, loop_tail, func_tail = self.parse(ast_if_node.body)
         self.connect_2_blocks(if_block, head_returned)
-        all_tail_list.extend(tail_list)
+        common_tail_list.extend(tail_list)
+        loop_tail_list.extend(loop_tail)
         func_tail_list.extend(func_tail)
-        head_returned, tail_list, func_tail = self.parse(ast_if_node.orelse)
+        head_returned, tail_list, loop_tail, func_tail = self.parse(ast_if_node.orelse)
         if head_returned is not None:
             # has an else or elif
             self.connect_2_blocks(if_block, head_returned)
-            all_tail_list.extend(tail_list)
+            common_tail_list.extend(tail_list)
+            loop_tail_list.extend(loop_tail)
             func_tail_list.extend(func_tail)
         else:
             # link this to the next statement if no else
-            all_tail_list.append(if_block)
-        return all_tail_list, func_tail_list
+            common_tail_list.append(if_block)
+        return common_tail_list, loop_tail_list, func_tail_list
 
     def build_FunctionDef(self, func_block: FunctionLabel):
         ast_fn_node = func_block.ast_node
         assert isinstance(ast_fn_node, ast.FunctionDef)
         func_block.statements.clear()
         func_block.statements.append(FunctionDeclaration(ast_fn_node.name, ast_fn_node.args))
-        head_returned, tail_list, func_tail_list = self.parse(ast_fn_node.body)
+        head_returned, tail_list, loop_tail, func_tail_list = self.parse(ast_fn_node.body)
         self.connect_2_blocks(func_block, head_returned)
         func_block.func_tail.extend(func_tail_list)
-        return [], []
+        return [], [], []
 
     def build_Return(self, return_block: BasicBlock):
         self.build_generic(return_block)
-        return [], [return_block]
+        return [], [], [return_block]
+
+    def build_Break(self, break_block: BasicBlock):
+        self.build_generic(break_block)
+        return [], [break_block], []
+
+    def build_Continue(self, continue_block: BasicBlock):
+        self.build_generic(continue_block)
+        return [], [continue_block], []
 
     def build_While(self, while_block: BasicBlock):
+        common_tails, loop_tails, func_tails = [], [], []
         while_block = self.separate_block(while_block, "While")
         ast_while_node = while_block.statements[-1]
         assert isinstance(ast_while_node, ast.While)
         while_block.statements[-1] = ast_while_node.test
-        head_returned, tail_list, func_tail = self.parse(ast_while_node.body)
+
+        head_returned, tail_list, loop_tail, func_tail = self.parse(ast_while_node.body)
+        break_tails = [t for t in loop_tail if t.block_end_type == "Break"]
+        continue_tails = [t for t in loop_tail if t.block_end_type == "Continue"]
+        func_tails.extend(func_tail)
+        common_tails.extend(break_tails)  # break always connect next block after while
         self.connect_2_blocks(while_block, head_returned)
         self.link_tail_to_cur_block(tail_list, while_block)
-        return [while_block], func_tail
+        self.link_tail_to_cur_block(continue_tails, while_block)
+
+        if ast_while_node.orelse:
+            # while ... else:
+            head_returned, tail_list, loop_tail, func_tail = self.parse(ast_while_node.orelse)
+            func_tails.extend(func_tail)
+            loop_tails.extend(loop_tail)
+            self.connect_2_blocks(while_block, head_returned)
+            # exit is else block
+            common_tails.append(tail_list)
+        else:
+            # exit is while_block
+            common_tails.append(while_block)
+        return common_tails, loop_tails, func_tails
 
     def build_For(self, for_block: BasicBlock):
-        func_tails = []
+        common_tails, loop_tails, func_tails = [], [], []
         for_block = self.separate_block(for_block, "For")
         ast_for_node = for_block.statements[-1]
         assert isinstance(ast_for_node, ast.For)
@@ -297,24 +356,39 @@ class CFG(object):
         for_iter.lineno = ast_for_node.lineno
         for_iter.col_offset = ast_for_node.col_offset
         for_block.statements[-1] = for_iter
-        head_returned, tail_list, func_tail = self.parse(ast_for_node.body)
+        head_returned, tail_list, loop_tail, func_tail = self.parse(ast_for_node.body)
+        break_tails = [t for t in loop_tail if t.block_end_type == "Break"]
+        continue_tails = [t for t in loop_tail if t.block_end_type == "Continue"]
         func_tails.extend(func_tail)
+        common_tails.extend(break_tails)  # break always connect next block after for
         self.connect_2_blocks(for_block, head_returned)
         self.link_tail_to_cur_block(tail_list, for_block)
-        head_returned, tail_list, func_tail = self.parse(ast_for_node.orelse)
-        func_tails.extend(func_tail)
-        self.connect_2_blocks(for_block, head_returned)
-        return [for_block, head_returned], func_tail
+        self.link_tail_to_cur_block(continue_tails, for_block)
+        if ast_for_node.orelse:
+            # for ... else:
+            head_returned, tail_list, loop_tail, func_tail = self.parse(ast_for_node.orelse)
+            func_tails.extend(func_tail)
+            loop_tails.extend(loop_tail)
+            self.connect_2_blocks(for_block, head_returned)
+            # exit is else block
+            common_tails.extend(tail_list)
+        else:
+            # exit is for_block
+            common_tails.append(for_block)
+        return common_tails, loop_tails, func_tail
 
     def build_Try(self, try_block: BasicBlock):
-        all_tail_list, func_tail_list = [], []
+        all_tail_list, loop_tail_list, func_tail_list = [], [], []
         ast_try_node = try_block.statements[-1]
         assert isinstance(ast_try_node, ast.Try)
         try_label = TryLabel()
         try_label.lineno = ast_try_node.lineno
         try_label.col_offset = ast_try_node.col_offset
         try_block.statements[-1] = try_label
-        try_body_head, try_body_tail_list, try_body_func_tail = self.parse(ast_try_node.body)
+        try_body_head, try_body_tail_list, try_loop_tail, try_body_func_tail = self.parse(
+            ast_try_node.body
+        )
+        loop_tail_list.extend(try_loop_tail)
         func_tail_list.extend(try_body_func_tail)
         has_finally = bool(ast_try_node.finalbody)
         has_except = bool(ast_try_node.handlers)
@@ -324,7 +398,8 @@ class CFG(object):
         assert has_except or has_finally, "syntax error: try with no except or finally"
 
         handlers_label_blocks = []
-        handlers_body_heads, handlers_body_tail, handlers_body_func_tail = [], [], []
+        handlers_body_heads, handlers_body_tail = [], []
+        handlers_body_loop_tail, handlers_body_func_tail = [], []
         if has_except:
             for handler in ast_try_node.handlers:
                 e_label = ExceptHandlerLabel(handler.type, handler.name)
@@ -333,22 +408,26 @@ class CFG(object):
                 label_block = BasicBlock.from_list([e_label], self.ast_node_ctx)
                 self.ast_node_ctx.set_block(handler, label_block)
                 handlers_label_blocks.append(label_block)
-                h_head, h_tail, h_func_tail = self.parse(handler.body)
+                h_head, h_tail, h_loop_tail, h_func_tail = self.parse(handler.body)
                 # except_body -> except
                 self.connect_2_blocks(label_block, h_head)
                 if h_head is not None:
                     handlers_body_heads.append(h_head)
                     handlers_body_tail.extend(h_tail)
+                    handlers_body_loop_tail.extend(h_loop_tail)
                     handlers_body_func_tail.extend(h_func_tail)
+            loop_tail_list.extend(handlers_body_loop_tail)
             func_tail_list.extend(handlers_body_func_tail)
         else_block, else_tail, else_func_tail = [], [], []
         if has_else:
-            else_block, else_tail, else_func_tail = self.parse(ast_try_node.orelse)
+            else_block, else_tail, else_loop_tail, else_func_tail = self.parse(ast_try_node.orelse)
+            loop_tail_list.extend(else_loop_tail)
             func_tail_list.extend(else_func_tail)
 
         self.connect_2_blocks(try_block, try_body_head)  # try -> try_body
         if has_finally:
-            final_body_head, finally_tail, finally_func_tail = self.parse(ast_try_node.finalbody)
+            final_body_head, finally_tail, finally_loop_tail, finally_func_tail = self.parse(ast_try_node.finalbody)
+            loop_tail_list.extend(finally_loop_tail)
             func_tail_list.extend(finally_func_tail)
             if not has_except:  # try finally
                 self.connect_2_blocks(try_block, final_body_head)
@@ -372,7 +451,7 @@ class CFG(object):
                     # try_body -> finally
                     self.link_tail_to_cur_block(try_body_tail_list, final_body_head)
             # finally is always the final tail block
-            return finally_tail, func_tail_list
+            return finally_tail, loop_tail_list, func_tail_list
         else:
             assert has_except, "internal error: control flow graph"
             for h_block in handlers_label_blocks:
@@ -388,22 +467,22 @@ class CFG(object):
             else:
                 # try except
                 all_tail_list.extend(try_body_tail_list)
-            return all_tail_list, func_tail_list
+            return all_tail_list, loop_tail_list, func_tail_list
 
     def build_Call(self, basic_block: BasicBlock):
-        return [basic_block], []
+        return [basic_block], [], []
 
     def build_generic(self, basic_block):
-        return [basic_block], []
+        return [basic_block], [], []
 
     def parse(self, ast_body: Union[List[ast.ExceptHandler], ast.stmt, List[ast.stmt]]):
         head = None
-        all_tail_list, func_tail_list = [], []
-        basic_block_parser = BasicBlocksBuilder(self.ast_node_ctx, ast_body)
+        common_tail_list, loop_tail_list, func_tail_list = [], [], []
+        basic_block_parser = BasicBlocksBuilder(self.dead_block_list, self.ast_node_ctx, ast_body)
         for basic_block in basic_block_parser.get_basic_block():
             self.add_basic_block(basic_block)
-            head = self.build(basic_block, head, all_tail_list, func_tail_list)
-        return head, all_tail_list, func_tail_list
+            head = self.build(basic_block, head, common_tail_list, loop_tail_list, func_tail_list)
+        return head, common_tail_list, loop_tail_list, func_tail_list
 
     def separate_block(self, basic_block: BasicBlock, block_end_type=""):
         if basic_block.start_line == basic_block.end_line:
@@ -460,11 +539,14 @@ class CFG(object):
         # https://en.wikipedia.org/wiki/Reaching_definition
         # compute reach_def_gen
         for block in self.block_list:
+            reach_def_gens = {}
             for stmt in block.get_code_to_analyse():
                 sep = LoadStoreSeparator(self.variable_cache)
                 sep.visit(stmt)
                 for store_var in sep.store:
-                    block.reach_def_gen.add(store_var)
+                    reach_def_gens[store_var.name] = store_var
+            for _, store_var in reach_def_gens.items():
+                block.reach_def_gen.add(store_var)
         # compute reach_def_kill
         for block in self.block_list:
             block_gens = {v.name: v for v in block.reach_def_gen}
@@ -537,11 +619,10 @@ class CFG(object):
                                 _update_use_def(load_var, v)
                 for store_var in sep.store:
                     block_gens[store_var.name] = store_var
+                    # init define-use as empty
+                    self.def_use_chains[store_var] = set()
 
         # compute define-use
-        for block in self.block_list:
-            for v in block.reach_def_gen:
-                self.def_use_chains[v] = set()
         for use, defines in self.use_def_chains.items():
             for v in defines:
                 self.def_use_chains[v].add(use)
