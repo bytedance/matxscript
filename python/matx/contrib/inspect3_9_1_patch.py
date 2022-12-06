@@ -173,8 +173,7 @@ def _has_code_flag(f, flag):
 
 
 def isgeneratorfunction(obj):
-    """
-    Return true if the object is a user-defined generator function. Generator function objects provide the same attributes as functions.
+    """Return true if the object is a user-defined generator function. Generator function objects provide the same attributes as functions.
     See help(isfunction) for a list of attributes.
 
     """
@@ -182,8 +181,7 @@ def isgeneratorfunction(obj):
 
 
 def iscoroutinefunction(obj):
-    """
-    Return true if the object is a coroutine function.
+    """Return true if the object is a coroutine function.
 
     Coroutine functions are defined with "async def" syntax.
 
@@ -245,8 +243,7 @@ def istraceback(object):
 
 
 def isframe(object):
-    """
-    Return true if the object is a frame object.
+    """Return true if the object is a frame object.
 
     Frame objects provide these attributes:
         f_back          next outer frame object (this frame's caller)
@@ -262,8 +259,7 @@ def isframe(object):
 
 
 def iscode(object):
-    """
-    Return true if the object is a code object.
+    """Return true if the object is a code object.
 
     Code objects provide these attributes:
         co_argcount         number of arguments (not including *, ** args
@@ -650,9 +646,7 @@ class EndOfBlock(Exception):
 
 
 class BlockFinder:
-    """
-    Provide a tokeneater() method to detect the end of a code block.
-    """
+    """Provide a tokeneater() method to detect the end of a code block."""
 
     def __init__(self):
         self.indent = 0

@@ -55,8 +55,7 @@ def get_cflags():
 
 
 def get_link_flags():
-    """
-    lib layout::
+    """ lib layout::
         - lib/
         - libmatx.so
         - pcre/

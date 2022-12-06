@@ -230,8 +230,8 @@ class IRBuilder(object):
         return WithScope(None, _exit_cb)
 
     def likely(self, expr):
-        """
-        Add likely tag for expression.
+        """Add likely tag for expression.
+
         Parameters
         ----------
         expr : Expr
@@ -240,7 +240,6 @@ class IRBuilder(object):
         -------
         expr : Expr
             The expression will likely tag.
-
         """
         return _expr.Call(expr.dtype, "ir.likely", [expr])
 
