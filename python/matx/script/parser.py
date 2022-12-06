@@ -1981,14 +1981,15 @@ class MATXScriptParser(ast.NodeVisitor):
     # note that after Python3.8, ast.NameConstant, ast.Num, ast.Str are no longer used
     def visit_Constant(self, node):
         if node.value is None:
-            return _ir.NoneExpr()
+            return self.visit_NoneType(node)
         elif isinstance(node.value, str):
-            span = self.build_span(node)
-            return _ir.UnicodeImm(node.value, span)
+            return self.visit_Str(node)
         elif isinstance(node.value, numbers.Number):
-            return _ir.const(node.value, _type_infer(node.n).dtype)
+            return self.visit_Num(node)
+        elif isinstance(node.value, bytes):
+            return self.visit_Bytes(node)
         else:
-            raise ValueError(f'Unknown node value type: {type(node)}')
+            raise ValueError(f'Unknown node value type: {type(node.value)}')
 
     def visit_NameConstant(self, node):
         if node.value is None:
