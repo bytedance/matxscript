@@ -185,8 +185,10 @@ def restore_user_behavior(ud: JitObject,
                 pf_func = JitOpImpl(main_func_name=func_name, jit_object=ud)
                 user_func = _make_user_func(raw_name, pf_func)
 
-                setattr(ud, raw_name, user_func)  # rebound the user function
-                ud.op_mapping_2_71828182846[raw_name] = pf_func  # bound the JitOpImpl into JitObject
+                # rebound the user function
+                setattr(ud, raw_name, user_func)
+                # bound the JitOpImpl into JitObject
+                ud.op_mapping_2_71828182846[raw_name] = pf_func
     else:
         func_name = init_schema.name
         pf_func = ud.get_function(func_name)
