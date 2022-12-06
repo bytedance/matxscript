@@ -19,6 +19,7 @@
 import inspect
 import unittest
 import re
+import copy
 import matx
 
 from matx import cfg
@@ -70,7 +71,12 @@ def get_ast_and_cfg(fn):
     my_cfg.fill_dominance_frontier()
     my_cfg.init_var_life_info()
     my_cfg.compute_live_out_var()
+    my_cfg.compute_reaching_defines()
     return start_lineno, ast_tree, my_cfg
+
+
+def repr_variable(v):
+    return f"{v.name}%{v.lineno}"
 
 
 class TestControlFlowGraphAnalysis(unittest.TestCase):
@@ -94,6 +100,29 @@ class TestControlFlowGraphAnalysis(unittest.TestCase):
         self.assertEqual(start_end_lines, [(1, 1), (2, 3), (4, 5), (7, 8), (9, 10)])
         live_outs = [blk.live_out for blk in my_cfg.block_list]
         self.assertEqual(live_outs, [set(), set(), {'a', 'z'}, {'a', 'z'}, set()])
+        define_use = copy.copy(my_cfg.def_use_chains)
+        define_use = {repr_variable(define): {repr_variable(u) for u in use}
+                      for define, use in define_use.items()}
+        expect_def_use = {
+            "a%2": {"a%3"},
+            "a%4": {"a%10"},
+            "a%8": {"a%10"},
+            "z%5": {"z%9"},
+            "z%7": {"z%9"},
+            "y%9": set(),
+            "h%10": set(),
+        }
+        self.assertEqual(define_use, expect_def_use)
+
+        use_define = copy.copy(my_cfg.use_def_chains)
+        use_define = {repr_variable(use): {repr_variable(d) for d in define}
+                      for use, define in use_define.items()}
+        expect_use_def = {
+            "a%3": {"a%2"},
+            "z%9": {"z%7", "z%5"},
+            "a%10": {"a%4", "a%8"},
+        }
+        self.assertEqual(use_define, expect_use_def)
 
 
 if __name__ == '__main__':
