@@ -29,13 +29,6 @@ pushd ${ROOT_PATH}/docs
 
 sphinx-apidoc -M -e -f --implicit-namespaces -o source/apidoc/ ${ROOT_PATH}/python/matx/ ${ROOT_PATH}/python/setup.py
 
-pushd source/apidoc/
-
-rm matx.vision.tv_transforms.*.rst
-rm matx.vision.*.rst
-
-popd 
-
 make clean
 make html
 
