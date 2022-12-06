@@ -282,6 +282,9 @@ class JITModule(Module):
         warnings.warn("The function JITModule.Run is deprecated.", DeprecationWarning)
         return self.run(feed_dict)
 
+    def __call__(self, **kwargs):
+        return self.run(kwargs)
+
     def run(self, feed_dict):
         """Execute Pipeline and get output
 

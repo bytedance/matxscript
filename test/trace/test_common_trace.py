@@ -203,6 +203,19 @@ class TestCommonTrace(unittest.TestCase):
         assert sess.run({'x': 2}) == 9
         assert sess.input_names == ['x']
 
+    def test_make_session_by_one_class_method(self):
+
+        class AddX:
+            def __init__(self, x: int) -> None:
+                self._x: int = x
+
+            def add(self, x: int) -> int:
+                return self._x + x
+
+        sess = matx.toolchain.make_session(AddX, method='add')(7)
+        assert sess.run({'x': 2}) == 9
+        assert sess.input_names == ['x']
+
 
 if __name__ == "__main__":
     import logging

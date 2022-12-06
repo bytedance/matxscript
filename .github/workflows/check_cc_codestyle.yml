@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Prepare clang-tools-10
+      run: echo "TODO install clang-tools-10"
     - name: checkout
       run: |
         commits=${{ github.event.pull_request.commits }}

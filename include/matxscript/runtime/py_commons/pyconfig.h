@@ -42,7 +42,9 @@
 /* Define if we can use gcc inline assembler to get and set x87 control word
  */
 #ifndef MATX_BUILD_MICRO_RUNTIME
+#ifndef __aarch64__  // if it is an arm processor, it doesn't support asm for x87
 #define HAVE_GCC_ASM_FOR_X87 1
+#endif
 #endif
 
 /* Define if your compiler provides __uint128_t */
