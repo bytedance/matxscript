@@ -124,6 +124,51 @@ class TestControlFlowGraphAnalysis(unittest.TestCase):
         }
         self.assertEqual(use_define, expect_use_def)
 
+    def test_forloop(self):
+        def my_fn_forloop_with_break_continue():
+            a = 3
+            a = a + 4
+            for i in range(0, 100):
+                a = a - 1
+                if i == 1:
+                    a = 1
+                    break
+                if i == 2:
+                    a = 2
+                    continue
+                a = 2
+            y = a + i
+
+        lineno, tree, my_cfg = get_ast_and_cfg(my_fn_forloop_with_break_continue)
+        print(my_cfg)
+        define_use = copy.copy(my_cfg.def_use_chains)
+        define_use = {repr_variable(define): {repr_variable(u) for u in use}
+                      for define, use in define_use.items()}
+        expect_def_use = {
+            "a%2": {"a%3"},
+            "a%3": {"a%13", "a%5"},
+            "a%5": set(),
+            "a%7": {"a%13"},
+            "a%10": {"a%13", "a%5"},
+            "a%12": {"a%13", "a%5"},
+            "y%13": set(),
+            "i%4": {"i%6", "i%9", "i%13"}
+        }
+        self.assertEqual(define_use, expect_def_use)
+
+        use_define = copy.copy(my_cfg.use_def_chains)
+        use_define = {repr_variable(use): {repr_variable(d) for d in define}
+                      for use, define in use_define.items()}
+        expect_use_def = {
+            "a%3": {"a%2"},
+            "a%5": {"a%3", "a%10", "a%12"},
+            "a%13": {"a%3", "a%7", "a%10", "a%12"},
+            "i%6": {"i%4"},
+            "i%9": {"i%4"},
+            "i%13": {"i%4"},
+        }
+        self.assertEqual(use_define, expect_use_def)
+
 
 if __name__ == '__main__':
     import logging
