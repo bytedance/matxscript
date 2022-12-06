@@ -111,6 +111,7 @@ class Conv2dOp:
                                     SYNC -- If device is GPU, the whole calculation will be blocked until this operation is finished.
                                     SYNC_CPU -- If device is GPU, the whole calculation will be blocked until this operation is finished, and the corresponding CPU array would be created and returned.
                                   Defaults to ASYNC.
+
         Returns:
             List[matx.runtime.NDArray]: converted images
 
@@ -217,6 +218,7 @@ class SharpenOp:
                  sync: int = ASYNC) -> List[matx.runtime.NDArray]:
         """
         Sharpen images and alpha-blend the result with the original input images.
+
         Args:
             images (List[matx.runtime.NDArray]): target images.
             alpha (List[float], optional): blending factor for each image. If omitted, the alpha set in op initialization would be used for all images.
@@ -334,6 +336,7 @@ class EmbossOp:
                  sync: int = ASYNC) -> List[matx.runtime.NDArray]:
         """
         Emboss images and alpha-blend the result with the original input images.
+
         Args:
             images (List[matx.runtime.NDArray]): target images.
             alpha (List[float], optional): blending factor for each image. If omitted, the alpha set in op initialization would be used for all images.
@@ -439,7 +442,8 @@ class EdgeDetectOp:
                  alpha: List[float] = [],
                  sync: int = ASYNC) -> List[matx.runtime.NDArray]:
         """
-        Generate an edge image and alpha-blend it with the input image..
+        Generate an edge image and alpha-blend it with the input image.
+
         Args:
             images (List[matx.runtime.NDArray]): target images.
             alpha (List[float]): blending factor for each image. If omitted, the alpha set in op initialization would be used for all images.

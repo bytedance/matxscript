@@ -61,6 +61,7 @@ class RandomResizedCropOp:
                  ratio: List[float],
                  interp: str = INTER_LINEAR) -> None:
         """ Initialize RandomResizedCropOP
+
         Args:
             device (Any): the matx device used for the operation.
             size (Tuple[int, int]): output size for all images, must be 2 dim tuple.
