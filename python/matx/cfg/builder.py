@@ -426,7 +426,8 @@ class CFG(object):
 
         self.connect_2_blocks(try_block, try_body_head)  # try -> try_body
         if has_finally:
-            final_body_head, finally_tail, finally_loop_tail, finally_func_tail = self.parse(ast_try_node.finalbody)
+            final_body_head, finally_tail, finally_loop_tail, finally_func_tail = self.parse(
+                ast_try_node.finalbody)
             loop_tail_list.extend(finally_loop_tail)
             func_tail_list.extend(finally_func_tail)
             if not has_except:  # try finally
