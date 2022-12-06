@@ -412,7 +412,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_ClassDef(self, node: ast.ClassDef):
         """ClassDef visitor
-
         AST abstract grammar:
             ClassDef(identifier name, expr* bases, keyword* keywords, stmt* body,
                      expr* decorator_list)
@@ -453,7 +452,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         """FunctionDef visitor
-
         AST abstract grammar:
             FunctionDef(identifier name, arguments args, stmt* body, expr* decorator_list,
                         expr? returns, string? type_comment)
@@ -628,7 +626,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_Assign(self, node: ast.Assign):
         """Assign visitor
-
         AST abstract grammar:
             Assign(expr* targets, expr value, string? type_comment)
 
@@ -801,7 +798,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_Assert(self, node):
         """Assert visitor
-
         AST abstract grammar:
             Assert(expr test, expr? msg)
 
@@ -1068,7 +1064,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_If(self, node):
         """If visitor
-
         AST abstract grammar:
             If(expr test, stmt* body, stmt* orelse)
         """
@@ -1142,7 +1137,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call):
         """Call visitor
-
         AST abstract grammar:
             Call(expr func, expr* args, keyword* keywords)
             keyword = (identifier? arg, expr value)
@@ -1295,7 +1289,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_BinOp(self, node):
         """BinOp visitor
-
         AST abstract grammar:
             BinOp(expr left, operator op, expr right)
         """
@@ -1309,7 +1302,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_Compare(self, node):
         """Compare visitor
-
         AST abstract grammar:
             Compare(expr left, expr right, ops=)
         """
@@ -1339,7 +1331,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_BoolOp(self, node):
         """BoolOp visitor
-
         AST abstract grammar:
             BoolOp(boolop op, expr* values)
         """
@@ -1350,8 +1341,7 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_UnaryOp(self, node):
         """UnaryOp visitor
-
-        AST abstract grammar:visit_keyword
+        AST abstract grammar:
             UnaryOp(unaryop op, expr operand)
         """
 
@@ -1363,10 +1353,11 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_Subscript(self, node: ast.Subscript):
         """Subscript visitor
-
         AST abstract grammar:
             Subscript(expr value, slice slice, expr_context ctx)
-            slice = Slice(expr? lower, expr? upper, expr? step) | ExtSlice(slice* dims) | Index(expr value)
+            slice = Slice(expr? lower, expr? upper, expr? step)
+                    | ExtSlice(slice* dims)
+                    | Index(expr value)
         By now 2 patterns of Subscript are supported:
             1. Var[index] Buffer element access()
             2. meta[type_key][index], Meta info access
@@ -1453,7 +1444,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_Attribute(self, node: ast.Attribute):
         """Attribute visitor
-
         AST abstract grammar:
             Attribute(expr value, identifier attr, expr_context ctx)
         """
@@ -1597,7 +1587,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_Dict(self, node: ast.Dict):
         """Dict visitor
-
         AST abstract grammar:
             Dict(expr* keys, expr* values)
         """
@@ -1627,7 +1616,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_Tuple(self, node: ast.Tuple):
         """Tuple visitor
-
         AST abstract grammar:
             Tuple(expr* elts, expr_context ctx)
         """
@@ -1657,7 +1645,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_List(self, node: ast.List):
         """List visitor
-
         AST abstract grammar:
             List(expr* elts, expr_context ctx)
         """
@@ -1681,7 +1668,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_Set(self, node: ast.Set):
         """Set visitor
-
         AST abstract grammar:
             Set(expr* elts, expr_context ctx)
         """
@@ -1930,7 +1916,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_keyword(self, node):
         """Keyword visitor
-
         AST abstract grammar:
             keyword = (identifier? arg, expr value)
         """
@@ -1939,7 +1924,6 @@ class MATXScriptParser(ast.NodeVisitor):
 
     def visit_Name(self, node: ast.Name):
         """Name visitor
-
         AST abstract grammar:
             Name(identifier id, expr_context ctx)
         """

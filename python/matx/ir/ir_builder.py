@@ -231,7 +231,6 @@ class IRBuilder(object):
 
     def likely(self, expr):
         """Add likely tag for expression.
-
         Parameters
         ----------
         expr : Expr
