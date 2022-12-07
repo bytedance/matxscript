@@ -77,6 +77,18 @@ class TestDynamicVarType(unittest.TestCase):
         tx_ret = matx.script(dynamic_var_across_if)(input_s)
         self.assertEqual(py_ret, tx_ret)
 
+        def dynamic_var_across_if2(cond: bool) -> Any:
+            s = "Hello"
+            if cond:
+                s = 3
+                return s
+            return s
+
+        input_s = True
+        py_ret = dynamic_var_across_if2(input_s)
+        tx_ret = matx.script(dynamic_var_across_if2)(input_s)
+        self.assertEqual(py_ret, tx_ret)
+
         def dynamic_var_across_for_loop() -> Any:
             s = "Hello"
             for i in range(1):
@@ -85,6 +97,17 @@ class TestDynamicVarType(unittest.TestCase):
 
         py_ret = dynamic_var_across_for_loop()
         tx_ret = matx.script(dynamic_var_across_for_loop)()
+        self.assertEqual(py_ret, tx_ret)
+
+        def dynamic_var_across_for_loop2() -> Any:
+            s = "Hello"
+            for i in range(1):
+                s = i
+                return s
+            return s
+
+        py_ret = dynamic_var_across_for_loop2()
+        tx_ret = matx.script(dynamic_var_across_for_loop2)()
         self.assertEqual(py_ret, tx_ret)
 
         def dynamic_var_across_while_loop() -> Any:
