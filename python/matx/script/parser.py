@@ -1544,8 +1544,8 @@ class MATXScriptParser(ast.NodeVisitor):
 
                         return user_data_wrapper
                     else:
-                        is_ft_split = (
-                                              node.attr == 'split') and self.current_ann_type is not None and self.current_ann_type.is_full_typed()
+                        is_ft_split = (node.attr == 'split') and self.current_ann_type is not None \
+                                      and self.current_ann_type.is_full_typed()
                         if is_ft_split:
                             if not isinstance(
                                     symbol.checked_type, (_ir.StringType, _ir.UnicodeType)):
