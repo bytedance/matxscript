@@ -1,4 +1,6 @@
-Building From PIP
-=======================================
+.. Installating From PIP
 
-English building from source
+Installating From PIP
+=============================================
+
+English building from pip

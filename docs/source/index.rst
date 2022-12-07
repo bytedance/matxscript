@@ -33,6 +33,20 @@ english intro
    tutorial_doc/design_philosophy
 
 .. toctree::
+   :maxdepth: 1
+   :caption: script
+   :hidden:
+
+   tutorial_doc/script
+
+.. toctree::
+   :maxdepth: 1
+   :caption: trace
+   :hidden:
+
+   tutorial_doc/trace
+
+.. toctree::
    :maxdepth: 4
    :caption: API
    :hidden:
