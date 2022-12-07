@@ -209,6 +209,11 @@ class LoadStoreSeparator(ast.NodeVisitor):
         else:
             self.load.add(self._make_var(node))
 
+    def visit_AugAssign(self, node: ast.AugAssign):
+        if isinstance(node.target, ast.Name):
+            self.load.add(self._make_var(node.target))
+        super().generic_visit(node)
+
     def visit_arg(self, node: ast.arg):
         self.store.add(self._make_var(node))
 
@@ -535,6 +540,20 @@ class CFG(object):
             for blocks in self.block_list:
                 if blocks.recompute_live_out_var():
                     changed_flag = True
+
+    def collect_ast_live_out_info(self):
+        # In a block, if a name is live out, all asts with this name are view as live out
+        result = {}
+        for block in self.block_list:
+            live_out = block.live_out
+            for stmt in block.get_code_to_analyse():
+                sep = LoadStoreSeparator(self.variable_cache)
+                sep.visit(stmt)
+                for load_var in sep.load:
+                    result[load_var.ast_node] = load_var.name in live_out
+                for store_var in sep.store:
+                    result[store_var.ast_node] = store_var.name in live_out
+        return result
 
     def compute_reaching_defines(self):
         # https://en.wikipedia.org/wiki/Reaching_definition
