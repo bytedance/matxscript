@@ -43,6 +43,7 @@ from ..pipeline.ops import OpKernel
 from ..pipeline.jit_object import JitObject, JitOpImpl
 from ..native import NativeFunction
 from ..native import NativeClass
+from .analysis import LiveVariableAnalysis
 
 NAME_NOT_FOUND = object()
 MATX_MODULE = sys.modules["matx"]
@@ -219,6 +220,7 @@ class MATXScriptParser(ast.NodeVisitor):
         else:
             self.fn_ctx = None
         self.context = None
+        self.fn_live_out_variables = dict()
         self.functions = {}
         self.current_node = None
         self.parent_node = None
@@ -460,6 +462,8 @@ class MATXScriptParser(ast.NodeVisitor):
                          expr* kw_defaults, arg? kwarg, expr* defaults)
             arg = (identifier arg, expr? annotation, string? type_comment)
         """
+        lva = LiveVariableAnalysis(node)
+        self.fn_live_out_variables = lva.get_live_out_mapping()
         self.fn_is_generator = False
         docstring = self.parse_docstring(node)
         self.init_function_parsing_env()
@@ -568,7 +572,7 @@ class MATXScriptParser(ast.NodeVisitor):
         rt_expr = _type_rel.smart_adapt_to(rt_expr, self.context.func_ret_type, span)
         return _ir.ReturnStmt(rt_expr, span)
 
-    def lookup_or_alloca(self, name_hint, init_value, node, ann_ty=None):
+    def lookup_or_alloca(self, name_hint, init_value, node, ann_ty=None, live_out=True):
         span = self.build_span(node)
         init_value = user_function_wrapper(init_value, self.current_handle_var, span)
         inf_ty = _type_infer(init_value)
@@ -602,7 +606,7 @@ class MATXScriptParser(ast.NodeVisitor):
             return alloca_stmt
         else:
             if not _type_rel.type_convertible(inf_ty, symbol.checked_type):
-                if level == -1:
+                if level == -1 or (not live_out):
                     # deref last var and alloca a new var
                     new_name_hint = name_hint + "_ssa_" + str(self.gen_random())
                     alloca_stmt = _ir.AllocaVarStmt(new_name_hint, inf_ty, init_value, span)
@@ -658,7 +662,8 @@ class MATXScriptParser(ast.NodeVisitor):
                 rhs_val = rhs_val_eval_func()
             else:
                 rhs_val = rhs_val_eval_func(symbol.checked_type)
-            return self.lookup_or_alloca(lhs_name, rhs_val, lhs_node)
+            live_out = self.fn_live_out_variables.get(lhs_node, True)
+            return self.lookup_or_alloca(lhs_name, rhs_val, lhs_node, live_out=live_out)
 
         def lhs_subscript_attr_assign(lhs_node, rhs_val_eval_func):
             # Pattern 2 & 4
@@ -781,7 +786,8 @@ class MATXScriptParser(ast.NodeVisitor):
             if isinstance(node.value, ast.Name):
                 # TODO: clean code
                 rhs_val = user_function_wrapper(rhs_val, self.current_handle_var, span)
-            return self.lookup_or_alloca(lhs_name, rhs_val, lhs_node, ann_type)
+            live_out = self.fn_live_out_variables.get(lhs_node, True)
+            return self.lookup_or_alloca(lhs_name, rhs_val, lhs_node, ann_type, live_out=live_out)
         else:
             assign_ast = ast.Assign(
                 targets=[

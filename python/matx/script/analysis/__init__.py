@@ -30,6 +30,8 @@ from .build_type_analysis import BuildTypeAnalysis
 from .syntax_check import SyntaxCheck
 from .inheritence_consistency_check import InheritencyConsistencyCheck
 
+from .live_variable_analysis import LiveVariableAnalysis
+
 
 class CallableAnalysis:
     """

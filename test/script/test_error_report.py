@@ -146,20 +146,23 @@ class TestErrorReport(unittest.TestCase):
         with self.assertRaises(Exception):
             matx.script(OP3)
 
-    def test_assign_type(self):
+    def test_dynamic_type(self):
         def func1(flag: bool) -> None:
             a = 1
             if flag:
                 a = 's'
+            print(a)
 
         def func2(flag: bool) -> None:
             a = b's'
             if flag:
                 a = 's'
+            print(a)
 
         def func3(s: int, flag: bool) -> None:
             if flag:
                 s = '12'
+            print(s)
 
         with self.assertRaises(Exception):
             matx.script(func1)
