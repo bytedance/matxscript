@@ -134,6 +134,12 @@ class _AnnTypeConvert(ast.NodeVisitor):
         except KeyError:
             raise TypeNotFoundException(node)
 
+    def visit_Constant(self, node):
+        if node.value is None:
+            return self.ty_map['None']
+        else:
+            raise TypeNotFoundException(node)
+
     def visit_NameConstant(self, node):
         if node.value is None:
             return self.ty_map['None']
@@ -185,10 +191,7 @@ class _AnnTypeConvert(ast.NodeVisitor):
             # compatible with typed_ast with Python 3.7 or older
             slice_ty = self.convert(node.slice.value)
         elif isinstance(node.slice, ast.Tuple):
-            slice_ty = []
-            for elt in node.slice.elts:
-                slice_ty.append(self.convert(elt))
-            slice_ty = tuple(slice_ty)
+            slice_ty = self.visit_Tuple(node.slice)
         elif isinstance(node.slice, ast.Name):
             slice_ty = self.convert(node.slice)
         else:

@@ -19,8 +19,12 @@
 
 
 import sys
+import warnings
 
 if sys.version_info < (3, 8):
     from typed_ast import ast3 as ast
 else:
-    import ast
+    # TODO: use ast to replace typed_ast
+    # import ast
+    warnings.warn('Language features higher or equal to Python 3.8 is not supported')
+    from typed_ast import ast3 as ast

@@ -760,6 +760,7 @@ class MATXScriptParser(ast.NodeVisitor):
                         rhs_value = user_function_wrapper(rhs_value, self.current_handle_var, span)
                     self.pop_ann_type()
                     return rhs_value
+
                 return assign_dispatch_value(lhs_node, eval_rhs_value)
 
         return assign_dispatch_node(node.targets[0], node.value)
@@ -1389,9 +1390,35 @@ class MATXScriptParser(ast.NodeVisitor):
                 symbol.py_type_name()), SyntaxError)
         span = self.build_span(node)
         if isinstance(symbol, _ir.expr.BaseExpr):
-            if isinstance(node.slice, ast.Index):
-                # Var[index]
-                indexes = self.visit(node.slice.value)
+            if isinstance(node.slice, ast.Slice):
+                lower = self.visit(node.slice.lower) if node.slice.lower else _ir.const(0, 'int64')
+                upper = self.visit(
+                    node.slice.upper) if node.slice.upper else _ir.op.object_len(span, symbol)
+                step = self.visit(node.slice.step) if node.slice.step else _ir.const(1, 'int64')
+                if isinstance(node.ctx, ast.Load):
+                    return _ir.op.object_get_slice(span, symbol, lower, upper, step)
+                elif isinstance(node.ctx, ast.Store):
+                    lower = self.visit(node.slice.lower) if node.slice.lower else _ir.const(0,
+                                                                                            'int64')
+                    upper = self.visit(
+                        node.slice.upper) if node.slice.upper else _ir.op.object_len(span, symbol)
+
+                    def subscript_assign(rval):
+                        return _ir.op.object_set_slice(span, symbol, lower, upper, rval)
+
+                    subscript_assign.checked_type = symbol.checked_type
+                    return subscript_assign
+                else:
+                    raise NotImplementedError("unknown ctx: ", type(node.ctx).__name__)
+            elif isinstance(node.slice, ast.Tuple):
+                self.report_error(f'[Subscript] node.slice type {node.slice} is not support',
+                                  NotImplementedError)
+            else:
+                if isinstance(node.slice, ast.Index):
+                    indexes = self.visit(node.slice.value)
+                else:
+                    indexes = self.visit(node.slice)
+
                 indexes = list(indexes) if isinstance(indexes, tuple) else [indexes]
                 symbol_s = symbol
                 for si in range(len(indexes) - 1):
@@ -1412,31 +1439,10 @@ class MATXScriptParser(ast.NodeVisitor):
                                 "'{}' object does not support item assignment".format(
                                     symbol_s.checked_type), SyntaxError)
                         return _ir.op.object_set_item(span, symbol_s, indexes[-1], rval)
+
                     subscript_assign.checked_type = symbol_s.checked_type
                     return subscript_assign
-            elif isinstance(node.slice, ast.Slice):
-                lower = self.visit(node.slice.lower) if node.slice.lower else _ir.const(0, 'int64')
-                upper = self.visit(
-                    node.slice.upper) if node.slice.upper else _ir.op.object_len(span, symbol)
-                step = self.visit(node.slice.step) if node.slice.step else _ir.const(1, 'int64')
-                if isinstance(node.ctx, ast.Load):
-                    return _ir.op.object_get_slice(span, symbol, lower, upper, step)
-                elif isinstance(node.ctx, ast.Store):
-                    lower = self.visit(node.slice.lower) if node.slice.lower else _ir.const(0,
-                                                                                            'int64')
-                    upper = self.visit(
-                        node.slice.upper) if node.slice.upper else _ir.op.object_len(span, symbol)
 
-                    def subscript_assign(rval):
-                        return _ir.op.object_set_slice(span, symbol, lower, upper, rval)
-
-                    subscript_assign.checked_type = symbol.checked_type
-                    return subscript_assign
-                else:
-                    raise NotImplementedError("unknown ctx: ", type(node.ctx).__name__)
-            else:
-                self.report_error('[Subscript] node.slice type is not support',
-                                  NotImplementedError)
         else:
             res = symbol[self.visit(slice)]
             if res is None:
@@ -1484,15 +1490,18 @@ class MATXScriptParser(ast.NodeVisitor):
             if symbol.__name__ == "numpy":
                 def wrapped_op(sp, *args):
                     return _ir.op.numpy_ops(sp, node.attr, *args)
+
                 return wrapped_op
             elif symbol.__name__ == "torch":
                 def wrapped_op(sp, *args):
                     return _ir.op.torch_ops(sp, node.attr, *args)
+
                 return wrapped_op
 
             def op_wrapper(op, name):
                 def wrappped_op(span, *args):
                     return op(span, name, *args)
+
                 return wrappped_op
 
             if inspect.isclass(module_attr) and issubclass(module_attr, NativeClass):
@@ -1507,6 +1516,7 @@ class MATXScriptParser(ast.NodeVisitor):
 
                 def wrapped_native_op(span, *args, **kwargs):
                     return _ir.op.matx_make_native_op(span, module_attr, *args, **kwargs)
+
                 return wrapped_native_op
             op = Builtin2Op.lookup(module_attr)
             if op is None:
@@ -1535,7 +1545,7 @@ class MATXScriptParser(ast.NodeVisitor):
                         return user_data_wrapper
                     else:
                         is_ft_split = (
-                            node.attr == 'split') and self.current_ann_type is not None and self.current_ann_type.is_full_typed()
+                                              node.attr == 'split') and self.current_ann_type is not None and self.current_ann_type.is_full_typed()
                         if is_ft_split:
                             if not isinstance(
                                     symbol.checked_type, (_ir.StringType, _ir.UnicodeType)):
@@ -1702,6 +1712,7 @@ class MATXScriptParser(ast.NodeVisitor):
                 if cap.same_as(e):
                     return True
             return False
+
         const_expr_1 = _ir.const(1, "int64")
         const_expr_2 = _ir.const(2, "int64")
         reserve_size = const_expr_1
@@ -1958,6 +1969,7 @@ class MATXScriptParser(ast.NodeVisitor):
 
                 def wrapped_native_op(span, *args, **kwargs):
                     return _ir.op.matx_make_native_op(span, global_dep, *args, **kwargs)
+
                 return wrapped_native_op
             dep_node = self.custom_ast_node.get_dep_cls_by_raw_type(global_dep)
             if dep_node is not None:
@@ -1981,15 +1993,17 @@ class MATXScriptParser(ast.NodeVisitor):
     # note that after Python3.8, ast.NameConstant, ast.Num, ast.Str are no longer used
     def visit_Constant(self, node):
         if node.value is None:
-            return self.visit_NoneType(node)
+            return _ir.NoneExpr()
         elif isinstance(node.value, str):
-            return self.visit_Str(node)
+            span = self.build_span(node)
+            return _ir.UnicodeImm(node.value, span)
         elif isinstance(node.value, numbers.Number):
-            return self.visit_Num(node)
+            return _ir.const(node.value, _type_infer(node.value).dtype)
         elif isinstance(node.value, bytes):
-            return self.visit_Bytes(node)
+            span = self.build_span(node)
+            return _ir.StringImm(node.value, span)
         else:
-            raise ValueError(f'Unknown node value type: {type(node.value)}')
+            raise NotImplementedError(f'Unsupported value {node.value}')
 
     def visit_NameConstant(self, node):
         if node.value is None:
