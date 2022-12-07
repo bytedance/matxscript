@@ -1,0 +1,1712 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-08 03:59+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/apidoc/matx.vision.rst:2
+msgid "matx.vision package"
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp:1
+#: matx.vision.average_blur_op.AverageBlurOp:1 matx.vision.cast_op.CastOp:1
+#: matx.vision.channel_reorder_op.ChannelReorderOp:1
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp:1
+#: matx.vision.conv2d_op.Conv2dOp:1 matx.vision.conv2d_op.EdgeDetectOp:1
+#: matx.vision.conv2d_op.EmbossOp:1 matx.vision.conv2d_op.SharpenOp:1
+#: matx.vision.crop_op.CenterCropOp:1 matx.vision.crop_op.CropOp:1
+#: matx.vision.cvt_color_op.CvtColorOp:1 matx.vision.flip_op.FlipOp:1
+#: matx.vision.gamma_contrast_op.GammaContrastOp:1
+#: matx.vision.gauss_noise_op.GaussNoiseOp:1
+#: matx.vision.gaussian_blur_op.GaussianBlurOp:1
+#: matx.vision.hist_equalize_op.HistEqualizeOp:1
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp:1
+#: matx.vision.imdecode_op.ImdecodeNoExceptionRandomCropOp:1
+#: matx.vision.imdecode_op.ImdecodeOp:1
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp:1
+#: matx.vision.invert_op.InvertOp:1
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp:1
+#: matx.vision.median_blur_op.MedianBlurOp:1
+#: matx.vision.mixup_images_op.MixupImagesOp:1
+#: matx.vision.normalize_op.NormalizeOp:1
+#: matx.vision.normalize_op.TransposeNormalizeOp:1 matx.vision.pad_op.PadOp:1
+#: matx.vision.pad_op.PadWithBorderOp:1 matx.vision.posterize_op.PosterizeOp:1
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp:1
+#: matx.vision.reduce_op.MeanOp:1 matx.vision.reduce_op.SumOp:1
+#: matx.vision.resize_op.ResizeOp:1 matx.vision.rotate_op.RotateOp:1
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp:1
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp:1
+#: matx.vision.solarize_op.SolarizeOp:1 matx.vision.split_op.SplitOp:1
+#: matx.vision.stack_op.StackOp:1 matx.vision.transpose_op.TransposeOp:1
+#: matx.vision.warp_affine_op.WarpAffineOp:1
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp:1 of
+msgid "Bases: :py:class:`object`"
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp:1 of
+msgid ""
+"Apply auto contrast on input images, i.e. remap the image so that the "
+"darkest pixel becomes black (0), and the lightest becomes white (255)"
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__call__:1 of
+msgid "Apply auto contrast on input images."
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__call__
+#: matx.vision.auto_contrast_op.AutoContrastOp.__init__
+#: matx.vision.average_blur_op.AverageBlurOp.__call__
+#: matx.vision.average_blur_op.AverageBlurOp.__init__
+#: matx.vision.cast_op.CastOp.__call__ matx.vision.cast_op.CastOp.__init__
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__call__
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__init__
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__init__
+#: matx.vision.conv2d_op.Conv2dOp.__call__
+#: matx.vision.conv2d_op.Conv2dOp.__init__
+#: matx.vision.conv2d_op.EdgeDetectOp.__call__
+#: matx.vision.conv2d_op.EdgeDetectOp.__init__
+#: matx.vision.conv2d_op.EmbossOp.__call__
+#: matx.vision.conv2d_op.EmbossOp.__init__
+#: matx.vision.conv2d_op.SharpenOp.__call__
+#: matx.vision.conv2d_op.SharpenOp.__init__
+#: matx.vision.crop_op.CenterCropOp.__call__
+#: matx.vision.crop_op.CenterCropOp.__init__
+#: matx.vision.crop_op.CropOp.__call__ matx.vision.crop_op.CropOp.__init__
+#: matx.vision.cvt_color_op.CvtColorOp.__call__
+#: matx.vision.cvt_color_op.CvtColorOp.__init__
+#: matx.vision.flip_op.FlipOp.__call__ matx.vision.flip_op.FlipOp.__init__
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__call__
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__init__
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__init__
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__init__
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__call__
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__init__
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__call__
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__init__
+#: matx.vision.imdecode_op.ImdecodeOp.__call__
+#: matx.vision.imdecode_op.ImdecodeOp.__init__
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__call__
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__init__
+#: matx.vision.invert_op.InvertOp.__call__
+#: matx.vision.invert_op.InvertOp.__init__
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__init__
+#: matx.vision.median_blur_op.MedianBlurOp.__call__
+#: matx.vision.median_blur_op.MedianBlurOp.__init__
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__
+#: matx.vision.mixup_images_op.MixupImagesOp.__init__
+#: matx.vision.normalize_op.NormalizeOp.__call__
+#: matx.vision.normalize_op.NormalizeOp.__init__
+#: matx.vision.normalize_op.TransposeNormalizeOp.__call__
+#: matx.vision.normalize_op.TransposeNormalizeOp.__init__
+#: matx.vision.pad_op.PadOp.__call__ matx.vision.pad_op.PadOp.__init__
+#: matx.vision.pad_op.PadWithBorderOp.__call__
+#: matx.vision.pad_op.PadWithBorderOp.__init__
+#: matx.vision.posterize_op.PosterizeOp.__call__
+#: matx.vision.posterize_op.PosterizeOp.__init__
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__call__
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__init__
+#: matx.vision.reduce_op.MeanOp.__call__ matx.vision.reduce_op.MeanOp.__init__
+#: matx.vision.reduce_op.SumOp.__call__ matx.vision.reduce_op.SumOp.__init__
+#: matx.vision.resize_op.ResizeOp.__call__
+#: matx.vision.resize_op.ResizeOp.__init__
+#: matx.vision.rotate_op.RotateOp.__call__
+#: matx.vision.rotate_op.RotateOp.__init__
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__call__
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__init__
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__init__
+#: matx.vision.solarize_op.SolarizeOp.__call__
+#: matx.vision.solarize_op.SolarizeOp.__init__
+#: matx.vision.split_op.SplitOp.__call__ matx.vision.split_op.SplitOp.__init__
+#: matx.vision.stack_op.StackOp.__call__ matx.vision.stack_op.StackOp.__init__
+#: matx.vision.transpose_op.TransposeOp.__call__
+#: matx.vision.transpose_op.TransposeOp.__init__
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__
+#: matx.vision.warp_affine_op.WarpAffineOp.__init__
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__init__ of
+msgid "Parameters"
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__call__:3
+#: matx.vision.average_blur_op.AverageBlurOp.__call__:3
+#: matx.vision.cast_op.CastOp.__call__:3
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__call__:3
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__:3
+#: matx.vision.conv2d_op.Conv2dOp.__call__:3
+#: matx.vision.conv2d_op.EdgeDetectOp.__call__:3
+#: matx.vision.conv2d_op.EmbossOp.__call__:3
+#: matx.vision.conv2d_op.SharpenOp.__call__:3
+#: matx.vision.cvt_color_op.CvtColorOp.__call__:3
+#: matx.vision.flip_op.FlipOp.__call__:3
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__call__:3
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__:3
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__:3
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__call__:3
+#: matx.vision.invert_op.InvertOp.__call__:3
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__:3
+#: matx.vision.median_blur_op.MedianBlurOp.__call__:3
+#: matx.vision.normalize_op.NormalizeOp.__call__:3
+#: matx.vision.normalize_op.TransposeNormalizeOp.__call__:4
+#: matx.vision.posterize_op.PosterizeOp.__call__:3
+#: matx.vision.reduce_op.MeanOp.__call__:3
+#: matx.vision.reduce_op.SumOp.__call__:3
+#: matx.vision.resize_op.ResizeOp.__call__:3
+#: matx.vision.rotate_op.RotateOp.__call__:3
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__call__:3
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__:3
+#: matx.vision.solarize_op.SolarizeOp.__call__:3
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__:3
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__:3 of
+msgid "target images."
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__call__:5
+#: matx.vision.average_blur_op.AverageBlurOp.__call__:10
+#: matx.vision.cast_op.CastOp.__call__:12
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__call__:8
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__:9
+#: matx.vision.conv2d_op.Conv2dOp.__call__:10
+#: matx.vision.conv2d_op.EdgeDetectOp.__call__:7
+#: matx.vision.conv2d_op.EmbossOp.__call__:9
+#: matx.vision.conv2d_op.SharpenOp.__call__:9
+#: matx.vision.crop_op.CenterCropOp.__call__:5
+#: matx.vision.crop_op.CropOp.__call__:13
+#: matx.vision.cvt_color_op.CvtColorOp.__call__:5
+#: matx.vision.flip_op.FlipOp.__call__:12
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__call__:8
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__:9
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__:9
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__call__:5
+#: matx.vision.invert_op.InvertOp.__call__:5
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__:9
+#: matx.vision.median_blur_op.MedianBlurOp.__call__:7
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__:11
+#: matx.vision.normalize_op.NormalizeOp.__call__:5
+#: matx.vision.normalize_op.TransposeNormalizeOp.__call__:6
+#: matx.vision.pad_op.PadOp.__call__:5
+#: matx.vision.pad_op.PadWithBorderOp.__call__:13
+#: matx.vision.posterize_op.PosterizeOp.__call__:7
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__call__:5
+#: matx.vision.reduce_op.MeanOp.__call__:5
+#: matx.vision.reduce_op.SumOp.__call__:5
+#: matx.vision.resize_op.ResizeOp.__call__:8
+#: matx.vision.rotate_op.RotateOp.__call__:9
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__call__:7
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__:9
+#: matx.vision.solarize_op.SolarizeOp.__call__:7
+#: matx.vision.split_op.SplitOp.__call__:5
+#: matx.vision.transpose_op.TransposeOp.__call__:5
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__:10
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__:14 of
+msgid ""
+"sync mode after calculating the output. when device is cpu, the params "
+"makes no difference.   ASYNC -- If device is GPU, the whole calculation "
+"process is asynchronous.   SYNC -- If device is GPU, the whole "
+"calculation will be blocked until this operation is finished.   SYNC_CPU "
+"-- If device is GPU, the whole calculation will be blocked until this "
+"operation is finished, and the corresponding CPU array would be created "
+"and returned. Defaults to ASYNC."
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__call__:8
+#: matx.vision.average_blur_op.AverageBlurOp.__call__:13
+#: matx.vision.cast_op.CastOp.__call__:15
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__call__:11
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__:12
+#: matx.vision.conv2d_op.Conv2dOp.__call__:13
+#: matx.vision.conv2d_op.EdgeDetectOp.__call__:10
+#: matx.vision.conv2d_op.EmbossOp.__call__:12
+#: matx.vision.conv2d_op.SharpenOp.__call__:12
+#: matx.vision.crop_op.CenterCropOp.__call__:8
+#: matx.vision.crop_op.CropOp.__call__:16
+#: matx.vision.cvt_color_op.CvtColorOp.__call__:8
+#: matx.vision.flip_op.FlipOp.__call__:15
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__call__:11
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__:12
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__:12
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__call__:8
+#: matx.vision.invert_op.InvertOp.__call__:8
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__:12
+#: matx.vision.median_blur_op.MedianBlurOp.__call__:10
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__:14
+#: matx.vision.normalize_op.NormalizeOp.__call__:8
+#: matx.vision.normalize_op.TransposeNormalizeOp.__call__:9
+#: matx.vision.pad_op.PadOp.__call__:8
+#: matx.vision.pad_op.PadWithBorderOp.__call__:16
+#: matx.vision.posterize_op.PosterizeOp.__call__:10
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__call__:8
+#: matx.vision.reduce_op.MeanOp.__call__:8
+#: matx.vision.reduce_op.SumOp.__call__:8
+#: matx.vision.resize_op.ResizeOp.__call__:11
+#: matx.vision.rotate_op.RotateOp.__call__:12
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__call__:10
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__:12
+#: matx.vision.solarize_op.SolarizeOp.__call__:10
+#: matx.vision.split_op.SplitOp.__call__:8
+#: matx.vision.transpose_op.TransposeOp.__call__:8
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__:13
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__:17 of
+msgid ""
+"sync mode after calculating the output. when device is cpu, the params "
+"makes no difference."
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__call__:7
+#: matx.vision.average_blur_op.AverageBlurOp.__call__:12
+#: matx.vision.cast_op.CastOp.__call__:14
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__call__:10
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__:11
+#: matx.vision.conv2d_op.Conv2dOp.__call__:12
+#: matx.vision.conv2d_op.EdgeDetectOp.__call__:9
+#: matx.vision.conv2d_op.EmbossOp.__call__:11
+#: matx.vision.conv2d_op.SharpenOp.__call__:11
+#: matx.vision.crop_op.CenterCropOp.__call__:7
+#: matx.vision.crop_op.CropOp.__call__:15
+#: matx.vision.cvt_color_op.CvtColorOp.__call__:7
+#: matx.vision.flip_op.FlipOp.__call__:14
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__call__:10
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__:11
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__:11
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__call__:7
+#: matx.vision.invert_op.InvertOp.__call__:7
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__:11
+#: matx.vision.median_blur_op.MedianBlurOp.__call__:9
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__:13
+#: matx.vision.normalize_op.NormalizeOp.__call__:7
+#: matx.vision.normalize_op.TransposeNormalizeOp.__call__:8
+#: matx.vision.pad_op.PadOp.__call__:7
+#: matx.vision.pad_op.PadWithBorderOp.__call__:15
+#: matx.vision.posterize_op.PosterizeOp.__call__:9
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__call__:7
+#: matx.vision.reduce_op.MeanOp.__call__:7
+#: matx.vision.reduce_op.SumOp.__call__:7
+#: matx.vision.resize_op.ResizeOp.__call__:10
+#: matx.vision.rotate_op.RotateOp.__call__:11
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__call__:9
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__:11
+#: matx.vision.solarize_op.SolarizeOp.__call__:9
+#: matx.vision.split_op.SplitOp.__call__:7
+#: matx.vision.transpose_op.TransposeOp.__call__:7
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__:12
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__:16 of
+msgid ""
+"ASYNC -- If device is GPU, the whole calculation process is asynchronous."
+" SYNC -- If device is GPU, the whole calculation will be blocked until "
+"this operation is finished. SYNC_CPU -- If device is GPU, the whole "
+"calculation will be blocked until this operation is finished, and the "
+"corresponding CPU array would be created and returned."
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__call__:10
+#: matx.vision.average_blur_op.AverageBlurOp.__call__:15
+#: matx.vision.cast_op.CastOp.__call__:17
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__call__:13
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__:14
+#: matx.vision.conv2d_op.Conv2dOp.__call__:15
+#: matx.vision.conv2d_op.EdgeDetectOp.__call__:12
+#: matx.vision.conv2d_op.EmbossOp.__call__:14
+#: matx.vision.conv2d_op.SharpenOp.__call__:14
+#: matx.vision.crop_op.CenterCropOp.__call__:10
+#: matx.vision.crop_op.CropOp.__call__:18
+#: matx.vision.cvt_color_op.CvtColorOp.__call__:10
+#: matx.vision.flip_op.FlipOp.__call__:17
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__call__:13
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__:14
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__:14
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__call__:10
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__call__:8
+#: matx.vision.imdecode_op.ImdecodeOp.__call__:8
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__call__:8
+#: matx.vision.invert_op.InvertOp.__call__:10
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__:14
+#: matx.vision.median_blur_op.MedianBlurOp.__call__:12
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__:16
+#: matx.vision.normalize_op.NormalizeOp.__call__:10
+#: matx.vision.normalize_op.TransposeNormalizeOp.__call__:11
+#: matx.vision.pad_op.PadOp.__call__:10
+#: matx.vision.pad_op.PadWithBorderOp.__call__:18
+#: matx.vision.posterize_op.PosterizeOp.__call__:12
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__call__:10
+#: matx.vision.reduce_op.MeanOp.__call__:10
+#: matx.vision.reduce_op.SumOp.__call__:10
+#: matx.vision.resize_op.ResizeOp.__call__:13
+#: matx.vision.rotate_op.RotateOp.__call__:14
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__call__:12
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__:14
+#: matx.vision.solarize_op.SolarizeOp.__call__:12
+#: matx.vision.split_op.SplitOp.__call__:10
+#: matx.vision.stack_op.StackOp.__call__:8
+#: matx.vision.transpose_op.TransposeOp.__call__:10
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__:15
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__:19 of
+msgid "Defaults to ASYNC."
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__call__
+#: matx.vision.average_blur_op.AverageBlurOp.__call__
+#: matx.vision.cast_op.CastOp.__call__
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__call__
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__
+#: matx.vision.conv2d_op.Conv2dOp.__call__
+#: matx.vision.conv2d_op.EdgeDetectOp.__call__
+#: matx.vision.conv2d_op.EmbossOp.__call__
+#: matx.vision.conv2d_op.SharpenOp.__call__
+#: matx.vision.crop_op.CenterCropOp.__call__
+#: matx.vision.crop_op.CropOp.__call__
+#: matx.vision.cvt_color_op.CvtColorOp.__call__
+#: matx.vision.flip_op.FlipOp.__call__
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__call__
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__call__
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__call__
+#: matx.vision.imdecode_op.ImdecodeOp.__call__
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__call__
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__
+#: matx.vision.median_blur_op.MedianBlurOp.__call__
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__
+#: matx.vision.normalize_op.NormalizeOp.__call__
+#: matx.vision.normalize_op.TransposeNormalizeOp.__call__
+#: matx.vision.pad_op.PadOp.__call__
+#: matx.vision.pad_op.PadWithBorderOp.__call__
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__call__
+#: matx.vision.reduce_op.MeanOp.__call__ matx.vision.reduce_op.SumOp.__call__
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__call__
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__
+#: matx.vision.split_op.SplitOp.__call__ matx.vision.stack_op.StackOp.__call__
+#: matx.vision.transpose_op.TransposeOp.__call__
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__ of
+msgid "Returns"
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__call__:13
+#: matx.vision.average_blur_op.AverageBlurOp.__call__:18
+#: matx.vision.cast_op.CastOp.__call__:20
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__call__:16
+#: matx.vision.conv2d_op.Conv2dOp.__call__:18
+#: matx.vision.conv2d_op.EdgeDetectOp.__call__:15
+#: matx.vision.conv2d_op.EmbossOp.__call__:17
+#: matx.vision.conv2d_op.SharpenOp.__call__:17
+#: matx.vision.cvt_color_op.CvtColorOp.__call__:13
+#: matx.vision.flip_op.FlipOp.__call__:20
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__call__:16
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__:17
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__:17
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__call__:13
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__:17
+#: matx.vision.median_blur_op.MedianBlurOp.__call__:15
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__:19
+#: matx.vision.normalize_op.NormalizeOp.__call__:13
+#: matx.vision.normalize_op.TransposeNormalizeOp.__call__:14
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__call__:15
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__:17
+#: matx.vision.split_op.SplitOp.__call__:13
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__:18
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__:22 of
+msgid "converted images"
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__call__
+#: matx.vision.average_blur_op.AverageBlurOp.__call__
+#: matx.vision.cast_op.CastOp.__call__
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__call__
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__
+#: matx.vision.conv2d_op.Conv2dOp.__call__
+#: matx.vision.conv2d_op.EdgeDetectOp.__call__
+#: matx.vision.conv2d_op.EmbossOp.__call__
+#: matx.vision.conv2d_op.SharpenOp.__call__
+#: matx.vision.crop_op.CenterCropOp.__call__
+#: matx.vision.crop_op.CropOp.__call__
+#: matx.vision.cvt_color_op.CvtColorOp.__call__
+#: matx.vision.flip_op.FlipOp.__call__
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__call__
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__call__
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__call__
+#: matx.vision.imdecode_op.ImdecodeOp.__call__
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__call__
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__
+#: matx.vision.median_blur_op.MedianBlurOp.__call__
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__
+#: matx.vision.normalize_op.NormalizeOp.__call__
+#: matx.vision.normalize_op.TransposeNormalizeOp.__call__
+#: matx.vision.pad_op.PadOp.__call__
+#: matx.vision.pad_op.PadWithBorderOp.__call__
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__call__
+#: matx.vision.reduce_op.MeanOp.__call__ matx.vision.reduce_op.SumOp.__call__
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__call__
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__
+#: matx.vision.split_op.SplitOp.__call__
+#: matx.vision.transpose_op.TransposeOp.__call__
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__ of
+msgid "Return type"
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__call__:16
+#: matx.vision.average_blur_op.AverageBlurOp.__call__:21
+#: matx.vision.cast_op.CastOp.__call__:23
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__call__:19
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__:20
+#: matx.vision.conv2d_op.Conv2dOp.__call__:21
+#: matx.vision.conv2d_op.EdgeDetectOp.__call__:18
+#: matx.vision.conv2d_op.EmbossOp.__call__:20
+#: matx.vision.conv2d_op.SharpenOp.__call__:20
+#: matx.vision.crop_op.CenterCropOp.__call__:16
+#: matx.vision.crop_op.CropOp.__call__:24
+#: matx.vision.cvt_color_op.CvtColorOp.__call__:16
+#: matx.vision.flip_op.FlipOp.__call__:23
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__call__:19
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__:20
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__:20
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__call__:16
+#: matx.vision.invert_op.InvertOp.__call__:13
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__:20
+#: matx.vision.median_blur_op.MedianBlurOp.__call__:18
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__:22
+#: matx.vision.normalize_op.NormalizeOp.__call__:16
+#: matx.vision.pad_op.PadOp.__call__:16
+#: matx.vision.posterize_op.PosterizeOp.__call__:15
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__call__:16
+#: matx.vision.reduce_op.SumOp.__call__:16
+#: matx.vision.resize_op.ResizeOp.__call__:16
+#: matx.vision.rotate_op.RotateOp.__call__:17
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__call__:18
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__:20
+#: matx.vision.solarize_op.SolarizeOp.__call__:15
+#: matx.vision.split_op.SplitOp.__call__:16
+#: matx.vision.transpose_op.TransposeOp.__call__:16
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__:21
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__:25 of
+msgid "Example:"
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__init__:1 of
+msgid "Initialize AutoContrastOp"
+msgstr ""
+
+#: matx.vision.auto_contrast_op.AutoContrastOp.__init__:3
+#: matx.vision.average_blur_op.AverageBlurOp.__init__:3
+#: matx.vision.cast_op.CastOp.__init__:3
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__init__:3
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__init__:3
+#: matx.vision.conv2d_op.Conv2dOp.__init__:3
+#: matx.vision.conv2d_op.EdgeDetectOp.__init__:3
+#: matx.vision.conv2d_op.EmbossOp.__init__:3
+#: matx.vision.conv2d_op.SharpenOp.__init__:3
+#: matx.vision.cvt_color_op.CvtColorOp.__init__:3
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__init__:3
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__init__:3
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__init__:3
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__init__:3
+#: matx.vision.invert_op.InvertOp.__init__:3
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__init__:3
+#: matx.vision.median_blur_op.MedianBlurOp.__init__:3
+#: matx.vision.mixup_images_op.MixupImagesOp.__init__:3
+#: matx.vision.normalize_op.NormalizeOp.__init__:3
+#: matx.vision.normalize_op.TransposeNormalizeOp.__init__:3
+#: matx.vision.posterize_op.PosterizeOp.__init__:3
+#: matx.vision.rotate_op.RotateOp.__init__:3
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__init__:3
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__init__:3
+#: matx.vision.solarize_op.SolarizeOp.__init__:3
+#: matx.vision.split_op.SplitOp.__init__:3
+#: matx.vision.warp_affine_op.WarpAffineOp.__init__:3
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__init__:3 of
+msgid "the matx device used for the operation"
+msgstr ""
+
+#: matx.vision.average_blur_op.AverageBlurOp:1
+#: matx.vision.average_blur_op.AverageBlurOp.__call__:1
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__:1 of
+msgid "Apply average blur on input images."
+msgstr ""
+
+#: matx.vision.average_blur_op.AverageBlurOp.__call__:5
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__:5
+#: matx.vision.median_blur_op.MedianBlurOp.__call__:5 of
+msgid ""
+"conv kernel size for each image, each item in this list should be a 2 "
+"element tuple (x, y)."
+msgstr ""
+
+#: matx.vision.average_blur_op.AverageBlurOp.__call__:7
+#: matx.vision.conv2d_op.Conv2dOp.__call__:7 of
+msgid ""
+"anchors of each kernel, each item in this list should be a 2 element "
+"tuple (x, y). If not given, -1 would be used by default to indicate "
+"anchor for from the center."
+msgstr ""
+
+#: matx.vision.average_blur_op.AverageBlurOp.__init__:1 of
+msgid "Initialize AverageBlurOp"
+msgstr ""
+
+#: matx.vision.average_blur_op.AverageBlurOp.__init__:5
+#: matx.vision.conv2d_op.Conv2dOp.__init__:5
+#: matx.vision.conv2d_op.EdgeDetectOp.__init__:7
+#: matx.vision.conv2d_op.EmbossOp.__init__:9
+#: matx.vision.conv2d_op.SharpenOp.__init__:9
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__init__:5
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__init__:5 of
+msgid ""
+"pixel extrapolation method, if border_type is BORDER_CONSTANT, 0 would be"
+" used as border value."
+msgstr ""
+
+#: matx.vision.cast_op.CastOp:1 of
+msgid "Cast image data type to target type, e.g. uint8 to float32"
+msgstr ""
+
+#: matx.vision.cast_op.CastOp.__call__:1 of
+msgid ""
+"Cast image data type to target type. Could apply factor scale and shift "
+"at the same time."
+msgstr ""
+
+#: matx.vision.cast_op.CastOp.__call__:5 of
+msgid "target data type that want to convert to, e.g. uint8, float32, etc."
+msgstr ""
+
+#: matx.vision.cast_op.CastOp.__call__:7 of
+msgid ""
+"scale factor when casting the data type, e.g. cast image from uint8 to "
+"float32, if want to change the value range from [0, 255] to [0, 1], alpha"
+" can be set as 1.0/255."
+msgstr ""
+
+#: matx.vision.cast_op.CastOp.__call__:10 of
+msgid "shift value when casting the data type"
+msgstr ""
+
+#: matx.vision.cast_op.CastOp.__init__:1 of
+msgid "Initialize CastOp"
+msgstr ""
+
+#: matx.vision.crop_op.CenterCropOp:1 of
+msgid "Center crop the given images"
+msgstr ""
+
+#: matx.vision.crop_op.CenterCropOp.__call__:1 of
+msgid "CenterCrop images"
+msgstr ""
+
+#: matx.vision.crop_op.CenterCropOp.__call__:3
+#: matx.vision.pad_op.PadOp.__call__:3
+#: matx.vision.pad_op.PadWithBorderOp.__call__:3
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__call__:3
+#: matx.vision.stack_op.StackOp.__call__:1
+#: matx.vision.transpose_op.TransposeOp.__call__:3 of
+msgid "input images."
+msgstr ""
+
+#: matx.vision.crop_op.CenterCropOp.__call__:13 of
+msgid "center crop images"
+msgstr ""
+
+#: matx.vision.crop_op.CenterCropOp.__init__:1 of
+msgid "Initialize CenterCropOp"
+msgstr ""
+
+#: matx.vision.crop_op.CenterCropOp.__init__:3
+#: matx.vision.crop_op.CropOp.__init__:3 matx.vision.flip_op.FlipOp.__init__:3
+#: matx.vision.pad_op.PadOp.__init__:3
+#: matx.vision.pad_op.PadWithBorderOp.__init__:3
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__init__:3
+#: matx.vision.reduce_op.MeanOp.__init__:3
+#: matx.vision.reduce_op.SumOp.__init__:3
+#: matx.vision.resize_op.ResizeOp.__init__:3
+#: matx.vision.transpose_op.TransposeOp.__init__:3 of
+msgid "the matx device used for the operation."
+msgstr ""
+
+#: matx.vision.crop_op.CenterCropOp.__init__:5
+#: matx.vision.pad_op.PadOp.__init__:5
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__init__:5 of
+msgid "output size for all images, must be 2 dim tuple."
+msgstr ""
+
+#: matx.vision.channel_reorder_op.ChannelReorderOp:1
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__call__:1 of
+msgid "Apply channel reorder on input images."
+msgstr ""
+
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__call__:5 of
+msgid ""
+"index order of the new channels for each image. e.g. if want to change "
+"bgr image to rgb image, the order could be [2,1,0]"
+msgstr ""
+
+#: matx.vision.channel_reorder_op.ChannelReorderOp.__init__:1 of
+msgid "Initialize ChannelReorderOp"
+msgstr ""
+
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp:1 of
+msgid ""
+"Apply linear adjust on pixels of input images, i.e. apply a * v + b for "
+"each pixel v in image/channel."
+msgstr ""
+
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__:1 of
+msgid "Apply linear adjust on pixels of input images."
+msgstr ""
+
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__:5 of
+msgid "factor for linear adjustment."
+msgstr ""
+
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__:7 of
+msgid "shift for linear adjustment."
+msgstr ""
+
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__call__:17 of
+msgid ""
+"converted images. The output value would be in its original data type "
+"range, e.g. for uint [0, 255]"
+msgstr ""
+
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__init__:1 of
+msgid "Initialize ColorLinearAdjustOp"
+msgstr ""
+
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__init__:5 of
+msgid "probability for linear ajustment on each image. Apply on all by default."
+msgstr ""
+
+#: matx.vision.color_linear_adjust_op.ColorLinearAdjustOp.__init__:7 of
+msgid ""
+"if False, all channels of a single image would use the same linear "
+"parameters; if True, each channel would be able to set different linear "
+"adjustment"
+msgstr ""
+
+#: matx.vision.conv2d_op.Conv2dOp:1 matx.vision.conv2d_op.Conv2dOp.__call__:1
+#: of
+msgid "Apply conv kernels on input images."
+msgstr ""
+
+#: matx.vision.conv2d_op.Conv2dOp.__call__:5 of
+msgid "conv kernels for each image."
+msgstr ""
+
+#: matx.vision.conv2d_op.Conv2dOp.__init__:1 of
+msgid "Initialize Conv2dOp"
+msgstr ""
+
+#: matx.vision.crop_op.CropOp:1 of
+msgid "Crop images in batch on GPU with customized parameters."
+msgstr ""
+
+#: matx.vision.crop_op.CropOp.__call__:1 of
+msgid "Crop images"
+msgstr ""
+
+#: matx.vision.crop_op.CropOp.__call__:3 of
+msgid "source/input image"
+msgstr ""
+
+#: matx.vision.crop_op.CropOp.__call__:5 of
+msgid "the x coordinates of the top_left corner of the cropped region."
+msgstr ""
+
+#: matx.vision.crop_op.CropOp.__call__:7 of
+msgid "the y coordinates of the top_left corner of the cropped region."
+msgstr ""
+
+#: matx.vision.crop_op.CropOp.__call__:9 of
+msgid "desired width for each cropped image."
+msgstr ""
+
+#: matx.vision.crop_op.CropOp.__call__:11 of
+msgid "desired height for each cropped image."
+msgstr ""
+
+#: matx.vision.crop_op.CropOp.__call__:21 of
+msgid "crop images"
+msgstr ""
+
+#: matx.vision.crop_op.CropOp.__init__:1 of
+msgid "Initialize CropOp"
+msgstr ""
+
+#: matx.vision.cvt_color_op.CvtColorOp:1 of
+msgid "Color convertion for input images."
+msgstr ""
+
+#: matx.vision.cvt_color_op.CvtColorOp.__call__:1 of
+msgid "Apply color convertion for input images."
+msgstr ""
+
+#: matx.vision.cvt_color_op.CvtColorOp.__init__:1 of
+msgid "Initialize CvtColorOp"
+msgstr ""
+
+#: matx.vision.cvt_color_op.CvtColorOp.__init__:5 of
+msgid "color convertion code, e.g. matx.vision.COLOR_BGR2RGB"
+msgstr ""
+
+#: matx.vision.conv2d_op.EdgeDetectOp:1 of
+msgid ""
+"Generate a black & white edge image and alpha-blend it with the input "
+"image. Edge detect kernel is [[0, 1, 0], [1, -4, 1], [0, 1, 0]]."
+msgstr ""
+
+#: matx.vision.conv2d_op.EdgeDetectOp.__call__:1 of
+msgid "Generate an edge image and alpha-blend it with the input image."
+msgstr ""
+
+#: matx.vision.conv2d_op.EdgeDetectOp.__call__:5
+#: matx.vision.conv2d_op.EmbossOp.__call__:5
+#: matx.vision.conv2d_op.SharpenOp.__call__:5 of
+msgid ""
+"blending factor for each image. If omitted, the alpha set in op "
+"initialization would be used for all images."
+msgstr ""
+
+#: matx.vision.conv2d_op.EdgeDetectOp.__init__:1 of
+msgid "Initialize EdgeDetectOp"
+msgstr ""
+
+#: matx.vision.conv2d_op.EdgeDetectOp.__init__:5 of
+msgid "alpha-blend factor, 1.0 by default, which means only keep the edge image."
+msgstr ""
+
+#: matx.vision.conv2d_op.EmbossOp:1 of
+msgid ""
+"Emboss images and alpha-blend the result with the original input images. "
+"Emboss kernel is [[-1-s, -s, 0], [-s, 1, s], [0, s, 1+s]], emboss "
+"strength is controlled by s here."
+msgstr ""
+
+#: matx.vision.conv2d_op.EmbossOp.__call__:1 of
+msgid "Emboss images and alpha-blend the result with the original input images."
+msgstr ""
+
+#: matx.vision.conv2d_op.EmbossOp.__call__:7 of
+msgid ""
+"parameter that controls the strength of the emboss. If omitted, the "
+"strength set in op initialization would be used for all images."
+msgstr ""
+
+#: matx.vision.conv2d_op.EmbossOp.__init__:1 of
+msgid "Initialize EmbossOp"
+msgstr ""
+
+#: matx.vision.conv2d_op.EmbossOp.__init__:5 of
+msgid ""
+"alpha-blend factor, 1.0 by default, which means only keep the emboss "
+"image."
+msgstr ""
+
+#: matx.vision.conv2d_op.EmbossOp.__init__:7 of
+msgid "strength of the emboss, 0.0 by default."
+msgstr ""
+
+#: matx.vision.flip_op.FlipOp:1 of
+msgid "Flip the given images along specified directions."
+msgstr ""
+
+#: matx.vision.flip_op.FlipOp.__call__:1 of
+msgid "Flip images with specified directions."
+msgstr ""
+
+#: matx.vision.flip_op.FlipOp.__call__:5 of
+msgid ""
+"flip type for each image in the batch. HORIZONTAL_FLIP -- flip "
+"horizontally, VERTICAL_FLIP -- flip vertically, DIAGONAL_FLIP -- flip "
+"horizontally and vertically, FLIP_NOT_APPLY --  keep the original If "
+"omitted, the value set in the op initialization would be used for all "
+"images."
+msgstr ""
+
+#: matx.vision.flip_op.FlipOp.__init__:1 of
+msgid "Initialize FlipOp"
+msgstr ""
+
+#: matx.vision.flip_op.FlipOp.__init__:5 of
+msgid ""
+"flip type. HORIZONTAL_FLIP -- flip horizontally, VERTICAL_FLIP -- flip "
+"vertically, DIAGONAL_FLIP -- flip horizontally and vertically, "
+"FLIP_NOT_APPLY --  keep the original HORIZONTAL_FLIP by default. Could be"
+" overriden in runtime to set for each image in the batch."
+msgstr ""
+
+#: matx.vision.flip_op.FlipOp.__init__:12 of
+msgid ""
+"probability for flipping each image, by default flipping all images with "
+"given flip code."
+msgstr ""
+
+#: matx.vision.gamma_contrast_op.GammaContrastOp:1 of
+msgid ""
+"Apply gamma contrast on input images, i.e. for each pixel value v: "
+"255*((v/255)**gamma)"
+msgstr ""
+
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__call__:1 of
+msgid "Apply gamma contrast on input images."
+msgstr ""
+
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__call__:5 of
+msgid ""
+"gamma value for each image / channel. If `per_channel` is False, the list"
+" should have the same size as batch size. If `per_channel` is True, the "
+"list should contain channel * batch_size elements."
+msgstr ""
+
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__init__:1 of
+msgid "Initialize GammaContrastOp"
+msgstr ""
+
+#: matx.vision.gamma_contrast_op.GammaContrastOp.__init__:5 of
+msgid ""
+"For each pixel, whether to apply the gamma contrast with different gamma "
+"value (True), or through out the channels using same gamma value (False)."
+" False by default."
+msgstr ""
+
+#: matx.vision.gauss_noise_op.GaussNoiseOp:1
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__:1 of
+msgid "Apply gaussian noise on input images."
+msgstr ""
+
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__:5 of
+msgid ""
+"mu value for each image. If omitted, the mu value set during the op "
+"initialization would be used for all images."
+msgstr ""
+
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__call__:7 of
+msgid ""
+"sigma value for each image. If omitted, the sigma value set during the op"
+" initialization would be used for all images."
+msgstr ""
+
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__init__:1 of
+msgid "Initialize GaussNoiseOp"
+msgstr ""
+
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__init__:5 of
+msgid ""
+"max batch size for gaussian noise op. It is required for cuda randomness "
+"initialization. When actually calling this op, the input batch size "
+"should be equal to or less than this value."
+msgstr ""
+
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__init__:8 of
+msgid ""
+"mu for gaussian noise. It is a global value for all images, can be "
+"overridden in calling time, 0.0 by default."
+msgstr ""
+
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__init__:10 of
+msgid ""
+"sigma for gaussian noise. It is a global value for all images, can be "
+"overridden in calling time, 1.0 by default."
+msgstr ""
+
+#: matx.vision.gauss_noise_op.GaussNoiseOp.__init__:12
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__init__:13 of
+msgid ""
+"For each pixel, whether to add the noise per channel with different value"
+" (True), or through out the channels using same value (False). False by "
+"default."
+msgstr ""
+
+#: matx.vision.gaussian_blur_op.GaussianBlurOp:1
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__:1 of
+msgid "Apply gaussian blur on input images."
+msgstr ""
+
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__call__:7 of
+msgid ""
+"sigma for gaussian blur, each item in this list should be a 2 element "
+"tuple (x, y)."
+msgstr ""
+
+#: matx.vision.gaussian_blur_op.GaussianBlurOp.__init__:1 of
+msgid "Initialize GaussianBlurOp"
+msgstr ""
+
+#: matx.vision.hist_equalize_op.HistEqualizeOp:1 of
+msgid ""
+"Apply histgram equalization on input images. Please refer to "
+"https://en.wikipedia.org/wiki/Histogram_equalization for more "
+"information."
+msgstr ""
+
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__call__:1 of
+msgid "Apply histgram equalization on input images."
+msgstr ""
+
+#: matx.vision.hist_equalize_op.HistEqualizeOp.__init__:1 of
+msgid "Initialize HistEqualizeOp"
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp:1 of
+msgid "Decode binary image without raising exception when handle invalid image"
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__call__:1
+#: matx.vision.imdecode_op.ImdecodeOp.__call__:1
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__call__:1 of
+msgid "list of binary images"
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__call__:3
+#: matx.vision.imdecode_op.ImdecodeOp.__call__:3
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__call__:3
+#: matx.vision.stack_op.StackOp.__call__:3 of
+msgid ""
+"sync mode after calculating the output. when device is cpu, the param "
+"makes no difference.   ASYNC -- If device is GPU, the whole calculation "
+"process is asynchronous.   SYNC -- If device is GPU, the whole "
+"calculation will bolcking util the compute is completed.   SYNC_CPU -- If"
+" device is GPU, the whole calculation will bolcking util the compute is "
+"completed, then copying the CUDA data to CPU. Defaults to ASYNC."
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__call__:6
+#: matx.vision.imdecode_op.ImdecodeOp.__call__:6
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__call__:6
+#: matx.vision.stack_op.StackOp.__call__:6 of
+msgid ""
+"sync mode after calculating the output. when device is cpu, the param "
+"makes no difference."
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__call__:5
+#: matx.vision.imdecode_op.ImdecodeOp.__call__:5
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__call__:5
+#: matx.vision.stack_op.StackOp.__call__:5 of
+msgid ""
+"ASYNC -- If device is GPU, the whole calculation process is asynchronous."
+" SYNC -- If device is GPU, the whole calculation will bolcking util the "
+"compute is completed. SYNC_CPU -- If device is GPU, the whole calculation"
+" will bolcking util the compute is completed, then copying the CUDA data "
+"to CPU."
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__call__:11 of
+msgid "decoded images List[int]: 1 means operation is successful, otherwise 0"
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__init__:1
+#: matx.vision.imdecode_op.ImdecodeOp.__init__:1 of
+msgid "Initialize ImdecodeOp"
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__init__:3
+#: matx.vision.imdecode_op.ImdecodeOp.__init__:3
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__init__:1
+#: matx.vision.stack_op.StackOp.__init__:1 of
+msgid "device used for the operation"
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__init__:5
+#: matx.vision.imdecode_op.ImdecodeOp.__init__:5
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__init__:3 of
+msgid "the color type for output image, support \"RGB\" and \"BGR\""
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeNoExceptionOp.__init__:7
+#: matx.vision.imdecode_op.ImdecodeOp.__init__:7
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__init__:12 of
+msgid "concurrency of decode operation, only for gpu, Defaults to 8."
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeNoExceptionRandomCropOp.__call__:1 of
+msgid "Call self as a function."
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeOp:1 of
+msgid "Decode binary image"
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeOp.__call__:11
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__call__:11 of
+msgid "decoded images"
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeOp.__call__:14
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__call__:14
+#: matx.vision.stack_op.StackOp.__call__:13 of
+msgid "Examples:"
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp:1 of
+msgid "Decode binary image and random crop"
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__init__:5
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__init__:7 of
+msgid ""
+"Specifies the lower and upper bounds for the random area of the crop, "
+"before resizing. The scale is defined with respect to the area of the "
+"original image."
+msgstr ""
+
+#: matx.vision.imdecode_op.ImdecodeRandomCropOp.__init__:9
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__init__:11 of
+msgid ""
+"lower and upper bounds for the random aspect ratio of the crop, before "
+"resizing."
+msgstr ""
+
+#: matx.vision.invert_op.InvertOp:1 of
+msgid "Invert all values in images. e.g. turn 20 into 255-20=235"
+msgstr ""
+
+#: matx.vision.invert_op.InvertOp.__call__:1 of
+msgid "Invert image pixels by substracting itself from given cap value"
+msgstr ""
+
+#: matx.vision.invert_op.InvertOp.__init__:1 of
+msgid "Initialize InvertOp"
+msgstr ""
+
+#: matx.vision.invert_op.InvertOp.__init__:5 of
+msgid "probability for inversion. Invert all by default."
+msgstr ""
+
+#: matx.vision.invert_op.InvertOp.__init__:7 of
+msgid "whether to apply the inversion probability on each image or each channel."
+msgstr ""
+
+#: matx.vision.invert_op.InvertOp.__init__:9 of
+msgid "the minuend for inversion, 255.0 by default."
+msgstr ""
+
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp:1 of
+msgid "Apply laplacian blur on input images."
+msgstr ""
+
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__:5 of
+msgid ""
+"conv kernel size for each image, laplacian kernel is a square shaped "
+"kernel, so each item in this list is an integer."
+msgstr ""
+
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__call__:7 of
+msgid "scale factor for laplacian blur"
+msgstr ""
+
+#: matx.vision.laplacian_blur_op.LaplacianBlurOp.__init__:1 of
+msgid "Initialize LaplacianBlurOp"
+msgstr ""
+
+#: matx.vision.reduce_op.MeanOp:1 matx.vision.reduce_op.MeanOp.__call__:1 of
+msgid "Calculate mean over each image."
+msgstr ""
+
+#: matx.vision.reduce_op.MeanOp.__call__:13 of
+msgid ""
+"mean result. For N images, the result would be shape Nx1 if per_channel "
+"is False, otherwise NxC where C is the image channel size."
+msgstr ""
+
+#: matx.vision.reduce_op.MeanOp.__call__:16 of
+msgid "Example: >>> import cv2 >>> import matx >>> from matx.vision import MeanOp"
+msgstr ""
+
+#: matx.vision.reduce_op.MeanOp.__init__:1 of
+msgid "Initialize MeanOp"
+msgstr ""
+
+#: matx.vision.reduce_op.MeanOp.__init__:5 of
+msgid ""
+"if True, calculate mean over each channel; if False, calculate mean over "
+"the whole image."
+msgstr ""
+
+#: matx.vision.median_blur_op.MedianBlurOp:1
+#: matx.vision.median_blur_op.MedianBlurOp.__call__:1 of
+msgid "Apply median blur on input images."
+msgstr ""
+
+#: matx.vision.median_blur_op.MedianBlurOp.__init__:1 of
+msgid "Initialize MedianBlurOp"
+msgstr ""
+
+#: matx.vision.mixup_images_op.MixupImagesOp:1 of
+msgid ""
+"Weighted add up two images, i.e. calculate a * img1 + b * img2. img2 "
+"should have the same width and height as img1, while img2 would either "
+"have the same channel size as img1, or img2 only contains 1 channel."
+msgstr ""
+
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__:1 of
+msgid "Weighted add up two images."
+msgstr ""
+
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__:3 of
+msgid "augend images."
+msgstr ""
+
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__:5 of
+msgid "addend images."
+msgstr ""
+
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__:7 of
+msgid "weighted factor for images1."
+msgstr ""
+
+#: matx.vision.mixup_images_op.MixupImagesOp.__call__:9 of
+msgid "weighted factor for images2."
+msgstr ""
+
+#: matx.vision.mixup_images_op.MixupImagesOp.__init__:1 of
+msgid "Initialize MixupImagesOp"
+msgstr ""
+
+#: matx.vision.normalize_op.NormalizeOp:1
+#: matx.vision.normalize_op.NormalizeOp.__call__:1 of
+msgid ""
+"Normalize images with mean and std, and cast the image data type to "
+"target type."
+msgstr ""
+
+#: matx.vision.normalize_op.NormalizeOp.__init__:1 of
+msgid "Initialize NormalizeOp"
+msgstr ""
+
+#: matx.vision.normalize_op.NormalizeOp.__init__:5
+#: matx.vision.normalize_op.TransposeNormalizeOp.__init__:5 of
+msgid "mean for normalize"
+msgstr ""
+
+#: matx.vision.normalize_op.NormalizeOp.__init__:7
+#: matx.vision.normalize_op.TransposeNormalizeOp.__init__:7 of
+msgid "std for normalize"
+msgstr ""
+
+#: matx.vision.normalize_op.NormalizeOp.__init__:9
+#: matx.vision.normalize_op.TransposeNormalizeOp.__init__:13 of
+msgid "output data type when normalize finished, float32 by default."
+msgstr ""
+
+#: matx.vision.normalize_op.NormalizeOp.__init__:11
+#: matx.vision.normalize_op.TransposeNormalizeOp.__init__:15 of
+msgid "shift value for all pixels after the normalization, 0.0 by default."
+msgstr ""
+
+#: matx.vision.normalize_op.NormalizeOp.__init__:13
+#: matx.vision.normalize_op.TransposeNormalizeOp.__init__:17 of
+msgid "scale factor value for all pixels after the normalization, 1.0 by default."
+msgstr ""
+
+#: matx.vision.pad_op.PadOp:1 matx.vision.pad_op.PadWithBorderOp:1 of
+msgid "Forms a border around given image."
+msgstr ""
+
+#: matx.vision.pad_op.PadOp.__call__:1 of
+msgid "Pad input images."
+msgstr ""
+
+#: matx.vision.pad_op.PadOp.__call__:13
+#: matx.vision.pad_op.PadWithBorderOp.__call__:21 of
+msgid "Pad images."
+msgstr ""
+
+#: matx.vision.pad_op.PadOp.__init__:1 of
+msgid "Initialize PadOp"
+msgstr ""
+
+#: matx.vision.pad_op.PadOp.__init__:7
+#: matx.vision.pad_op.PadWithBorderOp.__init__:5 of
+msgid ""
+"Border value if border_type==BORDER_CONSTANT. Padding value is 3 dim "
+"tuple, three channels would be padded with the given value. Defaults to "
+"(0, 0, 0)."
+msgstr ""
+
+#: matx.vision.pad_op.PadOp.__init__:11
+#: matx.vision.pad_op.PadWithBorderOp.__init__:9 of
+msgid ""
+"pad mode, could be chosen from BORDER_CONSTANT, BORDER_REPLICATE, "
+"BORDER_REFLECT, BORDER_WRAP, more pad_type see cv_border_types for "
+"details. Defaults to BORDER_CONSTANT."
+msgstr ""
+
+#: matx.vision.pad_op.PadOp.__init__:14 of
+msgid "If True, forms a border in lower right of the image. Defaults to False."
+msgstr ""
+
+#: matx.vision.pad_op.PadWithBorderOp.__call__:1 of
+msgid "Pad input images with border."
+msgstr ""
+
+#: matx.vision.pad_op.PadWithBorderOp.__call__:5 of
+msgid "The number of pixels to pad that above the images."
+msgstr ""
+
+#: matx.vision.pad_op.PadWithBorderOp.__call__:7 of
+msgid "The number of pixels to pad that below the images."
+msgstr ""
+
+#: matx.vision.pad_op.PadWithBorderOp.__call__:9 of
+msgid "The number of pixels to pad that to the left of the images."
+msgstr ""
+
+#: matx.vision.pad_op.PadWithBorderOp.__call__:11 of
+msgid "The number of pixels to pad that to the right of the images."
+msgstr ""
+
+#: matx.vision.pad_op.PadWithBorderOp.__call__:24 of
+msgid ""
+"Example: >>> import cv2 >>> import matx >>> from matx.vision import "
+"PadWithBorderOp"
+msgstr ""
+
+#: matx.vision.pad_op.PadWithBorderOp.__init__:1 of
+msgid "Initialize PadWithBorderOp"
+msgstr ""
+
+#: matx.vision.posterize_op.PosterizeOp:1 of
+msgid ""
+"Apply posterization on images. i.e. remove certain bits for each pixel "
+"value, e.g. with bit=4, pixel 77 would become 64 (the last 4 bits are set"
+" to 0)."
+msgstr ""
+
+#: matx.vision.posterize_op.PosterizeOp.__call__:1 of
+msgid "Apply posterization on images. Only support uint8 images"
+msgstr ""
+
+#: matx.vision.posterize_op.PosterizeOp.__call__:5 of
+msgid ""
+"posterization bit for each image. If not given, the bit for op "
+"initialization would be used."
+msgstr ""
+
+#: matx.vision.posterize_op.PosterizeOp.__init__:1 of
+msgid "Initialize PosterizeOp"
+msgstr ""
+
+#: matx.vision.posterize_op.PosterizeOp.__init__:5 of
+msgid ""
+"bit for posterization for all images, range from [0, 8], set to 4 by "
+"default."
+msgstr ""
+
+#: matx.vision.posterize_op.PosterizeOp.__init__:7 of
+msgid "probability for posterization on each image. Apply on all by default."
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp:1
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__call__:1 of
+msgid "Randomly drop out some pixels (set to 0) for input images."
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__call__:5 of
+msgid ""
+"drop out probability for each image. If omitted, the value set during the"
+" op initialization would be used for all images."
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__init__:1 of
+msgid "Initialize RandomDropoutOp"
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__init__:5
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__init__:5 of
+msgid ""
+"max batch size for sp noise op. It is required for cuda randomness "
+"initialization. When actually calling this op, the input batch size "
+"should be equal to or less than this value."
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__init__:8 of
+msgid ""
+"the probability for each pixel to be dropped out, range from 0 to 1, 0.01"
+" by default, can be overridden in runtime."
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.RandomDropoutOp.__init__:10 of
+msgid ""
+"For each pixel, whether to drop out the value differently for each "
+"channel (True), or drop out the value through out all the channels "
+"(False). False by default."
+msgstr ""
+
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp:1 of
+msgid "RandomResizedCropOp given image on gpu."
+msgstr ""
+
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__call__:1 of
+msgid "Resize and Crop image depends on scale and ratio."
+msgstr ""
+
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__call__:13 of
+msgid "RandomResizedCrop images."
+msgstr ""
+
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__init__:1 of
+msgid "Initialize RandomResizedCropOP"
+msgstr ""
+
+#: matx.vision.random_resized_crop_op.RandomResizedCropOp.__init__:14 of
+msgid ""
+"Desired interpolation. INTER_NEAREST -- a nearest-neighbor interpolation;"
+" INTER_LINEAR -- a bilinear interpolation (used by default); INTER_CUBIC "
+"-- a bicubic interpolation over 4x4 pixel neighborhood; "
+"PILLOW_INTER_LINEAR  -- a bilinear interpolation, simalir to Pillow(only "
+"support GPU) Defaults to INTER_LINEAR."
+msgstr ""
+
+#: matx.vision.resize_op.ResizeOp:1 matx.vision.resize_op.ResizeOp.__call__:1
+#: of
+msgid "Resize input images."
+msgstr ""
+
+#: matx.vision.resize_op.ResizeOp.__call__:5 of
+msgid ""
+"target size for each image, must be 2 dim tuple (h, w). If omitted, the "
+"target size set in op initialization would be used for all images."
+msgstr ""
+
+#: matx.vision.resize_op.ResizeOp.__init__:1 of
+msgid "Initialize ResizeOp"
+msgstr ""
+
+#: matx.vision.resize_op.ResizeOp.__init__:5 of
+msgid ""
+"output size for all images, must be 2 dim tuple. If omitted, the size "
+"must be given when calling."
+msgstr ""
+
+#: matx.vision.resize_op.ResizeOp.__init__:7 of
+msgid "used in RESIZE_NOT_SMALLER mode to make sure output size is not too large."
+msgstr ""
+
+#: matx.vision.resize_op.ResizeOp.__init__:9 of
+msgid ""
+"desired interpolation method. INTER_NEAREST -- a nearest-neighbor "
+"interpolation; INTER_LINEAR -- a bilinear interpolation (used by "
+"default); INTER_CUBIC -- a bicubic interpolation over 4x4 pixel "
+"neighborhood; PILLOW_INTER_LINEAR  -- a bilinear interpolation, simalir "
+"to Pillow(only support GPU) INTER_LINEAR by default."
+msgstr ""
+
+#: matx.vision.resize_op.ResizeOp.__init__:16 of
+msgid ""
+"resize mode, could be chosen from RESIZE_DEFAULT, RESIZE_NOT_LARGER, and "
+"RESIZE_NOT_SMALLER RESIZE_DEFAULT -- resize to the target output size "
+"RESIZE_NOT_LARGER -- keep the width/height ratio, final output size would"
+" be one dim equal to target, one dim smaller. e.g. original image shape "
+"(360, 240), target size (480, 360), output size (480, 320) "
+"RESIZE_NOT_SMALLER -- keep the width/height ratio, final output size "
+"would be one dim equal to target, one dim larger. e.g. original image "
+"shape (360, 240), target size (480, 360), output size (540, 360) "
+"RESIZE_DEFAULT by default."
+msgstr ""
+
+#: matx.vision.rotate_op.RotateOp:1 of
+msgid "Apply image rotation."
+msgstr ""
+
+#: matx.vision.rotate_op.RotateOp.__call__:1 of
+msgid "Apply rotation on images."
+msgstr ""
+
+#: matx.vision.rotate_op.RotateOp.__call__:5 of
+msgid "rotation angle for each image"
+msgstr ""
+
+#: matx.vision.rotate_op.RotateOp.__call__:7 of
+msgid ""
+"rotation center (y, x) for each image, if omitted, the image center would"
+" be used as rotation center."
+msgstr ""
+
+#: matx.vision.rotate_op.RotateOp.__init__:1 of
+msgid "Initialize RotateOp"
+msgstr ""
+
+#: matx.vision.rotate_op.RotateOp.__init__:5
+#: matx.vision.warp_affine_op.WarpAffineOp.__init__:5
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__init__:5 of
+msgid "border type to fill the target image, use constant value by default."
+msgstr ""
+
+#: matx.vision.rotate_op.RotateOp.__init__:7
+#: matx.vision.warp_affine_op.WarpAffineOp.__init__:7
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__init__:7 of
+msgid ""
+"the border value to fill the target image if pad_type is BORDER_CONSTANT,"
+" (0, 0, 0) by default."
+msgstr ""
+
+#: matx.vision.rotate_op.RotateOp.__init__:9
+#: matx.vision.warp_affine_op.WarpAffineOp.__init__:9
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__init__:9 of
+msgid ""
+"desired interpolation method. INTER_NEAREST -- a nearest-neighbor "
+"interpolation; INTER_LINEAR -- a bilinear interpolation (used by "
+"default); INTER_CUBIC -- a bicubic interpolation over 4x4 pixel "
+"neighborhood; INTER_LINEAR by default."
+msgstr ""
+
+#: matx.vision.rotate_op.RotateOp.__init__:15 of
+msgid ""
+"control the shape of rotated image. If False, the rotated images would be"
+" center cropped into the original size; if True, expand the output to "
+"make it large enough to hold the entire rotated image."
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp:1 of
+msgid "Apply salt and pepper noise on input images."
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__:1 of
+msgid "Apply sp noise on input images."
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__:5 of
+msgid ""
+"probability to add sp noise for each image. If omitted, the value set "
+"during the op initialization would be used for all images."
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__call__:7 of
+msgid ""
+"probability to add salt noise for each image. If omitted, the value set "
+"during the op initialization would be used for all images."
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__init__:1 of
+msgid "Initialize SaltAndPepperOp"
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__init__:8 of
+msgid ""
+"the probability for each pixel to add sp noise, range from 0 to 1, 0.01 "
+"by default, can be overridden in runtime."
+msgstr ""
+
+#: matx.vision.salt_n_pepper_op.SaltAndPepperOp.__init__:10 of
+msgid ""
+"for those pixels that need to apply salt_n_pepper noise, the probability "
+"that the salt noise would be, range from 0 to 1. The pepper probability "
+"would then be (1 - salt_prob). 0.5 by default, can be overridden in "
+"runtime."
+msgstr ""
+
+#: matx.vision.conv2d_op.SharpenOp:1 of
+msgid ""
+"Sharpen images and alpha-blend the result with the original input images."
+" Sharpen kernel is [[-1, -1, -1], [-1, 8+l,-1], [-1, -1, -1]], sharpen "
+"lightness is controlled by l here."
+msgstr ""
+
+#: matx.vision.conv2d_op.SharpenOp.__call__:1 of
+msgid "Sharpen images and alpha-blend the result with the original input images."
+msgstr ""
+
+#: matx.vision.conv2d_op.SharpenOp.__call__:7 of
+msgid ""
+"lightness/brightness for each image. If omitted, the lightness set in op "
+"initialization would be used for all images."
+msgstr ""
+
+#: matx.vision.conv2d_op.SharpenOp.__init__:1 of
+msgid "Initialize SharpenOp"
+msgstr ""
+
+#: matx.vision.conv2d_op.SharpenOp.__init__:5 of
+msgid ""
+"alpha-blend factor, 1.0 by default, which means only keep the sharpened "
+"image."
+msgstr ""
+
+#: matx.vision.conv2d_op.SharpenOp.__init__:7 of
+msgid "lightness/brightness of the sharpened image, 1.0 by default."
+msgstr ""
+
+#: matx.vision.solarize_op.SolarizeOp:1 of
+msgid ""
+"Apply solarization on images. i.e. invert the pixel value if the value is"
+" above the given threshold."
+msgstr ""
+
+#: matx.vision.solarize_op.SolarizeOp.__call__:1 of
+msgid "Apply solarization on images. Only support uint8 images"
+msgstr ""
+
+#: matx.vision.solarize_op.SolarizeOp.__call__:5 of
+msgid ""
+"solarization threshold for each image. If not given the threshold for op "
+"initialization would be used."
+msgstr ""
+
+#: matx.vision.solarize_op.SolarizeOp.__init__:1 of
+msgid "Initialize SolarizeOp"
+msgstr ""
+
+#: matx.vision.solarize_op.SolarizeOp.__init__:5 of
+msgid "solarization threshold for all images, 128 by default."
+msgstr ""
+
+#: matx.vision.solarize_op.SolarizeOp.__init__:7 of
+msgid "probability for solarization on each image. Apply on all by default."
+msgstr ""
+
+#: matx.vision.split_op.SplitOp:1 of
+msgid "split input image along channel dimension. The input is a single image."
+msgstr ""
+
+#: matx.vision.split_op.SplitOp.__call__:1 of
+msgid "split input image along channel dimension."
+msgstr ""
+
+#: matx.vision.split_op.SplitOp.__call__:3 of
+msgid "target image."
+msgstr ""
+
+#: matx.vision.split_op.SplitOp.__init__:1 of
+msgid "Initialize SplitOp"
+msgstr ""
+
+#: matx.vision.stack_op.StackOp:1 of
+msgid "Stack images along first dim"
+msgstr ""
+
+#: matx.vision.stack_op.StackOp.__call__:11 of
+msgid "matx.runtime.NDArray"
+msgstr ""
+
+#: matx.vision.reduce_op.SumOp:1 matx.vision.reduce_op.SumOp.__call__:1 of
+msgid "Sum over each image."
+msgstr ""
+
+#: matx.vision.reduce_op.SumOp.__call__:13 of
+msgid ""
+"summation result. For N images, the result would be shape Nx1 if "
+"per_channel is False, otherwise NxC where C is the image channel size."
+msgstr ""
+
+#: matx.vision.reduce_op.SumOp.__init__:1 of
+msgid "Initialize SumOp"
+msgstr ""
+
+#: matx.vision.reduce_op.SumOp.__init__:5 of
+msgid "if True, sum over each channel; if False, sum over the whole image."
+msgstr ""
+
+#: matx.vision.normalize_op.TransposeNormalizeOp:1
+#: matx.vision.normalize_op.TransposeNormalizeOp.__call__:1 of
+msgid ""
+"Normalize images with mean and std, cast the image data type to target "
+"type, stack the images into a single array, and then update the array "
+"format (e.g. NHWC or NCHW)."
+msgstr ""
+
+#: matx.vision.normalize_op.TransposeNormalizeOp.__call__:17 of
+msgid ""
+"Example: >>> import cv2 >>> import matx >>> from matx.vision import "
+"TransposeNormalizeOp"
+msgstr ""
+
+#: matx.vision.normalize_op.TransposeNormalizeOp.__init__:1 of
+msgid "Initialize TransposeNormalizeOp"
+msgstr ""
+
+#: matx.vision.normalize_op.TransposeNormalizeOp.__init__:9 of
+msgid "the data layout format after the stack, e.g. NHWC"
+msgstr ""
+
+#: matx.vision.normalize_op.TransposeNormalizeOp.__init__:11 of
+msgid "the target data layout, e.g. NCHW."
+msgstr ""
+
+#: matx.vision.transpose_op.TransposeOp:1 of
+msgid "Convert image tensor layout, this operators only support gpu backend."
+msgstr ""
+
+#: matx.vision.transpose_op.TransposeOp.__call__:1 of
+msgid "Transpose image tensor."
+msgstr ""
+
+#: matx.vision.transpose_op.TransposeOp.__call__:13 of
+msgid "Transpose images."
+msgstr ""
+
+#: matx.vision.transpose_op.TransposeOp.__init__:1 of
+msgid "Initialize TransposeOp"
+msgstr ""
+
+#: matx.vision.transpose_op.TransposeOp.__init__:5 of
+msgid "the input image tensor layout. only suppport NCHW or NHWC."
+msgstr ""
+
+#: matx.vision.transpose_op.TransposeOp.__init__:7 of
+msgid "the desired image tensor layout. only support NCHW or NHWC."
+msgstr ""
+
+#: matx.vision.warp_affine_op.WarpAffineOp:1
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__:1 of
+msgid "Apply warp affine on images."
+msgstr ""
+
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__:5 of
+msgid "affine matrix for each image, each matrix should be of shape 2x3."
+msgstr ""
+
+#: matx.vision.warp_affine_op.WarpAffineOp.__call__:7 of
+msgid ""
+"target output size (h, w) for affine transformation. If omitted, the "
+"image original shape would be used."
+msgstr ""
+
+#: matx.vision.warp_affine_op.WarpAffineOp.__init__:1 of
+msgid "Initialize WarpAffineOp"
+msgstr ""
+
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp:1
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__:1 of
+msgid "Apply warp perspective on images."
+msgstr ""
+
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__:5 of
+msgid ""
+"coordinate pairs of src and dst points. the shape of pts is Nx2xMx2, "
+"where N is the batch size, the left side 2 represents src and dst points "
+"respectively, M means the number of points for src/dst, the right side 2 "
+"represents the coordinator for each point, which is a 2 element tuple (x,"
+" y). If still confused, please see the usage in the example below."
+msgstr ""
+
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__call__:11 of
+msgid ""
+"target output size (h, w) for perspective transformation. If omitted, the"
+" image original shape would be used."
+msgstr ""
+
+#: matx.vision.warp_perspective_op.WarpPerspectiveOp.__init__:1 of
+msgid "Initialize WarpPerspectiveOp"
+msgstr ""
+
+#: ../../source/apidoc/matx.vision.rst:10
+msgid "Subpackages"
+msgstr ""
+
