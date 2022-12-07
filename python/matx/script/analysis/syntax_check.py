@@ -292,7 +292,10 @@ class ClassSyntaxCheck(ast.NodeVisitor):
                         'Please don\'t use annotation assignment for __slots__ with no elements.')
 
                 if len(stmt.value.elts) == 1:
-                    self.annotated_vars[stmt.value.elts[0].s] = stmt.annotation.slice.value
+                    if isinstance(stmt.annotation.slice, ast.Name):
+                        self.annotated_vars[stmt.value.elts[0].s] = stmt.annotation.slice
+                    else:
+                        self.annotated_vars[stmt.value.elts[0].s] = stmt.annotation.slice.value
                 else:
                     if isinstance(stmt.annotation.slice, ast.Tuple):
                         elts = stmt.annotation.slice.elts

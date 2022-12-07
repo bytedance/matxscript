@@ -194,6 +194,8 @@ class _AnnTypeConvert(ast.NodeVisitor):
             slice_ty = self.visit_Tuple(node.slice)
         elif isinstance(node.slice, ast.Name):
             slice_ty = self.convert(node.slice)
+        elif isinstance(node.slice, ast.Subscript):
+            slice_ty = self.convert(node.slice)
         else:
             raise TypeNotFoundException(node)
 
