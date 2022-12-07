@@ -1,4 +1,4 @@
-name: Test Python Runtime
+name: Test Python Runtime 3.7
 
 on:
   push:

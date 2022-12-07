@@ -1,4 +1,4 @@
-name: Test Python Script
+name: Test Python Script 3.8
 
 on:
   push:

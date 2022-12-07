@@ -1,4 +1,4 @@
-name: Test Python Trace
+name: Test Python Trace 3.8
 
 on:
   push:
