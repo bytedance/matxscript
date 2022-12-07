@@ -411,6 +411,8 @@ class CFG(object):
                 e_label.lineno = handler.lineno
                 e_label.col_offset = handler.col_offset
                 label_block = BasicBlock.from_list([e_label], self.ast_node_ctx)
+                label_block.name = "L" + str(label_block.start_line)
+                self.add_basic_block(label_block)
                 self.ast_node_ctx.set_block(handler, label_block)
                 handlers_label_blocks.append(label_block)
                 h_head, h_tail, h_loop_tail, h_func_tail = self.parse(handler.body)
