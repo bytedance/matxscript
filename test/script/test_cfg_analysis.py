@@ -24,7 +24,7 @@ import matx
 
 from matx import cfg
 from matx.contrib.inspect3_9_1_patch import getsourcelines
-from typed_ast import ast3 as ast
+from matx._typed_ast import ast
 
 
 def dedent_and_margin(text):

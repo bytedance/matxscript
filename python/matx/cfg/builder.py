@@ -24,7 +24,7 @@
 # under the License.
 import copy
 
-from typed_ast import ast3 as ast
+from matx._typed_ast import ast
 from typing import List, Dict, Set, Optional, Union
 from .model import Variable
 from .model import Block, BasicBlock, FunctionLabel

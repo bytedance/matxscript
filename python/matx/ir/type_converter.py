@@ -21,7 +21,7 @@
 import inspect
 from functools import lru_cache
 import types
-from typed_ast import ast3 as ast
+from matx._typed_ast import ast
 from typing import Optional
 
 from . import type as _ty

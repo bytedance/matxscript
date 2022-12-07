@@ -22,9 +22,10 @@ import inspect
 import random
 import builtins
 import sys
+import numbers
 
 from typing import Any, Union, List, Optional
-from typed_ast import ast3 as ast
+from matx._typed_ast import ast
 
 from .reporter.script_error import MATXScriptError
 
@@ -1979,7 +1980,16 @@ class MATXScriptParser(ast.NodeVisitor):
 
     # note that after Python3.8, ast.NameConstant, ast.Num, ast.Str are no longer used
     def visit_Constant(self, node):
-        return node.value
+        if node.value is None:
+            return self.visit_NoneType(node)
+        elif isinstance(node.value, str):
+            return self.visit_Str(node)
+        elif isinstance(node.value, numbers.Number):
+            return self.visit_Num(node)
+        elif isinstance(node.value, bytes):
+            return self.visit_Bytes(node)
+        else:
+            raise ValueError(f'Unknown node value type: {type(node.value)}')
 
     def visit_NameConstant(self, node):
         if node.value is None:

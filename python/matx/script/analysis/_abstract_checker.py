@@ -20,7 +20,7 @@
 import abc
 import inspect
 
-from typed_ast import ast3 as ast
+from matx._typed_ast import ast
 from ..reporter import Reporter
 from ..context import Span
 from ...contrib.inspect3_9_1_patch import getsourcelines, findsource, getabsfile
