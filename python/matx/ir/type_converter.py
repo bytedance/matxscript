@@ -179,11 +179,21 @@ class _AnnTypeConvert(ast.NodeVisitor):
         my_slot_names = None
         if hasattr(node, 'my_slot_names'):
             my_slot_names = node.my_slot_names
-        if not isinstance(node.slice, ast.Index):
-            raise TypeNotFoundException(node)
 
         symbol = self.visit(node.value)
-        slice_ty = self.convert(node.slice.value)
+        if isinstance(node.slice, ast.Index):
+            # compatible with typed_ast with Python 3.7 or older
+            slice_ty = self.convert(node.slice.value)
+        elif isinstance(node.slice, ast.Tuple):
+            slice_ty = []
+            for elt in node.slice.elts:
+                slice_ty.append(self.convert(elt))
+            slice_ty = tuple(slice_ty)
+        elif isinstance(node.slice, ast.Name):
+            slice_ty = self.convert(node.slice)
+        else:
+            raise TypeNotFoundException(node)
+
         if isinstance(slice_ty, tuple):
             def func_wrapper():
                 if my_slot_names is None:
