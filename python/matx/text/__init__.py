@@ -18,6 +18,5 @@
 # under the License.
 
 from .wordpiece_tokenizer import WordPieceTokenizer
-from .wordpiece_tokenizer import WordPieceTokenizerWithMeta
 from .jieba import Jieba
 from .emoji import EmojiFilter
