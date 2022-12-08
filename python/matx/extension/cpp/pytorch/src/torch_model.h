@@ -44,6 +44,7 @@ class TorchEngine {
   virtual ~TorchEngine() = default;
 
   void init(const std::string& path, int device) {
+    torch::NoGradGuard no_grad;
     MXCHECK(FileUtil::Exists(path)) << "[TorchEngine] model location not exist: " << path;
     if (device >= 0) {
       torch_device_ = at::Device(at::kCUDA, device);

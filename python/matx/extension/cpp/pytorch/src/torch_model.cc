@@ -26,6 +26,7 @@ MATX_REGISTER_NATIVE_OP(TorchModel);
 
 void TorchEngine::forward(const std::vector<torch::jit::IValue>& inputs,
                           torch::jit::IValue& output) {
+  torch::NoGradGuard no_grad;
   output = module_.forward(inputs);
 }
 
@@ -52,6 +53,7 @@ TorchEnginePtr TorchModel::RegisterOrGetEngine(int device) {
   if (itr != engines_.end()) {
     return itr->second;
   } else {
+    torch::NoGradGuard no_grad;
     auto e = std::make_shared<TorchEngine>();
     e->init(resource_path_ + location, device);
     engines_.emplace(key, e);
