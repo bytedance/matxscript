@@ -48,20 +48,21 @@ class Object(ObjectBase):
 
     def __dir__(self):
         class_names = dir(self.__class__)
-        fnames = _ffi_api.NodeListAttrNames(self)
-        size = fnames(-1)
-        return sorted([fnames(i).decode() for i in range(size)] + class_names)
+        attr_names = _ffi_api.NodeListAttrNames(self)
+        size = len(attr_names)
+        return sorted([attr_names[i].decode() for i in range(size)] + class_names)
 
     def __getattr__(self, name):
         if name == "__init_self__" or name == "__call__" or name in self.__slots__:
             raise AttributeError(f"{name} is not set")
 
         try:
-            attr = _ffi_api.NodeGetAttr(self, name)
-            if attr is None:
+            success, attr = _ffi_api.NodeGetAttr(self, name)
+            if success:
+                return attr
+            else:
                 raise AttributeError(
                     "%s has no attribute %s" % (str(type(self)), name)) from None
-            return attr
         except:
             raise AttributeError(
                 "%s has no attribute %s" % (str(type(self)), name)) from None
