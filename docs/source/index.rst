@@ -12,10 +12,10 @@ english intro
 
 .. toctree::
    :maxdepth: 1
-   :caption: Installation
+   :caption: Introduce to Marxscript
    :hidden:
 
-   tutorial_doc/installation
+   tutorial_doc/design_philosophy
 
 
 .. toctree::
@@ -23,28 +23,33 @@ english intro
    :caption: quick start
    :hidden:
 
+   tutorial_doc/installation
    tutorial_doc/quick_start
 
-.. toctree::
-   :maxdepth: 1
-   :caption: design philosophy
-   :hidden:
-
-   tutorial_doc/design_philosophy
 
 .. toctree::
    :maxdepth: 1
-   :caption: script
+   :caption: features
    :hidden:
 
    tutorial_doc/script
+   tutorial_doc/trace
+   tutorial_doc/advanced_features
 
 .. toctree::
    :maxdepth: 1
-   :caption: trace
+   :caption: performance
    :hidden:
 
-   tutorial_doc/trace
+   tutorial_doc/performance
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Example
+   :hidden:
+
+   tutorial_doc/e2e_example
+
 
 .. toctree::
    :maxdepth: 4

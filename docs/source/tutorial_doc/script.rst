@@ -1,6 +1,6 @@
 .. script
 
-Installation
+Script
 =================================
 
 english installation
