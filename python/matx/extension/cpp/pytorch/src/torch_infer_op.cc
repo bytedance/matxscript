@@ -311,6 +311,7 @@ IValueType TorchInferOp::ToDict(const Dict& rt_dict) const {
 }
 
 void TorchInferOp::Init() {
+  torch::NoGradGuard no_grad;
   model = GetAttr<Unicode>("model").encode();
   if (HasAttr("output_to_cpu") && GetAttr<int>("output_to_cpu") == 0) {
     output_to_cpu_ = false;
@@ -348,6 +349,7 @@ void TorchInferOp::Init() {
 }
 
 RTValue TorchInferOp::Process(PyArgs inputs) const {
+  torch::NoGradGuard no_grad;
 #ifdef MATXSCRIPT_PYTHON_MODE
   if (th_model_ && th_model_->example.is_nullptr()) {
     // for bundle example data
