@@ -50,7 +50,7 @@ class TestBuiltinTextOps(unittest.TestCase):
             subwords_prefix="",
         )
 
-        tx_ret2 = tokenizer_op(example)
+        tx_ret2 = tokenizer_op.tokenize(example)
         print(tx_ret2)
         self.assertEqual(tx_ret2, expect)
 
