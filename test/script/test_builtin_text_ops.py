@@ -40,7 +40,7 @@ class TestBuiltinTextOps(unittest.TestCase):
 
         example = ["hello", "world", "helloworld", "kkk"]
         expect = ["hello", "world", "hello", "world", "[UNK]"]
-        tx_ret1 = tokenizer(example)
+        tx_ret1 = tokenizer.tokenize(example)
         print(tx_ret1)
         self.assertEqual(tx_ret1, expect)
 
@@ -50,20 +50,20 @@ class TestBuiltinTextOps(unittest.TestCase):
             subwords_prefix="",
         )
 
-        tx_ret2 = tokenizer_op(example)
+        tx_ret2 = tokenizer_op.tokenize(example)
         print(tx_ret2)
         self.assertEqual(tx_ret2, expect)
 
         class MyTokenizer:
             def __init__(self):
-                self.op: Callable = matx.text.WordPieceTokenizer(
+                self.op: matx.text.WordPieceTokenizer = matx.text.WordPieceTokenizer(
                     vocab_path=vocab_path,
                     lookup_id=False,
                     subwords_prefix="",
                 )
 
             def __call__(self, a: List[AnyStr]) -> Any:
-                return self.op(a)
+                return self.op.tokenize(a)
 
         tx_ret3 = matx.script(MyTokenizer)()(example)
         print(tx_ret3)

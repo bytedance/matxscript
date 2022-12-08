@@ -36,7 +36,7 @@ class WordPieceTokenizerImpl(object):
                  skip_empty: bool = True,
                  max_bytes_per_token: int = 100,
                  ) -> None:
-        self.tokenizer: Any = make_native_object(
+        self.native_tokenizer: Any = make_native_object(
             "text_tokenizer_WordPieceTokenizer",
             vocab_path,
             lookup_id,
@@ -46,8 +46,11 @@ class WordPieceTokenizerImpl(object):
             max_bytes_per_token,
         )
 
-    def __call__(self, sentence: List[AnyStr]) -> List[AnyStr]:
-        return self.tokenizer.tokenize(sentence)
+    def tokenize(self, sentence: List[AnyStr]) -> List[AnyStr]:
+        return self.native_tokenizer.tokenize(sentence)
+
+    def tokenize_with_meta(self, sentence: List[AnyStr]) -> Tuple[List[AnyStr], List[int]]:
+        return self.native_tokenizer.tokenize_with_meta(sentence)
 
 
 class WordPieceTokenizer:
@@ -60,49 +63,11 @@ class WordPieceTokenizer:
                  skip_empty: bool = True,
                  max_bytes_per_token: int = 100,
                  ) -> None:
-        self.tokenizer_op: Any = matx.script(WordPieceTokenizerImpl)(
+        self.tokenizer_impl: WordPieceTokenizerImpl = matx.script(WordPieceTokenizerImpl)(
             vocab_path, lookup_id, unk_token, subwords_prefix, skip_empty, max_bytes_per_token)
 
-    def __call__(self, sentence: List[AnyStr]) -> List[AnyStr]:
-        return self.tokenizer_op(sentence)
+    def tokenize(self, sentence: List[AnyStr]) -> List[AnyStr]:
+        return self.tokenizer_impl.tokenize(sentence)
 
-
-class WordPieceTokenizerWithMetaImpl(object):
-
-    def __init__(self,
-                 vocab_path: str,
-                 lookup_id: bool = True,
-                 unk_token: Any = "[UNK]",
-                 subwords_prefix: str = "##",
-                 skip_empty: bool = True,
-                 max_bytes_per_token: int = 100,
-                 ) -> None:
-        self.tokenizer: Any = make_native_object(
-            "text_tokenizer_WordPieceTokenizer",
-            vocab_path,
-            lookup_id,
-            unk_token,
-            subwords_prefix,
-            skip_empty,
-            max_bytes_per_token,
-        )
-
-    def __call__(self, sentence: List[AnyStr]) -> Tuple[List[AnyStr], List[int]]:
-        return self.tokenizer.tokenize_with_meta(sentence)
-
-
-class WordPieceTokenizerWithMeta:
-
-    def __init__(self,
-                 vocab_path: str,
-                 lookup_id: bool = True,
-                 unk_token: Any = "[UNK]",
-                 subwords_prefix: str = "##",
-                 skip_empty: bool = True,
-                 max_bytes_per_token: int = 100,
-                 ) -> None:
-        self.tokenizer_op: WordPieceTokenizerWithMetaImpl = matx.script(WordPieceTokenizerWithMetaImpl)(
-            vocab_path, lookup_id, unk_token, subwords_prefix, skip_empty, max_bytes_per_token)
-
-    def __call__(self, sentence: List[AnyStr]) -> Tuple[List[AnyStr], List[int]]:
-        return self.tokenizer_op(sentence)
+    def tokenizer_with_meta(self, sentence: List[AnyStr]) -> Tuple[List[AnyStr], List[int]]:
+        return self.tokenizer_impl.tokenize_with_meta(sentence)
