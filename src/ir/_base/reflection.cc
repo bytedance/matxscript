@@ -114,10 +114,7 @@ RTValue ReflectionVTable::GetAttr(Object* self, const StringRef& field_name) con
     VisitAttrs(self, &getter);
     success = getter.found_ref_object || ret.type_code() != TypeIndex::kRuntimeNullptr;
   }
-  if (!success) {
-    return None;
-  }
-  return ret;
+  return Tuple::dynamic(success, std::move(ret));
 }
 
 // List names;
@@ -291,18 +288,9 @@ static RTValue NodeGetAttr(PyArgs args) {
 static RTValue NodeListAttrNames(PyArgs args) {
   MXCHECK_GE(args[0].type_code(), 0);
   Object* self = static_cast<Object*>(args[0].value().data.v_handle);
-
-  auto names =
-      std::make_shared<std::vector<String>>(ReflectionVTable::Global()->ListAttrNames(self));
-
-  return new NativeFunction([names](PyArgs args) -> RTValue {
-    int64_t i = args[0].As<int64_t>();
-    if (i == -1) {
-      return static_cast<int64_t>(names->size());
-    } else {
-      return (*names)[i];
-    }
-  });
+  auto attr_names = ReflectionVTable::Global()->ListAttrNames(self);
+  return Tuple(std::make_move_iterator(attr_names.begin()),
+               std::make_move_iterator(attr_names.end()));
 }
 
 // API function to make node.
