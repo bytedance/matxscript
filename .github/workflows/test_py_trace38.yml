@@ -1,0 +1,22 @@
+name: Test Python Trace 3.8
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+    - name: Install PyTorch
+      run: pip3 install torch==1.8.2 --extra-index-url https://download.pytorch.org/whl/lts/1.8/cpu
+    - name: Test Python Trace
+      run: python3 ci/run_py_trace_test.py

@@ -1,4 +1,4 @@
-name: Test Python Script
+name: Test Python Script 3.7
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
-        python-version: '3.8'
+        python-version: '3.7'
     - name: install requirements
       run: pip3 install msgpack
     - name: Test Python Script

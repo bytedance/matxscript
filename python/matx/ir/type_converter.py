@@ -190,12 +190,8 @@ class _AnnTypeConvert(ast.NodeVisitor):
         if isinstance(node.slice, ast.Index):
             # compatible with typed_ast with Python 3.7 or older
             slice_ty = self.convert(node.slice.value)
-        elif isinstance(node.slice, ast.Tuple):
-            slice_ty = self.visit_Tuple(node.slice)
-        elif isinstance(node.slice, ast.Name):
-            slice_ty = self.convert(node.slice)
         else:
-            raise TypeNotFoundException(node)
+            slice_ty = self.convert(node.slice)
 
         if isinstance(slice_ty, tuple):
             def func_wrapper():

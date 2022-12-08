@@ -292,10 +292,19 @@ class ClassSyntaxCheck(ast.NodeVisitor):
                         'Please don\'t use annotation assignment for __slots__ with no elements.')
 
                 if len(stmt.value.elts) == 1:
-                    self.annotated_vars[stmt.value.elts[0].s] = stmt.annotation.slice.value
+                    if isinstance(stmt.annotation.slice, ast.Index):
+                        self.annotated_vars[stmt.value.elts[0].s] = stmt.annotation.slice.value
+                    else:
+                        self.annotated_vars[stmt.value.elts[0].s] = stmt.annotation.slice
                 else:
-                    for value_elem, annotation_elem in zip(
-                            stmt.value.elts, stmt.annotation.slice.value.elts):
+                    if isinstance(stmt.annotation.slice, ast.Tuple):
+                        elts = stmt.annotation.slice.elts
+                    elif isinstance(stmt.annotation.slice, ast.Index):
+                        elts = stmt.annotation.slice.value.elts
+                    else:
+                        raise NotImplementedError(f'Unsupported annotation {stmt.annotation.slice}')
+
+                    for value_elem, annotation_elem in zip(stmt.value.elts, elts):
                         self.annotated_vars[value_elem.s] = annotation_elem
 
             elif isinstance(stmt, ast.FunctionDef):
