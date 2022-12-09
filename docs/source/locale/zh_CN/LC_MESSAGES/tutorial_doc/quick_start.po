@@ -1,0 +1,60 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-10 03:03+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/tutorial_doc/quick_start.rst:4
+msgid "Quick Start"
+msgstr "快速开始"
+
+#: ../../source/tutorial_doc/quick_start.rst:7
+msgid ""
+"This section provides an example to walk through the basic usage of Matx."
+" The complete code can be found `here "
+"<https://github.com/bytedance/matxscript/blob/main/examples/text2ids/text2ids.py>`_."
+msgstr "下面我们一起结合一个简单的范例来熟悉下matx的使用。完整代码可访问`这里 <https://github.com/bytedance/matxscript/blob/main/examples/text2ids/text2ids.py>`_."
+
+#: ../../source/tutorial_doc/quick_start.rst:12
+msgid "1. Import dependencies"
+msgstr "1. Import 相关依赖"
+
+#: ../../source/tutorial_doc/quick_start.rst:19
+msgid ""
+"Note that we import various types from Python typing module as Matx "
+"enforces type annotations."
+msgstr "注意在涉及到matx编译部分的Python代码需要进行类型标注，因此我们import了typing模块下的一些Python常用类型。"
+
+#: ../../source/tutorial_doc/quick_start.rst:23
+msgid "2. Constructing Op"
+msgstr "2. OP 创建"
+
+#: ../../source/tutorial_doc/quick_start.rst:24
+msgid "An operation (Op) is a class or a function."
+msgstr ""
+
+#: ../../source/tutorial_doc/quick_start.rst:46
+msgid "3. Script"
+msgstr "3. Script 编译"
+
+#: ../../source/tutorial_doc/quick_start.rst:56
+msgid "4. Trace"
+msgstr "4. Trace 保存编译产物"
+
+#: ../../source/tutorial_doc/quick_start.rst:80
+msgid "5. C++ deployment"
+msgstr "5. C++代码调用产物"
+

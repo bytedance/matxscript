@@ -1,0 +1,114 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-10 03:03+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/tutorial_doc/ndarray.rst:2
+msgid "NDArray"
+msgstr "多维数组(NDArray)"
+
+#: ../../source/tutorial_doc/ndarray.rst:4
+msgid ""
+"Like numpy.array and torch.Tensor, NDArray is a data structure Matx uses "
+"to represent a tensor. Currently, we only support simple constructors and"
+" data manipulation, and NDArray is primarily used to perform data "
+"transfer from Matx to Pytorch/TensorFlow/TVM."
+msgstr "NDArray 是我们表示多维矩阵的数据类型，我们目前只实现了简单的数据装载和转换操作。 类似numpy，matx实现了自己的NDArray数据结构来表示多维数组。目前NDArray主要定位为各个深度学习框架(pytorch/tensorflow/tvm)的tensor结构进行桥接数据结构，我们并未在NDArray上定义完备的算子。"
+
+#: ../../source/tutorial_doc/ndarray.rst:7
+msgid "Constructor"
+msgstr "构造"
+
+#: ../../source/tutorial_doc/ndarray.rst:8
+msgid "The constructor of NDArray has 4 arguments:"
+msgstr "构造参数列表"
+
+#: ../../source/tutorial_doc/ndarray.rst:11
+msgid "Args"
+msgstr ""
+
+#: ../../source/tutorial_doc/ndarray.rst:11
+msgid "Type"
+msgstr ""
+
+#: ../../source/tutorial_doc/ndarray.rst:11
+msgid "Description"
+msgstr ""
+
+#: ../../source/tutorial_doc/ndarray.rst:13
+msgid "arr"
+msgstr ""
+
+#: ../../source/tutorial_doc/ndarray.rst:13
+#: ../../source/tutorial_doc/ndarray.rst:15
+msgid "List"
+msgstr ""
+
+#: ../../source/tutorial_doc/ndarray.rst:13
+msgid "Construct a NDArray from arr"
+msgstr "list对象，指定构造出的NDArray的内容。"
+
+#: ../../source/tutorial_doc/ndarray.rst:15
+msgid "shape"
+msgstr ""
+
+#: ../../source/tutorial_doc/ndarray.rst:15
+msgid ""
+"The shape of the NDArray. It is equivalent to "
+"np.array(arr).reshape(shape). If shape is [], the shape will be the same "
+"as arr."
+msgstr "list对象，指定构造出的NDArray的shape，可以为[]（空list），为[]时，构造出的NDArray shape和arr相同。"
+
+#: ../../source/tutorial_doc/ndarray.rst:17
+msgid "dtype"
+msgstr ""
+
+#: ../../source/tutorial_doc/ndarray.rst:17
+#: ../../source/tutorial_doc/ndarray.rst:19
+msgid "str"
+msgstr ""
+
+#: ../../source/tutorial_doc/ndarray.rst:17
+msgid ""
+"The type of the data stored in NDArray. Currently, we support int32, "
+"int64, float32, float64, uint8 and bool."
+msgstr "NDArray存储的数据类型，目前支持的类型：int32 int64 float32 float64 uint8 bool"
+
+#: ../../source/tutorial_doc/ndarray.rst:19
+msgid "device"
+msgstr ""
+
+#: ../../source/tutorial_doc/ndarray.rst:19
+#, python-format
+msgid ""
+"The device where the NDArray is stored. Supported type: \"cpu“, “cuda:%d”"
+" and “gpu:%d”, where d is the device number. The default device is "
+"\"cpu\"."
+msgstr "NDArray存储的设配信息，目前支持类型：cpu cuda:%d gpu:%d，默认为cpu"
+
+#: ../../source/tutorial_doc/ndarray.rst:24
+msgid "Example 1: Pass in a flat list of size 4 and reshape it into a 2x2 matrix."
+msgstr "示例1：指定shape，将传入的一维list变换为指定shape的多维NDArray"
+
+#: ../../source/tutorial_doc/ndarray.rst:43
+msgid "Example 2: Pass in shape as []."
+msgstr "示例2：不指定shape，按照传入的list shape构造NDArray"
+
+#: ../../source/tutorial_doc/ndarray.rst:61
+msgid "Please refer to the API documentation for more details."
+msgstr "更多见api文档"
+

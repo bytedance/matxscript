@@ -1,0 +1,51 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-10 03:03+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/tutorial_doc/script.rst:4
+msgid "Script"
+msgstr ""
+
+#: ../../source/tutorial_doc/script.rst:7
+msgid "Functionality"
+msgstr "功能"
+
+#: ../../source/tutorial_doc/script.rst:8
+msgid ""
+"matx.script is used to compile Python function/class into corresponding "
+"C++ function/class."
+msgstr "通过matx.script可以将用Python的类/函数翻译成 C++，并提供统一接口，以op的形式集成到整体 pipeline。"
+
+#: ../../source/tutorial_doc/script.rst:12
+msgid "Usage  :meth:`matx.script`"
+msgstr "使用方式 :meth:`matx.script`"
+
+#: ../../source/tutorial_doc/script.rst:13
+msgid ""
+"Note that we enforce type annotation of the class members and signatures "
+"of the functions."
+msgstr "注意：所有的类的成员变量和函数的声明需要强制类型标注（python的typing的link）具体请参照编程规范（link to 编程规范）"
+
+#: ../../source/tutorial_doc/script.rst:16
+msgid "Example 1"
+msgstr "案例一"
+
+#: ../../source/tutorial_doc/script.rst:39
+msgid "Example 2"
+msgstr "案例二"
+

@@ -1,0 +1,47 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-10 03:03+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/tutorial_doc/installation.from_source.rst:4
+msgid "Installating From Source"
+msgstr "源码安装"
+
+#: ../../source/tutorial_doc/installation.from_source.rst:6
+msgid "English installating from source"
+msgstr ""
+
+#: ../../source/tutorial_doc/installation.from_source.rst:9
+msgid "Prerequisite"
+msgstr "准备构建工具"
+
+#: ../../source/tutorial_doc/installation.from_source.rst:10
+msgid "CMAKE >=3.2"
+msgstr "CMAKE >=3.2"
+
+#: ../../source/tutorial_doc/installation.from_source.rst:11
+msgid "gcc>=6.0"
+msgstr "gcc>=6.0"
+
+#: ../../source/tutorial_doc/installation.from_source.rst:14
+msgid "Build Matx using script"
+msgstr "一键构建"
+
+#: ../../source/tutorial_doc/installation.from_source.rst:25
+msgid "Verify installation"
+msgstr "验证可用性"
+

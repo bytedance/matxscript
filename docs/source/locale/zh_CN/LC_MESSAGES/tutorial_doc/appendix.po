@@ -1,0 +1,193 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-10 03:03+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/tutorial_doc/appendix.rst:4
+msgid "Supported Syntax and Grammar"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:7
+msgid "Type System"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:8
+msgid ""
+"Matx adopts weak type system and supports \"Any\" type. It aims to be "
+"compatible with Python programming style. However, we enforce type "
+"annotation of the class members and signatures of the functions. In other"
+" circumstances, we highly recommend users to annotate the type of any "
+"used variables to achieve better performance."
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:9
+msgid ""
+"Reference to `Python annotation "
+"<https://docs.python.org/3/library/typing.html />`_."
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:10
+msgid "Below is the type correspondece table:"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:15
+msgid "Python"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:15
+msgid "MATX"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:15
+msgid "Remark"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:17
+msgid "int"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:17
+#: ../../source/tutorial_doc/appendix.rst:21
+msgid "int64_t"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:19
+msgid "float"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:19
+msgid "double"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:21
+msgid "bool"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:23
+msgid "str"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:23
+msgid "runtime::Unicode"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:25
+msgid "bytes"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:25
+msgid "runtime::String"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst
+msgid "list"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst
+msgid "runtime::List(generic var)"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst
+msgid "runtime::FTList (scoped var)"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst
+msgid "dict"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst
+msgid "runtime::Dict(generic var)"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst
+msgid "runtime::FTDict(scoped var)"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst
+msgid "set"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst
+msgid "runtime::Set(generic var)"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst
+msgid "runtime::FTSet(scoped var)"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:36
+msgid "tuple"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:36
+msgid "runtime::Tuple"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:38
+msgid "class"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:38
+#: ../../source/tutorial_doc/appendix.rst:40
+msgid "runtime::UserData"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:40
+msgid "callable"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:42
+msgid "NDArray(matx)"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:42
+msgid "runtime::NDArray"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:44
+msgid "Any"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:44
+#: ../../source/tutorial_doc/appendix.rst:46
+msgid "runtime::RTValue"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:46
+msgid "None"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:50
+msgid "Python Gammar"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:54
+msgid "Operator"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:58
+msgid "User defined class"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:61
+msgid "Libraries Support"
+msgstr ""
+
+#: ../../source/tutorial_doc/appendix.rst:64
+msgid "Script Type Correspondence Table"
+msgstr ""
+

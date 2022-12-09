@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-08 03:59+0800\n"
+"POT-Creation-Date: 2022-12-10 03:03+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,35 @@ msgstr ""
 "Generated-By: Babel 2.6.0\n"
 
 #: ../../source/index.rst:13
-msgid "Contents:"
+msgid "Introduce to Marxscript"
+msgstr ""
+
+#: ../../source/index.rst:21
+msgid "quick start"
+msgstr ""
+
+#: ../../source/index.rst:30
+msgid "basics"
+msgstr ""
+
+#: ../../source/index.rst:39
+msgid "Advanced usage"
+msgstr ""
+
+#: ../../source/index.rst:46
+msgid "performance evaluation"
+msgstr ""
+
+#: ../../source/index.rst:53
+msgid "Example"
+msgstr ""
+
+#: ../../source/index.rst:61
+msgid "API"
+msgstr ""
+
+#: ../../source/index.rst:69
+msgid "Appendix"
 msgstr ""
 
 #: ../../source/index.rst:7
@@ -29,19 +57,30 @@ msgstr ""
 msgid "Introduction"
 msgstr ""
 
-#: ../../source/index.rst:20
+#: ../../source/index.rst:11
+msgid ""
+"MATXScript is an AOT (ahead of time) compiler. By automatically compiling"
+" a subset of Python into C++, MATXScript unifies deep learning model "
+"training including data preprocessing and postprocessing using Python and"
+" deployment using C++."
+msgstr ""
+
+#: ../../source/index.rst:78
 msgid "Indices and tables"
 msgstr ""
 
-#: ../../source/index.rst:22
+#: ../../source/index.rst:80
 msgid ":ref:`genindex`"
 msgstr ""
 
-#: ../../source/index.rst:23
+#: ../../source/index.rst:81
 msgid ":ref:`modindex`"
 msgstr ""
 
-#: ../../source/index.rst:24
+#: ../../source/index.rst:82
 msgid ":ref:`search`"
 msgstr ""
+
+#~ msgid "Contents:"
+#~ msgstr ""
 

@@ -3,8 +3,6 @@
 Installating From Source
 #############################################
 
-English installating from source
-
 Prerequisite
 ************************************
 | CMAKE >=3.2   
