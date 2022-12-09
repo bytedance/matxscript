@@ -29,16 +29,23 @@ english intro
 
 .. toctree::
    :maxdepth: 1
-   :caption: features
+   :caption: basics
    :hidden:
 
+   tutorial_doc/ndarray
    tutorial_doc/script
    tutorial_doc/trace
-   tutorial_doc/advanced_features
+
+.. toctree:: 
+   :maxdepth: 1
+   :caption: Advanced usage
+   :hidden:
+
+   tutorial_doc/advanced_usage
 
 .. toctree::
    :maxdepth: 1
-   :caption: performance
+   :caption: performance evaluation
    :hidden:
 
    tutorial_doc/performance
@@ -57,6 +64,13 @@ english intro
    :hidden:
 
    apidoc/modules
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Appendix
+   :hidden:
+
+   tutorial_doc/appendix
 
 
 Indices and tables

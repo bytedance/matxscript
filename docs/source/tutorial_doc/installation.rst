@@ -1,9 +1,8 @@
 .. installation
 
 Installation
-=================================
+############################
 
-english installation
 
 .. toctree::
    :maxdepth: 1

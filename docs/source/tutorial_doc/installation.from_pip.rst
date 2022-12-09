@@ -1,6 +1,8 @@
 .. Installating From PIP
 
 Installating From PIP
-=============================================
+#############################################
 
-English building from pip
+.. code-block:: bash 
+
+    pip3 install matxscript
