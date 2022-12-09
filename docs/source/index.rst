@@ -8,7 +8,7 @@ Welcome to Matxscript's documentation!
 
 Introduction
 --------------------------------------
-english intro
+MATXScript is an AOT (ahead of time) compiler. By automatically compiling a subset of Python into C++, MATXScript unifies deep learning model training including data preprocessing and postprocessing using Python and deployment using C++. 
 
 .. toctree::
    :maxdepth: 1
