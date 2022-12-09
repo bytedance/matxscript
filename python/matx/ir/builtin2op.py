@@ -450,7 +450,9 @@ def _register_nd_array_construct():
             elif isinstance(e.checked_type, _type.ObjectType):
                 return _to_unicode_ir(span, e)
             else:
-                raise TypeError("ndarray constructor: type of parameter %s should be Unicode, but get %s" % (name, e.checked_type))
+                raise TypeError(
+                    "ndarray constructor: type of parameter %s should be Unicode, but get %s" %
+                    (name, e.checked_type))
 
         if not isinstance(device, _expr.BaseExpr):
             assert isinstance(device, str), "internal error"
@@ -471,7 +473,9 @@ def _register_nd_array_construct():
         elif isinstance(shape.checked_type, _type.ObjectType):
             shape = Builtin2Op.lookup("list")(span, shape)
         else:
-            raise TypeError("ndarray constructor: type of parameter shape should be list, but get %s" % shape.checked_type)
+            raise TypeError(
+                "ndarray constructor: type of parameter shape should be list, but get %s" %
+                shape.checked_type)
 
         dtype = convert_unicode(span, dtype, 'dtype')
         device = convert_unicode(span, device, 'device')
