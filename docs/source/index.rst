@@ -59,9 +59,10 @@ english intro
 
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
    :caption: API
    :hidden:
+   :titlesonly:
 
    apidoc/modules
 
