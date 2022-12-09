@@ -18,7 +18,7 @@ Due to Gobal Interpreter Lock (GIL) implemented in Python interpreter, multithre
 
 Regular Expression
 ***************************************
-Matx implements a builtin regular expression engine based on `PCRE <(https://github.com/PCRE2Project/pcre2>`_.
+Matx implements a builtin regular expression engine based on `PCRE <https://github.com/PCRE2Project/pcre2>`_.
 
 .. code-block:: python3 
 

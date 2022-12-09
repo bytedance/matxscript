@@ -3,21 +3,15 @@
 Pytorch Integration
 #####################################################
 
-Torch support
+Overview
 *****************************************************
 Matx provides support for pytorch models. You can simply call matx.script() to convert a nn.Module or jit.ScriptModule to an InferenceOp and use it in trace pipeline.
 
-InferenceOp
+Usage
 *****************************************************
 
-Construction
-=====================================================
-There are two ways to construct InferenceOp 
-
 From ScriptModule(ScriptFunction)
------------------------------------------------------
-
-| From a given ScriptModule and a device id, we can pack a ScriptModule into a matx InferenceOp.
+=====================================================
 
 | 1. Define a nn.Module and call torch.jit.trace
 
@@ -40,11 +34,23 @@ From ScriptModule(ScriptFunction)
 
 | 2. Construct InferenceOp
 
+From a given ScriptModule and a device id, we can pack a ScriptModule into a matx InferenceOp.
+
+| 2.1 From a existing instance
+
 .. code-block:: python3 
 
     import matx
 
-    infer_op = matx.script(script_model)
+    infer_op = matx.script(cript_model, device=0)
+
+| 2.2 From local file 
+
+.. code-block:: python3 
+
+    import matx
+
+    infer_op = matx.script("model", device=0)
 
 | 3. Now we can use infer_op as a normal matx op or call it in pipeline for trace. Notice that the inputs for calling infer_op are the same as ScriptModule, but users have to substitute torch.tensor with matx.NDArray.
 
@@ -63,7 +69,7 @@ From ScriptModule(ScriptFunction)
     print(r)
 
 From nn.Module 
------------------------------------------------------
+=====================================================
 
 Using the same model above, we can skip torch.jit.trace as below.
 .. code-block:: python3 
@@ -73,7 +79,8 @@ Using the same model above, we can skip torch.jit.trace as below.
 This will call torch.jit.trace to convert nn.Module to ScriotModule during trace. So, there is no essential difference between this method and the one above. However, notice that users have to make sure that their nn.Module can be converted to ScriptModule by torch,jit.trace.
 
 Remarks
-=====================================================
+*****************************************************
+
 #. InferenceOp needs a device id. Loading trace also needs a device id. Their relationship is:
     #. When InferenceOp device is cpu, matx will ignore device id given to trace, and InferenceOp runs on cpu.
     #. When InferenceOp device is gpu, and the trace is loaded to GPU, then InferenceOp will run on the gpu given to trace.
