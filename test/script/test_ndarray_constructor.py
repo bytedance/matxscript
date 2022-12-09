@@ -123,6 +123,21 @@ class TestMatxNDArrayConstructor(unittest.TestCase):
         np_nd = numpy.ones(shape=[2, 2], dtype="int64")
         self.assertTrue(numpy.all(mx_nd.asnumpy().astype(dtype="int64") == np_nd))
 
+    def test_construct_with_any_shape(self):
+        def build_ndarray() -> matx.NDArray:
+            shape: Any = [2, 2]
+            return matx.NDArray([1, 2, 3, 4], shape, "int32")
+        py_nd = build_ndarray()
+        matx_nd = matx.script(build_ndarray)()
+        self.assertTrue(numpy.array_equal(py_nd.asnumpy(), matx_nd.asnumpy()))
+
+    def test_construct_with_invalid_shape(self):
+        def build_ndarray() -> matx.NDArray:
+            data = [[1, 2], [3, 4]]
+            shape = (2, 2)
+            return matx.NDArray(data, shape, dtype='int32')
+        self.assertRaises(Exception, matx.script, build_ndarray)
+
 
 if __name__ == "__main__":
     import logging

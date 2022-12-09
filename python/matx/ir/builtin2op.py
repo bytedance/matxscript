@@ -444,6 +444,16 @@ def _register_nd_array_construct():
                            shape,
                            dtype,
                            device="cpu"):
+        def convert_unicode(span, e, name):
+            if isinstance(e.checked_type, _type.UnicodeType):
+                return e
+            elif isinstance(e.checked_type, _type.ObjectType):
+                return _to_unicode_ir(span, e)
+            else:
+                raise TypeError(
+                    "ndarray constructor: type of parameter %s should be Unicode, but get %s" %
+                    (name, e.checked_type))
+
         if not isinstance(device, _expr.BaseExpr):
             assert isinstance(device, str), "internal error"
             device = _expr.UnicodeImm(device, span=span)
@@ -458,6 +468,18 @@ def _register_nd_array_construct():
         #     checked_dtype = _type.PrimType(dtype.value)
         # ret_ty = _type.NDArrayType(ndim=ndim, dtype=checked_dtype)
         ret_ty = _type.NDArrayType()
+        if isinstance(shape.checked_type, _type.ListType):
+            pass
+        elif isinstance(shape.checked_type, _type.ObjectType):
+            shape = Builtin2Op.lookup("list")(span, shape)
+        else:
+            raise TypeError(
+                "ndarray constructor: type of parameter shape should be list, but get %s" %
+                shape.checked_type)
+
+        dtype = convert_unicode(span, dtype, 'dtype')
+        device = convert_unicode(span, device, 'device')
+
         return _ir_adt.Constructor("NDArray", ret_type=ret_ty)(
             span,
             arr,
