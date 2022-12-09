@@ -51,6 +51,18 @@ class PyTorchDeviceNotSetError(ValueError):
         return f"Loss the device parameter, model: '{self.model}'"
 
 
+class PyTorchRuntimeError(RuntimeError):
+    """Raised when the device parameter is not passed by user."""
+
+    def __init__(self, model, stack_message) -> None:
+        self.model = model
+        self.stack_message = stack_message
+
+    def __str__(self) -> str:
+        errmsg = self.stack_message[self.stack_message.find('\n') + 1:]
+        return f"{errmsg}"
+
+
 class TorchModel(pipeline.ops.OpKernel):
     """Create TorchModel
 
@@ -361,7 +373,12 @@ class PytorchModule(object):
             args_data = []
             for arg in args:
                 args_data.append(self._trans_(arg))
-            model_output = self._model(*args_data)
+            try:
+                model_output = self._model(*args_data)
+            except:
+                import traceback
+                msg = traceback.format_exc()
+                raise PyTorchRuntimeError(self._model, msg)
             res = self._reverse_trans_output_(model_output)
             if self._already_traced or not tracing():
                 return res

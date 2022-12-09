@@ -507,12 +507,14 @@ typedef void (*MATXScriptPackedCFuncFinalizer)(void* resource_handle);
  * \param resource_handle The resource handle from front-end, can be NULL.
  * \param fin The finalizer on resource handle when the FunctionHandle get freed, can be NULL
  * \param out the result function handle.
+ * \param do_stack_trace_on_error
  * \return 0 when success, -1 when failure happens
  */
 MATX_DLL int MATXScriptFuncCreateFromCFunc(MATXScriptPackedCFunc func,
                                            void* resource_handle,
                                            MATXScriptPackedCFuncFinalizer fin,
-                                           MATXScriptFunctionHandle* out);
+                                           MATXScriptFunctionHandle* out,
+                                           int do_stack_trace_on_error);
 
 /*!
  * \brief Register the function to runtime's global table.

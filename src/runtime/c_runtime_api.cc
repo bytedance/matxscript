@@ -52,6 +52,44 @@
 namespace matxscript {
 namespace runtime {
 
+static bool IsAlreadyPythonStackTraceFormat(const std::string& err_msg) {
+  const char* msg_ptr = err_msg.data();
+  const char* msg_end_ptr = err_msg.data() + err_msg.size();
+  const char* line_end_ptr = msg_ptr;
+  while (line_end_ptr < msg_end_ptr && *line_end_ptr != '\n') {
+    ++line_end_ptr;
+  }
+  while (msg_ptr < line_end_ptr && *msg_ptr == ' ') {
+    ++msg_ptr;
+  }
+  const char* head = "File \"";
+  auto head_len = strlen(head);
+  if (line_end_ptr - msg_ptr < head_len) {
+    return false;
+  }
+  if (0 != std::memcmp(msg_ptr, head, head_len)) {
+    return false;
+  }
+
+  const char* line = "\", line";
+  auto line_len = strlen(line);
+
+  msg_ptr += head_len;
+  while (msg_ptr < line_end_ptr) {
+    while (msg_ptr < line_end_ptr && *msg_ptr != '"') {
+      ++msg_ptr;
+    }
+    if (line_end_ptr - msg_ptr < line_len) {
+      return false;
+    }
+    if (0 == std::memcmp(msg_ptr, line, line_len)) {
+      return true;
+    }
+    ++msg_ptr;
+  }
+  return false;
+}
+
 //--------------------------------------------------------
 // Error handling mechanism
 // -------------------------------------------------------
@@ -78,6 +116,9 @@ namespace runtime {
  * \return normalized message.
  */
 std::string NormalizeError(std::string err_msg) {
+  if (IsAlreadyPythonStackTraceFormat(err_msg)) {
+    return err_msg;
+  }
   // ------------------------------------------------------------------------
   // log with header, {} indicates optional
   //-------------------------------------------------------------------------
@@ -101,7 +142,7 @@ std::string NormalizeError(std::string err_msg) {
   std::string line, file_name, error_type, check_msg;
 
   // Parse log header and set the fields,
-  // Return true if it the log is in correct format,
+  // Return true if the log is in correct format,
   // return false if something is wrong.
   auto parse_log_header = [&]() {
     // skip timestamp
@@ -655,28 +696,34 @@ int MATXScriptCFuncSetReturn(MATXScriptValueHandle ret, MATXScriptAny* value, in
 int MATXScriptFuncCreateFromCFunc(MATXScriptPackedCFunc func,
                                   void* resource_handle,
                                   MATXScriptPackedCFuncFinalizer fin,
-                                  MATXScriptFunctionHandle* out) {
+                                  MATXScriptFunctionHandle* out,
+                                  int do_stack_trace_on_error) {
   API_BEGIN();
   if (fin == nullptr) {
-    *out = new NativeFunction([func, resource_handle](PyArgs args) -> RTValue {
-      std::vector<MATXScriptAny> c_args;
-      c_args.reserve(args.size());
-      for (auto& val : args) {
-        c_args.push_back(val.value());
-      }
-      RTValue rv;
-      int ret = func(c_args.data(), args.size(), &rv, resource_handle);
-      if (ret != 0) {
-        throw ::matxscript::runtime::Error(MATXScriptAPIGetLastError() + std::string("\n") +
-                                           ::matxscript::runtime::StackTrace());
-      }
-      return rv;
-    });
+    *out = new NativeFunction(
+        [func, resource_handle, do_stack_trace_on_error](PyArgs args) -> RTValue {
+          std::vector<MATXScriptAny> c_args;
+          c_args.reserve(args.size());
+          for (auto& val : args) {
+            c_args.push_back(val.value());
+          }
+          RTValue rv;
+          int ret = func(c_args.data(), args.size(), &rv, resource_handle);
+          if (ret != 0) {
+            if (do_stack_trace_on_error) {
+              throw ::matxscript::runtime::Error(MATXScriptAPIGetLastError() + std::string("\n") +
+                                                 ::matxscript::runtime::StackTrace());
+            } else {
+              throw ::matxscript::runtime::Error(MATXScriptAPIGetLastError());
+            }
+          }
+          return rv;
+        });
   } else {
     // wrap it in a shared_ptr, with fin as deleter.
     // so fin will be called when the lambda went out of scope.
     std::shared_ptr<void> rpack(resource_handle, fin);
-    *out = new NativeFunction([func, rpack](PyArgs args) -> RTValue {
+    *out = new NativeFunction([func, rpack, do_stack_trace_on_error](PyArgs args) -> RTValue {
       std::vector<MATXScriptAny> c_args;
       c_args.reserve(args.size());
       for (auto& val : args) {
@@ -685,8 +732,12 @@ int MATXScriptFuncCreateFromCFunc(MATXScriptPackedCFunc func,
       RTValue rv;
       int ret = func(c_args.data(), args.size(), &rv, rpack.get());
       if (ret != 0) {
-        throw ::matxscript::runtime::Error(MATXScriptAPIGetLastError() + std::string("\n") +
-                                           ::matxscript::runtime::StackTrace());
+        if (do_stack_trace_on_error) {
+          throw ::matxscript::runtime::Error(MATXScriptAPIGetLastError() + std::string("\n") +
+                                             ::matxscript::runtime::StackTrace());
+        } else {
+          throw ::matxscript::runtime::Error(MATXScriptAPIGetLastError());
+        }
       }
       return rv;
     });

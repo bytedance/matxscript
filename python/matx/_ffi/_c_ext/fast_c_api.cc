@@ -1283,7 +1283,8 @@ static PyObject* matx_script_api_convert_to_packed_func(PyObject* self, PyObject
   if (0 != MATXScriptFuncCreateFromCFunc(PythonClosureMATXScriptPackedCFunc,
                                          py_func,
                                          PythonClosureMATXScriptPackedCFuncFinalizer,
-                                         &handle)) {
+                                         &handle,
+                                         0)) {
     PyErr_SetString(PyExc_TypeError, MATXScriptAPIGetLastError());
     return NULL;
   }
