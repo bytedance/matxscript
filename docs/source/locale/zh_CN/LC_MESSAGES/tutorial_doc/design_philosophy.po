@@ -144,11 +144,11 @@ msgid ""
 "cleaning, text augmentation and tokenizing. A large portion of existing "
 "codebase is written in Python. With Matx, Developers can integrate data "
 "preprocessing code into neural network inference code easily."
-msgstr ""
+msgstr "数据的前后处理是机器学习生产系统中的两个关键组件。现有的大部分代码库是用Python编写的。使用Matx，开发人员可以轻松地将数据预处理代码集成到神经网络推理代码中。"
 
 #: ../../source/tutorial_doc/design_philosophy.rst:51
 msgid "Pytorch/TensorFlow Integration"
-msgstr "数据的前后处理是机器学习生产系统中的两个关键组件。现有的大部分代码库是用Python编写的。使用Matx，开发人员可以轻松地将数据预处理代码集成到神经网络推理代码中。"
+msgstr "Pytorch/TensorFlow 集成"
 
 #: ../../source/tutorial_doc/design_philosophy.rst:52
 msgid ""
