@@ -19,27 +19,27 @@ msgstr ""
 
 #: ../../source/index.rst:13
 msgid "Introduce to Marxscript"
-msgstr ""
+msgstr "Matxscript 简介"
 
 #: ../../source/index.rst:21
 msgid "quick start"
-msgstr ""
+msgstr "快速开始"
 
 #: ../../source/index.rst:30
 msgid "basics"
-msgstr ""
+msgstr "基础知识"
 
 #: ../../source/index.rst:39
 msgid "Advanced usage"
-msgstr ""
+msgstr "高级用法"
 
 #: ../../source/index.rst:46
 msgid "performance evaluation"
-msgstr ""
+msgstr "性能测试"
 
 #: ../../source/index.rst:53
 msgid "Example"
-msgstr ""
+msgstr "应用案例"
 
 #: ../../source/index.rst:61
 msgid "API"
@@ -47,7 +47,7 @@ msgstr ""
 
 #: ../../source/index.rst:69
 msgid "Appendix"
-msgstr ""
+msgstr "附录"
 
 #: ../../source/index.rst:7
 msgid "Welcome to Matxscript's documentation!"
@@ -55,7 +55,7 @@ msgstr ""
 
 #: ../../source/index.rst:10
 msgid "Introduction"
-msgstr ""
+msgstr "介绍"
 
 #: ../../source/index.rst:11
 msgid ""
@@ -63,7 +63,7 @@ msgid ""
 " a subset of Python into C++, MATXScript unifies deep learning model "
 "training including data preprocessing and postprocessing using Python and"
 " deployment using C++."
-msgstr ""
+msgstr "MATXScript 是一个 Python 子语言的 Ahead-of-time (AOT) 编译器，通过自动化将 Python 翻译成 C++，可以解决深度学习中训练和服务的割裂问题：用 Python 离线调试/训练，用 C++ 部署上线。"
 
 #: ../../source/index.rst:78
 msgid "Indices and tables"
