@@ -72,6 +72,8 @@ From nn.Module
 =====================================================
 
 Using the same model above, we can skip torch.jit.trace as below.
+
+
 .. code-block:: python3 
 
     infer_op = matx.script(my_cell, device=0)

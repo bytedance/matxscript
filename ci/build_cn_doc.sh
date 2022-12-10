@@ -16,9 +16,11 @@ ROOT_PATH=${THIS_PATH}/..
 pip3 install sphinx-intl
 
 pushd ${ROOT_PATH}/docs
+make gettext
+
 sphinx-intl update -p ./build/gettext -l zh_CN
 
-sphinx-build -D language=zh_CN -b html ./source _build/html/zh-CN
+sphinx-build -D language=zh_CN -b html ./source build/html/zh-CN
 
 
 popd

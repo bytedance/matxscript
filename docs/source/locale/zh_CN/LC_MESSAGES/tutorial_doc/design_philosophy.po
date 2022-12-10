@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-10 03:03+0800\n"
+"POT-Creation-Date: 2022-12-10 08:05+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -51,7 +51,9 @@ msgid ""
 " C++. Besides machine learning applications, we expect Matx to be used in"
 " a wider range of applications that involve translating Python into C++ "
 "for better performance."
-msgstr "为实现这些目标，我们将 matx 设计为一个 Python 代码的超前编译器，将Python 代码自动编译成C++。目前 Matx 主要支持机器学习相关的应用，但我们预期将 matx 推广到更多对性能敏感的python应用。"
+msgstr ""
+"为实现这些目标，我们将 matx 设计为一个 Python 代码的超前编译器，将Python 代码自动编译成C++。目前 Matx "
+"主要支持机器学习相关的应用，但我们预期将 matx 推广到更多对性能敏感的python应用。"
 
 #: ../../source/tutorial_doc/design_philosophy.rst:17
 msgid "High-level Concepts"
@@ -101,7 +103,9 @@ msgid ""
 "choose Python as it is the dominate programming language in deep learning"
 " and has a large existing codebase. Note that we only support a subset of"
 " Python due to performance consideration."
-msgstr "之所以我们选择 Python 是因为它是深度学习中的主要编程语言，并且拥有大量现有代码库。请注意，出于性能考虑，我们只支持 Python 语法的子集。"
+msgstr ""
+"之所以我们选择 Python 是因为它是深度学习中的主要编程语言，并且拥有大量现有代码库。请注意，出于性能考虑，我们只支持 Python "
+"语法的子集。"
 
 #: ../../source/tutorial_doc/design_philosophy.rst:36
 msgid "Fast Execution"
@@ -113,7 +117,9 @@ msgid ""
 "orders of speedup compared with the original Python code executed by "
 "Python Interpreter. To further improve the performance, we enforce type "
 "annotation when writing Python code."
-msgstr "由于在经过编译(script) 后，我们将用户的Python代码转换为了C++，所以在与使用 Python 解释器运行的代码相比，生成的c++代码为我们带来了几个数量级的性能提升。除此之外，我们还要求用户对其Python代码进行类型标注，这样可以进一步提升性能。"
+msgstr ""
+"由于在经过编译(script) 后，我们将用户的Python代码转换为了C++，所以在与使用 Python "
+"解释器运行的代码相比，生成的c++代码为我们带来了几个数量级的性能提升。除此之外，我们还要求用户对其Python代码进行类型标注，这样可以进一步提升性能。"
 
 #: ../../source/tutorial_doc/design_philosophy.rst:40
 msgid "Extensions Without Pain"
@@ -143,4 +149,10 @@ msgstr ""
 #: ../../source/tutorial_doc/design_philosophy.rst:51
 msgid "Pytorch/TensorFlow Integration"
 msgstr "数据的前后处理是机器学习生产系统中的两个关键组件。现有的大部分代码库是用Python编写的。使用Matx，开发人员可以轻松地将数据预处理代码集成到神经网络推理代码中。"
+
+#: ../../source/tutorial_doc/design_philosophy.rst:52
+msgid ""
+"Matx enables easy integration of existing Pytorch/TensorFlow models into "
+"preprocessing and postprocessing pipelines."
+msgstr "Matx可以轻松地将现有的Pytorch/TensorFlow模型集成到预处理和后处理的流程中。"
 
