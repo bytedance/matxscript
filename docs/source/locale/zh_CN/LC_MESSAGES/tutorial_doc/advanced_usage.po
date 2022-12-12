@@ -35,7 +35,6 @@ msgid "Regular Expression"
 msgstr "正则表达式"
 
 #: ../../source/tutorial_doc/advanced_usage.rst:21
-#, fuzzy
 msgid ""
 "Matx implements a builtin regular expression engine based on `PCRE "
 "<https://github.com/PCRE2Project/pcre2>`_."

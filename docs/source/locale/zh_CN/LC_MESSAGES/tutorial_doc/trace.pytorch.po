@@ -69,7 +69,7 @@ msgid ""
 "ScriptModule, but users have to substitute torch.tensor with "
 "matx.NDArray."
 msgstr ""
-"3. 3.  构造出InferenceOp后，我们可以如普通matx "
+"3. 构造出InferenceOp后，我们可以如普通matx "
 "op一样调用，或者在pipeline中进行trace。调用InferenceOp的输入参数和调用ScriptModule需要的参数一致，仅需要注意的是将tensor类型用相应的NDArray类型替换即可。"
 
 #: ../../source/tutorial_doc/trace.pytorch.rst:72
@@ -77,7 +77,6 @@ msgid "From nn.Module"
 msgstr "从 nn.Module 构建"
 
 #: ../../source/tutorial_doc/trace.pytorch.rst:74
-#, fuzzy
 msgid "Using the same model above, we can skip torch.jit.trace as below."
 msgstr "沿用MyCell模型，我们将其直接封装为InferenceOp。"
 
