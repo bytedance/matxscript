@@ -31,3 +31,4 @@ add_library(byted_vision_cpu_ops SHARED
 )
 
 target_link_libraries(byted_vision_cpu_ops PUBLIC ${CV_LIBS})
+INSTALL(TARGETS byted_vision_cpu_ops LIBRARY DESTINATION ${CMAKE_CURRENT_LIST_DIR})
