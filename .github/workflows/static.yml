@@ -44,8 +44,7 @@ jobs:
           pip3 install prettytable
           pip3 install recommonmark
       - name: build_english_version
-        working-directory: ./docs
-        run: make html
+        run: ci/build_docs.sh
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
