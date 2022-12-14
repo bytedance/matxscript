@@ -43,6 +43,7 @@ jobs:
           pip3 install sphinx-gallery
           pip3 install prettytable
           pip3 install recommonmark
+          pip3 install torch
       - name: compile matx
         run: |
           bash ./ci/build_pip_whl.sh
