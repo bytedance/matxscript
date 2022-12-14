@@ -17,8 +17,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "ndarray_helper.h"
 #include "matxscript/runtime/data_type.h"
+#include "ndarray_helper.h"
 
 namespace byted_matx_vision {
 namespace ops {
