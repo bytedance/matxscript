@@ -1,0 +1,133 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-08 03:59+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/apidoc/matx.runtime.regex.rst:2
+msgid "matx.runtime.regex module"
+msgstr ""
+
+#: matx.runtime.regex.Regex:1 of
+msgid "Bases: :py:class:`~matx.runtime.object.Object`"
+msgstr ""
+
+#: matx.runtime.regex.Regex:1 of
+msgid "Regular class implemented using pcre."
+msgstr ""
+
+#: matx.runtime.regex.Regex matx.runtime.regex.Regex.match
+#: matx.runtime.regex.Regex.replace matx.runtime.regex.Regex.split of
+msgid "Parameters"
+msgstr ""
+
+#: matx.runtime.regex.Regex:3 of
+msgid "Str types. Regular expression pattern."
+msgstr ""
+
+#: matx.runtime.regex.Regex:5 of
+msgid "Booleans. Perform case-insensitive matching. The default is false"
+msgstr ""
+
+#: matx.runtime.regex.Regex:7 of
+msgid ""
+"Booleans. \".\" matches any character at all, including the newline. The "
+"default is false"
+msgstr ""
+
+#: matx.runtime.regex.Regex:9 of
+msgid ""
+"Booleans. Most white space in the pattern (other than in a character "
+"class), and characters between a # outside a character class and the next"
+" newline, inclusive, are ignored. An escaping backslash can be used to "
+"include a white space or # character as part of the pattern. The default "
+"is false."
+msgstr ""
+
+#: matx.runtime.regex.Regex:11 of
+msgid ""
+"Booleans. Matches only at the beginning of the subject. The default is "
+"false."
+msgstr ""
+
+#: matx.runtime.regex.Regex:13 of
+msgid ""
+"Booleans. Sequences such as \"\\d\" and \"\\w\" use Unicode properties to"
+" determine character types, instead of recognizing only characters with "
+"codes less than 128 via a lookup table. The default is false."
+msgstr ""
+
+#: matx.runtime.regex.Regex:17 matx.runtime.regex.Regex.match:12
+#: matx.runtime.regex.Regex.replace:12 matx.runtime.regex.Regex.split:10 of
+msgid "Examples"
+msgstr ""
+
+#: matx.runtime.regex.Regex.match:1 of
+msgid ""
+"Try to apply the pattern at the start of the string, returning a tuple "
+"containing the matched string. If grouping version of regular pattern is "
+"used, then the text of all groups are returned."
+msgstr ""
+
+#: matx.runtime.regex.Regex.match:3 matx.runtime.regex.Regex.replace:3
+#: matx.runtime.regex.Regex.split:3 of
+msgid "The source string."
+msgstr ""
+
+#: matx.runtime.regex.Regex.match:5 of
+msgid "Offset in the subject at which to start matching"
+msgstr ""
+
+#: matx.runtime.regex.Regex.match matx.runtime.regex.Regex.replace
+#: matx.runtime.regex.Regex.split of
+msgid "Returns"
+msgstr ""
+
+#: matx.runtime.regex.Regex.match:8 of
+msgid ""
+"The matched groups. The first element in the tuple is indexed groups. The"
+" second element in the tuple is named groups."
+msgstr ""
+
+#: matx.runtime.regex.Regex.match matx.runtime.regex.Regex.replace
+#: matx.runtime.regex.Regex.split of
+msgid "Return type"
+msgstr ""
+
+#: matx.runtime.regex.Regex.replace:1 of
+msgid ""
+"Return the string obtained by replacing the leftmost non-overlapping "
+"occurrences of the pattern in the input string by the replacement repl."
+msgstr ""
+
+#: matx.runtime.regex.Regex.replace:5 of
+msgid "The replacement string."
+msgstr ""
+
+#: matx.runtime.regex.Regex.replace:8 of
+msgid "The replaced string. If no match was found, returning the source string."
+msgstr ""
+
+#: matx.runtime.regex.Regex.split:1 of
+msgid "Split a string by the occurrences of a pattern."
+msgstr ""
+
+#: matx.runtime.regex.Regex.split:6 of
+msgid ""
+"A list containing the resulting substrings. If no match was "
+"found，returning a list containing only the source string, i.e. [input]."
+msgstr ""
+

@@ -1,0 +1,234 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-08 03:59+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/apidoc/matx.runtime.module.rst:2
+msgid "matx.runtime.module module"
+msgstr ""
+
+#: matx.runtime.module:1 of
+msgid "Runtime Module namespace."
+msgstr ""
+
+#: matx.runtime.module.Module:1 of
+msgid "Bases: :py:class:`object`"
+msgstr ""
+
+#: matx.runtime.module.Module:1 of
+msgid "Runtime Module."
+msgstr ""
+
+#: matx.runtime.module.Module.__call__:1 of
+msgid "Call self as a function."
+msgstr ""
+
+#: matx.runtime.module.Module.entry_func:1 of
+msgid "Get the entry function"
+msgstr ""
+
+#: matx.runtime.module.Module.entry_func
+#: matx.runtime.module.Module.get_function
+#: matx.runtime.module.Module.get_source
+#: matx.runtime.module.Module.imported_modules matx.runtime.module.load_module
+#: matx.runtime.module.system_lib of
+msgid "Returns"
+msgstr ""
+
+#: matx.runtime.module.Module.entry_func:3 of
+msgid "**f** -- The entry function if exist"
+msgstr ""
+
+#: matx.runtime.module.Module.entry_func
+#: matx.runtime.module.Module.get_function
+#: matx.runtime.module.Module.get_source
+#: matx.runtime.module.Module.imported_modules matx.runtime.module.load_module
+#: matx.runtime.module.system_lib of
+msgid "Return type"
+msgstr ""
+
+#: matx.runtime.module.Module.export_library:1 of
+msgid "Export the module and its imported device code one library."
+msgstr ""
+
+#: matx.runtime.module.Module.export_library:3 of
+msgid ""
+"This function only works on host llvm modules. It will pack all the "
+"imported modules"
+msgstr ""
+
+#: matx.runtime.module.Module.export_library
+#: matx.runtime.module.Module.get_function
+#: matx.runtime.module.Module.get_source
+#: matx.runtime.module.Module.import_module matx.runtime.module.Module.save
+#: matx.runtime.module.load_module of
+msgid "Parameters"
+msgstr ""
+
+#: matx.runtime.module.Module.export_library:6 of
+msgid "The name of the shared library."
+msgstr ""
+
+#: matx.runtime.module.Module.export_library:8 of
+msgid ""
+"Compilation function to use create dynamic library. If fcompile has "
+"attribute object_format, will compile host library to that format. "
+"Otherwise, will use default format \"o\"."
+msgstr ""
+
+#: matx.runtime.module.Module.export_library:12 of
+msgid "Additional arguments passed to fcompile"
+msgstr ""
+
+#: matx.runtime.module.Module.get_function:1 of
+msgid "Get function from the module."
+msgstr ""
+
+#: matx.runtime.module.Module.get_function:3 of
+msgid "The name of the function"
+msgstr ""
+
+#: matx.runtime.module.Module.get_function:5 of
+msgid "Whether also query modules imported by this module."
+msgstr ""
+
+#: matx.runtime.module.Module.get_function:8 of
+msgid "**f** -- The result function."
+msgstr ""
+
+#: matx.runtime.module.Module.get_source:1 of
+msgid "Get source code from module, if available."
+msgstr ""
+
+#: matx.runtime.module.Module.get_source:3 of
+msgid "The specified format."
+msgstr ""
+
+#: matx.runtime.module.Module.get_source:6 of
+msgid "**source** -- The result source code."
+msgstr ""
+
+#: matx.runtime.module.Module.import_module:1 of
+msgid "Add module to the import list of current one."
+msgstr ""
+
+#: matx.runtime.module.Module.import_module:3 of
+msgid "The other module."
+msgstr ""
+
+#: matx.runtime.module.Module.imported_modules:1 of
+msgid "Get imported modules"
+msgstr ""
+
+#: matx.runtime.module.Module.imported_modules:3 of
+msgid "**modules** -- The module"
+msgstr ""
+
+#: matx.runtime.module.Module.save:1 of
+msgid "Save the module to file."
+msgstr ""
+
+#: matx.runtime.module.Module.save:3 of
+msgid "This do not save the dependent device modules. See also export_shared"
+msgstr ""
+
+#: matx.runtime.module.Module.save:6 of
+msgid "The name of the file."
+msgstr ""
+
+#: matx.runtime.module.Module.save:8 of
+msgid "The format of the file."
+msgstr ""
+
+#: matx.runtime.module.Module.save:13 of
+msgid ":obj:`runtime.Module.export_library`"
+msgstr ""
+
+#: matx.runtime.module.Module.save:14 of
+msgid "export the module to shared library."
+msgstr ""
+
+#: matx.runtime.module.Module.type_key:1 of
+msgid "Get type key of the module."
+msgstr ""
+
+#: matx.runtime.module.ProfileResult:1 of
+msgid "Bases: :py:class:`tuple`"
+msgstr ""
+
+#: matx.runtime.module.ProfileResult.mean:1 of
+msgid "Alias for field number 0"
+msgstr ""
+
+#: matx.runtime.module.ProfileResult.results:1 of
+msgid "Alias for field number 1"
+msgstr ""
+
+#: matx.runtime.module.load_module:1 of
+msgid "Load module from file."
+msgstr ""
+
+#: matx.runtime.module.load_module:3 of
+msgid "The path to the module file."
+msgstr ""
+
+#: matx.runtime.module.load_module:5 of
+msgid ""
+"The format of the file, if not specified it will be inferred from suffix "
+"of the file."
+msgstr ""
+
+#: matx.runtime.module.load_module:9 of
+msgid "**module** -- The loaded module"
+msgstr ""
+
+#: matx.runtime.module.load_module:14 of
+msgid ""
+"This function will automatically call cc.create_shared if the path is in "
+"format .o or .tar"
+msgstr ""
+
+#: matx.runtime.module.system_lib:1 of
+msgid "Get system-wide library module singleton."
+msgstr ""
+
+#: matx.runtime.module.system_lib:3 of
+msgid ""
+"System lib is a global module that contains self register functions in "
+"startup. Unlike normal dso modules which need to be loaded explicitly. It"
+" is useful in environments where dynamic loading api like dlopen is "
+"banned."
+msgstr ""
+
+#: matx.runtime.module.system_lib:7 of
+msgid ""
+"To build system lib function, simply specify target option ```llvm "
+"--system-lib``` The system lib will be available as long as the result "
+"code is linked by the program."
+msgstr ""
+
+#: matx.runtime.module.system_lib:10 of
+msgid ""
+"The system lib is intended to be linked and loaded during the entire "
+"life-cyle of the program. If you want dynamic loading features, use dso "
+"modules instead."
+msgstr ""
+
+#: matx.runtime.module.system_lib:13 of
+msgid "**module** -- The system-wide library module."
+msgstr ""
+

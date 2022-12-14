@@ -1,0 +1,139 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-10 08:10+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:4
+msgid "Pytorch Integration"
+msgstr "PyTorch 集成"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:7
+msgid "Overview"
+msgstr "简介"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:8
+msgid ""
+"Matx provides support for pytorch models. You can simply call "
+"matx.script() to convert a nn.Module or jit.ScriptModule to an "
+"InferenceOp and use it in trace pipeline."
+msgstr "matxscript内置了对pytorch的支持，通过matx.script()将一个Pytorch实例包装成一个InferenceOp，可以用于被trace的pipeline中。"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:11
+msgid "Usage"
+msgstr "使用方式"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:14
+msgid "From ScriptModule(ScriptFunction)"
+msgstr "从 ScriptModule(ScriptFunction) 构建"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:16
+msgid "1. Define a nn.Module and call torch.jit.trace"
+msgstr "1. 定义一个简单的nn.Module，并将其转换为ScriptModule"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:35
+msgid "2. Construct InferenceOp"
+msgstr "2. 构造InferenceOp"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:37
+msgid ""
+"From a given ScriptModule and a device id, we can pack a ScriptModule "
+"into a matx InferenceOp."
+msgstr "通过给定ScriptModule和设备（device id)，我们可以将一个ScriptModule封装成matx op"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:39
+msgid "2.1 From a existing instance"
+msgstr "2.1 从已有实例构建"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:47
+msgid "2.2 From local file"
+msgstr "2.2 从本地文件构建"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:55
+msgid ""
+"3. Now we can use infer_op as a normal matx op or call it in pipeline for"
+" trace. Notice that the inputs for calling infer_op are the same as "
+"ScriptModule, but users have to substitute torch.tensor with "
+"matx.NDArray."
+msgstr ""
+"3. 构造出InferenceOp后，我们可以如普通matx "
+"op一样调用，或者在pipeline中进行trace。调用InferenceOp的输入参数和调用ScriptModule需要的参数一致，仅需要注意的是将tensor类型用相应的NDArray类型替换即可。"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:72
+msgid "From nn.Module"
+msgstr "从 nn.Module 构建"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:74
+msgid "Using the same model above, we can skip torch.jit.trace as below."
+msgstr "沿用MyCell模型，我们将其直接封装为InferenceOp。"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:81
+msgid ""
+"This will call torch.jit.trace to convert nn.Module to ScriotModule "
+"during trace. So, there is no essential difference between this method "
+"and the one above. However, notice that users have to make sure that "
+"their nn.Module can be converted to ScriptModule by torch,jit.trace."
+msgstr "同样infer_op可以进行调用及pipeline trace，在pipeline trace的过程中，InferenceOp内部会调用torch.jit.trace将nn.Module转换为ScriptModule， 因此nn.Module构造InferenceOp在本质上和ScriptModule没有什么不同，需要值得注意的是，在使用nn.Module构造的InfereceOp进行trace时，需要用户保证该nn.Module可以使用torch.jit.trace转换为ScriptModule。"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:84
+msgid "Remarks"
+msgstr "注意事项"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:88
+msgid ""
+"InferenceOp needs a device id. Loading trace also needs a device id. "
+"Their relationship is:"
+msgstr "InferenceOp需要指定device id，通用在session加载时也需要指定device id，其关系如下："
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:87
+msgid ""
+"When InferenceOp device is cpu, matx will ignore device id given to "
+"trace, and InferenceOp runs on cpu."
+msgstr "InferenceOp device为cpu，则不关心session加载的device，InferenceOp在cpu上执行。"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:88
+msgid ""
+"When InferenceOp device is gpu, and the trace is loaded to GPU, then "
+"InferenceOp will run on the gpu given to trace."
+msgstr "InferenceOp device为gpu，session加载的device为gpu，则忽略InferenceOp的id号，InfereceOp在session加载的device上执行。"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:89
+msgid ""
+"When InferenceOp device isgpu, loading trace on CPU leads to undefined "
+"behaviors."
+msgstr "InferenceOp device为gpu，session加载的device为cpu，行为未定义。"
+
+#: ../../source/tutorial_doc/trace.pytorch.rst:90
+msgid ""
+"It is mandatory that the output tensor from Pytorch model is contiguous. "
+"If not, please call tensor.contiguous() before output."
+msgstr "目前要求pytorch model输出的tensor是contiguous的，对于pytorch model非contiguous的tensor，pytorch model内部调用tensor.contiguous在输出前对其进行转换。"
+
+#~ msgid "Torch support"
+#~ msgstr "Torch 支持"
+
+#~ msgid "InferenceOp"
+#~ msgstr ""
+
+#~ msgid "Construction"
+#~ msgstr ""
+
+#~ msgid "There are two ways to construct InferenceOp"
+#~ msgstr ""
+
+#~ msgid "infer_op = matx.script(my_cell, device=0)"
+#~ msgstr ""
+

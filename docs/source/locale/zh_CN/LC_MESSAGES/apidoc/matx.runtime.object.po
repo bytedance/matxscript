@@ -1,0 +1,35 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-08 03:59+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/apidoc/matx.runtime.object.rst:2
+msgid "matx.runtime.object module"
+msgstr ""
+
+#: matx.runtime.object:1 of
+msgid "Runtime Object API"
+msgstr ""
+
+#: matx.runtime.object.Object:1 of
+msgid "Bases: :py:class:`~matx_script_api.ObjectBase`"
+msgstr ""
+
+#: matx.runtime.object.Object:1 of
+msgid "Base class for all tvm's runtime objects."
+msgstr ""
+

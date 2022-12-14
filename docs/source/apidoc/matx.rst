@@ -1,3 +1,5 @@
+.. _matx package:
+
 matx package
 ============
 
