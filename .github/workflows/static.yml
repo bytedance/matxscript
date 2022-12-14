@@ -44,11 +44,11 @@ jobs:
           pip3 install prettytable
           pip3 install recommonmark
           pip3 install torch
-      - name: compile matx
+      - name: Build Matx
         run: |
           bash ./ci/build_pip_whl.sh
           pip3 install ./output
-      - name: build_english_version
+      - name: Build Docs
         run: bash ci/build_docs.sh
       - name: Setup Pages
         uses: actions/configure-pages@v2
