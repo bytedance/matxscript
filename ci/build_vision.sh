@@ -21,7 +21,7 @@
 set -xue
 set -o pipefail
 
-find_opencv=$(pkg-config --modversion opencv | grep -Eo "([0-9].[0-9].[0-9])")
+find_opencv=$(pkg-config --modversion opencv | grep -Eo "([0-9].[0-9].[0-9])") || $(echo "")
 echo $find_opencv
 if [ "x${find_opencv}" != "x3.4.8" ]; then
     echo "no opencv found/ version is not 3.4.8"
