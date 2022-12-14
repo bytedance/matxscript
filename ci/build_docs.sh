@@ -19,15 +19,12 @@ pip3 install sphinx-gallery
 pip3 install prettytable
 pip3 install recommonmark
 
-export PATH=/usr/local/python3.7/bin/:$PATH
-
+export PATH=${ROOT_PATH}/python:$PATH
+echo $PYTHONPATH
 sphinx-build --version
 
 
 pushd ${ROOT_PATH}/docs
-
-
-sphinx-apidoc -M -e -f --implicit-namespaces -o source/apidoc/ ${ROOT_PATH}/python/matx/ ${ROOT_PATH}/python/setup.py
 
 make clean
 make html
