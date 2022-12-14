@@ -114,6 +114,11 @@ cmake ../ -DCMAKE_INSTALL_PREFIX=${OUTPUT_PATH}
 make -j 8
 make install
 
+
+# build vision
+cd "${THIS_PATH}"
+bash build_vision.sh "${BUILD_PATH}/vision"
+
 # prebuild matx_script_api.so
 if [ "$(uname)" == "Darwin" ]; then
     cd ${OUTPUT_PATH} && python3 -c 'import matx'
