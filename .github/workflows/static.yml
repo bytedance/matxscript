@@ -4,7 +4,7 @@ name: Deploy static content to Pages
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: [ "jc-bytedance-setup-githubio" ]
+    branches: ["jc-bytedance-setup-githubio"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -30,16 +30,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: build_english_version
-        working-directory: ./docs
-        run: make html
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload entire repository
-          path: './docs/build/html'
+          path: '.'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
