@@ -21,6 +21,14 @@
 set -xue
 set -o pipefail
 
+find_opencv=$(pkg-config --modversion opencv | grep -Eo "([0-9].[0-9].[0-9])")
+echo $find_opencv
+if [ "x${find_opencv}" != "x3.4.8" ]; then
+    echo "no opencv found/ version is not 3.4.8"
+    exit 0
+fi
+echo "found opencv 3.4.8. continue"
+
 VISION_INSTALL_PATH=$1
 
 THIS_PATH=$(cd $(dirname "$0"); pwd)
