@@ -19,8 +19,6 @@ pip3 install sphinx-gallery
 pip3 install prettytable
 pip3 install recommonmark
 
-export $PYTHONPATH=${ROOT_PATH}/python:$PYTHONPATH
-echo $PYTHONPATH
 sphinx-build --version
 
 
