@@ -1,0 +1,35 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-10 03:03+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/tutorial_doc/trace.tensorflow.rst:4
+msgid "Tensorflow Integration"
+msgstr "TensorFlow 集成"
+
+#: ../../source/tutorial_doc/trace.tensorflow.rst:7
+msgid "Save model"
+msgstr "保存模型"
+
+#: ../../source/tutorial_doc/trace.tensorflow.rst:23
+msgid "Use matxscript load SavedModel"
+msgstr "使用 matxscript 加载 SavedModel"
+
+#: ../../source/tutorial_doc/trace.tensorflow.rst:33
+msgid "Trace and inference"
+msgstr "进行trace和推理"
+

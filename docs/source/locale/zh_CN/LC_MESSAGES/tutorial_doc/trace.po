@@ -1,0 +1,118 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-10 03:03+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/tutorial_doc/trace.rst:4
+msgid "Trace"
+msgstr ""
+
+#: ../../source/tutorial_doc/trace.rst:7
+msgid "Objective"
+msgstr "目标"
+
+#: ../../source/tutorial_doc/trace.rst:9
+msgid ""
+"Trace can conviencelly pack training code written in Python to a format "
+"that matx c++ interface can recognize and use for online inference. It "
+"records the execution process of given Python code and saves it as a "
+"graph on disk."
+msgstr "将训练代码一键打包成 C++ Server 所需格式，方便优化和 Server 上线服务。"
+
+#: ../../source/tutorial_doc/trace.rst:12
+msgid "What does trace record"
+msgstr "能够记录哪些执行过程？"
+
+#: ../../source/tutorial_doc/trace.rst:14
+msgid ""
+"Trace depends on the execution of the code, so only code executed during "
+"the trace process is recoreded."
+msgstr "Trace 机制是依赖程序执行才能记录，换句话说，能够记录的逻辑需要在运行时被执行到！"
+
+#: ../../source/tutorial_doc/trace.rst:16
+msgid "For now, only the Op Call Graph is saved."
+msgstr "目前只保存 OP Call Graph"
+
+#: ../../source/tutorial_doc/trace.rst:17
+msgid "Only the if-branch executed during trace is recorded."
+msgstr "IF 语句只能记录一个 branch，这个需要灵活把握"
+
+#: ../../source/tutorial_doc/trace.rst:18
+msgid ""
+"For/While is unrolled based on the given input during trace. Usually, "
+"this causes bugs."
+msgstr "For/While 循环会根据当时的输入条件强制展开，通常这意味着 BUG"
+
+#: ../../source/tutorial_doc/trace.rst:19
+msgid "Code after return is discarded."
+msgstr "Return 之后的逻辑会被丢弃，需要灵活把握"
+
+#: ../../source/tutorial_doc/trace.rst:22
+msgid "Restrictions on design pattern"
+msgstr "约束设计模式"
+
+#: ../../source/tutorial_doc/trace.rst:23
+msgid ""
+"To use trace without potential bugs, users need to follow the restrctions"
+" below:"
+msgstr "使用 Trace 机制是有代价的，需要遵守以下约定："
+
+#: ../../source/tutorial_doc/trace.rst:26
+msgid "Modular design the pipeline. Each module is an operator."
+msgstr "业务需要进行模块设计，每个模块视为一个Op (Operator)"
+
+#: ../../source/tutorial_doc/trace.rst:27
+msgid ""
+"Take text classification task as an example. Tokenization can be designed"
+"  as an operator. One-hot encoding can be another operator."
+msgstr "比如一个 文本分类的 pipeline，分词可以认为是一个 Op，文本 ID 化也是一个 Op 等等。"
+
+#: ../../source/tutorial_doc/trace.rst:30
+msgid "Organize operators in your pipeline into a DAG"
+msgstr "由 Op 集合组成一个DAG，即为业务的 Pipeline"
+
+#: ../../source/tutorial_doc/trace.rst:31
+msgid "Every rectangle in the following chart is considered an Op."
+msgstr "比如下图的文本分类的 pipeline，每个框均是一个 Op，这些 Op 串联起来是一个简单的 DAG"
+
+#: ../../source/tutorial_doc/trace.rst:34
+msgid "Operators can be implemented in C++ or Python"
+msgstr "Op 可以由 C++ 或 Python 开发，不受 Trace 约束"
+
+#: ../../source/tutorial_doc/trace.rst:35
+msgid ""
+"For operators implemented in Python. It needs matx.script to be able to "
+"use in trace. Please refer to Script chapter."
+msgstr "对于python开发的op，需要可以被matx.script否则仍会受到trace的约束，具体请参照 Script章节"
+
+#: ../../source/tutorial_doc/trace.rst:38
+msgid "Third party library support."
+msgstr "第三方库支持"
+
+#: ../../source/tutorial_doc/trace.rst:39
+msgid ""
+"When the code being traced contains calls to a third party library such "
+"as requests, then returns from the calls are saved as constant and used "
+"when executing the trace result. In other words, third party libraries "
+"are only called during the generation of the trace file but not called "
+"anymore during loading and running the trace file."
+msgstr "在被trace的函数中如果调用了第三方库比如requests，那么本次的结果将被当做常量保存并且会在之后执行时使用。换句话说，第三方库仅会在生成trace文件时被调用。"
+
+#: ../../source/tutorial_doc/trace.rst:43
+msgid "Integration Examples"
+msgstr "集成样例"
+

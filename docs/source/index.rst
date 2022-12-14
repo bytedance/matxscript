@@ -6,10 +6,72 @@
 Welcome to Matxscript's documentation!
 ======================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+Introduction
+--------------------------------------
+MATXScript is an AOT (ahead of time) compiler. By automatically compiling a subset of Python into C++, MATXScript unifies deep learning model training including data preprocessing and postprocessing using Python and deployment using C++. 
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Introduce to Marxscript
+   :hidden:
+
+   tutorial_doc/design_philosophy
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: quick start
+   :hidden:
+
+   tutorial_doc/installation
+   tutorial_doc/quick_start
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: basics
+   :hidden:
+
+   tutorial_doc/ndarray
+   tutorial_doc/script
+   tutorial_doc/trace
+
+.. toctree:: 
+   :maxdepth: 1
+   :caption: Advanced usage
+   :hidden:
+
+   tutorial_doc/advanced_usage
+
+.. toctree::
+   :maxdepth: 1
+   :caption: performance evaluation
+   :hidden:
+
+   tutorial_doc/performance
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Example
+   :hidden:
+
+   tutorial_doc/e2e_example
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API
+   :hidden:
+   :titlesonly:
+
+   apidoc/modules
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Appendix
+   :hidden:
+
+   tutorial_doc/appendix
 
 
 Indices and tables

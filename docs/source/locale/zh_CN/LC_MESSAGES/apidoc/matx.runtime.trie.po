@@ -1,0 +1,111 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2022, Bytedance Inc.
+# This file is distributed under the same license as the Matxscript package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Matxscript \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-08 03:59+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: ../../source/apidoc/matx.runtime.trie.rst:2
+msgid "matx.runtime.trie module"
+msgstr ""
+
+#: matx.runtime.trie.Trie:1 of
+msgid "Bases: :py:class:`~matx.runtime.object.Object`"
+msgstr ""
+
+#: matx.runtime.trie.Trie:1 of
+msgid "Double Array Trie Object"
+msgstr ""
+
+#: matx.runtime.trie.Trie matx.runtime.trie.Trie.prefix_search
+#: matx.runtime.trie.Trie.prefix_search_all matx.runtime.trie.Trie.update of
+msgid "Parameters"
+msgstr ""
+
+#: matx.runtime.trie.Trie:3 of
+msgid "The key is word and the value is id"
+msgstr ""
+
+#: matx.runtime.trie.Trie:7 matx.runtime.trie.Trie.prefix_search:15
+#: matx.runtime.trie.Trie.prefix_search_all:15 matx.runtime.trie.Trie.update:9
+#: of
+msgid "Examples"
+msgstr ""
+
+#: matx.runtime.trie.Trie.prefix_search:1 of
+msgid "Find the longest substring of w[pos:] in the trie tree"
+msgstr ""
+
+#: matx.runtime.trie.Trie.prefix_search:3
+#: matx.runtime.trie.Trie.prefix_search_all:3 matx.runtime.trie.Trie.update:3
+#: of
+msgid "The input word"
+msgstr ""
+
+#: matx.runtime.trie.Trie.prefix_search:5
+#: matx.runtime.trie.Trie.prefix_search_all:5 of
+msgid "The start position"
+msgstr ""
+
+#: matx.runtime.trie.Trie.prefix_search
+#: matx.runtime.trie.Trie.prefix_search_all of
+msgid "Returns"
+msgstr ""
+
+#: matx.runtime.trie.Trie.prefix_search:8 of
+msgid ""
+"Return the length and id of the matched substring.     If not found, "
+"return (0, -1)"
+msgstr ""
+
+#: matx.runtime.trie.Trie.prefix_search:10 of
+msgid "Return the length and id of the matched substring."
+msgstr ""
+
+#: matx.runtime.trie.Trie.prefix_search:11 of
+msgid "If not found, return (0, -1)"
+msgstr ""
+
+#: matx.runtime.trie.Trie.prefix_search
+#: matx.runtime.trie.Trie.prefix_search_all of
+msgid "Return type"
+msgstr ""
+
+#: matx.runtime.trie.Trie.prefix_search_all:1 of
+msgid "Find all substring of w[pos:] in the trie tree"
+msgstr ""
+
+#: matx.runtime.trie.Trie.prefix_search_all:8 of
+msgid ""
+"Return a list of the length and id of the matched substring.     If not "
+"found, return []"
+msgstr ""
+
+#: matx.runtime.trie.Trie.prefix_search_all:10 of
+msgid "Return a list of the length and id of the matched substring."
+msgstr ""
+
+#: matx.runtime.trie.Trie.prefix_search_all:11 of
+msgid "If not found, return []"
+msgstr ""
+
+#: matx.runtime.trie.Trie.update:1 of
+msgid "Insert a word and corresponding id into the trie tree"
+msgstr ""
+
+#: matx.runtime.trie.Trie.update:5 of
+msgid "id, -1 for default"
+msgstr ""
+
