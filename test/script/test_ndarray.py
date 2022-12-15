@@ -17,7 +17,7 @@
 # specific language governing permissions and limitations
 # under the License.
 import unittest
-from typing import List
+from typing import List, Tuple
 from typing import Any
 import numpy
 import matx
@@ -802,26 +802,32 @@ class TestMatxNdarray(unittest.TestCase):
         self.assertEqual(z1[0][0], 1)
 
     def test_nd_reshape(self):
+        @matx.script
         def generic_reshape(x: Any, newshape: Any) -> Any:
             return x.reshape(newshape)
 
-        def specific_reshape_tuple(x: matx.NDArray, newshape: tuple) -> matx.NDArray:
+        @matx.script
+        def specific_reshape_tuple(x: matx.NDArray, newshape: Tuple[int]) -> matx.NDArray:
             return x.reshape(newshape)
 
+        @matx.script
         def specific_reshape_list(x: matx.NDArray, newshape: List) -> matx.NDArray:
             return x.reshape(newshape)
 
+        generic_op = matx.script(generic_reshape)
+        specific_tuple_op = matx.script(specific_reshape_tuple)
+        specific_list_op = matx.script(specific_reshape_list)
         x = matx.NDArray([1, 2, 3, 4, 5, 6], [2, 3], "int32")
-        newshape1 = (1,2,3)
-        r0 = generic_reshape(x, newshape1)
-        r1 = specific_reshape_tuple(x, newshape1)
-        self.assertEqual(r0.shape(), [1,2,3])
-        self.assertEqual(r1.shape(), [1,2,3])
+        newshape1 = (1, 2, 3)
+        r0 = generic_op(x, newshape1)
+        r1 = specific_tuple_op(x, newshape1)
+        self.assertEqual(r0.shape(), [1, 2, 3])
+        self.assertEqual(r1.shape(), [1, 2, 3])
         self.assertEqual(r0[0][1][2], x[1][2])
         self.assertEqual(r1[0][0][2], x[0][2])
 
-        r2 = specific_reshape_list(x, [3,2])
-        self.assertEqual(r2.shape(), [3,2])
+        r2 = specific_list_op(x, [3, 2])
+        self.assertEqual(r2.shape(), [3, 2])
         self.assertEqual(r2[0][0], 1)
         self.assertEqual(r2[0][1], 2)
         self.assertEqual(r2[1][0], 3)
@@ -829,8 +835,8 @@ class TestMatxNdarray(unittest.TestCase):
         self.assertEqual(r2[2][0], 5)
         self.assertEqual(r2[2][1], 6)
 
-        r3 = generic_reshape(x, [3,2])
-        self.assertEqual(r3.shape(), [3,2])
+        r3 = generic_op(x, [3, 2])
+        self.assertEqual(r3.shape(), [3, 2])
         self.assertEqual(r3[0][0], 1)
         self.assertEqual(r3[0][1], 2)
         self.assertEqual(r3[1][0], 3)
@@ -838,7 +844,36 @@ class TestMatxNdarray(unittest.TestCase):
         self.assertEqual(r3[2][0], 5)
         self.assertEqual(r3[2][1], 6)
 
+    def test_squeeze(self):
 
+        @matx.script
+        def simple_squeeze(x: matx.NDArray) -> matx.NDArray:
+            return x.squeeze()
+
+        @matx.script
+        def generic_squeeze(x: Any, axis: Any) -> Any:
+            return x.squeeze(axis)
+
+        @matx.script
+        def specific_squeeze_tuple(x: matx.NDArray, axis: Tuple[int]) -> matx.NDArray:
+            return x.squeeze(axis)
+
+        x = matx.NDArray([[[0], [1], [2]]], [1, 3, 1], "int32")
+        r0 = simple_squeeze(x)
+        r1 = generic_squeeze(x, (0, 2))
+        r2 = specific_squeeze_tuple(x, (0, 2))
+        self.assertEqual(r0.shape(), [3])
+        self.assertEqual(r1.shape(), [3])
+        self.assertEqual(r2.shape(), [3])
+
+        r3 = generic_squeeze(x, (0,))
+        r4 = specific_squeeze_tuple(x, (0,))
+        self.assertEqual(r3.shape(), [3, 1])
+        self.assertEqual(r4.shape(), [3, 1])
+
+        x = matx.NDArray([[1234]], [1, 1], "int32")
+        r5 = simple_squeeze(x)
+        self.assertEqual(r5.shape(), [])
 
     def test_dlpack(self):
 

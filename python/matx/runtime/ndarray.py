@@ -269,6 +269,9 @@ class NDArray(Object):
     def reshape(self, newshape: Union[tuple, list]):
         return _ffi_api.NDArrayReshape(self, newshape)
 
+    def squeeze(self, axis: tuple = ()):
+        return _ffi_api.NDArraySqueeze(self, axis)
+
     def device(self):
         """Returns the current NDArray device as a string"""
         if self.tensor_handle.contents.device.device_type == 1:

@@ -1765,7 +1765,7 @@ RTValue kernel_object_contiguous(const Any& self, PyArgs args) {
       return ud_view.data().generic_call_attr("contiguous", args);
     } break;
     default: {
-      MXTHROW << "\"" << self.type_name() << "\" object has no method \"is_contiguous\"";
+      MXTHROW << "\"" << self.type_name() << "\" object has no method \"contiguous\"";
     } break;
   }
   return None;
@@ -1782,7 +1782,25 @@ RTValue kernel_object_reshape(const Any& self, PyArgs args) {
       return ud_view.data().generic_call_attr("reshape", args);
     } break;
     default: {
-      MXTHROW << "\"" << self.type_name() << "\" object has no method \"is_contiguous\"";
+      MXTHROW << "\"" << self.type_name() << "\" object has no method \"reshape\"";
+    } break;
+  }
+  return None;
+}
+
+RTValue kernel_object_squeeze(const Any& self, PyArgs args) {
+  switch (self.type_code()) {
+    case TypeIndex::kRuntimeNDArray: {
+      MXCHECK_EQ(args.size(), 1) << "ndarray.squeeze Expect 1 arguments but get " << args.size();
+      return self.AsObjectViewNoCheck<NDArray>().data().Squeeze(
+          args[0].AsObjectRefNoCheck<Tuple>());
+    } break;
+    case TypeIndex::kRuntimeUserData: {
+      auto ud_view = self.AsObjectViewNoCheck<UserDataRef>();
+      return ud_view.data().generic_call_attr("squeeze", args);
+    } break;
+    default: {
+      MXTHROW << "\"" << self.type_name() << "\" object has no method \"squeeze\"";
     } break;
   }
   return None;

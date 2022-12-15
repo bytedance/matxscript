@@ -215,6 +215,7 @@ _register_object_builtin_op("union")
 _register_object_builtin_op("sort")
 _register_object_builtin_op("contiguous")
 _register_object_builtin_op("reshape")
+_register_object_builtin_op("squeeze")
 
 ###############################################################################
 # Python builtin modules
