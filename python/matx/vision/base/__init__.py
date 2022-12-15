@@ -20,6 +20,7 @@
 # under the License.
 
 import os
+import sys
 from ._libinfo import find_lib_path
 from ._dso_loader import load_bundled_lib
 
