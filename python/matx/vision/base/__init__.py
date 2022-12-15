@@ -20,10 +20,21 @@
 # under the License.
 
 import os
+import sys
 from ._libinfo import find_lib_path
 from ._dso_loader import load_bundled_lib
 
-LIB = load_bundled_lib("libbyted_vision_cpu_ops")
+LIB = None
+try:
+    LIB = load_bundled_lib("libbyted_vision_cpu_ops")
+except IOError as e:
+    print(
+        "[WARN][BytedVision] Can't found CUDA HOME. When use GPU Runtime, please set CUDA HOME to LD_LIBRARY_PATH ! ERROR: ",
+        e,
+        file=sys.stderr)
+except Exception as e:
+    print("[ERROR][BytedVision] Occur Error when load byted_vision cuda ops: ", e, file=sys.stderr)
+
 CUDA_LIB = None
 BYTED_VISION_SYNC = os.environ.get('BYTED_VISION_SYNC', '')
 BYTED_VISION_SYNC = BYTED_VISION_SYNC == '1'
@@ -31,6 +42,9 @@ BYTED_VISION_SYNC = BYTED_VISION_SYNC == '1'
 try:
     CUDA_LIB = load_bundled_lib("libbyted_vision_cuda_ops")
 except IOError as e:
-    print("[WARN][BytedVision] Can't found CUDA HOME. When use GPU Runtime, please set CUDA HOME to LD_LIBRARY_PATH ! ERROR: ", e)
+    print(
+        "[WARN][BytedVision] Can't found CUDA HOME. When use GPU Runtime, please set CUDA HOME to LD_LIBRARY_PATH ! ERROR: ",
+        e,
+        file=sys.stderr)
 except Exception as e:
-    print("[ERROR][BytedVision] Occur Error when load byted_vision cuda ops: ", e)
+    print("[ERROR][BytedVision] Occur Error when load byted_vision cuda ops: ", e, file=sys.stderr)
