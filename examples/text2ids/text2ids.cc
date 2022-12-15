@@ -29,7 +29,7 @@ using namespace ::matxscript::runtime;
 int main(int argc, char* argv[]) {
   // test case
   std::unordered_map<std::string, RTValue> feed_dict;
-  feed_dict.emplace("texts", List{Unicode(U"hello"), Unicode(U"world"), Unicode(U"unknown")});
+  feed_dict.emplace("inputs", List{Unicode(U"hello"), Unicode(U"world"), Unicode(U"unknown")});
   std::vector<std::pair<std::string, RTValue>> result;
   const char* module_path = argv[1];
   const char* module_name = "model.spec.json";
