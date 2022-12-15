@@ -30,7 +30,7 @@ except IOError as e:
     print("[WARN][BytedVision] Can't found CUDA HOME. When use GPU Runtime, please set CUDA HOME to LD_LIBRARY_PATH ! ERROR: ", e)
 except Exception as e:
     print("[ERROR][BytedVision] Occur Error when load byted_vision cuda ops: ", e)
-    
+
 CUDA_LIB = None
 BYTED_VISION_SYNC = os.environ.get('BYTED_VISION_SYNC', '')
 BYTED_VISION_SYNC = BYTED_VISION_SYNC == '1'
