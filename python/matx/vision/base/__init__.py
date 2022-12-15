@@ -27,7 +27,10 @@ LIB = None
 try:
     LIB = load_bundled_lib("libbyted_vision_cpu_ops")
 except IOError as e:
-    print("[WARN][BytedVision] Can't found CUDA HOME. When use GPU Runtime, please set CUDA HOME to LD_LIBRARY_PATH ! ERROR: ", e, file=sys.stderr)
+    print(
+        "[WARN][BytedVision] Can't found CUDA HOME. When use GPU Runtime, please set CUDA HOME to LD_LIBRARY_PATH ! ERROR: ",
+        e,
+        file=sys.stderr)
 except Exception as e:
     print("[ERROR][BytedVision] Occur Error when load byted_vision cuda ops: ", e, file=sys.stderr)
 
@@ -38,6 +41,9 @@ BYTED_VISION_SYNC = BYTED_VISION_SYNC == '1'
 try:
     CUDA_LIB = load_bundled_lib("libbyted_vision_cuda_ops")
 except IOError as e:
-    print("[WARN][BytedVision] Can't found CUDA HOME. When use GPU Runtime, please set CUDA HOME to LD_LIBRARY_PATH ! ERROR: ", e, file=sys.stderr)
+    print(
+        "[WARN][BytedVision] Can't found CUDA HOME. When use GPU Runtime, please set CUDA HOME to LD_LIBRARY_PATH ! ERROR: ",
+        e,
+        file=sys.stderr)
 except Exception as e:
     print("[ERROR][BytedVision] Occur Error when load byted_vision cuda ops: ", e, file=sys.stderr)
