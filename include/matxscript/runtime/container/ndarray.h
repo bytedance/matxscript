@@ -121,6 +121,9 @@ class NDArray : public ObjectRef {
   NDArray Squeeze(const std::vector<int64_t>& axis = {}) const;
   NDArray Squeeze(const Tuple& axis) const;
   NDArray Squeeze(const Any& axis) const;
+
+  NDArray Unsqueeze(int64_t dim) const;
+  NDArray Unsqueeze(const Any& dim) const;
   /*!
    * \brief Create a NDArray that shares the data memory with the current one.
    * \param shape The shape of the new array.

@@ -272,6 +272,9 @@ class NDArray(Object):
     def squeeze(self, axis: tuple = ()):
         return _ffi_api.NDArraySqueeze(self, axis)
 
+    def unsqueeze(self, dim: int):
+        return _ffi_api.NDArrayUnsqueeze(self, dim)
+
     def device(self):
         """Returns the current NDArray device as a string"""
         if self.tensor_handle.contents.device.device_type == 1:

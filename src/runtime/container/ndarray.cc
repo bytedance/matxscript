@@ -699,6 +699,25 @@ NDArray NDArray::Squeeze(const Any& axis) const {
   return NDArray();
 }
 
+NDArray NDArray::Unsqueeze(int64_t dim) const {
+  auto curr_shape = Shape();
+  int64_t curr_ndim = curr_shape.size();
+  auto inclusive_lower_bound = 0 - curr_ndim - 1;
+  auto exclusive_higher_bound = curr_ndim + 1;
+  MXCHECK(inclusive_lower_bound <= dim && dim < exclusive_higher_bound)
+      << "IndexError: Dimension out of range (expected to be in range of [" << inclusive_lower_bound
+      << ", " << exclusive_higher_bound << "], but got " << dim << ")";
+  if (dim < 0) {
+    dim = dim + curr_ndim + 1;
+  }
+  curr_shape.insert(curr_shape.cbegin() + dim, 1);
+  return Reshape(curr_shape);
+}
+
+NDArray NDArray::Unsqueeze(const Any& dim) const {
+  return Unsqueeze(dim.As<int64_t>());
+}
+
 NDArray NDArray::CreateView(std::vector<int64_t> shape, DLDataType dtype) const {
   MXCHECK(data_ != nullptr);
   MXCHECK(get_mutable()->dl_tensor.strides == nullptr) << "Can only create view for compact tensor";

@@ -875,6 +875,34 @@ class TestMatxNdarray(unittest.TestCase):
         r5 = simple_squeeze(x)
         self.assertEqual(r5.shape(), [])
 
+    def test_unsqueeze(self):
+
+        @matx.script
+        def generic_unsqueeze(x: Any, dim: Any) -> Any:
+            return x.unsqueeze(dim)
+
+        @matx.script
+        def specific_unsqueeze(x: matx.NDArray, dim: int) -> matx.NDArray:
+            return x.unsqueeze(dim)
+
+        x = matx.NDArray([1, 2, 3, 4], [4], "int32")
+        r0 = generic_unsqueeze(x, 0)
+        r1 = specific_unsqueeze(x, 0)
+        self.assertEqual(r0.shape(), [1, 4])
+        self.assertEqual(r1.shape(), [1, 4])
+        r2 = generic_unsqueeze(x, 1)
+        r3 = specific_unsqueeze(x, 1)
+        self.assertEqual(r2.shape(), [4, 1])
+        self.assertEqual(r3.shape(), [4, 1])
+        r4 = generic_unsqueeze(x, -1)
+        r5 = specific_unsqueeze(x, -1)
+        self.assertEqual(r4.shape(), [4, 1])
+        self.assertEqual(r5.shape(), [4, 1])
+        r6 = generic_unsqueeze(x, -2)
+        r7 = specific_unsqueeze(x, -2)
+        self.assertEqual(r6.shape(), [1, 4])
+        self.assertEqual(r7.shape(), [1, 4])
+
     def test_dlpack(self):
 
         def cast_tensor_to_dlpack():

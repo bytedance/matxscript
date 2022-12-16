@@ -1806,6 +1806,23 @@ RTValue kernel_object_squeeze(const Any& self, PyArgs args) {
   return None;
 }
 
+RTValue kernel_object_unsqueeze(const Any& self, PyArgs args) {
+  switch (self.type_code()) {
+    case TypeIndex::kRuntimeNDArray: {
+      MXCHECK_EQ(args.size(), 1) << "ndarray.unsqueeze Expect 1 arguments but get " << args.size();
+      return self.AsObjectViewNoCheck<NDArray>().data().Unsqueeze(args[0].As<int64_t>());
+    } break;
+    case TypeIndex::kRuntimeUserData: {
+      auto ud_view = self.AsObjectViewNoCheck<UserDataRef>();
+      return ud_view.data().generic_call_attr("squeeze", args);
+    } break;
+    default: {
+      MXTHROW << "\"" << self.type_name() << "\" object has no method \"squeeze\"";
+    } break;
+  }
+  return None;
+}
+
 RTValue kernel_object_shape(const Any& self, PyArgs args) {
   switch (self.type_code()) {
     case TypeIndex::kRuntimeNDArray: {

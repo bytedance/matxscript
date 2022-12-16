@@ -58,6 +58,11 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_squeeze, Squeeze)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("axis", "Tuple|Any|any_view", "");
 
+MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_unsqueeze, Unsqueeze)
+    .set_num_inputs(2)
+    .add_argument("self", "matx.NDArray", "")
+    .add_argument("dim", "int|any_view", "");
+
 MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_shape, ShapeList)
     .set_num_inputs(1)
     .add_argument("self", "matx.NDArray", "");
