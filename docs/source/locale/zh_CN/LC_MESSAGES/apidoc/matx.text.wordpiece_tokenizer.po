@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-08 03:59+0800\n"
+"POT-Creation-Date: 2022-12-17 06:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,16 +22,10 @@ msgid "matx.text.wordpiece\\_tokenizer module"
 msgstr ""
 
 #: matx.text.wordpiece_tokenizer.WordPieceTokenizer:1
-#: matx.text.wordpiece_tokenizer.WordPieceTokenizerImpl:1
-#: matx.text.wordpiece_tokenizer.WordPieceTokenizerWithMeta:1
-#: matx.text.wordpiece_tokenizer.WordPieceTokenizerWithMetaImpl:1 of
+#: matx.text.wordpiece_tokenizer.WordPieceTokenizerImpl:1 of
 msgid "Bases: :py:class:`object`"
 msgstr ""
 
-#: matx.text.wordpiece_tokenizer.WordPieceTokenizer.__call__:1
-#: matx.text.wordpiece_tokenizer.WordPieceTokenizerImpl.__call__:1
-#: matx.text.wordpiece_tokenizer.WordPieceTokenizerWithMeta.__call__:1
-#: matx.text.wordpiece_tokenizer.WordPieceTokenizerWithMetaImpl.__call__:1 of
-msgid "Call self as a function."
-msgstr ""
+#~ msgid "Call self as a function."
+#~ msgstr ""
 
