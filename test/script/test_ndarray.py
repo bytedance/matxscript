@@ -903,7 +903,6 @@ class TestMatxNdarray(unittest.TestCase):
         self.assertEqual(r6.shape(), [1, 4])
         self.assertEqual(r7.shape(), [1, 4])
 
-
     def test_dlpack(self):
 
         def cast_tensor_to_dlpack():
