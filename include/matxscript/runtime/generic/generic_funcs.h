@@ -276,6 +276,8 @@ RTValue kernel_object_transpose(const Any& self, PyArgs args);
 RTValue kernel_object_as_type(const Any& self, PyArgs args);
 RTValue kernel_object_contiguous(const Any& self, PyArgs args);
 RTValue kernel_object_reshape(const Any& self, PyArgs args);
+RTValue kernel_object_squeeze(const Any& self, PyArgs args);
+RTValue kernel_object_unsqueeze(const Any& self, PyArgs args);
 
 // trie tree
 RTValue kernel_object_prefix_search(const Any& self, PyArgs args);
