@@ -57,6 +57,16 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayReshape").set_body([](PyArgs args) ->
   return data.Reshape(args[1]);
 });
 
+MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArraySqueeze").set_body([](PyArgs args) -> RTValue {
+  NDArray data = args[0].As<NDArray>();
+  return data.Squeeze(args[1]);
+});
+
+MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayUnsqueeze").set_body([](PyArgs args) -> RTValue {
+  NDArray data = args[0].As<NDArray>();
+  return data.Unsqueeze(args[1].As<int64_t>());
+});
+
 MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayStride").set_body([](PyArgs args) -> RTValue {
   NDArray data = args[0].As<NDArray>();
   const int64_t* strides = data.GetStridesPtr();

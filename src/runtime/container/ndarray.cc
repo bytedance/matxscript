@@ -564,6 +564,10 @@ struct NDArray::Internal {
 
 NDArray NDArray::Reshape(std::vector<int64_t> newshape) const {
   MXCHECK(IsContiguous()) << "only support contiguous ndarray";
+  std::stringstream result;
+  result << '<';
+  std::copy(newshape.begin(), newshape.end(), std::ostream_iterator<int>(result, " "));
+  result << '>';
   auto curr_shape = Shape();
   size_t curr_size = 1;
   for (size_t i = 0; i < curr_shape.size(); i++) {
@@ -583,9 +587,9 @@ NDArray NDArray::Reshape(std::vector<int64_t> newshape) const {
   }
 
   MXCHECK(!(newaxis == -1 && given_size != curr_size))
-      << "cannot reshape array of size " << curr_size << " into the given shape";
+      << "cannot reshape array of size " << curr_size << " into " << result.str();
   MXCHECK(!(has_zero && newaxis != -1))
-      << "cannot reshape array of size " << curr_size << " into the given shape";
+      << "cannot reshape array of size " << curr_size << " into " << result.str();
 
   if (newaxis != -1) {
     newshape[newaxis] = curr_size / given_size;
@@ -636,6 +640,82 @@ NDArray NDArray::Reshape(const Any& newshape) const {
     } break;
   }
   return NDArray();
+}
+
+NDArray NDArray::Squeeze(const std::vector<int64_t>& axis) const {
+  auto curr_shape = Shape();
+  std::vector<int64_t> new_shape;
+  new_shape.reserve(curr_shape.size());
+  if (axis.empty()) {
+    for (int e : curr_shape) {
+      if (e != 1) {
+        new_shape.push_back(e);
+      }
+    }
+    return Reshape(new_shape);
+  }
+  std::vector<int64_t> sorted_axis(axis.size());
+  partial_sort_copy(axis.begin(), axis.end(), sorted_axis.begin(), sorted_axis.end());
+  auto i = 0, j = 0;
+  while (i < curr_shape.size() && j < sorted_axis.size()) {
+    if (i == sorted_axis[j]) {
+      MXCHECK(curr_shape[i] == 1)
+          << "ValueError: cannot select an axis to squeeze out which has size not equal to one";
+      i++;
+      j++;
+      continue;
+    }
+    new_shape.push_back(curr_shape[i]);
+    i++;
+  }
+  MXCHECK(j >= sorted_axis.size())
+      << "NDArray.AxisError: axis " << sorted_axis[j] << " is out of bounds for array of dimension "
+      << curr_shape.size();
+  for (; i < curr_shape.size(); i++) {
+    new_shape.push_back(curr_shape[i]);
+  }
+  return Reshape(new_shape);
+}
+
+NDArray NDArray::Squeeze(const Tuple& axis) const {
+  std::vector<int64_t> _axis;
+  for (auto& e : axis) {
+    _axis.push_back(e.As<int64_t>());
+  }
+  std::cout << std::endl;
+  return Squeeze(std::move(_axis));
+}
+
+NDArray NDArray::Squeeze(const Any& axis) const {
+  switch (axis.type_code()) {
+    case TypeIndex::kRuntimeTuple: {
+      auto it = axis.AsObjectRefNoCheck<Tuple>();
+      return Squeeze(std::move(it));
+    } break;
+    default: {
+      MXTHROW << "expect 'tuple' but get '" << TypeIndex2Str(axis.type_code());
+    } break;
+  }
+  return NDArray();
+}
+
+NDArray NDArray::Unsqueeze(int64_t dim) const {
+  auto curr_shape = Shape();
+  int64_t curr_ndim = curr_shape.size();
+  auto inclusive_lower_bound = 0 - curr_ndim - 1;
+  auto exclusive_higher_bound = curr_ndim + 1;
+  MXCHECK(inclusive_lower_bound <= dim && dim < exclusive_higher_bound)
+      << "IndexError: Dimension out of range (expected to be in range of [" << inclusive_lower_bound
+      << ", " << exclusive_higher_bound << "], but got " << dim << ")";
+  if (dim < 0) {
+    dim = dim + curr_ndim + 1;
+  }
+  curr_shape.insert(curr_shape.cbegin() + dim, 1);
+  return Reshape(curr_shape);
+}
+
+NDArray NDArray::Unsqueeze(const Any& dim) const {
+  return Unsqueeze(dim.As<int64_t>());
 }
 
 NDArray NDArray::CreateView(std::vector<int64_t> shape, DLDataType dtype) const {
