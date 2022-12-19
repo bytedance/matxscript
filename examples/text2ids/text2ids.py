@@ -32,20 +32,20 @@ class Text2Ids:
 
 
 if __name__ == "__main__":
-    ##  Basic usage
+    # Basic usage
     op = Text2Ids(["hello", "world"])
     examples = "hello world unknown".split()
     ret = op(examples)
     print(ret)
     # should print out [0, 1, -1]
 
-    ##  Script
+    # Script
     script_op = matx.script(Text2Ids)(["hello", "world"])
     ret = script_op(examples)
     print(ret)
     # should print out [0, 1, -1]
 
-    ##  Trace
+    # Trace
     def wrapper(inputs):
         return script_op(inputs)
     # trace and save
@@ -62,4 +62,3 @@ if __name__ == "__main__":
     ret = loaded.run({"inputs": examples})
     print(ret)
     # should print out [0, 1, -1]
-

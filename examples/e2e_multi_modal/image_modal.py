@@ -19,7 +19,7 @@
 from typing import List, Dict, Any
 import matx
 from matx.vision.tv_transforms import Decode, RandomHorizontalFlip, \
-RandomResizedCrop, CenterCrop, Normalize, Stack, Transpose, Compose
+    RandomResizedCrop, CenterCrop, Normalize, Stack, Transpose, Compose
 
 
 class MatxImagenetVisionProcessor:
@@ -29,7 +29,7 @@ class MatxImagenetVisionProcessor:
         if is_train:  # image transform for training
             vision_ops = [
                 matx.script(Decode)(to_rgb=True),
-                matx.script(RandomResizedCrop)(size=[224, 224],scale=(0.08,1.0), ratio=(0.75, 1.33)),
+                matx.script(RandomResizedCrop)(size=[224, 224], scale=(0.08,1.0), ratio=(0.75, 1.33)),
                 matx.script(RandomHorizontalFlip)(),
                 matx.script(Normalize)(mean=[123.675, 116.28, 103.53],
                                        std=[58.395, 57.12, 57.375]),
@@ -46,6 +46,6 @@ class MatxImagenetVisionProcessor:
                 matx.script(Transpose)()
             ]
         self.vision_op: Any = matx.script(Compose)(device_id, vision_ops)
-    
+
     def __call__(self, images: List[bytes]) -> matx.NDArray:
         return self.vision_op(images)

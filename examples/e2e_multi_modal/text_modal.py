@@ -19,6 +19,7 @@
 import matx
 from typing import List, Dict, Any
 
+
 class TextCleaner:
     """TextCleaner impl by matx."""
 
@@ -82,7 +83,6 @@ class MatxBertTokenizer:
         self.cls_id: int = self.world_piece.tokenize(['[CLS]'])[0]
         self.sep_id: int = self.world_piece.tokenize(['[SEP]'])[0]
         self.pad_id: int = self.world_piece.tokenize(['[PAD]'])[0]
-        
 
     def __call__(self, texts: List[bytes]) -> Dict[str, matx.NDArray]:
         batch_input_ids: List = []
@@ -97,7 +97,8 @@ class MatxBertTokenizer:
             # start to create bert style input
             len_tre: int = self.max_tokens_per_input - 2
             input_ids: List = [self.cls_id] + tokens[:len_tre] + [self.sep_id]
-            input_mask: List = [1] * len(input_ids) + [0] * (self.max_tokens_per_input - len(input_ids))
+            input_mask: List = [1] * len(input_ids) + [0] * \
+                (self.max_tokens_per_input - len(input_ids))
             input_ids = input_ids + [self.pad_id] * (self.max_tokens_per_input - len(input_ids))
             segment_ids = [0] * self.max_tokens_per_input
             batch_input_ids.append(input_ids)

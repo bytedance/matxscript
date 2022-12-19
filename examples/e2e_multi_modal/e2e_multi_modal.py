@@ -37,7 +37,7 @@ class MultiModalPipeline:
         self.vision_processor: Any = MatxImagenetVisionProcessor(
             vision_device_id, is_train
         )
-    
+
     # the input is a batch of data
     # assume each data is like {"text": "some text", "image": b"some image"}
     # the output would be collated, organize the result in any format as you want
@@ -59,13 +59,13 @@ class DemoDataset:
     def __init__(self, is_train=True):
         # If want to run the code, please download the demo image and vocabulary file
         # from github, or just replace them with your own ones
-        f = open("demo.jpeg","rb")
+        f = open("demo.jpeg", "rb")
         img = f.read()
         f.close()
         text = b"this is a demo"
         self.data = {"text": text, "image": img}
         self.transform = MultiModalPipeline("vocab.txt", is_train=is_train)
-    
+
     def __len__(self):
         return 100  # some fake number
 
@@ -77,8 +77,8 @@ class DemoDataset:
         for k in transformed_data.keys():
             res[k] = transformed_data[k].torch()
         return res
- 
- 
+
+
 if __name__ == "__main__":
     dataset = DemoDataset()
     loader = DataLoader(dataset)
