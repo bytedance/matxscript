@@ -12,5 +12,5 @@ RUNTIME_PATHS=$(python3 -c 'import matx; print( " ".join(["-Wl,-rpath," + p for 
 g++ -O2 -fPIC -std=c++14 $MX_CFLAGS $MX_LINK_FLAGS ${RUNTIME_PATHS} text2ids.cc -o text2ids
 
 # reload and run by cpp
-./text2ids ./my_text2ids
+./text2ids demo_text2id
 ```
