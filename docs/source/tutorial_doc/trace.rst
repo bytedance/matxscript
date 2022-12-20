@@ -1,13 +1,15 @@
 .. trace
-
+###############################################
 Trace
 ###############################################
 
+************************************************
 Objective
 ************************************************
 
 Trace can conviencelly pack training code written in Python to a format that matx c++ interface can recognize and use for online inference. It records the execution process of given Python code and saves it as a graph on disk. 
 
+************************************************
 What does trace record
 ************************************************
 
@@ -18,6 +20,7 @@ What does trace record
 * For/While is unrolled based on the given input during trace. Usually, this causes bugs.
 * Code after return is discarded.
 
+************************************************
 Restrictions on design pattern
 ************************************************
 To use trace without potential bugs, users need to follow the restrctions below:
@@ -34,11 +37,12 @@ Operators can be implemented in C++ or Python
 ====================================================================
 For operators implemented in Python. It needs matx.script to be able to use in trace. Please refer to Script chapter.
 
+************************************************
 Third party library support.
 ************************************************
 When the code being traced contains calls to a third party library such as requests, then returns from the calls are saved as constant and used when executing the trace result. In other words, third party libraries are only called during the generation of the trace file but not called anymore during loading and running the trace file.
  
-
+************************************************
 Integration Examples
 ************************************************
 

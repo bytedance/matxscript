@@ -1,8 +1,10 @@
+################################
 NDArray
 ################################
 
 Like numpy.array and torch.Tensor, NDArray is a data structure Matx uses to represent a tensor. Currently, we only support simple constructors and data manipulation, and NDArray is primarily used to perform data transfer from Matx to Pytorch/TensorFlow/TVM.
 
+********************************
 Constructor
 ********************************
 The constructor of NDArray has 4 arguments:

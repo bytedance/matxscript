@@ -1,5 +1,6 @@
 .. quick start
 
+#################################
 Quick Start
 #################################
 
@@ -7,7 +8,7 @@ Quick Start
 This section provides an example to walk through the basic usage of Matx. The complete code can be found `here <https://github.com/bytedance/matxscript/blob/main/examples/text2ids/text2ids.py>`_.
 
 
-
+*********************************
 1. Import dependencies
 *********************************
 .. code-block:: python3
@@ -18,7 +19,7 @@ This section provides an example to walk through the basic usage of Matx. The co
 
 Note that we import various types from Python typing module as Matx enforces type annotations.
 
-
+*********************************
 2. Constructing Op
 *********************************
 An operation (Op) is a class or a function. 
@@ -42,6 +43,7 @@ An operation (Op) is a class or a function.
     print(ret)
     # should print out [0, 1, -1]
 
+*********************************
 3. Script
 *********************************
 
@@ -52,6 +54,7 @@ An operation (Op) is a class or a function.
     print(ret)
     # should print out [0, 1, -1]
 
+*********************************
 4. Trace
 *********************************
 
@@ -76,6 +79,7 @@ An operation (Op) is a class or a function.
     print(ret)
     # should print out [0, 1, -1]
 
+*********************************
 5. C++ deployment
 *********************************
 
