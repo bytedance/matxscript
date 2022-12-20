@@ -1,7 +1,7 @@
 MatxScript
 ===============================================================
 
-[Documentation]() |
+[Documentation](https://bytedance.github.io/matxscript/) |
 [Contributors](CONTRIBUTORS.md) |
 [Release Notes](NEWS.md)
 
