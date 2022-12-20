@@ -26,5 +26,6 @@ pushd ${ROOT_PATH}/docs
 
 make clean
 make html
+sphinx-build -D language=zh_CN -b html ./source build/html/zh-CN
 
 popd
