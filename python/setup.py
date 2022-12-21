@@ -26,7 +26,7 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 
-NAME = 'byted-matxscript'
+NAME = 'matxscript'
 VERSION = None
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -100,9 +100,9 @@ setup(
     name=NAME,
     version=VERSION,
     description='''Static Python AOT Compiler''',
-    author='maxiandi,wuxian',
-    author_email='maxiandi@bytedance.com, wuxian.94@bytedance.com',
-    url='',
+    author='MATXScript Team',
+    author_email='maxiandi@bytedance.com',
+    url='https://github.com/bytedance/matxscript',
     packages=['matx'],
     package_data={
         'matx': package_files(['matx']),
