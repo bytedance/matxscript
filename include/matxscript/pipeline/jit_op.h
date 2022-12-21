@@ -35,6 +35,8 @@ class JitOp : public OpKernel {
 
   RTValue generic_call_attr(string_view func_name, PyArgs args);
 
+  String GetHumanName(bool with_debug_info) const;
+
  protected:
   String main_func_name_;
   String jit_object_name_;

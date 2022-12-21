@@ -18,9 +18,11 @@
  * under the License.
  */
 #include <matxscript/pipeline/interpreter_op.h>
+
 #include <matxscript/pipeline/node.h>
 #include <matxscript/pipeline/symbolic_executor.h>
 #include <matxscript/runtime/container/dict_private.h>
+#include <matxscript/runtime/file_util.h>
 #include <matxscript/runtime/generic/generic_constructor_funcs.h>
 #include <matxscript/runtime/generic/generic_funcs.h>
 #include <matxscript/runtime/generic/generic_hlo_arith_funcs.h>
@@ -320,6 +322,31 @@ String InterpreterOp::GenDebugMessage() const {
   message.append(", in ").append(py_source_func_).append("\n");
   message.append("  ").append(py_source_stmt_);
   return message;
+}
+
+String InterpreterOp::GetHumanName(bool with_debug_info) const {
+  String op_code_s;
+  switch (static_cast<OpCode>(opcode_)) {
+    case OpCode::ParallelMap: {
+      op_code_s = "matx.pmap";
+    } break;
+    case OpCode::ParallelStarMap: {
+      op_code_s = "matx.pstarmap";
+    } break;
+    case OpCode::ApplyAsync: {
+      op_code_s = "matx.apply_async";
+    } break;
+    default: {
+      op_code_s = OpCode2Str(opcode_);
+    } break;
+  }
+  if (with_debug_info && py_source_line_ >= 0) {
+    auto filename = FileUtil::GetFileBasename(py_source_file_);
+    auto fileline = std::to_string(py_source_line_);
+    return String(op_code_s) + " @" + filename + ":" + fileline;
+  } else {
+    return op_code_s;
+  }
 }
 
 RTValue InterpreterOp::Process(PyArgs inputs) const {

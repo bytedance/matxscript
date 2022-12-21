@@ -161,6 +161,8 @@ def make_jit_object_creator(sc_ctx: context.ScriptContext, share=True, bundle_ar
                 function_mapping={func_name: func_name},
                 share=share,
                 captures=captures,
+                py_source_file=sc_ctx.main_node.span.file_name.encode(),
+                py_source_line=sc_ctx.main_node.span.lineno,
             )
             ud = restore_user_behavior(ud, func_name, False, func_schema)
             ud.__name__ = sc_ctx.main_node.context.name
@@ -220,6 +222,8 @@ def make_jit_object_creator(sc_ctx: context.ScriptContext, share=True, bundle_ar
                 function_mapping=function_mapping,
                 share=share,
                 captures=captures,
+                py_source_file=sc_ctx.main_node.span.file_name.encode(),
+                py_source_line=sc_ctx.main_node.span.lineno,
             )
             ud = restore_user_behavior(ud, user_class_name, True, ctor_func_meta, member_funcs)
             ud.__name__ = sc_ctx.main_node.context.name

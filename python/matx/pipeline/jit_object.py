@@ -101,7 +101,9 @@ class JitObject(OpKernel):
                  need_bundle=None,
                  function_mapping=None,
                  share=True,
-                 captures=None):
+                 captures=None,
+                 py_source_file=b"",
+                 py_source_line=-1):
         assert isinstance(function_mapping, dict)
         assert isinstance(meta_info, (ClassMeta, FuncMeta))
         if need_bundle is None:
@@ -117,7 +119,9 @@ class JitObject(OpKernel):
                                             class_info=meta_info.toobject(),
                                             need_bundle=need_bundle,
                                             share=share,
-                                            captures=captures)
+                                            captures=captures,
+                                            py_source_file=py_source_file,
+                                            py_source_line=py_source_line)
         else:
             super(JitObject, self).__init__("JitObject",
                                             dso_path=dso_path.encode(),
@@ -125,7 +129,9 @@ class JitObject(OpKernel):
                                             func_info=meta_info.toobject(),
                                             need_bundle=need_bundle,
                                             share=share,
-                                            captures=captures)
+                                            captures=captures,
+                                            py_source_file=py_source_file,
+                                            py_source_line=py_source_line)
         # TODO: add magic number
         self.function_mapping = function_mapping
         self.op_mapping_2_71828182846 = dict()
@@ -155,14 +161,8 @@ class JitObject(OpKernel):
 
 
 def _make_user_func(raw_name, pf_func):
-    @trans_exception_from_c_to_py
-    def user_func(*args, **kwargs):
-        assert len(kwargs) == 0
-        # bound self
-        return pf_func(*args)
-
-    user_func.__name__ = raw_name
-    return user_func
+    pf_func.__name__ = raw_name
+    return pf_func
 
 
 def restore_user_behavior(ud: JitObject,

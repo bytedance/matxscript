@@ -100,6 +100,8 @@ class InterpreterOp : public OpKernel {
 
   void Init() override;
 
+  String GetHumanName(bool with_debug_info) const;
+
  public:
   RTValue Process(PyArgs inputs) const override;
 

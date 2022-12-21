@@ -104,6 +104,8 @@ class JitObject : public OpKernel {
     std::vector<std::pair<String, String>> captures;
     bool is_class = false;
     bool share = true;
+    int64_t py_source_line_ = -1;
+    String py_source_file_;
 
     static Options FromDict(const Dict& config);
     Dict ToDict() const;
