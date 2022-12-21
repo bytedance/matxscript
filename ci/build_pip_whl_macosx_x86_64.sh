@@ -29,7 +29,7 @@ THIS_PATH=$(
 ROOT_PATH=${THIS_PATH}/..
 OUTPUT_PATH=${ROOT_PATH}/output
 
-bash ${THIS_PATH}/build_pip_whl.sh --python-tag py3 --plat-name manylinux1_x86_64
+bash ${THIS_PATH}/build_pip_whl.sh --python-tag py3 --plat-name macosx_10_9_x86_64
 
 # cp dist
 cp -r ${OUTPUT_PATH}/dist ./

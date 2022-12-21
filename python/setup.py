@@ -26,7 +26,7 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 
-NAME = 'byted-matxscript'
+NAME = 'matxscript'
 VERSION = None
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -46,9 +46,9 @@ def record_build_info():
     build_info = None
     if CUDA_HOME is not None:
         nvcc_bin = os.path.join(CUDA_HOME, 'bin/nvcc')
-        get_nvcc_version_cmd = f'''{nvcc_bin} --version |  grep -Eo "release ([0-9]{1,}\.)+[0-9]{1,}" | cut -c 8- '''
+        get_nvcc_version_cmd = f'''{nvcc_bin} --version | grep -Eo "release ([0-9]+\\.[0-9]+)" | cut -c 8- '''
         nvcc_version = subprocess.check_output(get_nvcc_version_cmd,
-                                               shell=True).decode('utf-8')
+                                               shell=True).decode('utf-8').strip(" \r\n")
         build_info = "Build MatxScript with CUDA {}.".format(nvcc_version.strip())
     else:
         build_info = "Build MatxScript without CUDA."
@@ -100,9 +100,9 @@ setup(
     name=NAME,
     version=VERSION,
     description='''Static Python AOT Compiler''',
-    author='maxiandi,wuxian',
-    author_email='maxiandi@bytedance.com, wuxian.94@bytedance.com',
-    url='',
+    author='MATXScript Team',
+    author_email='maxiandi@bytedance.com',
+    url='https://github.com/bytedance/matxscript',
     packages=['matx'],
     package_data={
         'matx': package_files(['matx']),
