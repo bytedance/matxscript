@@ -8,20 +8,101 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-10 03:03+0800\n"
+"POT-Creation-Date: 2022-12-20 14:53-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.11.0\n"
 
-#: ../../source/tutorial_doc/e2e_example.rst:4
+#: ../../source/tutorial_doc/e2e_example.rst:5
 msgid "End-to-end Deep Learning Example"
 msgstr "应用案例"
 
-#: ../../source/tutorial_doc/e2e_example.rst:6
-msgid "TO BE DONE"
-msgstr "敬请期待"
+#: ../../source/tutorial_doc/e2e_example.rst:7
+msgid ""
+"This section will introduce an end-to-end example of using Matx in a "
+"multimodal training task. It will only focus on the data preprocessing "
+"part for images and texts, and the multimodal model itself is not "
+"covered. To get the source, please visit `here "
+"<https://github.com/bytedance/matxscript/blob/main/examples/e2e_multi_modal>`_."
+msgstr "本文将介绍Matx在多模态相关任务场景下的应用，并以图片/文本多模态为例，聚焦预处理逻辑的实现，相关模型部分不在本文的讨论范围内。 "
+"`源代码 <https://github.com/bytedance/matxscript/blob/main/examples/e2e_multi_modal>`_."
+
+#: ../../source/tutorial_doc/e2e_example.rst:11
+msgid "1. Text Modal Preprocessing"
+msgstr "1. 文本模态预处理"
+
+#: ../../source/tutorial_doc/e2e_example.rst:12
+msgid "We'll first use Matx to implement a Bert style tokenizer."
+msgstr "以下文本模态的预处理主要实现了BertTokenizer的逻辑。"
+
+#: ../../source/tutorial_doc/e2e_example.rst:15
+msgid "1.1 Helper Functions"
+msgstr "1.1 辅助函数"
+
+#: ../../source/tutorial_doc/e2e_example.rst:16
+msgid ""
+"In order to make the code clean, we'll define some helper functions (ops)"
+" below"
+msgstr "下面首先定义一些BertTokenizer style的文本清洗和预变换逻辑（OP） "
+
+#: ../../source/tutorial_doc/e2e_example.rst:18
+msgid "Text Cleaner"
+msgstr "文本清洗"
+
+#: ../../source/tutorial_doc/e2e_example.rst:36
+msgid "Case Normalizer for lowercase the word is necessary"
+msgstr "大小写变换"
+
+#: ../../source/tutorial_doc/e2e_example.rst:49
+msgid "Processing punctuations"
+msgstr "标点处理"
+
+#: ../../source/tutorial_doc/e2e_example.rst:64
+msgid "1.2 Matx based BertTokenizer"
+msgstr "1.2 基于Matx的BertTokenizer"
+
+#: ../../source/tutorial_doc/e2e_example.rst:66
+msgid "With the helper functions ready, we can then define the Bert Tokenizer"
+msgstr "下面实现了基于Matx的BertTokenizer的逻辑，并使用了上文实现的文本清洗，大小写变换等工具。"
+
+#: ../../source/tutorial_doc/e2e_example.rst:126
+msgid "2. Vision Modal Preprocessing"
+msgstr "2. 图片模态预处理"
+
+#: ../../source/tutorial_doc/e2e_example.rst:127
+msgid ""
+"The code snippet below implements the Resnet Vision preprocessing with "
+"Matx, and the related vision transforms are Decode,  RandomResizedCrop, "
+"CenterCrop, RandomHorizontalFlip, Normalize, etc."
+msgstr "下面以Resnet预处理为例，实现了图片模态的预处理逻辑，涉及到的图片类OP主要有 Decode，RandomResizedCrop，CenterCrop，RandomHorizontalFlip, Normalize等"
+
+#: ../../source/tutorial_doc/e2e_example.rst:166
+msgid "3. Data Transform Pipeline"
+msgstr "3. 图片/文本模态整合"
+
+#: ../../source/tutorial_doc/e2e_example.rst:167
+msgid ""
+"Finally, we combine the text and vision transform logic, and create a "
+"transform pipeline."
+msgstr "现在可以结合文本和图片的预处理生成整体的多模态预处理逻辑"
+
+#: ../../source/tutorial_doc/e2e_example.rst:205
+msgid "4. PyTorch Dataloader Demo"
+msgstr "4. PyTorch Dataloader 示例"
+
+#: ../../source/tutorial_doc/e2e_example.rst:206
+msgid ""
+"With the data transform pipeline, we can then integrate it into the data "
+"loader and further provide data for the model training process. There is "
+"nothing special in this part if you are familiar with the PyTorch "
+"DataLoader. We provide a demo below for reference, which uses fake data "
+"as the data source, and you could just replace it with your own data."
+msgstr "有了预处理逻辑之后，即可以将其接入DataLoader，进而进行模型训练。这部分与大家习惯的写法没有什么不同，下面用假数据生成了一个Pytorch DataLoader，供大家参考。"
+
+#~ msgid "TO BE DONE"
+#~ msgstr "敬请期待"
 

@@ -80,3 +80,10 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. raw:: html
+
+    <embed>
+        <p>Languages: <a href="/index.html">English</a> <a href="/zh-CN/index.html">中文</a></p>
+    </embed>
+
