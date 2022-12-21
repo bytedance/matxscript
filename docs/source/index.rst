@@ -84,6 +84,6 @@ Indices and tables
 .. raw:: html
 
     <embed>
-        <p>Languages: <a href="/index.html">English</a> <a href="/zh-CN/index.html">中文</a></p>
+        <p>Languages: <a href="/matxscript/index.html">English</a> <a href="/matxscript/zh-CN/index.html">中文</a></p>
     </embed>
 
