@@ -9,6 +9,13 @@ MatxScript
 
 MatxScript is an ahead of time compiler for a subset of the Python language, with a focus on a unified research and service framework for machine learning
 
+Installation
+-------
+```bash
+pip install matxscript
+```
+
+
 A Quick Example
 -------
 ```python
