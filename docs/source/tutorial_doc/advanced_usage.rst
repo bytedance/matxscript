@@ -1,7 +1,7 @@
 ***************************************
 Multithreading
 ***************************************
-Due to Gobal Interpreter Lock (GIL) implemented in Python interpreter, multithreading in Python can be truly executed in parallel. In matx, we implement matx.pmap to support multithreading in C++.
+Due to Gobal Interpreter Lock (GIL) implemented in Python interpreter, multithreading in Python can‘t be truly executed in parallel. In matx, we implement matx.pmap to support multithreading in C++.
 
 .. code-block:: python3 
 
