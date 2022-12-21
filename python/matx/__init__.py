@@ -292,6 +292,25 @@ def load_so(dso_path=""):
 
 
 def trace(func, *args, **kwargs):
+    """Trace a function and return an executable module that will be optimized using just-in-time compilation.
+
+    Parameters
+    ----------
+    func : callable
+        A Python function or a matx Symbol(s) that will be run with `args`.
+        `func` arguments and return values must be Operators returned from Script.
+
+    args :
+        func inputs
+
+    kwargs :
+        func inputs
+
+    Returns
+    -------
+    module : JITModule
+       an executable module
+    """
     try:
         return pipeline.trace(func, *args, **kwargs)
     except BaseException:
@@ -299,6 +318,25 @@ def trace(func, *args, **kwargs):
 
 
 def script(compiling_obj, *args, backend=None, **kwargs):
+    """Entry function for compiling. Given a python object including function,
+    simple class, compile it to a matx object which mostly
+    keep the behavior of the original python object.
+
+    Parameters
+    ----------
+    compiling_obj : ([function, class])
+        [input python object to be compiled.]
+    args
+        not used
+    backend : [str, None]
+        'torch' or 'pytorch' or None
+    kwargs
+        keyword arguments passed into different script backend
+    Returns
+    -------
+    obj : OpKernel
+        the compiled object.
+    """
     from . import extension
     if isinstance(compiling_obj, pipeline.ops.OpKernel):
         return compiling_obj
