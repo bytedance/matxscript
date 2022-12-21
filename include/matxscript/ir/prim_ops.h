@@ -21,7 +21,7 @@
  */
 
 /*!
- * \file tvm/ir/op.h
+ * \file matxscript/ir/op.h
  * \brief Common operators defined for Expr.
  *
  * \note Most of the operator defined here perform simple constant folding
@@ -58,7 +58,7 @@ namespace ir {
  * \param expr The input parameter.
  * \return The result type.
  *
- * \sa tvm/ir/type.h for discussion about the relation between Type and runtime::DataType.
+ * \sa matxscript/ir/type.h for discussion about the relation between Type and runtime::DataType.
  */
 MATX_DLL Type GetType(const PrimExpr& expr);
 
@@ -68,7 +68,7 @@ MATX_DLL Type GetType(const PrimExpr& expr);
  * \param type The input type.
  * \return The result runtime::DataType.
  *
- * \sa tvm/ir/type.h for discussion about the relation between Type and runtime::DataType.
+ * \sa matxscript/ir/type.h for discussion about the relation between Type and runtime::DataType.
  */
 MATX_DLL runtime::DataType GetRuntimeDataType(const Type& type);
 
@@ -883,7 +883,7 @@ template <typename TA>
 inline void DivAmbiguityError(const TA& a) {
   constexpr bool div_ambiguity = !std::is_class<TA>::value;
   static_assert(div_ambiguity,
-                "TVM supports multiple types of integer divisions, "
+                "MATXScript supports multiple types of integer divisions, "
                 "please call div, indexdiv/indexmod, "
                 "floordiv/floormod or truncdiv/truncmod directly "
                 "to avoid ambiguity in the code. "

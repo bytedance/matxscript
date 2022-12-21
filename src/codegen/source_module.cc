@@ -47,7 +47,7 @@ class SourceModuleNode : public runtime::ModuleNode {
 
   NativeFunction GetFunction(const String& name, const ObjectPtr<Object>& sptr_to_self) final {
     MXLOG(FATAL) << "Source module cannot execute, to get executable module"
-                 << " build TVM with \'" << fmt_ << "\' runtime support";
+                 << " build MATXScript with \'" << fmt_ << "\' runtime support";
     return NativeFunction();
   }
 

@@ -16,7 +16,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""FFI APIs for tvm.runtime"""
+"""FFI APIs for matx.runtime"""
 from .. import _ffi
 
 # The implementations below are default ones when the corresponding

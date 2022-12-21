@@ -355,7 +355,7 @@ class ObjectRValueRef:
 
     Parameters
     ----------
-    obj : tvm.runtime.Object
+    obj : matx.runtime.Object
         The object that this value refers to
     """
     __slots__ = ["obj"]

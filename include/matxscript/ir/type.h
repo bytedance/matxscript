@@ -141,7 +141,7 @@ class Type : public ObjectRef {
  * \param type The input type.
  * \return The result runtime::DataType.
  *
- * \sa tvm/ir/type.h for discussion about the relation between Type and runtime::DataType.
+ * \sa matxscript/ir/type.h for discussion about the relation between Type and runtime::DataType.
  */
 MATX_DLL runtime::DataType GetRuntimeDataType(const Type& type);
 MATX_DLL bool IsRuntimeDataType(const Type& type);

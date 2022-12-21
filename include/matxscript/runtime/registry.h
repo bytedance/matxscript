@@ -34,12 +34,12 @@
  *
  *  Front-end can also pass callbacks as PackedFunc, or register
  *  then into the same global registry in C++.
- *  The goal is to mix the front-end language and the TVM back-end.
+ *  The goal is to mix the front-end language and the MATXScript back-end.
  *
  * \code
  *   // register the function as MyAPIFuncName
- *   TVM_REGISTER_GLOBAL(MyAPIFuncName)
- *   .set_body([](TArgs args, TVMRetValue* rv) {
+ *   MATXSCRIPT_REGISTER_GLOBAL(MyAPIFuncName)
+ *   .set_body([](PyArgs args) -> RTValue {
  *     // my code.
  *   });
  * \endcode

@@ -190,7 +190,7 @@ class MapIterator(object):
 
 @_ffi.register_object
 class Map(Object):
-    """Map container of TVM.
+    """Map container of MATX IR.
 
     You do not need to create Map explicitly.
     Normally python dict will be converted automaticall to Map during tvm function call.

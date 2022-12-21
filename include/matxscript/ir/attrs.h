@@ -2,7 +2,7 @@
 /*
  * Taken from https://github.com/apache/tvm/blob/v0.7/include/tvm/ir/attrs.h
  * with fixes applied:
- * - add namespace matx::ir for fix conflict with tvm
+ * - add namespace matxscript::ir for fix conflict with tvm
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -29,7 +29,7 @@
  *  which support default value setup and bound checking.
  *
  * \code
- *   struct MyAttrs : public tvm::AttrsNode<MyAttrs> {
+ *   struct MyAttrs : public matxscript::ir::AttrsNode<MyAttrs> {
  *     float learning_rate;
  *     int num_hidden;
  *     String name;
@@ -293,7 +293,7 @@ class AttrsSHashVisitor {
 };
 
 /*!
- * \brief Helper struct to get the type name known to tvm.
+ * \brief Helper struct to get the type name known to matxscript.
  * \tparam T the type we are interested in.
  */
 template <typename T>
