@@ -2,6 +2,7 @@ MatxScript
 ===============================================================
 
 [Documentation](https://bytedance.github.io/matxscript/) |
+[文档](https://bytedance.github.io/matxscript/zh-CN/index.html) |
 [Contributors](CONTRIBUTORS.md) |
 [Release Notes](NEWS.md)
 
