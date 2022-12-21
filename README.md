@@ -9,15 +9,15 @@ MatxScript
 
 MatxScript is an ahead of time compiler for a subset of the Python language, with a focus on a unified research and service framework for machine learning
 
-Examples
+A Quick Example
 -------
 ```python
 import matx
 
 # make a function and compile it as a operator
 @matx.script
-def boo(a:str, b:str)->str:  # annotation of the function signature
-   return a+b
+def boo(a: str, b: str) -> str:  # annotation of the function signature
+    return a + b
 
 rc = boo("ab", "cd")  # execute in C++ for high performance
 ```
