@@ -8,44 +8,47 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-10 03:03+0800\n"
+"POT-Creation-Date: 2022-12-20 16:33-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.11.0\n"
 
-#: ../../source/tutorial_doc/script.rst:4
+#: ../../source/tutorial_doc/script.rst:5
 msgid "Script"
 msgstr ""
 
-#: ../../source/tutorial_doc/script.rst:7
+#: ../../source/tutorial_doc/script.rst:9
 msgid "Functionality"
 msgstr "功能"
 
-#: ../../source/tutorial_doc/script.rst:8
+#: ../../source/tutorial_doc/script.rst:10
 msgid ""
 "matx.script is used to compile Python function/class into corresponding "
 "C++ function/class."
 msgstr "通过matx.script可以将用Python的类/函数翻译成 C++，并提供统一接口，以op的形式集成到整体 pipeline。"
 
-#: ../../source/tutorial_doc/script.rst:12
-msgid "Usage  :meth:`matx.script`"
-msgstr "使用方式 :meth:`matx.script`"
+#: ../../source/tutorial_doc/script.rst:14
+msgid "Usage"
+msgstr "使用方式"
 
-#: ../../source/tutorial_doc/script.rst:13
+#: ../../source/tutorial_doc/script.rst:15
 msgid ""
 "Note that we enforce type annotation of the class members and signatures "
 "of the functions."
 msgstr "注意：所有的类的成员变量和函数的声明需要强制类型标注（python的typing的link）具体请参照编程规范（link to 编程规范）"
 
-#: ../../source/tutorial_doc/script.rst:16
+#: ../../source/tutorial_doc/script.rst:19
 msgid "Example 1"
 msgstr "案例一"
 
-#: ../../source/tutorial_doc/script.rst:39
+#: ../../source/tutorial_doc/script.rst:42
 msgid "Example 2"
 msgstr "案例二"
+
+#~ msgid "Usage  :meth:`matx.script`"
+#~ msgstr "使用方式"
 

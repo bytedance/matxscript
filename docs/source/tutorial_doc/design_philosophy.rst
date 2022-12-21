@@ -1,8 +1,9 @@
 .. design philosophy
-
+##################################
 Design Philosophy
 ##################################
 
+**********************************
 Overview
 **********************************
 | Matx is originally designed to integrate training and inference in machine learning production system. It comes with the following goals:
@@ -13,6 +14,7 @@ Overview
 
 | Given them, Matx is an ahead-of-time compiler that transforms Python into C++. Besides machine learning applications, we expect Matx to be used in a wider range of applications that involve translating Python into C++ for better performance.
 
+**********************************
 High-level Concepts
 **********************************
 
@@ -28,18 +30,22 @@ Trace
 ==================================
 Trace is used to generate a computational graph composed of operations. Note that the computational graph must be a directly asyclic graph. The computational graph can be directly executed in Python. It can also be saved/loaded to/from disk files.
 
+**********************************
 Python First
 **********************************
 Matx is an ahead-of-time compiler that compiles Python into C++. We choose Python as it is the dominate programming language in deep learning and has a large existing codebase. Note that we only support a subset of Python due to performance consideration.
 
+**********************************
 Fast Execution
 **********************************
 As compiled code from Matx  is written in C++, it naturally achieves orders of speedup compared with the original Python code executed by Python Interpreter. To further improve the performance, we enforce type annotation when writing Python code.
 
+**********************************
 Extensions Without Pain
 **********************************
 Writing custom C++ Operations can be easily integrated into Matx.
 
+**********************************
 Machine Learning Support
 **********************************
 

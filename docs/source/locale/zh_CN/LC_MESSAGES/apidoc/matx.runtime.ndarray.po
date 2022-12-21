@@ -8,389 +8,304 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-08 03:59+0800\n"
+"POT-Creation-Date: 2022-12-20 16:33-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.11.0\n"
 
 #: ../../source/apidoc/matx.runtime.ndarray.rst:2
 msgid "matx.runtime.ndarray module"
 msgstr ""
 
-#: matx.runtime.ndarray:1 of
-msgid "Runtime NDArray API"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:1 of
-msgid "Bases: :py:class:`~matx.runtime.object.Object`"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:1 of
-msgid "Lightweight NDArray implementation for matx runtime"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:3 of
-msgid ""
-"The structure is currently just a container for a multi-dimensional "
-"array, without defining various types of transformations and arithmetic "
-"methods. The goal of the structure is to serve as a bridge tool and other"
-" machine learning frameworks (pytorch tensorflow) for the conversion of "
-"multidimensional arrays"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray matx.runtime.ndarray.NDArray.from_numpy
-#: matx.runtime.ndarray.NDArray.transpose matx.runtime.ndarray.add
-#: matx.runtime.ndarray.concatenate matx.runtime.ndarray.div
-#: matx.runtime.ndarray.from_dlpack matx.runtime.ndarray.from_numpy
-#: matx.runtime.ndarray.mul matx.runtime.ndarray.rand
-#: matx.runtime.ndarray.stack matx.runtime.ndarray.sub of
-msgid "Parameters"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:6 of
-msgid "Constructing the contents of an NDArray"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:8 of
-msgid "Shape of the constructed NDArray"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:10 of
-msgid ""
-"The type of the constructed NDArray element, supporting \"int32\" "
-"\"int64\" \"float32\" \"float64\""
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:25 of
-msgid "Construction method 1"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:14 of
-msgid ""
-"arr is a one-dimensional List, the shape is not empty, producing NDArray "
-"with the content of arr and the shape of the given shape"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:25 matx.runtime.ndarray.NDArray:41
-#: matx.runtime.ndarray.NDArray:54 of
-msgid "Examples:"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:41 of
-msgid "Construction method 2"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:28 of
-msgid ""
-"arr is a List of arbitrary dimensions, shape is an empty List, producing "
-"NDArray with the same shape as arr and the same content as arr"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:54 of
-msgid "Construction method 3"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:44 of
-msgid ""
-"arr is empty, shape is not empty, return a NDArray corresponding to the "
-"random initialization content of the shape"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.asnumpy:1 matx.runtime.ndarray.NDArray.numpy:1
-#: of
-msgid ""
-"Construct a numpy.ndarray from the current NDArray. Note! This method "
-"cannot be compiled for use in matx.script"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.asnumpy matx.runtime.ndarray.NDArray.contiguous
-#: matx.runtime.ndarray.NDArray.dim matx.runtime.ndarray.NDArray.dtype
-#: matx.runtime.ndarray.NDArray.from_numpy
-#: matx.runtime.ndarray.NDArray.is_contiguous
-#: matx.runtime.ndarray.NDArray.numpy matx.runtime.ndarray.NDArray.shape
-#: matx.runtime.ndarray.NDArray.stride:4 matx.runtime.ndarray.NDArray.to_list
-#: matx.runtime.ndarray.NDArray.tolist matx.runtime.ndarray.NDArray.torch
-#: matx.runtime.ndarray.add matx.runtime.ndarray.concatenate
-#: matx.runtime.ndarray.div matx.runtime.ndarray.from_dlpack
-#: matx.runtime.ndarray.from_numpy matx.runtime.ndarray.mul
-#: matx.runtime.ndarray.rand matx.runtime.ndarray.stack
-#: matx.runtime.ndarray.sub of
-msgid "Returns"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.asnumpy:4 matx.runtime.ndarray.NDArray.numpy:4
-#: of
-msgid "numpy.ndarray"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.asnumpy:7
-#: matx.runtime.ndarray.NDArray.contiguous:7 matx.runtime.ndarray.NDArray.dim:6
-#: matx.runtime.ndarray.NDArray.dtype:7
-#: matx.runtime.ndarray.NDArray.from_numpy:13
-#: matx.runtime.ndarray.NDArray.is_contiguous:7
-#: matx.runtime.ndarray.NDArray.numpy:7 matx.runtime.ndarray.NDArray.shape:6
-#: matx.runtime.ndarray.NDArray.stride:7 matx.runtime.ndarray.NDArray.to_list:6
-#: matx.runtime.ndarray.NDArray.tolist:6 matx.runtime.ndarray.add:16
-#: matx.runtime.ndarray.concatenate:13 matx.runtime.ndarray.div:17
-#: matx.runtime.ndarray.from_numpy:12 matx.runtime.ndarray.mul:16
-#: matx.runtime.ndarray.rand:11 matx.runtime.ndarray.stack:13
-#: matx.runtime.ndarray.sub:16 of
-msgid "Examples"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.contiguous:1 of
-msgid ""
-"Returns a copy of the ndarray with contiguous memory if the adarray is "
-"not contiguous. Otherwise, the original one is returned."
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.contiguous:4 matx.runtime.ndarray.add:13
-#: matx.runtime.ndarray.concatenate:10 matx.runtime.ndarray.div:14
-#: matx.runtime.ndarray.from_numpy:9 matx.runtime.ndarray.mul:13
-#: matx.runtime.ndarray.rand:8 matx.runtime.ndarray.stack:10
-#: matx.runtime.ndarray.sub:13 of
-msgid "matx.NDArray"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.device:1 of
-msgid "Returns the current NDArray device as a string"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.dim:1 of
-msgid ""
-"Returns the number of array dimensions. Unlike numpy, this is a method "
-"and not a property."
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.dim:3
-#: matx.runtime.ndarray.NDArray.is_contiguous:4 of
-msgid "int"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.dtype:1 of
-msgid "Returns the dtype of the current NDArray as a string"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.dtype:3 of
-msgid "\"int32\" \"int64\" \"float32\" \"float64\""
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.dtype matx.runtime.ndarray.NDArray.from_numpy
-#: matx.runtime.ndarray.from_dlpack of
-msgid "Return type"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.from_numpy:2 of
-msgid ""
-"Copy data from a numpy.ndarray to the current NDArray, requiring both to "
-"have the same size."
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.from_numpy:2 matx.runtime.ndarray.from_numpy:2
-#: of
-msgid "Note! This method cannot be compiled for use in matx.script"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.from_numpy of
-msgid "Raises"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.from_numpy:9 of
-msgid "self"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.is_contiguous:1 of
-msgid ""
-"Returns a int indicating if the underlying data is contiguous in memory. "
-"The continuity of array changes when its stride changes."
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.shape:1 of
-msgid ""
-"Returns the current NDArray's shape, unlike numpy, this is a method and "
-"not a property"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.shape:3 matx.runtime.ndarray.NDArray.stride:4
-#: matx.runtime.ndarray.NDArray.to_list:3 matx.runtime.ndarray.NDArray.tolist:3
-#: of
-msgid "matx.List"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.stride:1 of
-msgid "Returns List of bytes to step in each dimension when traversing an array."
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.to_list:1 matx.runtime.ndarray.NDArray.tolist:1
-#: of
-msgid "Convert a NDArray to a matx.List corresponding to the shape"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.torch:1 of
-msgid "convert NDArray to torch.Tensor, make sure NDArray is synchronized"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.torch:3 of
-msgid "torch.Tensor"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.transpose:1 of
-msgid "Reverse or permute the axes of an array"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.transpose:6 of
-msgid "Returns :"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.transpose:7 of
-msgid "the given with its axes permuted. A view is returned whenever possible"
-msgstr ""
-
-#: matx.runtime.ndarray.add:2 of
-msgid "Supports addition between NDArray and NDArray"
-msgstr ""
-
-#: matx.runtime.ndarray.add:2 of
-msgid "Supports addition between NDArray and numbers"
-msgstr ""
-
-#: matx.runtime.ndarray.add:4 matx.runtime.ndarray.div:5 of
-msgid ""
-"Supports "
-"broadcasting(https://numpy.org/doc/stable/user/basics.broadcasting.html)"
-msgstr ""
-
-#: matx.runtime.ndarray.add:6 of
-msgid "Specific use of the interface: matx.array.add"
-msgstr ""
-
-#: matx.runtime.ndarray.add:8 matx.runtime.ndarray.div:9
-#: matx.runtime.ndarray.mul:8 matx.runtime.ndarray.sub:8 of
-msgid "Left operand"
-msgstr ""
-
-#: matx.runtime.ndarray.add:10 matx.runtime.ndarray.div:11
-#: matx.runtime.ndarray.mul:10 matx.runtime.ndarray.sub:10 of
-msgid "Right operand"
-msgstr ""
-
-#: matx.runtime.ndarray.concatenate:1 of
-msgid ""
-"Concatenates the given sequence of seq tensors in the given dimension, "
-"Similar to numpy.concatenate"
-msgstr ""
-
-#: matx.runtime.ndarray.concatenate:3 of
-msgid "Specific use of the interface: matx.array.concatenate"
-msgstr ""
-
-#: matx.runtime.ndarray.concatenate:7 matx.runtime.ndarray.stack:7 of
-msgid "dim"
-msgstr ""
-
-#: matx.runtime.ndarray.div:3 of
-msgid "Support division between NDArray and NDArray"
-msgstr ""
-
-#: matx.runtime.ndarray.div:2 of
-msgid "Support division between NDArray and numbers"
-msgstr ""
-
-#: matx.runtime.ndarray.div:7 of
-msgid "Specific use of the interface: matx.array.div"
-msgstr ""
-
-#: matx.runtime.ndarray.from_dlpack:1 of
-msgid ""
-"Produce an array from a DLPack tensor without memory copy. Retreives the "
-"underlying DLPack tensor's pointer to create an array from the data. "
-"Removes the original DLPack tensor's destructor as now the array is "
-"responsible for destruction."
-msgstr ""
-
-#: matx.runtime.ndarray.from_dlpack:6 of
-msgid "Input DLManagedTensor, can only be consumed once."
-msgstr ""
-
-#: matx.runtime.ndarray.from_dlpack:9 of
-msgid "**arr** -- The array view of the tensor data."
-msgstr ""
-
-#: matx.runtime.ndarray.from_numpy:2 of
-msgid "Construct a module method for matx.NDArray from numpy.ndarray."
-msgstr ""
-
-#: matx.runtime.ndarray.from_numpy:6 matx.runtime.ndarray.from_numpy:7 of
-msgid "The device context to create the array)"
-msgstr ""
-
-#: matx.runtime.ndarray.mul:2 of
-msgid "Support multiplication between NDArray and NDArray"
-msgstr ""
-
-#: matx.runtime.ndarray.mul:2 of
-msgid "Support multiplication between NDArray and numbers"
-msgstr ""
-
-#: matx.runtime.ndarray.mul:4 of
-msgid ""
-"support "
-"broadcasting(https://numpy.org/doc/stable/user/basics.broadcasting.html)"
-msgstr ""
-
-#: matx.runtime.ndarray.mul:6 of
-msgid "Specific use of the interface: matx.array.mul"
-msgstr ""
-
-#: matx.runtime.ndarray.rand:1 of
-msgid ""
-"Returns a NDArray filled with random numbers from a uniform distribution "
-"on the interval[0, 1), similar to numpy.rando.rand"
-msgstr ""
-
-#: matx.runtime.ndarray.rand:3 of
-msgid "Analogous to: matx.array.rand"
-msgstr ""
-
-#: matx.runtime.ndarray.rand:17 of
-msgid "["
-msgstr ""
-
-#: matx.runtime.ndarray.rand:17 of
-msgid "[ 0.145728 0.357696 0.574777 ] [ 0.437011 0.0172242 0.704895 ]"
-msgstr ""
-
-#: matx.runtime.ndarray.rand:19 of
-msgid "]"
-msgstr ""
-
-#: matx.runtime.ndarray.stack:1 of
-msgid "Concatenates a sequence of NDArray along a new dimension."
-msgstr ""
-
-#: matx.runtime.ndarray.stack:3 of
-msgid "Specific use of the interface: matx.array.stack"
-msgstr ""
-
-#: matx.runtime.ndarray.sub:2 of
-msgid "Support subtraction between NDArray and NDArray"
-msgstr ""
-
-#: matx.runtime.ndarray.sub:2 of
-msgid "Support subtraction between NDArray and numbers"
-msgstr ""
-
-#: matx.runtime.ndarray.sub:4 of
-msgid ""
-"Support "
-"broadcasting(https://numpy.org/doc/stable/user/basics.broadcasting.html)"
-msgstr ""
-
-#: matx.runtime.ndarray.sub:6 of
-msgid "Specific use of the interface: matx.array.sub"
-msgstr ""
+#~ msgid "Runtime NDArray API"
+#~ msgstr ""
+
+#~ msgid "Bases: :py:class:`~matx.runtime.object.Object`"
+#~ msgstr ""
+
+#~ msgid "Lightweight NDArray implementation for matx runtime"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The structure is currently just a "
+#~ "container for a multi-dimensional array,"
+#~ " without defining various types of "
+#~ "transformations and arithmetic methods. The"
+#~ " goal of the structure is to "
+#~ "serve as a bridge tool and other"
+#~ " machine learning frameworks (pytorch "
+#~ "tensorflow) for the conversion of "
+#~ "multidimensional arrays"
+#~ msgstr ""
+
+#~ msgid "Parameters"
+#~ msgstr ""
+
+#~ msgid "Constructing the contents of an NDArray"
+#~ msgstr ""
+
+#~ msgid "Shape of the constructed NDArray"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The type of the constructed NDArray "
+#~ "element, supporting \"int32\" \"int64\" "
+#~ "\"float32\" \"float64\""
+#~ msgstr ""
+
+#~ msgid "Construction method 1"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "arr is a one-dimensional List, the"
+#~ " shape is not empty, producing "
+#~ "NDArray with the content of arr "
+#~ "and the shape of the given shape"
+#~ msgstr ""
+
+#~ msgid "Examples:"
+#~ msgstr ""
+
+#~ msgid "Construction method 2"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "arr is a List of arbitrary "
+#~ "dimensions, shape is an empty List, "
+#~ "producing NDArray with the same shape"
+#~ " as arr and the same content as"
+#~ " arr"
+#~ msgstr ""
+
+#~ msgid "Construction method 3"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "arr is empty, shape is not empty,"
+#~ " return a NDArray corresponding to "
+#~ "the random initialization content of the"
+#~ " shape"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Construct a numpy.ndarray from the "
+#~ "current NDArray. Note! This method "
+#~ "cannot be compiled for use in "
+#~ "matx.script"
+#~ msgstr ""
+
+#~ msgid "Returns"
+#~ msgstr ""
+
+#~ msgid "numpy.ndarray"
+#~ msgstr ""
+
+#~ msgid "Examples"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Returns a copy of the ndarray with"
+#~ " contiguous memory if the adarray is"
+#~ " not contiguous. Otherwise, the original"
+#~ " one is returned."
+#~ msgstr ""
+
+#~ msgid "matx.NDArray"
+#~ msgstr ""
+
+#~ msgid "Returns the current NDArray device as a string"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Returns the number of array dimensions."
+#~ " Unlike numpy, this is a method "
+#~ "and not a property."
+#~ msgstr ""
+
+#~ msgid "int"
+#~ msgstr ""
+
+#~ msgid "Returns the dtype of the current NDArray as a string"
+#~ msgstr ""
+
+#~ msgid "\"int32\" \"int64\" \"float32\" \"float64\""
+#~ msgstr ""
+
+#~ msgid "Return type"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Copy data from a numpy.ndarray to "
+#~ "the current NDArray, requiring both to"
+#~ " have the same size."
+#~ msgstr ""
+
+#~ msgid "Note! This method cannot be compiled for use in matx.script"
+#~ msgstr ""
+
+#~ msgid "Raises"
+#~ msgstr ""
+
+#~ msgid "self"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Returns a int indicating if the "
+#~ "underlying data is contiguous in memory."
+#~ " The continuity of array changes when"
+#~ " its stride changes."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Returns the current NDArray's shape, "
+#~ "unlike numpy, this is a method and"
+#~ " not a property"
+#~ msgstr ""
+
+#~ msgid "matx.List"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Returns List of bytes to step in"
+#~ " each dimension when traversing an "
+#~ "array."
+#~ msgstr ""
+
+#~ msgid "Convert a NDArray to a matx.List corresponding to the shape"
+#~ msgstr ""
+
+#~ msgid "convert NDArray to torch.Tensor, make sure NDArray is synchronized"
+#~ msgstr ""
+
+#~ msgid "torch.Tensor"
+#~ msgstr ""
+
+#~ msgid "Reverse or permute the axes of an array"
+#~ msgstr ""
+
+#~ msgid "Returns :"
+#~ msgstr ""
+
+#~ msgid "the given with its axes permuted. A view is returned whenever possible"
+#~ msgstr ""
+
+#~ msgid "Supports addition between NDArray and NDArray"
+#~ msgstr ""
+
+#~ msgid "Supports addition between NDArray and numbers"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Supports "
+#~ "broadcasting(https://numpy.org/doc/stable/user/basics.broadcasting.html)"
+#~ msgstr ""
+
+#~ msgid "Specific use of the interface: matx.array.add"
+#~ msgstr ""
+
+#~ msgid "Left operand"
+#~ msgstr ""
+
+#~ msgid "Right operand"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Concatenates the given sequence of seq"
+#~ " tensors in the given dimension, "
+#~ "Similar to numpy.concatenate"
+#~ msgstr ""
+
+#~ msgid "Specific use of the interface: matx.array.concatenate"
+#~ msgstr ""
+
+#~ msgid "dim"
+#~ msgstr ""
+
+#~ msgid "Support division between NDArray and NDArray"
+#~ msgstr ""
+
+#~ msgid "Support division between NDArray and numbers"
+#~ msgstr ""
+
+#~ msgid "Specific use of the interface: matx.array.div"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Produce an array from a DLPack "
+#~ "tensor without memory copy. Retreives "
+#~ "the underlying DLPack tensor's pointer "
+#~ "to create an array from the data."
+#~ " Removes the original DLPack tensor's "
+#~ "destructor as now the array is "
+#~ "responsible for destruction."
+#~ msgstr ""
+
+#~ msgid "Input DLManagedTensor, can only be consumed once."
+#~ msgstr ""
+
+#~ msgid "**arr** -- The array view of the tensor data."
+#~ msgstr ""
+
+#~ msgid "Construct a module method for matx.NDArray from numpy.ndarray."
+#~ msgstr ""
+
+#~ msgid "The device context to create the array)"
+#~ msgstr ""
+
+#~ msgid "Support multiplication between NDArray and NDArray"
+#~ msgstr ""
+
+#~ msgid "Support multiplication between NDArray and numbers"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "support "
+#~ "broadcasting(https://numpy.org/doc/stable/user/basics.broadcasting.html)"
+#~ msgstr ""
+
+#~ msgid "Specific use of the interface: matx.array.mul"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Returns a NDArray filled with random "
+#~ "numbers from a uniform distribution on"
+#~ " the interval[0, 1), similar to "
+#~ "numpy.rando.rand"
+#~ msgstr ""
+
+#~ msgid "Analogous to: matx.array.rand"
+#~ msgstr ""
+
+#~ msgid "["
+#~ msgstr ""
+
+#~ msgid "[ 0.145728 0.357696 0.574777 ] [ 0.437011 0.0172242 0.704895 ]"
+#~ msgstr ""
+
+#~ msgid "]"
+#~ msgstr ""
+
+#~ msgid "Concatenates a sequence of NDArray along a new dimension."
+#~ msgstr ""
+
+#~ msgid "Specific use of the interface: matx.array.stack"
+#~ msgstr ""
+
+#~ msgid "Support subtraction between NDArray and NDArray"
+#~ msgstr ""
+
+#~ msgid "Support subtraction between NDArray and numbers"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Support "
+#~ "broadcasting(https://numpy.org/doc/stable/user/basics.broadcasting.html)"
+#~ msgstr ""
+
+#~ msgid "Specific use of the interface: matx.array.sub"
+#~ msgstr ""
 

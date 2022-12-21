@@ -8,79 +8,68 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-08 03:59+0800\n"
+"POT-Creation-Date: 2022-12-20 16:33-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.11.0\n"
 
 #: ../../source/apidoc/matx.runtime.packed_func.rst:2
 msgid "matx.runtime.packed\\_func module"
 msgstr ""
 
-#: matx.runtime.packed_func:1 of
-msgid "Packed Function namespace."
-msgstr ""
+#~ msgid "Packed Function namespace."
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:1 of
-msgid "Bases: :py:class:`~matx_script_api.PackedFuncBase`"
-msgstr ""
+#~ msgid "Bases: :py:class:`~matx_script_api.PackedFuncBase`"
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:1 of
-msgid "The PackedFunc object used in MATX."
-msgstr ""
+#~ msgid "The PackedFunc object used in MATX."
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:3 of
-msgid ""
-"Function plays an key role to bridge front and backend in MATX. Function "
-"provide a type-erased interface, you can call function with positional "
-"arguments."
-msgstr ""
+#~ msgid ""
+#~ "Function plays an key role to "
+#~ "bridge front and backend in MATX. "
+#~ "Function provide a type-erased "
+#~ "interface, you can call function with"
+#~ " positional arguments."
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:6 of
-msgid ""
-"The compiled module returns Function. MATX backend also registers and "
-"exposes its API as Functions."
-msgstr ""
+#~ msgid ""
+#~ "The compiled module returns Function. "
+#~ "MATX backend also registers and exposes"
+#~ " its API as Functions."
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:9 of
-msgid ""
-"The following are list of common usage scenario of "
-"matx.runtime.PackedFunc."
-msgstr ""
+#~ msgid ""
+#~ "The following are list of common "
+#~ "usage scenario of matx.runtime.PackedFunc."
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:11 of
-msgid "Automatic exposure of C++ API into python"
-msgstr ""
+#~ msgid "Automatic exposure of C++ API into python"
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:12 of
-msgid "To call PackedFunc from python side"
-msgstr ""
+#~ msgid "To call PackedFunc from python side"
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:13 of
-msgid "To call python callbacks to inspect results in generated code"
-msgstr ""
+#~ msgid "To call python callbacks to inspect results in generated code"
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:14 of
-msgid "Bring python hook into C++ backend"
-msgstr ""
+#~ msgid "Bring python hook into C++ backend"
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:19 of
-msgid ":obj:`matx.register_func`"
-msgstr ""
+#~ msgid ":obj:`matx.register_func`"
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:19 of
-msgid "How to register global function."
-msgstr ""
+#~ msgid "How to register global function."
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:21 of
-msgid ":obj:`matx.get_global_func`"
-msgstr ""
+#~ msgid ":obj:`matx.get_global_func`"
+#~ msgstr ""
 
-#: matx.runtime.packed_func.PackedFunc:22 of
-msgid "How to get global function."
-msgstr ""
+#~ msgid "How to get global function."
+#~ msgstr ""
 

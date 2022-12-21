@@ -8,125 +8,103 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-08 03:59+0800\n"
+"POT-Creation-Date: 2022-12-20 16:33-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.11.0\n"
 
 #: ../../source/apidoc/matx.runtime.container.rst:2
 msgid "matx.runtime.container module"
 msgstr ""
 
-#: matx.runtime.container:1 of
-msgid "Runtime container structures."
-msgstr ""
+#~ msgid "Runtime container structures."
+#~ msgstr ""
 
-#: matx.runtime.container.Array:1 matx.runtime.container.Map:1
-#: matx.runtime.container.Tuple:1 of
-msgid "Bases: :py:class:`~matx.runtime.object.Object`"
-msgstr ""
+#~ msgid "Bases: :py:class:`~matx.runtime.object.Object`"
+#~ msgstr ""
 
-#: matx.runtime.container.Array:1 of
-msgid "Array container of MATX."
-msgstr ""
+#~ msgid "Array container of MATX."
+#~ msgstr ""
 
-#: matx.runtime.container.Array:3 of
-msgid ""
-"You do not need to create Array explicitly. Normally python list and "
-"tuple will be converted automatically to Array during tvm function call. "
-"You may get Array in return values of TVM function call."
-msgstr ""
+#~ msgid ""
+#~ "You do not need to create Array"
+#~ " explicitly. Normally python list and "
+#~ "tuple will be converted automatically to"
+#~ " Array during tvm function call. You"
+#~ " may get Array in return values "
+#~ "of TVM function call."
+#~ msgstr ""
 
-#: matx.runtime.container.ArrayIterator:1 matx.runtime.container.MapIterator:1
-#: of
-msgid "Bases: :py:class:`object`"
-msgstr ""
+#~ msgid "Bases: :py:class:`object`"
+#~ msgstr ""
 
-#: matx.runtime.container.Map:1 of
-msgid "Map container of TVM."
-msgstr ""
+#~ msgid "Map container of TVM."
+#~ msgstr ""
 
-#: matx.runtime.container.Map:3 of
-msgid ""
-"You do not need to create Map explicitly. Normally python dict will be "
-"converted automaticall to Map during tvm function call. You can use "
-"convert to create a dict[Object-> Object] into a Map"
-msgstr ""
+#~ msgid ""
+#~ "You do not need to create Map "
+#~ "explicitly. Normally python dict will be"
+#~ " converted automaticall to Map during "
+#~ "tvm function call. You can use "
+#~ "convert to create a dict[Object-> "
+#~ "Object] into a Map"
+#~ msgstr ""
 
-#: matx.runtime.container.Map.get:1 of
-msgid "Get an element with a default value."
-msgstr ""
+#~ msgid "Get an element with a default value."
+#~ msgstr ""
 
-#: matx.runtime.container.Map.get matx.runtime.container.Tuple
-#: matx.runtime.container.getitem_helper of
-msgid "Parameters"
-msgstr ""
+#~ msgid "Parameters"
+#~ msgstr ""
 
-#: matx.runtime.container.Map.get:3 of
-msgid "The attribute key."
-msgstr ""
+#~ msgid "The attribute key."
+#~ msgstr ""
 
-#: matx.runtime.container.Map.get:5 of
-msgid "The default object."
-msgstr ""
+#~ msgid "The default object."
+#~ msgstr ""
 
-#: matx.runtime.container.Map.get matx.runtime.container.getitem_helper of
-msgid "Returns"
-msgstr ""
+#~ msgid "Returns"
+#~ msgstr ""
 
-#: matx.runtime.container.Map.get:8 of
-msgid "**value** -- The result value."
-msgstr ""
+#~ msgid "**value** -- The result value."
+#~ msgstr ""
 
-#: matx.runtime.container.Map.get matx.runtime.container.getitem_helper of
-msgid "Return type"
-msgstr ""
+#~ msgid "Return type"
+#~ msgstr ""
 
-#: matx.runtime.container.Map.items:1 of
-msgid "Get the items from the map"
-msgstr ""
+#~ msgid "Get the items from the map"
+#~ msgstr ""
 
-#: matx.runtime.container.Map.keys:1 of
-msgid "Get the keys from the map"
-msgstr ""
+#~ msgid "Get the keys from the map"
+#~ msgstr ""
 
-#: matx.runtime.container.Map.values:1 of
-msgid "Get the values from the map"
-msgstr ""
+#~ msgid "Get the values from the map"
+#~ msgstr ""
 
-#: matx.runtime.container.Tuple:1 of
-msgid "tuple object."
-msgstr ""
+#~ msgid "tuple object."
+#~ msgstr ""
 
-#: matx.runtime.container.Tuple:3 of
-msgid "The source."
-msgstr ""
+#~ msgid "The source."
+#~ msgstr ""
 
-#: matx.runtime.container.getitem_helper:1 of
-msgid "Helper function to implement a pythonic getitem function."
-msgstr ""
+#~ msgid "Helper function to implement a pythonic getitem function."
+#~ msgstr ""
 
-#: matx.runtime.container.getitem_helper:3 of
-msgid "The original object"
-msgstr ""
+#~ msgid "The original object"
+#~ msgstr ""
 
-#: matx.runtime.container.getitem_helper:5 of
-msgid "A simple function that takes index and return a single element."
-msgstr ""
+#~ msgid "A simple function that takes index and return a single element."
+#~ msgstr ""
 
-#: matx.runtime.container.getitem_helper:7 of
-msgid "The size of the array"
-msgstr ""
+#~ msgid "The size of the array"
+#~ msgstr ""
 
-#: matx.runtime.container.getitem_helper:9 of
-msgid "The argument passed to getitem"
-msgstr ""
+#~ msgid "The argument passed to getitem"
+#~ msgstr ""
 
-#: matx.runtime.container.getitem_helper:12 of
-msgid "**result** -- The result of getitem"
-msgstr ""
+#~ msgid "**result** -- The result of getitem"
+#~ msgstr ""
 

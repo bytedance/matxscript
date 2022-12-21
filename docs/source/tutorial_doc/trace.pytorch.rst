@@ -1,12 +1,15 @@
 .. Pytorch Integration
 
+#####################################################
 Pytorch Integration
 #####################################################
 
+*****************************************************
 Overview
 *****************************************************
 Matx provides support for pytorch models. You can simply call matx.script() to convert a nn.Module or jit.ScriptModule to an InferenceOp and use it in trace pipeline.
 
+*****************************************************
 Usage
 *****************************************************
 
@@ -80,12 +83,17 @@ Using the same model above, we can skip torch.jit.trace as below.
 
 This will call torch.jit.trace to convert nn.Module to ScriotModule during trace. So, there is no essential difference between this method and the one above. However, notice that users have to make sure that their nn.Module can be converted to ScriptModule by torch,jit.trace.
 
+*****************************************************
 Remarks
 *****************************************************
 
 #. InferenceOp needs a device id. Loading trace also needs a device id. Their relationship is:
+
     #. When InferenceOp device is cpu, matx will ignore device id given to trace, and InferenceOp runs on cpu.
+
     #. When InferenceOp device is gpu, and the trace is loaded to GPU, then InferenceOp will run on the gpu given to trace.
+
     #. When InferenceOp device isgpu, loading trace on CPU leads to undefined behaviors.
+
 #. It is mandatory that the output tensor from Pytorch model is contiguous. If not, please call tensor.contiguous() before output.
 

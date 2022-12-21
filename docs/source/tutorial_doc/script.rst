@@ -1,17 +1,20 @@
 .. script
 
+#############################################
 Script
 #############################################
 
+********************************************
 Functionality
 ********************************************
 matx.script is used to compile Python function/class into corresponding C++ function/class. 
 
-
-Usage  :meth:`matx.script`
+********************************************
+Usage
 ********************************************
 Note that we enforce type annotation of the class members and signatures of the functions.
 
+********************************************
 Example 1
 ********************************************
 .. code-block:: python3 
@@ -34,7 +37,7 @@ Example 1
    obj = matx.script(foo)(1)
    rc = obj.add(2)
 
-
+********************************************
 Example 2
 ********************************************
 

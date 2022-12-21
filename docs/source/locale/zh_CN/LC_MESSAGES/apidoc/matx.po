@@ -8,784 +8,568 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-08 03:59+0800\n"
+"POT-Creation-Date: 2022-12-20 16:33-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.11.0\n"
 
-#: ../../source/apidoc/matx.rst:2
+#: ../../source/apidoc/matx.rst:4
 msgid "matx package"
 msgstr ""
 
-#: matx.runtime._container._dict.Dict:1 matx.runtime._container._list.List:1
-#: matx.runtime._container._opaque_object.OpaqueObject:1
-#: matx.runtime._container._set.Set:1 matx.runtime.container.Tuple:1
-#: matx.runtime.file.File:1 matx.runtime.ndarray.NDArray:1
-#: matx.runtime.regex.Regex:1 matx.runtime.trie.Trie:1 of
-msgid "Bases: :py:class:`~matx.runtime.object.Object`"
-msgstr ""
-
-#: matx.runtime._container._dict.Dict:2 of
-msgid "matx.Dict implemented refering to python built-in dict,"
-msgstr ""
-
-#: matx.runtime._container._dict.Dict:2 matx.runtime._container._list.List:2
-#: matx.runtime._container._set.Set:2 of
-msgid "supports common methods of built-in list and some custom methods."
-msgstr ""
-
-#: matx.runtime._container._dict.Dict:7 of
-msgid "Dict() -> construct empty dict"
-msgstr ""
-
-#: matx.runtime._container._dict.Dict:14 of
-msgid "Dict(mapping) -> construct dict from mapping"
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.bucket_count:1
-#: matx.runtime._container._set.Set.bucket_count:1 of
-msgid "Returns the number of slots in the hash table."
-msgstr ""
-
-#: matx._ffi.registry.get_global_func matx._ffi.registry.register_func
-#: matx.runtime._container._dict.Dict.bucket_count
-#: matx.runtime._container._dict.Dict.clear
-#: matx.runtime._container._dict.Dict.get
-#: matx.runtime._container._dict.Dict.items
-#: matx.runtime._container._dict.Dict.keys
-#: matx.runtime._container._dict.Dict.pop
-#: matx.runtime._container._dict.Dict.reserve
-#: matx.runtime._container._dict.Dict.values
-#: matx.runtime._container._list.List.append
-#: matx.runtime._container._list.List.capacity
-#: matx.runtime._container._list.List.clear
-#: matx.runtime._container._list.List.extend
-#: matx.runtime._container._list.List.index
-#: matx.runtime._container._list.List.insert
-#: matx.runtime._container._list.List.pop
-#: matx.runtime._container._list.List.remove
-#: matx.runtime._container._list.List.reserve
-#: matx.runtime._container._list.List.reverse
-#: matx.runtime._container._set.Set.add:5
-#: matx.runtime._container._set.Set.bucket_count
-#: matx.runtime._container._set.Set.clear
-#: matx.runtime._container._set.Set.difference
-#: matx.runtime._container._set.Set.difference_update
-#: matx.runtime._container._set.Set.discard
-#: matx.runtime._container._set.Set.reserve
-#: matx.runtime._container._set.Set.union
-#: matx.runtime._container._set.Set.update matx.runtime.ndarray.NDArray.asnumpy
-#: matx.runtime.ndarray.NDArray.contiguous matx.runtime.ndarray.NDArray.dim
-#: matx.runtime.ndarray.NDArray.dtype matx.runtime.ndarray.NDArray.from_numpy
-#: matx.runtime.ndarray.NDArray.is_contiguous
-#: matx.runtime.ndarray.NDArray.numpy matx.runtime.ndarray.NDArray.shape
-#: matx.runtime.ndarray.NDArray.stride:4 matx.runtime.ndarray.NDArray.to_list
-#: matx.runtime.ndarray.NDArray.tolist matx.runtime.ndarray.NDArray.torch
-#: matx.runtime.regex.Regex.match matx.runtime.regex.Regex.replace
-#: matx.runtime.regex.Regex.split matx.runtime.trie.Trie.prefix_search
-#: matx.runtime.trie.Trie.prefix_search_all of
-msgid "Returns"
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.bucket_count:3
-#: matx.runtime._container._list.List.capacity:3
-#: matx.runtime._container._set.Set.bucket_count:3
-#: matx.runtime.ndarray.NDArray.dim:3
-#: matx.runtime.ndarray.NDArray.is_contiguous:4 of
-msgid "int"
-msgstr ""
-
-#: matx._ffi.registry.register_func:14
-#: matx.runtime._container._dict.Dict.bucket_count:6
-#: matx.runtime._container._dict.Dict.clear:6
-#: matx.runtime._container._dict.Dict.get:11
-#: matx.runtime._container._dict.Dict.items:6
-#: matx.runtime._container._dict.Dict.keys:6
-#: matx.runtime._container._dict.Dict.pop:10
-#: matx.runtime._container._dict.Dict.reserve:9
-#: matx.runtime._container._dict.Dict.values:6
-#: matx.runtime._container._list.List.append:8
-#: matx.runtime._container._list.List.capacity:6
-#: matx.runtime._container._list.List.clear:6
-#: matx.runtime._container._list.List.extend:8
-#: matx.runtime._container._list.List.pop:12
-#: matx.runtime._container._list.List.remove:12
-#: matx.runtime._container._list.List.reserve:9
-#: matx.runtime._container._list.List.reverse:6
-#: matx.runtime._container._set.Set.add:8
-#: matx.runtime._container._set.Set.bucket_count:6
-#: matx.runtime._container._set.Set.clear:6
-#: matx.runtime._container._set.Set.difference:6
-#: matx.runtime._container._set.Set.difference_update:6
-#: matx.runtime._container._set.Set.discard:7
-#: matx.runtime._container._set.Set.reserve:9
-#: matx.runtime._container._set.Set.union:6
-#: matx.runtime._container._set.Set.update:6
-#: matx.runtime.ndarray.NDArray.asnumpy:7
-#: matx.runtime.ndarray.NDArray.contiguous:7 matx.runtime.ndarray.NDArray.dim:6
-#: matx.runtime.ndarray.NDArray.dtype:7
-#: matx.runtime.ndarray.NDArray.from_numpy:13
-#: matx.runtime.ndarray.NDArray.is_contiguous:7
-#: matx.runtime.ndarray.NDArray.numpy:7 matx.runtime.ndarray.NDArray.shape:6
-#: matx.runtime.ndarray.NDArray.stride:7 matx.runtime.ndarray.NDArray.to_list:6
-#: matx.runtime.ndarray.NDArray.tolist:6 matx.runtime.regex.Regex:17
-#: matx.runtime.regex.Regex.match:12 matx.runtime.regex.Regex.replace:12
-#: matx.runtime.regex.Regex.split:10 matx.runtime.trie.Trie:7
-#: matx.runtime.trie.Trie.prefix_search:15
-#: matx.runtime.trie.Trie.prefix_search_all:15 matx.runtime.trie.Trie.update:9
-#: of
-msgid "Examples"
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.clear:1 of
-msgid "Remove all items."
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.clear:3
-#: matx.runtime._container._dict.Dict.reserve:6
-#: matx.runtime._container._list.List.append:5
-#: matx.runtime._container._list.List.clear:3
-#: matx.runtime._container._list.List.extend:5
-#: matx.runtime._container._list.List.index:12
-#: matx.runtime._container._list.List.insert:8
-#: matx.runtime._container._list.List.remove:7
-#: matx.runtime._container._list.List.reserve:6
-#: matx.runtime._container._list.List.reverse:3
-#: matx.runtime._container._set.Set.add:5
-#: matx.runtime._container._set.Set.clear:3
-#: matx.runtime._container._set.Set.difference_update:3
-#: matx.runtime._container._set.Set.discard:4
-#: matx.runtime._container._set.Set.reserve:6
-#: matx.runtime._container._set.Set.update:3 of
-msgid "None"
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.get:1 of
-msgid "Return the value for key if key is in the dictionary, d."
-msgstr ""
-
-#: matx._ffi.registry.get_global_func matx._ffi.registry.register_func
-#: matx.runtime._container._dict.Dict.get
-#: matx.runtime._container._dict.Dict.pop
-#: matx.runtime._container._dict.Dict.reserve
-#: matx.runtime._container._list.List.append
-#: matx.runtime._container._list.List.extend
-#: matx.runtime._container._list.List.index
-#: matx.runtime._container._list.List.insert
-#: matx.runtime._container._list.List.pop
-#: matx.runtime._container._list.List.remove
-#: matx.runtime._container._list.List.reserve
-#: matx.runtime._container._set.Set.reserve matx.runtime.container.Tuple
-#: matx.runtime.ndarray.NDArray matx.runtime.ndarray.NDArray.from_numpy
-#: matx.runtime.ndarray.NDArray.transpose matx.runtime.regex.Regex
-#: matx.runtime.regex.Regex.match matx.runtime.regex.Regex.replace
-#: matx.runtime.regex.Regex.split matx.runtime.trie.Trie
-#: matx.runtime.trie.Trie.prefix_search
-#: matx.runtime.trie.Trie.prefix_search_all matx.runtime.trie.Trie.update of
-msgid "Parameters"
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.get:5 of
-msgid "defautl return value when k is not in dict"
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.get:8
-#: matx.runtime._container._dict.Dict.pop:7
-#: matx.runtime._container._list.List.pop:7 of
-msgid "item"
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.items:1 of
-msgid "Return a key-value iterable (matx.Iterator)."
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.items:3
-#: matx.runtime._container._dict.Dict.keys:3
-#: matx.runtime._container._dict.Dict.values:3 of
-msgid "matx.Iterator"
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.keys:1 of
-msgid "Return a key iterable."
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.pop:2 of
-msgid ".pop(k[,d]) -> v, remove specified key and return the corresponding value."
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.pop:2 of
-msgid "If key is not found, d is returned if given, otherwise Exception is raised"
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.reserve:1 of
-msgid ""
-"Increase the capacity of the dict to a value that's greater or equal to "
-"new_size."
-msgstr ""
-
-#: matx.runtime._container._dict.Dict.values:1 of
-msgid "Return a value iterable."
-msgstr ""
-
-#: matx.runtime.file.File:1 of
-msgid "A simple file class, which only supports reading by lines now."
-msgstr ""
-
-#: matx.runtime.file.File:3 of
-msgid "File(path, mode, encoding) -> similar to builtins.open"
-msgstr ""
-
-#: matx.runtime._container._list.List:2 of
-msgid "matx.List implemented refering to python built-in list,"
-msgstr ""
-
-#: matx.runtime._container._list.List:7 of
-msgid "List() -> construct empty list"
-msgstr ""
-
-#: matx.runtime._container._list.List:18 of
-msgid "List(iterable) -> construct list from iterable object"
-msgstr ""
-
-#: matx.runtime._container._list.List.append:1 of
-msgid "Append object to the end of the list."
-msgstr ""
-
-#: matx.runtime._container._list.List.capacity:1 of
-msgid ""
-"Return the number of elements that the list has currently allocated space"
-" for."
-msgstr ""
-
-#: matx.runtime._container._list.List.clear:1 of
-msgid "Remove all items from list."
-msgstr ""
-
-#: matx.runtime._container._list.List.extend:1 of
-msgid "Extend list by appending elements from the iterable."
-msgstr ""
-
-#: matx.runtime._container._list.List.extend:3 of
-msgid "iterable"
-msgstr ""
-
-#: matx.runtime._container._list.List.index:1 of
-msgid ""
-"Return zero-based index in the list of the first item whose value is "
-"equal to x."
-msgstr ""
-
-#: matx.runtime._container._list.List.index
-#: matx.runtime._container._list.List.pop
-#: matx.runtime._container._list.List.remove
-#: matx.runtime.ndarray.NDArray.from_numpy of
-msgid "Raises"
-msgstr ""
-
-#: matx.runtime._container._list.List.insert:1 of
-msgid ""
-"Insert an item at a given position. The first argument is the index of "
-"the element before which to insert"
-msgstr ""
-
-#: matx.runtime._container._list.List.pop:2 of
-msgid "Remove and return item at index (default last)."
-msgstr ""
-
-#: matx.runtime._container._list.List.pop:2 of
-msgid "Raises Exception if list is empty or index is out of range."
-msgstr ""
-
-#: matx.runtime._container._list.List.remove:3 of
-msgid "Remove first occurrence of value."
-msgstr ""
-
-#: matx.runtime._container._list.List.remove:2 of
-msgid "Raises Exception if the value is not present."
-msgstr ""
-
-#: matx.runtime._container._list.List.reserve:1 of
-msgid ""
-"Increase the capacity of the list to a value that's greater or equal to "
-"new_size."
-msgstr ""
-
-#: matx.runtime._container._list.List.reverse:1 of
-msgid "Reverse *IN PLACE*."
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:1 of
-msgid "Lightweight NDArray implementation for matx runtime"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:3 of
-msgid ""
-"The structure is currently just a container for a multi-dimensional "
-"array, without defining various types of transformations and arithmetic "
-"methods. The goal of the structure is to serve as a bridge tool and other"
-" machine learning frameworks (pytorch tensorflow) for the conversion of "
-"multidimensional arrays"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:6 of
-msgid "Constructing the contents of an NDArray"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:8 of
-msgid "Shape of the constructed NDArray"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:10 of
-msgid ""
-"The type of the constructed NDArray element, supporting \"int32\" "
-"\"int64\" \"float32\" \"float64\""
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:25 of
-msgid "Construction method 1"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:14 of
-msgid ""
-"arr is a one-dimensional List, the shape is not empty, producing NDArray "
-"with the content of arr and the shape of the given shape"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:25 matx.runtime.ndarray.NDArray:41
-#: matx.runtime.ndarray.NDArray:54 of
-msgid "Examples:"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:41 of
-msgid "Construction method 2"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:28 of
-msgid ""
-"arr is a List of arbitrary dimensions, shape is an empty List, producing "
-"NDArray with the same shape as arr and the same content as arr"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:54 of
-msgid "Construction method 3"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray:44 of
-msgid ""
-"arr is empty, shape is not empty, return a NDArray corresponding to the "
-"random initialization content of the shape"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.asnumpy:1 matx.runtime.ndarray.NDArray.numpy:1
-#: of
-msgid ""
-"Construct a numpy.ndarray from the current NDArray. Note! This method "
-"cannot be compiled for use in matx.script"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.asnumpy:4 matx.runtime.ndarray.NDArray.numpy:4
-#: of
-msgid "numpy.ndarray"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.contiguous:1 of
-msgid ""
-"Returns a copy of the ndarray with contiguous memory if the adarray is "
-"not contiguous. Otherwise, the original one is returned."
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.contiguous:4 of
-msgid "matx.NDArray"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.device:1 of
-msgid "Returns the current NDArray device as a string"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.dim:1 of
-msgid ""
-"Returns the number of array dimensions. Unlike numpy, this is a method "
-"and not a property."
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.dtype:1 of
-msgid "Returns the dtype of the current NDArray as a string"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.dtype:3 of
-msgid "\"int32\" \"int64\" \"float32\" \"float64\""
-msgstr ""
-
-#: matx._ffi.registry.get_global_func matx._ffi.registry.register_func
-#: matx.runtime.ndarray.NDArray.dtype matx.runtime.ndarray.NDArray.from_numpy
-#: matx.runtime.regex.Regex.match matx.runtime.regex.Regex.replace
-#: matx.runtime.regex.Regex.split matx.runtime.trie.Trie.prefix_search
-#: matx.runtime.trie.Trie.prefix_search_all of
-msgid "Return type"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.from_numpy:2 of
-msgid ""
-"Copy data from a numpy.ndarray to the current NDArray, requiring both to "
-"have the same size."
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.from_numpy:2 of
-msgid "Note! This method cannot be compiled for use in matx.script"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.from_numpy:9 of
-msgid "self"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.is_contiguous:1 of
-msgid ""
-"Returns a int indicating if the underlying data is contiguous in memory. "
-"The continuity of array changes when its stride changes."
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.shape:1 of
-msgid ""
-"Returns the current NDArray's shape, unlike numpy, this is a method and "
-"not a property"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.shape:3 matx.runtime.ndarray.NDArray.stride:4
-#: matx.runtime.ndarray.NDArray.to_list:3 matx.runtime.ndarray.NDArray.tolist:3
-#: of
-msgid "matx.List"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.stride:1 of
-msgid "Returns List of bytes to step in each dimension when traversing an array."
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.to_list:1 matx.runtime.ndarray.NDArray.tolist:1
-#: of
-msgid "Convert a NDArray to a matx.List corresponding to the shape"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.torch:1 of
-msgid "convert NDArray to torch.Tensor, make sure NDArray is synchronized"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.torch:3 of
-msgid "torch.Tensor"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.transpose:1 of
-msgid "Reverse or permute the axes of an array"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.transpose:6 of
-msgid "Returns :"
-msgstr ""
-
-#: matx.runtime.ndarray.NDArray.transpose:7 of
-msgid "the given with its axes permuted. A view is returned whenever possible"
-msgstr ""
-
-#: matx.native._native_object.NativeObject:1 matx.toolchain.ToolChain:1 of
-msgid "Bases: :py:class:`object`"
-msgstr ""
-
-#: matx.runtime.object.Object:1 of
-msgid "Bases: :py:class:`~matx_script_api.ObjectBase`"
-msgstr ""
-
-#: matx.runtime.object.Object:1 of
-msgid "Base class for all tvm's runtime objects."
-msgstr ""
-
-#: matx.runtime.regex.Regex:1 of
-msgid "Regular class implemented using pcre."
-msgstr ""
-
-#: matx.runtime.regex.Regex:3 of
-msgid "Str types. Regular expression pattern."
-msgstr ""
-
-#: matx.runtime.regex.Regex:5 of
-msgid "Booleans. Perform case-insensitive matching. The default is false"
-msgstr ""
-
-#: matx.runtime.regex.Regex:7 of
-msgid ""
-"Booleans. \".\" matches any character at all, including the newline. The "
-"default is false"
-msgstr ""
-
-#: matx.runtime.regex.Regex:9 of
-msgid ""
-"Booleans. Most white space in the pattern (other than in a character "
-"class), and characters between a # outside a character class and the next"
-" newline, inclusive, are ignored. An escaping backslash can be used to "
-"include a white space or # character as part of the pattern. The default "
-"is false."
-msgstr ""
-
-#: matx.runtime.regex.Regex:11 of
-msgid ""
-"Booleans. Matches only at the beginning of the subject. The default is "
-"false."
-msgstr ""
-
-#: matx.runtime.regex.Regex:13 of
-msgid ""
-"Booleans. Sequences such as \"\\d\" and \"\\w\" use Unicode properties to"
-" determine character types, instead of recognizing only characters with "
-"codes less than 128 via a lookup table. The default is false."
-msgstr ""
-
-#: matx.runtime.regex.Regex.match:1 of
-msgid ""
-"Try to apply the pattern at the start of the string, returning a tuple "
-"containing the matched string. If grouping version of regular pattern is "
-"used, then the text of all groups are returned."
-msgstr ""
-
-#: matx.runtime.regex.Regex.match:3 matx.runtime.regex.Regex.replace:3
-#: matx.runtime.regex.Regex.split:3 of
-msgid "The source string."
-msgstr ""
-
-#: matx.runtime.regex.Regex.match:5 of
-msgid "Offset in the subject at which to start matching"
-msgstr ""
-
-#: matx.runtime.regex.Regex.match:8 of
-msgid ""
-"The matched groups. The first element in the tuple is indexed groups. The"
-" second element in the tuple is named groups."
-msgstr ""
-
-#: matx.runtime.regex.Regex.replace:1 of
-msgid ""
-"Return the string obtained by replacing the leftmost non-overlapping "
-"occurrences of the pattern in the input string by the replacement repl."
-msgstr ""
-
-#: matx.runtime.regex.Regex.replace:5 of
-msgid "The replacement string."
-msgstr ""
-
-#: matx.runtime.regex.Regex.replace:8 of
-msgid "The replaced string. If no match was found, returning the source string."
-msgstr ""
-
-#: matx.runtime.regex.Regex.split:1 of
-msgid "Split a string by the occurrences of a pattern."
-msgstr ""
-
-#: matx.runtime.regex.Regex.split:6 of
-msgid ""
-"A list containing the resulting substrings. If no match was "
-"found，returning a list containing only the source string, i.e. [input]."
-msgstr ""
-
-#: matx.runtime._container._set.Set:2 of
-msgid "matx.Set: matx.Set implemented refering to python built-in dict,"
-msgstr ""
-
-#: matx.runtime._container._set.Set:4 of
-msgid "set() -> construct empty set .. rubric:: Examples"
-msgstr ""
-
-#: matx.runtime._container._set.Set:12 of
-msgid "set(iterable) -> construct set from iterable .. rubric:: Examples"
-msgstr ""
-
-#: matx.runtime._container._set.Set.add:2 of
-msgid "Add an element to a set."
-msgstr ""
-
-#: matx.runtime._container._set.Set.add:2 of
-msgid "This has no effect if the element is already present."
-msgstr ""
-
-#: matx.runtime._container._set.Set.clear:1 of
-msgid "Remove all elements."
-msgstr ""
-
-#: matx.runtime._container._set.Set.difference:1 of
-msgid "Return the difference of two or more sets as a new set."
-msgstr ""
-
-#: matx.runtime._container._set.Set.difference:3
-#: matx.runtime._container._set.Set.union:3 of
-msgid "matx.Set"
-msgstr ""
-
-#: matx.runtime._container._set.Set.difference_update:1 of
-msgid "Remove all elements of another set from this set."
-msgstr ""
-
-#: matx.runtime._container._set.Set.discard:2 of
-msgid "Remove an element from a set if it is a member."
-msgstr ""
-
-#: matx.runtime._container._set.Set.discard:2 of
-msgid "If the element is not a member, do nothing."
-msgstr ""
-
-#: matx.runtime._container._set.Set.reserve:1 of
-msgid ""
-"Increase the capacity of the set to a value that's greater or equal to "
-"new_size."
-msgstr ""
-
-#: matx.runtime._container._set.Set.union:1 of
-msgid "Return the union of sets as a new set."
-msgstr ""
-
-#: matx.runtime._container._set.Set.update:1 of
-msgid "Update a set with the union of itself and others."
-msgstr ""
-
-#: matx._ffi.base.TError:1 of
-msgid "Bases: :py:class:`RuntimeError`"
-msgstr ""
-
-#: matx._ffi.base.TError:1 of
-msgid "Default error thrown by packed functions."
-msgstr ""
-
-#: matx._ffi.base.TError:3 of
-msgid "TError will be raised if you do not give any error type specification,"
-msgstr ""
-
-#: matx.runtime.trie.Trie:1 of
-msgid "Double Array Trie Object"
-msgstr ""
-
-#: matx.runtime.trie.Trie:3 of
-msgid "The key is word and the value is id"
-msgstr ""
-
-#: matx.runtime.trie.Trie.prefix_search:1 of
-msgid "Find the longest substring of w[pos:] in the trie tree"
-msgstr ""
-
-#: matx.runtime.trie.Trie.prefix_search:3
-#: matx.runtime.trie.Trie.prefix_search_all:3 matx.runtime.trie.Trie.update:3
-#: of
-msgid "The input word"
-msgstr ""
-
-#: matx.runtime.trie.Trie.prefix_search:5
-#: matx.runtime.trie.Trie.prefix_search_all:5 of
-msgid "The start position"
-msgstr ""
-
-#: matx.runtime.trie.Trie.prefix_search:8 of
-msgid ""
-"Return the length and id of the matched substring.     If not found, "
-"return (0, -1)"
-msgstr ""
-
-#: matx.runtime.trie.Trie.prefix_search:10 of
-msgid "Return the length and id of the matched substring."
-msgstr ""
-
-#: matx.runtime.trie.Trie.prefix_search:11 of
-msgid "If not found, return (0, -1)"
-msgstr ""
-
-#: matx.runtime.trie.Trie.prefix_search_all:1 of
-msgid "Find all substring of w[pos:] in the trie tree"
-msgstr ""
-
-#: matx.runtime.trie.Trie.prefix_search_all:8 of
-msgid ""
-"Return a list of the length and id of the matched substring.     If not "
-"found, return []"
-msgstr ""
-
-#: matx.runtime.trie.Trie.prefix_search_all:10 of
-msgid "Return a list of the length and id of the matched substring."
-msgstr ""
-
-#: matx.runtime.trie.Trie.prefix_search_all:11 of
-msgid "If not found, return []"
-msgstr ""
-
-#: matx.runtime.trie.Trie.update:1 of
-msgid "Insert a word and corresponding id into the trie tree"
-msgstr ""
-
-#: matx.runtime.trie.Trie.update:5 of
-msgid "id, -1 for default"
-msgstr ""
-
-#: matx.runtime.container.Tuple:1 of
-msgid "tuple object."
-msgstr ""
-
-#: matx.runtime.container.Tuple:3 of
-msgid "The source."
-msgstr ""
-
-#: matx._ffi.registry.get_global_func:1 of
-msgid "Get a global function by name"
-msgstr ""
-
-#: matx._ffi.registry.get_global_func:3 of
-msgid "The name of the global function"
-msgstr ""
-
-#: matx._ffi.registry.get_global_func:5 of
-msgid "Whether allow missing function or raise an error."
-msgstr ""
-
-#: matx._ffi.registry.get_global_func:8 of
-msgid "**func** -- The function to be returned, None if function is missing."
-msgstr ""
-
-#: matx.contrib.cpp_extension.get_link_flags:1 of
-msgid "lib layout - lib/"
-msgstr ""
-
-#: matx.contrib.cpp_extension.get_link_flags:3 of
-msgid "libmatx.so"
-msgstr ""
-
-#: matx.contrib.cpp_extension.get_link_flags:4 of
-msgid "pcre/ libpcre.so"
-msgstr ""
-
-#: matx._ffi.registry.register_func:1 of
-msgid "Register global function"
-msgstr ""
-
-#: matx._ffi.registry.register_func:3 of
-msgid "The function name"
-msgstr ""
-
-#: matx._ffi.registry.register_func:5 of
-msgid "The function to be registered."
-msgstr ""
-
-#: matx._ffi.registry.register_func:7 of
-msgid "Whether override existing entry."
-msgstr ""
-
-#: matx._ffi.registry.register_func:10 of
-msgid "**fregister** -- Register function if f is not specified."
-msgstr ""
-
-#: matx._ffi.registry.register_func:15 of
-msgid ""
-"The following code registers my_packed_func as global function. Note that"
-" we simply get it back from global function table to invoke it from "
-"python side. However, we can also invoke the same function from C++ "
-"backend, or in the compiled TVM code."
-msgstr ""
-
-#: ../../source/apidoc/matx.rst:10
+#: ../../source/apidoc/matx.rst:12
 msgid "Subpackages"
 msgstr ""
+
+#~ msgid "Bases: :py:class:`~matx.runtime.object.Object`"
+#~ msgstr ""
+
+#~ msgid "matx.Dict implemented refering to python built-in dict,"
+#~ msgstr ""
+
+#~ msgid "supports common methods of built-in list and some custom methods."
+#~ msgstr ""
+
+#~ msgid "Dict() -> construct empty dict"
+#~ msgstr ""
+
+#~ msgid "Dict(mapping) -> construct dict from mapping"
+#~ msgstr ""
+
+#~ msgid "Returns the number of slots in the hash table."
+#~ msgstr ""
+
+#~ msgid "Returns"
+#~ msgstr ""
+
+#~ msgid "int"
+#~ msgstr ""
+
+#~ msgid "Examples"
+#~ msgstr ""
+
+#~ msgid "Remove all items."
+#~ msgstr ""
+
+#~ msgid "None"
+#~ msgstr ""
+
+#~ msgid "Return the value for key if key is in the dictionary, d."
+#~ msgstr ""
+
+#~ msgid "Parameters"
+#~ msgstr ""
+
+#~ msgid "defautl return value when k is not in dict"
+#~ msgstr ""
+
+#~ msgid "item"
+#~ msgstr ""
+
+#~ msgid "Return a key-value iterable (matx.Iterator)."
+#~ msgstr ""
+
+#~ msgid "matx.Iterator"
+#~ msgstr ""
+
+#~ msgid "Return a key iterable."
+#~ msgstr ""
+
+#~ msgid ""
+#~ ".pop(k[,d]) -> v, remove specified key"
+#~ " and return the corresponding value."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "If key is not found, d is "
+#~ "returned if given, otherwise Exception "
+#~ "is raised"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Increase the capacity of the dict "
+#~ "to a value that's greater or equal"
+#~ " to new_size."
+#~ msgstr ""
+
+#~ msgid "Return a value iterable."
+#~ msgstr ""
+
+#~ msgid "A simple file class, which only supports reading by lines now."
+#~ msgstr ""
+
+#~ msgid "File(path, mode, encoding) -> similar to builtins.open"
+#~ msgstr ""
+
+#~ msgid "matx.List implemented refering to python built-in list,"
+#~ msgstr ""
+
+#~ msgid "List() -> construct empty list"
+#~ msgstr ""
+
+#~ msgid "List(iterable) -> construct list from iterable object"
+#~ msgstr ""
+
+#~ msgid "Append object to the end of the list."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Return the number of elements that "
+#~ "the list has currently allocated space"
+#~ " for."
+#~ msgstr ""
+
+#~ msgid "Remove all items from list."
+#~ msgstr ""
+
+#~ msgid "Extend list by appending elements from the iterable."
+#~ msgstr ""
+
+#~ msgid "iterable"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Return zero-based index in the "
+#~ "list of the first item whose value"
+#~ " is equal to x."
+#~ msgstr ""
+
+#~ msgid "Raises"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Insert an item at a given "
+#~ "position. The first argument is the "
+#~ "index of the element before which "
+#~ "to insert"
+#~ msgstr ""
+
+#~ msgid "Remove and return item at index (default last)."
+#~ msgstr ""
+
+#~ msgid "Raises Exception if list is empty or index is out of range."
+#~ msgstr ""
+
+#~ msgid "Remove first occurrence of value."
+#~ msgstr ""
+
+#~ msgid "Raises Exception if the value is not present."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Increase the capacity of the list "
+#~ "to a value that's greater or equal"
+#~ " to new_size."
+#~ msgstr ""
+
+#~ msgid "Reverse *IN PLACE*."
+#~ msgstr ""
+
+#~ msgid "Lightweight NDArray implementation for matx runtime"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The structure is currently just a "
+#~ "container for a multi-dimensional array,"
+#~ " without defining various types of "
+#~ "transformations and arithmetic methods. The"
+#~ " goal of the structure is to "
+#~ "serve as a bridge tool and other"
+#~ " machine learning frameworks (pytorch "
+#~ "tensorflow) for the conversion of "
+#~ "multidimensional arrays"
+#~ msgstr ""
+
+#~ msgid "Constructing the contents of an NDArray"
+#~ msgstr ""
+
+#~ msgid "Shape of the constructed NDArray"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The type of the constructed NDArray "
+#~ "element, supporting \"int32\" \"int64\" "
+#~ "\"float32\" \"float64\""
+#~ msgstr ""
+
+#~ msgid "Construction method 1"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "arr is a one-dimensional List, the"
+#~ " shape is not empty, producing "
+#~ "NDArray with the content of arr "
+#~ "and the shape of the given shape"
+#~ msgstr ""
+
+#~ msgid "Examples:"
+#~ msgstr ""
+
+#~ msgid "Construction method 2"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "arr is a List of arbitrary "
+#~ "dimensions, shape is an empty List, "
+#~ "producing NDArray with the same shape"
+#~ " as arr and the same content as"
+#~ " arr"
+#~ msgstr ""
+
+#~ msgid "Construction method 3"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "arr is empty, shape is not empty,"
+#~ " return a NDArray corresponding to "
+#~ "the random initialization content of the"
+#~ " shape"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Construct a numpy.ndarray from the "
+#~ "current NDArray. Note! This method "
+#~ "cannot be compiled for use in "
+#~ "matx.script"
+#~ msgstr ""
+
+#~ msgid "numpy.ndarray"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Returns a copy of the ndarray with"
+#~ " contiguous memory if the adarray is"
+#~ " not contiguous. Otherwise, the original"
+#~ " one is returned."
+#~ msgstr ""
+
+#~ msgid "matx.NDArray"
+#~ msgstr ""
+
+#~ msgid "Returns the current NDArray device as a string"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Returns the number of array dimensions."
+#~ " Unlike numpy, this is a method "
+#~ "and not a property."
+#~ msgstr ""
+
+#~ msgid "Returns the dtype of the current NDArray as a string"
+#~ msgstr ""
+
+#~ msgid "\"int32\" \"int64\" \"float32\" \"float64\""
+#~ msgstr ""
+
+#~ msgid "Return type"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Copy data from a numpy.ndarray to "
+#~ "the current NDArray, requiring both to"
+#~ " have the same size."
+#~ msgstr ""
+
+#~ msgid "Note! This method cannot be compiled for use in matx.script"
+#~ msgstr ""
+
+#~ msgid "self"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Returns a int indicating if the "
+#~ "underlying data is contiguous in memory."
+#~ " The continuity of array changes when"
+#~ " its stride changes."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Returns the current NDArray's shape, "
+#~ "unlike numpy, this is a method and"
+#~ " not a property"
+#~ msgstr ""
+
+#~ msgid "matx.List"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Returns List of bytes to step in"
+#~ " each dimension when traversing an "
+#~ "array."
+#~ msgstr ""
+
+#~ msgid "Convert a NDArray to a matx.List corresponding to the shape"
+#~ msgstr ""
+
+#~ msgid "convert NDArray to torch.Tensor, make sure NDArray is synchronized"
+#~ msgstr ""
+
+#~ msgid "torch.Tensor"
+#~ msgstr ""
+
+#~ msgid "Reverse or permute the axes of an array"
+#~ msgstr ""
+
+#~ msgid "Returns :"
+#~ msgstr ""
+
+#~ msgid "the given with its axes permuted. A view is returned whenever possible"
+#~ msgstr ""
+
+#~ msgid "Bases: :py:class:`object`"
+#~ msgstr ""
+
+#~ msgid "Bases: :py:class:`~matx_script_api.ObjectBase`"
+#~ msgstr ""
+
+#~ msgid "Base class for all tvm's runtime objects."
+#~ msgstr ""
+
+#~ msgid "Regular class implemented using pcre."
+#~ msgstr ""
+
+#~ msgid "Str types. Regular expression pattern."
+#~ msgstr ""
+
+#~ msgid "Booleans. Perform case-insensitive matching. The default is false"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Booleans. \".\" matches any character at"
+#~ " all, including the newline. The "
+#~ "default is false"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Booleans. Most white space in the "
+#~ "pattern (other than in a character "
+#~ "class), and characters between a # "
+#~ "outside a character class and the "
+#~ "next newline, inclusive, are ignored. An"
+#~ " escaping backslash can be used to"
+#~ " include a white space or # "
+#~ "character as part of the pattern. "
+#~ "The default is false."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Booleans. Matches only at the beginning"
+#~ " of the subject. The default is "
+#~ "false."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Booleans. Sequences such as \"\\d\" and"
+#~ " \"\\w\" use Unicode properties to "
+#~ "determine character types, instead of "
+#~ "recognizing only characters with codes "
+#~ "less than 128 via a lookup table."
+#~ " The default is false."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Try to apply the pattern at the"
+#~ " start of the string, returning a "
+#~ "tuple containing the matched string. If"
+#~ " grouping version of regular pattern "
+#~ "is used, then the text of all "
+#~ "groups are returned."
+#~ msgstr ""
+
+#~ msgid "The source string."
+#~ msgstr ""
+
+#~ msgid "Offset in the subject at which to start matching"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The matched groups. The first element"
+#~ " in the tuple is indexed groups. "
+#~ "The second element in the tuple is"
+#~ " named groups."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Return the string obtained by replacing"
+#~ " the leftmost non-overlapping occurrences"
+#~ " of the pattern in the input "
+#~ "string by the replacement repl."
+#~ msgstr ""
+
+#~ msgid "The replacement string."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The replaced string. If no match "
+#~ "was found, returning the source string."
+#~ msgstr ""
+
+#~ msgid "Split a string by the occurrences of a pattern."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "A list containing the resulting "
+#~ "substrings. If no match was "
+#~ "found，returning a list containing only "
+#~ "the source string, i.e. [input]."
+#~ msgstr ""
+
+#~ msgid "matx.Set: matx.Set implemented refering to python built-in dict,"
+#~ msgstr ""
+
+#~ msgid "set() -> construct empty set .. rubric:: Examples"
+#~ msgstr ""
+
+#~ msgid "set(iterable) -> construct set from iterable .. rubric:: Examples"
+#~ msgstr ""
+
+#~ msgid "Add an element to a set."
+#~ msgstr ""
+
+#~ msgid "This has no effect if the element is already present."
+#~ msgstr ""
+
+#~ msgid "Remove all elements."
+#~ msgstr ""
+
+#~ msgid "Return the difference of two or more sets as a new set."
+#~ msgstr ""
+
+#~ msgid "matx.Set"
+#~ msgstr ""
+
+#~ msgid "Remove all elements of another set from this set."
+#~ msgstr ""
+
+#~ msgid "Remove an element from a set if it is a member."
+#~ msgstr ""
+
+#~ msgid "If the element is not a member, do nothing."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Increase the capacity of the set "
+#~ "to a value that's greater or equal"
+#~ " to new_size."
+#~ msgstr ""
+
+#~ msgid "Return the union of sets as a new set."
+#~ msgstr ""
+
+#~ msgid "Update a set with the union of itself and others."
+#~ msgstr ""
+
+#~ msgid "Bases: :py:class:`RuntimeError`"
+#~ msgstr ""
+
+#~ msgid "Default error thrown by packed functions."
+#~ msgstr ""
+
+#~ msgid "TError will be raised if you do not give any error type specification,"
+#~ msgstr ""
+
+#~ msgid "Double Array Trie Object"
+#~ msgstr ""
+
+#~ msgid "The key is word and the value is id"
+#~ msgstr ""
+
+#~ msgid "Find the longest substring of w[pos:] in the trie tree"
+#~ msgstr ""
+
+#~ msgid "The input word"
+#~ msgstr ""
+
+#~ msgid "The start position"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Return the length and id of the"
+#~ " matched substring.     If not found, "
+#~ "return (0, -1)"
+#~ msgstr ""
+
+#~ msgid "Return the length and id of the matched substring."
+#~ msgstr ""
+
+#~ msgid "If not found, return (0, -1)"
+#~ msgstr ""
+
+#~ msgid "Find all substring of w[pos:] in the trie tree"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Return a list of the length and"
+#~ " id of the matched substring.     If"
+#~ " not found, return []"
+#~ msgstr ""
+
+#~ msgid "Return a list of the length and id of the matched substring."
+#~ msgstr ""
+
+#~ msgid "If not found, return []"
+#~ msgstr ""
+
+#~ msgid "Insert a word and corresponding id into the trie tree"
+#~ msgstr ""
+
+#~ msgid "id, -1 for default"
+#~ msgstr ""
+
+#~ msgid "tuple object."
+#~ msgstr ""
+
+#~ msgid "The source."
+#~ msgstr ""
+
+#~ msgid "Get a global function by name"
+#~ msgstr ""
+
+#~ msgid "The name of the global function"
+#~ msgstr ""
+
+#~ msgid "Whether allow missing function or raise an error."
+#~ msgstr ""
+
+#~ msgid "**func** -- The function to be returned, None if function is missing."
+#~ msgstr ""
+
+#~ msgid "lib layout - lib/"
+#~ msgstr ""
+
+#~ msgid "libmatx.so"
+#~ msgstr ""
+
+#~ msgid "pcre/ libpcre.so"
+#~ msgstr ""
+
+#~ msgid "Register global function"
+#~ msgstr ""
+
+#~ msgid "The function name"
+#~ msgstr ""
+
+#~ msgid "The function to be registered."
+#~ msgstr ""
+
+#~ msgid "Whether override existing entry."
+#~ msgstr ""
+
+#~ msgid "**fregister** -- Register function if f is not specified."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The following code registers my_packed_func"
+#~ " as global function. Note that we "
+#~ "simply get it back from global "
+#~ "function table to invoke it from "
+#~ "python side. However, we can also "
+#~ "invoke the same function from C++ "
+#~ "backend, or in the compiled TVM "
+#~ "code."
+#~ msgstr ""
 

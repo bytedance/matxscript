@@ -26,7 +26,8 @@ msgid ""
 "This section provides an example to walk through the basic usage of Matx."
 " The complete code can be found `here "
 "<https://github.com/bytedance/matxscript/blob/main/examples/text2ids/text2ids.py>`_."
-msgstr "下面我们一起结合一个简单的范例来熟悉下matx的使用。完整代码可访问这里"
+msgstr "下面我们一起结合一个简单的范例来熟悉下matx的使用。完整代码可访问"
+" `这里 <https://github.com/bytedance/matxscript/blob/main/examples/text2ids/text2ids.py>`_ "
 
 #: ../../source/tutorial_doc/quick_start.rst:12
 msgid "1. Import dependencies"

@@ -1,10 +1,12 @@
 .. example
 
+##################################
 End-to-end Deep Learning Example
 ##################################
 
 This section will introduce an end-to-end example of using Matx in a multimodal training task. It will only focus on the data preprocessing part for images and texts, and the multimodal model itself is not covered. To get the source, please visit `here <https://github.com/bytedance/matxscript/blob/main/examples/e2e_multi_modal>`_.
 
+**********************************
 1. Text Modal Preprocessing
 **********************************
 | We'll first use Matx to implement a Bert style tokenizer.
@@ -60,7 +62,9 @@ In order to make the code clean, we'll define some helper functions (ops) below
 
 1.2 Matx based BertTokenizer
 ===========
+
 With the helper functions ready, we can then define the Bert Tokenizer
+
 .. code-block:: python3
 
     import matx
@@ -117,7 +121,7 @@ With the helper functions ready, we can then define the Bert Tokenizer
             res["segment_ids"] = matx.NDArray(batch_segment_ids, [], "int64")
             return res
 
-
+**********************************
 2. Vision Modal Preprocessing
 **********************************
 | The code snippet below implements the Resnet Vision preprocessing with Matx, and the related vision transforms are Decode,  RandomResizedCrop, CenterCrop, RandomHorizontalFlip, Normalize, etc.
@@ -157,7 +161,7 @@ With the helper functions ready, we can then define the Bert Tokenizer
         def __call__(self, images: List[bytes]) -> matx.NDArray:
             return self.vision_op(images)
 
-
+**********************************
 3. Data Transform Pipeline
 **********************************
 | Finally, we combine the text and vision transform logic, and create a transform pipeline.
@@ -196,7 +200,7 @@ With the helper functions ready, we can then define the Bert Tokenizer
             res["images"] = processed_images
             return res
 
-
+**********************************
 4. PyTorch Dataloader Demo
 **********************************
 | With the data transform pipeline, we can then integrate it into the data loader and further provide data for the model training process. There is nothing special in this part if you are familiar with the PyTorch DataLoader. We provide a demo below for reference, which uses fake data as the data source, and you could just replace it with your own data.
