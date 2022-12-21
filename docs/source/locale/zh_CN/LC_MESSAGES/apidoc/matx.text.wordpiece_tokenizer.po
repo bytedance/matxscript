@@ -8,24 +8,22 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-17 06:02+0800\n"
+"POT-Creation-Date: 2022-12-20 16:33-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.11.0\n"
 
 #: ../../source/apidoc/matx.text.wordpiece_tokenizer.rst:2
 msgid "matx.text.wordpiece\\_tokenizer module"
 msgstr ""
 
-#: matx.text.wordpiece_tokenizer.WordPieceTokenizer:1
-#: matx.text.wordpiece_tokenizer.WordPieceTokenizerImpl:1 of
-msgid "Bases: :py:class:`object`"
-msgstr ""
-
 #~ msgid "Call self as a function."
+#~ msgstr ""
+
+#~ msgid "Bases: :py:class:`object`"
 #~ msgstr ""
 

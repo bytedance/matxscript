@@ -8,51 +8,52 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-08 03:59+0800\n"
+"POT-Creation-Date: 2022-12-20 16:33-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.11.0\n"
 
 #: ../../source/apidoc/matx.text.jieba.rst:2
 msgid "matx.text.jieba module"
 msgstr ""
 
-#: matx.text.jieba:1 of
-msgid "supported global functions in jieba(py)"
-msgstr ""
+#~ msgid "supported global functions in jieba(py)"
+#~ msgstr ""
 
-#: matx.text.jieba:3 of
-msgid ""
-"[ ] get_FREQ = lambda k, d=None: dt.FREQ.get(k, d) [ ] add_word = "
-"dt.add_word [ ] calc = dt.calc [*] cut = dt.cut [*] lcut = dt.lcut [*] "
-"cut_for_search = dt.cut_for_search [*] lcut_for_search = "
-"dt.lcut_for_search [ ] del_word = dt.del_word [ ] get_DAG = dt.get_DAG [ "
-"] get_dict_file = dt.get_dict_file [ ] initialize = dt.initialize [ ] "
-"load_userdict = dt.load_userdict [ ] set_dictionary = dt.set_dictionary ["
-" ] suggest_freq = dt.suggest_freq [ ] tokenize = dt.tokenize [ ] "
-"user_word_tag_tab = dt.user_word_tag_tab"
-msgstr ""
+#~ msgid ""
+#~ "[ ] get_FREQ = lambda k, d=None:"
+#~ " dt.FREQ.get(k, d) [ ] add_word = "
+#~ "dt.add_word [ ] calc = dt.calc [*]"
+#~ " cut = dt.cut [*] lcut = "
+#~ "dt.lcut [*] cut_for_search = dt.cut_for_search"
+#~ " [*] lcut_for_search = dt.lcut_for_search ["
+#~ " ] del_word = dt.del_word [ ] "
+#~ "get_DAG = dt.get_DAG [ ] get_dict_file"
+#~ " = dt.get_dict_file [ ] initialize ="
+#~ " dt.initialize [ ] load_userdict = "
+#~ "dt.load_userdict [ ] set_dictionary = "
+#~ "dt.set_dictionary [ ] suggest_freq = "
+#~ "dt.suggest_freq [ ] tokenize = "
+#~ "dt.tokenize [ ] user_word_tag_tab = "
+#~ "dt.user_word_tag_tab"
+#~ msgstr ""
 
-#: matx.text.jieba.Jieba:1 matx.text.jieba.JiebaImpl:1 of
-msgid "Bases: :py:class:`object`"
-msgstr ""
+#~ msgid "Bases: :py:class:`object`"
+#~ msgstr ""
 
-#: matx.text.jieba.Jieba.__call__:1 matx.text.jieba.JiebaImpl.__call__:1 of
-msgid "Call self as a function."
-msgstr ""
+#~ msgid "Call self as a function."
+#~ msgstr ""
 
-#: matx.text.jieba.Jieba.cut:1 matx.text.jieba.JiebaImpl.cut:1 of
-msgid "Generator is not supported now, `cut` behaves the same as `lcut`."
-msgstr ""
+#~ msgid "Generator is not supported now, `cut` behaves the same as `lcut`."
+#~ msgstr ""
 
-#: matx.text.jieba.Jieba.cut_for_search:1
-#: matx.text.jieba.JiebaImpl.cut_for_search:1 of
-msgid ""
-"Generator is not supported now, `cut_for_search` behaves the same as "
-"`lcut_for_search`."
-msgstr ""
+#~ msgid ""
+#~ "Generator is not supported now, "
+#~ "`cut_for_search` behaves the same as "
+#~ "`lcut_for_search`."
+#~ msgstr ""
 

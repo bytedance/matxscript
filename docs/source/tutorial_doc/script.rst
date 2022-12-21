@@ -10,7 +10,7 @@ Functionality
 matx.script is used to compile Python function/class into corresponding C++ function/class. 
 
 ********************************************
-Usage  :meth:`matx.script`
+Usage
 ********************************************
 Note that we enforce type annotation of the class members and signatures of the functions.
 
