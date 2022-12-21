@@ -298,7 +298,7 @@ def trace(func, *args, **kwargs):
     ----------
     func : callable
         A Python function or a matx Symbol(s) that will be run with `args`.
-        `func` arguments and return values must be Symbol.
+        `func` arguments and return values must be Operators returned from Script.
 
     args :
         func inputs
