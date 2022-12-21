@@ -28,8 +28,8 @@ msgid ""
 "part for images and texts, and the multimodal model itself is not "
 "covered. To get the source, please visit `here "
 "<https://github.com/bytedance/matxscript/blob/main/examples/e2e_multi_modal>`_."
-msgstr "本文将介绍Matx在多模态相关任务场景下的应用，并以图片/文本多模态为例，聚焦预处理逻辑的实现，相关模型部分不在本文的讨论范围内。 "
-"`源代码 <https://github.com/bytedance/matxscript/blob/main/examples/e2e_multi_modal>`_."
+msgstr "本文将介绍Matx在多模态相关任务场景下的应用，并以图片/文本多模态为例，聚焦预处理逻辑的实现，相关模型部分不在本文的讨论范围内。"
+"`源代码 <https://github.com/bytedance/matxscript/blob/main/examples/e2e_multi_modal>`_  "
 
 #: ../../source/tutorial_doc/e2e_example.rst:11
 msgid "1. Text Modal Preprocessing"

@@ -33,7 +33,7 @@ msgstr "通过matx.script可以将用Python的类/函数翻译成 C++，并提�
 
 #: ../../source/tutorial_doc/script.rst:12
 msgid "Usage  :meth:`matx.script`"
-msgstr "使用方式 :meth:`matx.script`"
+msgstr "使用方式"
 
 #: ../../source/tutorial_doc/script.rst:13
 msgid ""

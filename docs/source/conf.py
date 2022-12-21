@@ -45,6 +45,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 templates_path = ['_templates']
 
+
 def skip(app, what, name, obj, would_skip, options):
     if name == "__init__" or name == "__call__":
         return False
