@@ -141,7 +141,7 @@ class IRModule(Node):
         var: GlobalVar
             The global variable.
 
-        func: tvm.relay.Function
+        func: matx.ir.BaseFunc
             The function to be inserted.
         """
         return _ffi_api.Module_UpdateFunction(self, _to_ir(var), func)
@@ -167,7 +167,7 @@ class IRModule(Node):
 
         Raises
         ------
-        tvm.error.TVMError if we cannot find corresponding global var.
+        ValueError if we cannot find corresponding global var.
         """
         return _ffi_api.Module_GetGlobalVar(self, _to_ir(name))
 
@@ -206,7 +206,7 @@ class IRModule(Node):
 
         Raises
         ------
-        tvm.error.TVMError if we cannot find corresponding global type var.
+        ValueError if we cannot find corresponding global type var.
         """
         return _ffi_api.Module_GetGlobalTypeVar(self, _to_ir(name))
 

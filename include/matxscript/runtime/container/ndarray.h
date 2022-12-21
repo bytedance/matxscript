@@ -39,7 +39,7 @@ class Unicode;
  */
 class NDArray : public ObjectRef {
  public:
-  /*! \brief ContainerBase used to back the TVMArrayHandle */
+  /*! \brief ContainerBase used to back the MATXScriptArrayHandle */
   class ContainerBase;
   /*! \brief NDArray internal container type */
   class Container;
@@ -72,7 +72,7 @@ class NDArray : public ObjectRef {
    * \brief Copy data content from another array.
    * \param other The source array to be copied from.
    * \note The copy may happen asynchronously if it involves a GPU device.
-   *       TVMSynchronize is necessary.
+   *       MATXScriptSynchronize is necessary.
    */
   void CopyFrom(const DLTensor* other);
   void CopyFrom(const NDArray& other);
@@ -81,14 +81,14 @@ class NDArray : public ObjectRef {
    * \param data The source bytes to be copied from.
    * \param nbytes The size of the buffer in bytes
    *        Must be equal to the size of the NDArray.
-   * \note The copy always triggers a TVMSynchronize.
+   * \note The copy always triggers a MATXScriptSynchronize.
    */
   MATX_DLL void CopyFromBytes(const void* data, size_t nbytes);
   /*!
    * \brief Copy data content into another array.
    * \param other The source array to be copied from.
    * \note The copy may happen asynchronously if it involves a GPU device.
-   *       TVMSynchronize is necessary.
+   *       MATXScriptSynchronize is necessary.
    */
   void CopyTo(DLTensor* other) const;
   void CopyTo(const NDArray& other) const;
@@ -97,7 +97,7 @@ class NDArray : public ObjectRef {
    * \param data The source bytes to be copied from.
    * \param nbytes The size of the data buffer.
    *        Must be equal to the size of the NDArray.
-   * \note The copy always triggers a TVMSynchronize.
+   * \note The copy always triggers a MATXScriptSynchronize.
    */
   MATX_DLL void CopyToBytes(void* data, size_t nbytes) const;
   /*!
@@ -309,7 +309,7 @@ size_t GetDataSize(const DLTensor& arr);
  */
 bool IsContiguous(const DLTensor& arr);
 
-Object* TVMArrayHandleToObjectHandle(MATXScriptTensorHandle handle);
+Object* MATXScriptArrayHandleToObjectHandle(MATXScriptTensorHandle handle);
 
 template <>
 RTValue::RTValue(NDArray val) noexcept;

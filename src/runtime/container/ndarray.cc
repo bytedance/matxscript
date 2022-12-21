@@ -295,7 +295,7 @@ void NDArray::FFIDecRef(MATXScriptTensorHandle handle) {
   static_cast<NDArray::Container*>(reinterpret_cast<NDArray::ContainerBase*>(handle))->DecRef();
 }
 
-Object* TVMArrayHandleToObjectHandle(MATXScriptTensorHandle handle) {
+Object* MATXScriptArrayHandleToObjectHandle(MATXScriptTensorHandle handle) {
   return static_cast<NDArray::Container*>(reinterpret_cast<NDArray::ContainerBase*>(handle));
 }
 
@@ -430,7 +430,7 @@ struct NDArray::Internal {
   }
   // Deleter for NDArray converted from DLPack
   // This is used from data which is passed from external DLPack(DLManagedTensor)
-  // that are not allocated inside of TVM.
+  // that are not allocated inside of MATXScript.
   // This enables us to create NDArray from memory allocated by other
   // frameworks that are DLPack compatible
   static void DLPackDeleter(Object* ptr_obj) {
@@ -1733,7 +1733,7 @@ void MATXScriptNDArrayDLPackDeleter(DLManagedTensor* tensor) {
 
 int MATXScriptArrayGetTypeIndex(MATXScriptTensorHandle handle, unsigned* out_tindex) {
   API_BEGIN();
-  *out_tindex = TVMArrayHandleToObjectHandle(handle)->type_index();
+  *out_tindex = MATXScriptArrayHandleToObjectHandle(handle)->type_index();
   API_END();
 }
 

@@ -225,11 +225,11 @@ def register_error(func_name=None, cls=None):
     --------
     .. code-block:: python
 
-      @tvm.error.register_error
+      @matx.error.register_error
       class MyError(RuntimeError):
           pass
 
-      err_inst = tvm.error.create_ffi_error("MyError: xyz")
+      err_inst = matx.error.create_ffi_error("MyError: xyz")
       assert isinstance(err_inst, MyError)
     """
     if callable(func_name):
@@ -387,8 +387,8 @@ def get_last_ffi_error():
     """
     c_err_msg = py_str(_LIB.MATXScriptAPIGetLastError())
     py_err_msg, err_type = c2pyerror(c_err_msg)
-    if err_type is not None and err_type.startswith("tvm.error."):
-        err_type = err_type[10:]
+    if err_type is not None and err_type.startswith("matx.error."):
+        err_type = err_type[11:]
     return ERROR_TYPE.get(err_type, TError)(py_err_msg)
 
 

@@ -257,11 +257,11 @@ class ReflectionVTable::Registry {
  *    }
  *  };
  *
- *  TVM_REGISTER_REFLECTION_VTABLE(runtime::StringObj, StringObjTrait);
+ *  MATXSCRIPT_REGISTER_REFLECTION_VTABLE(runtime::StringObj, StringObjTrait);
  *
  * \endcode
  *
- * \note This macro can be called in different place as TVM_REGISTER_OBJECT_TYPE.
+ * \note This macro can be called in different place as MATXSCRIPT_REGISTER_OBJECT_TYPE.
  *       And can be used to register the related reflection functions for runtime objects.
  */
 #define MATXSCRIPT_REGISTER_REFLECTION_VTABLE(TypeName, TraitName) \
@@ -271,7 +271,7 @@ class ReflectionVTable::Registry {
 /*!
  * \brief Register a node type to object registry and reflection registry.
  * \param TypeName The name of the type.
- * \note This macro will call TVM_REGISTER_OBJECT_TYPE for the type as well.
+ * \note This macro will call MATXSCRIPT_REGISTER_OBJECT_TYPE for the type as well.
  */
 #define MATXSCRIPT_REGISTER_NODE_TYPE(TypeName)                                                   \
   MATXSCRIPT_REGISTER_OBJECT_TYPE(TypeName);                                                      \

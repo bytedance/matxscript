@@ -21,9 +21,7 @@
 
 # pylint: disable=invalid-name, unused-import, import-outside-toplevel
 """Runtime Module namespace."""
-import os
 import ctypes
-from collections import namedtuple
 
 from .._ffi.base import _LIB, check_call, c_str, string_types, _RUNTIME_ONLY
 from .._ffi.libinfo import find_include_path
@@ -32,19 +30,14 @@ from .packed_func import PackedFunc, PackedFuncHandle
 
 from . import _ffi_api
 
-# profile result of time evaluator
-ProfileResult = namedtuple("ProfileResult", ["mean", "results"])
-
 
 class Module(object):
     """Runtime Module."""
 
-    __slots__ = ["handle", "_entry", "entry_name"]
+    __slots__ = ["handle"]
 
     def __init__(self, handle):
         self.handle = handle
-        self._entry = None
-        self.entry_name = "__tvm_main__"
 
     def __del__(self):
         handle = self.handle
@@ -57,20 +50,6 @@ class Module(object):
             return ctypes.cast(self.handle, ctypes.c_void_p).value
         else:
             return self.handle
-
-    @property
-    def entry_func(self):
-        """Get the entry function
-
-        Returns
-        -------
-        f : tvm.runtime.PackedFunc
-            The entry function if exist
-        """
-        if self._entry:
-            return self._entry
-        self._entry = self.get_function(self.entry_name)
-        return self._entry
 
     def get_function(self, name, query_imports=False):
         """Get function from the module.
@@ -85,7 +64,7 @@ class Module(object):
 
         Returns
         -------
-        f : tvm.runtime.PackedFunc
+        f : matx.runtime.PackedFunc
             The result function.
         """
         ret_handle = PackedFuncHandle()
@@ -106,7 +85,7 @@ class Module(object):
 
         Parameters
         ----------
-        module : tvm.runtime.Module
+        module : matx.runtime.Module
             The other module.
         """
         handle = self.handle
@@ -122,12 +101,6 @@ class Module(object):
         if not isinstance(name, string_types):
             raise ValueError("Can only take string as function name")
         return self.get_function(name)
-
-    def __call__(self, *args):
-        if self._entry:
-            return self._entry(*args)
-        # pylint: disable=not-callable
-        return self.entry_func(*args)
 
     def __repr__(self):
         handle = self.handle
@@ -323,36 +296,7 @@ def load_module(path, fmt=""):
     -------
     module : runtime.Module
         The loaded module
-
-    Note
-    ----
-    This function will automatically call
-    cc.create_shared if the path is in format .o or .tar
     """
-
-    # c++ compiler/linker
-    cc = os.environ.get("CXX", "g++")
-
-    # High level handling for .o and .tar file.
-    # We support this to be consistent with RPC module load.
-    if path.endswith(".o"):
-        # Extra dependencies during runtime.
-        from contrib import cc as _cc
-
-        _cc.create_shared(path + ".so", path, cc=cc)
-        path += ".so"
-    elif path.endswith(".tar"):
-        # Extra dependencies during runtime.
-        from contrib import cc as _cc, util as _util, tar as _tar
-
-        tar_temp = _util.tempdir(custom_path=path.replace(".tar", ""))
-        _tar.untar(path, tar_temp.temp_dir)
-        files = [tar_temp.relpath(x) for x in tar_temp.listdir()]
-        _cc.create_shared(path + ".so", files, cc=cc)
-        path += ".so"
-    # TODO(weberlo): we should probably use a more distinctive suffix for uTVM object files
-    elif path.endswith(".obj"):
-        fmt = "micro_dev"
     # Redirect to the load API
     return _ffi_api.ModuleLoadFromFile(path, fmt)
 

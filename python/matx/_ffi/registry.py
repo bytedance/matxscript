@@ -49,7 +49,7 @@ def register_object(type_key=None, callback=None):
 
     .. code-block:: python
 
-      @tvm.register_object("test.MyObject")
+      @matx.register_object("test.MyObject")
       class MyObject(Object):
           pass
     """
@@ -110,13 +110,13 @@ def register_func(func_name, f=None, override=False):
     .. code-block:: python
 
       targs = (10, 10.0, "hello")
-      @tvm.register_func
+      @matx.register_func
       def my_packed_func(*args):
           assert(tuple(args) == targs)
           return 10
       # Get it out from global function table
-      f = tvm.get_global_func("my_packed_func")
-      assert isinstance(f, tvm.PackedFunc)
+      f = matx.get_global_func("my_packed_func")
+      assert isinstance(f, matx.PackedFunc)
       y = f(*targs)
       assert y == 10
     """
