@@ -77,5 +77,25 @@ RTValue JitOp::generic_call_attr(string_view func_name, PyArgs args) {
   return jit_object_->generic_call_attr(func_name, args);
 }
 
+String JitOp::GetHumanName(bool with_debug_info) const {
+  String human_name;
+  auto jit_obj_name = jit_object_->PyObjectName();
+  if (jit_object_->options_.is_class) {
+    String method_name = FunctionNameRules::remove_class_prefix(jit_obj_name, main_func_name_);
+    human_name = jit_obj_name + "." + method_name;
+  } else {
+    human_name = jit_obj_name;
+  }
+  if (with_debug_info && jit_object_->options_.py_source_line_ >= 0) {
+    auto filename = FileUtil::GetFileBasename(jit_object_->options_.py_source_file_);
+    auto fileline = std::to_string(jit_object_->options_.py_source_line_);
+    human_name.append(" @");
+    human_name.append(filename.data(), filename.size());
+    human_name.append(":");
+    human_name.append(fileline.data(), fileline.size());
+  }
+  return human_name;
+}
+
 }  // namespace runtime
 }  // namespace matxscript

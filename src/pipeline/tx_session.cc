@@ -26,6 +26,7 @@
 #include <thread>
 #include <unordered_set>
 
+#include <matxscript/pipeline/interpreter_op.h>
 #include <matxscript/pipeline/jit_object.h>
 #include <matxscript/pipeline/jit_op.h>
 #include <matxscript/pipeline/node.h>
@@ -592,6 +593,36 @@ static int TXSessionRunOneNode(const NodePtr& node,
   if (step_stat) {
     step_stat->inputs = Tuple(op_feed.data(), op_feed.data() + op_feed.size());
     step_stat->output = rets;
+    if (step_stat->op.startswith("matx.pmap") || step_stat->op.startswith("matx.pstarmap") ||
+        step_stat->op.startswith("matx.apply_async")) {
+      if (op_feed.size() >= 1 && op_feed[0].IsObjectRef<UserDataRef>()) {
+        auto parallel_callable = op_feed[0].AsNoCheck<UserDataRef>();
+        auto parallel_op = try_get_op_kernel(parallel_callable);
+        String func_repr;
+        if (parallel_op && parallel_op->ClassName() == "JitOp") {
+          func_repr = std::static_pointer_cast<JitOp>(parallel_op)->GetHumanName(false);
+        } else {
+          func_repr = parallel_callable.__str__().encode();
+          if (func_repr.startswith("<function ")) {
+            func_repr = func_repr.substr(10);
+            func_repr = func_repr.substr(0, func_repr.find(" "));
+          } else if (func_repr.startswith("<") && func_repr.endswith(">")) {
+            auto first_space_pos = func_repr.find(" ");
+            if (first_space_pos != String::npos &&
+                func_repr.substr(first_space_pos + 1).startswith("object at ")) {
+              func_repr = func_repr.substr(1, first_space_pos - 1);
+            }
+          }
+        }
+        auto at_pos = step_stat->op.find(" @");
+        if (at_pos == String::npos) {
+          step_stat->op = step_stat->op + "(" + func_repr + ", ...)";
+        } else {
+          step_stat->op = step_stat->op.substr(0, at_pos) + "(" + func_repr + ", ...)" +
+                          step_stat->op.substr(at_pos);
+        }
+      }
+    }
   }
   if (node->outputs.size() > 1) {
     MXCHECK(rets.IsObjectRef<Tuple>()) << "expect tuple outputs, but get: " << rets.type_name();
@@ -671,9 +702,21 @@ Dict TXSession::GetNestedOpAttributes(const OpKernel* op) {
   return d;
 }
 
-TXSessionStepStat TXSession::MakeSessionStepStat(const OpKernel* op) {
+TXSessionStepStat TXSession::MakeSessionStepStat(const NodePtr& node) {
+  auto* op = node->op.get();
   TXSessionStepStat stat;
-  stat.op = op->name_;
+  if (op->ClassName() == "JitOp") {
+    stat.op = static_cast<const JitOp*>(op)->GetHumanName(true);
+  } else if (op->ClassName() == "InterpreterOp") {
+    stat.op = static_cast<const InterpreterOp*>(op)->GetHumanName(true);
+  } else if (op->ClassName() == "VariableOp") {
+    stat.op = "Input: " + node->name;
+  } else if (op->ClassName() == "ConstantOp") {
+    stat.op = "GetConstant";
+  } else {
+    stat.op = op->name_;
+  }
+  // stat.op = op->name_;
   stat.op_cls = op->class_name_;
   stat.attributes = TXSession::GetNestedOpAttributes(op);
   return stat;
@@ -689,7 +732,7 @@ void TXSession::RunImpl(const std::unordered_map<std::string, RTValue>& feed_dic
   TXSessionStepStat* step_stats = nullptr;
   if (meta) {
     for (size_t i = 0; i < serial_nodes_.size(); ++i) {
-      meta->step_stats.emplace_back(TXSession::MakeSessionStepStat(serial_nodes_[i]->op.get()));
+      meta->step_stats.emplace_back(TXSession::MakeSessionStepStat(serial_nodes_[i]));
     }
     step_stats = meta->step_stats.data();
   }
@@ -919,7 +962,7 @@ void TXSession::RunImplMultiThread(const std::unordered_map<std::string, RTValue
       TXSessionStepStat* step_stats = nullptr;
       if (meta) {
         size_t last_idx = meta->step_stats.size();
-        meta->step_stats.emplace_back(TXSession::MakeSessionStepStat(run_nodes[0]->op.get()));
+        meta->step_stats.emplace_back(TXSession::MakeSessionStepStat(run_nodes[0]));
         step_stats = meta->step_stats.data() + last_idx;
       }
       TXSessionRunOneNode(run_nodes[0], feed_dict, datapack, &datapack, step_stats);
@@ -928,7 +971,7 @@ void TXSession::RunImplMultiThread(const std::unordered_map<std::string, RTValue
       if (meta) {
         size_t last_idx = meta->step_stats.size();
         for (size_t i = 0; i < run_nodes.size(); ++i) {
-          meta->step_stats.emplace_back(TXSession::MakeSessionStepStat(run_nodes[i]->op.get()));
+          meta->step_stats.emplace_back(TXSession::MakeSessionStepStat(run_nodes[i]));
         }
         step_stats = meta->step_stats.data() + last_idx;
       }

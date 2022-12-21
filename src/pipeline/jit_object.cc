@@ -197,6 +197,14 @@ JitObject::Options JitObject::Options::FromDict(const Dict& config) {
     jit_module_opts.is_class = false;
     jit_module_opts.func_info = FuncMeta::FromDict(config["func_info"].As<Dict>());
   }
+
+  // debug info
+  if (config.contains("py_source_file")) {
+    jit_module_opts.py_source_file_ = config.get_item("py_source_file").As<String>();
+  }
+  if (config.contains("py_source_line")) {
+    jit_module_opts.py_source_line_ = config.get_item("py_source_line").As<int64_t>();
+  }
   return jit_module_opts;
 }
 
@@ -229,6 +237,10 @@ Dict JitObject::Options::ToDict() const {
   } else {
     generic_object_opt["func_info"] = func_info.ToDict();
   }
+
+  // debug info
+  generic_object_opt["py_source_file"] = py_source_file_;
+  generic_object_opt["py_source_line"] = py_source_line_;
 
   return generic_object_opt;
 }

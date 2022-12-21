@@ -187,7 +187,7 @@ struct TXSession {
  private:
   class TXSessionRunnable;
   class TXSessionWarmupRunnable;
-  static TXSessionStepStat MakeSessionStepStat(const OpKernel* op);
+  static TXSessionStepStat MakeSessionStepStat(const NodePtr& op);
   void RunImpl(const std::unordered_map<std::string, RTValue>& feed_dict,
                std::vector<std::pair<std::string, RTValue>>& result,
                TXSessionRunMeta* meta = nullptr) const;
