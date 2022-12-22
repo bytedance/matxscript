@@ -294,7 +294,6 @@ int JitObject::Bundle(string_view folder) {
   };
   auto src_path_cxx11 = ReplaceSuffixFunc(options_.dso_path_cxx11);
   auto src_path = ReplaceSuffixFunc(options_.dso_path);
-  std::cout << src_path << std::endl;
   if (FileUtil::Exists(src_path_cxx11)) {
     BundlePath(src_path_cxx11, folder);
   }

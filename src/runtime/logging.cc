@@ -27,6 +27,21 @@
 namespace matxscript {
 namespace runtime {
 
+/*
+ * The default logging_level is set to WARNING
+ */
+
+static int64_t logging_level = LoggingLevel::WARNING;
+
+NullStream null_stream = NullStream();
+
+void SetLoggingLevel(int64_t level) {
+  logging_level = level;
+}
+int64_t GetLoggingLevel() {
+  return logging_level;
+}
+
 static int GET_ENV_MATXSCRIPT_LOG_STACK_TRACE() {
   if (auto var = std::getenv("MATXSCRIPT_LOG_STACK_TRACE")) {
     return std::atoi(var);

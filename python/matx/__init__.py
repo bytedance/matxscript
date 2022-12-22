@@ -133,6 +133,8 @@ from .runtime._container._list import heapify as list_heapify
 from .runtime._container._list import heap_replace as list_heap_replace
 from .runtime._container._list import nth_element as list_nth_element
 from .runtime._container._list import heap_pushpop as list_heap_pushpop
+from .runtime.cpp_logging import set_cpp_logging_level, get_cpp_logging_level
+from .runtime.cpp_logging import FATAL, ERROR, WARNING, INFO, DEBUG
 
 from .runtime.picke import serialize, deserialize
 
