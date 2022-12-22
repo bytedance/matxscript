@@ -31,6 +31,7 @@ class Resize(BaseInterfaceClass):
     def __init__(self,
                  size: List[int],
                  interpolation: str = "bilinear",
+                 resize_mode: str = "",
                  max_size: int = 0,
                  device_id: int = -2,
                  sync: int = ASYNC) -> None:
@@ -38,10 +39,16 @@ class Resize(BaseInterfaceClass):
         # check size
         if len(size) == 1:
             self._size: Tuple[int, int] = (size[0], size[0])
-            self._resize_mode: str = RESIZE_NOT_SMALLER
+            if not resize_mode:
+                self._resize_mode: str = RESIZE_NOT_SMALLER
+            else:
+                self._resize_mode: str = resize_mode
         elif len(size) == 2:
             self._size: Tuple[int, int] = (size[0], size[1])
-            self._resize_mode: str = RESIZE_DEFAULT
+            if not resize_mode:
+                self._resize_mode: str = RESIZE_DEFAULT
+            else:
+                self._resize_mode: str = resize_mode
         else:
             assert False, "Resize size value should be an integer or a list/tuple with length 2."
         self._max_size: int = max_size
