@@ -85,7 +85,8 @@ struct TXSession {
                                          string_view version = "");
 
   // After fork, the child process should call this function once
-  void AtForkAfterInChild();
+  void AtForkBefore();
+  void AtForkAfterInParentOrChild();
 
   /**
    * build a new trace and clear history

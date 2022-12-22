@@ -29,6 +29,11 @@ namespace runtime {
 
 class ThreadPoolOp : public OpKernel {
  public:
+  // Before fork, the parent process should call this function once
+  void AtForkBefore();
+  // After fork, the child/parent process should call this function once
+  void AtForkAfterInParentOrChild();
+
   void Init() override;
   const std::shared_ptr<internal::IThreadPool>& GetPool() const {
     return pool_;

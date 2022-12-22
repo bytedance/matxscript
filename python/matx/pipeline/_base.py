@@ -40,27 +40,15 @@ class TXSession:
         self.__native_free_func = _ffi_api.FreeTXSessionHandle
         self.__backend_sess_handle = void_p_to_runtime(self.__c_handle)
         register_session_at_fork(self.__c_handle, self)
-        self.__threads_config = None
 
     def at_fork_before(self):
-        pmap_threads = self.get_pmap_threads()
-        apply_async_threads = self.get_apply_async_threads()
-        self.__threads_config = {"pmap_threads": pmap_threads, "apply_async_threads": apply_async_threads}
-        self.disable_op_parallelism()
-        self.disable_apply_async_threads()
-        self.disable_pmap_threads()
+        _ffi_api.TXSessionAtForkBefore(self.__c_handle)
 
     def at_fork_after_in_parent(self):
-        assert isinstance(self.__threads_config, dict)
-        self.set_pmap_threads(self.__threads_config["pmap_threads"])
-        self.set_apply_async_threads(self.__threads_config["apply_async_threads"])
-        self.__threads_config = None
+        _ffi_api.TXSessionAtForkAfterInParent(self.__c_handle)
 
     def at_fork_after_in_child(self):
-        assert isinstance(self.__threads_config, dict)
-        self.set_pmap_threads(self.__threads_config["pmap_threads"])
-        self.set_apply_async_threads(self.__threads_config["apply_async_threads"])
-        self.__threads_config = None
+        _ffi_api.TXSessionAtForkAfterInChild(self.__c_handle)
 
     def __del__(self):
         unregister_session_at_fork(self.__c_handle)
@@ -105,6 +93,12 @@ class TXSession:
 
     def disable_apply_async_threads(self):
         return _ffi_api.TXSessionSetSchedulingThreads(self.__c_handle, -1)
+
+    def get_all_threads_config(self):
+        return _ffi_api.TXSessionGetAllThreadsConfig(self.__c_handle)
+
+    def restore_all_threads(self, configs):
+        return _ffi_api.TXSessionRestoreAllThreads(self.__c_handle, configs)
 
 
 def make_default_session():

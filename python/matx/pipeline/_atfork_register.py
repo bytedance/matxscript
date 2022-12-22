@@ -23,7 +23,6 @@ from typing import List
 
 from .._ffi import void_p_to_runtime
 from .._ffi import to_packed_func
-from . import _ffi_api
 
 
 class AtForkTask:
