@@ -82,8 +82,11 @@ static std::unique_ptr<std::shared_ptr<void>[]> createDefaultCUDAStreams() {
   return streams;
 }
 
-// Default streams
-static std::unique_ptr<std::shared_ptr<void>[]> default_streams = createDefaultCUDAStreams();
+static const std::unique_ptr<std::shared_ptr<void>[]>& getDefaultCUDAStreams() {
+  // Default streams
+  static std::unique_ptr<std::shared_ptr<void>[]> default_streams = createDefaultCUDAStreams();
+  return default_streams;
+}
 
 // Init front-end to ensure initialization only occurs once
 static void initCUDAStreamsOnce() {
@@ -97,7 +100,7 @@ static void initCUDAStreamsOnce() {
   // Inits current streams (thread local) to default streams
   current_streams = std::make_unique<std::shared_ptr<void>[]>(num_gpus);
   for (int i = 0; i < num_gpus; ++i) {
-    current_streams[i] = default_streams[i];
+    current_streams[i] = getDefaultCUDAStreams()[i];
   }
 }
 
@@ -317,7 +320,7 @@ class CUDADeviceAPI final : public DeviceAPI {
       device_index = current_device();
     }
     check_gpu(device_index);
-    return default_streams[device_index].get();
+    return getDefaultCUDAStreams()[device_index].get();
   }
 
   MATXScriptStreamHandle GetCurrentThreadStream(MATXScriptDevice device) final {
