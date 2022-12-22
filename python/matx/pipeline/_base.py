@@ -94,12 +94,6 @@ class TXSession:
     def disable_apply_async_threads(self):
         return _ffi_api.TXSessionSetSchedulingThreads(self.__c_handle, -1)
 
-    def get_all_threads_config(self):
-        return _ffi_api.TXSessionGetAllThreadsConfig(self.__c_handle)
-
-    def restore_all_threads(self, configs):
-        return _ffi_api.TXSessionRestoreAllThreads(self.__c_handle, configs)
-
 
 def make_default_session():
     default_sess = TXSession()
