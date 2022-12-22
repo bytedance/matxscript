@@ -580,13 +580,32 @@ MATXSCRIPT_REGISTER_GLOBAL("pipeline.TXSessionHasAttr").set_body([](PyArgs args)
   return sess->HasAttr(key.encode());
 });
 
+MATXSCRIPT_REGISTER_GLOBAL("pipeline.TXSessionAtForkBefore").set_body([](PyArgs args) -> RTValue {
+  MXCHECK_EQ(args.size(), 1) << "[TXSessionAtForkBefore] Expect 1 arguments but get "
+                             << args.size();
+  void* handle = args[0].As<void*>();
+  auto sess = static_cast<TXSession*>(handle);
+  sess->AtForkBefore();
+  return None;
+});
+
 MATXSCRIPT_REGISTER_GLOBAL("pipeline.TXSessionAtForkAfterInChild")
     .set_body([](PyArgs args) -> RTValue {
       MXCHECK_EQ(args.size(), 1) << "[TXSessionAtForkAfterInChild] Expect 1 arguments but get "
                                  << args.size();
       void* handle = args[0].As<void*>();
       auto sess = static_cast<TXSession*>(handle);
-      sess->AtForkAfterInChild();
+      sess->AtForkAfterInParentOrChild();
+      return None;
+    });
+
+MATXSCRIPT_REGISTER_GLOBAL("pipeline.TXSessionAtForkAfterInParent")
+    .set_body([](PyArgs args) -> RTValue {
+      MXCHECK_EQ(args.size(), 1) << "[TXSessionAtForkAfterInParent] Expect 1 arguments but get "
+                                 << args.size();
+      void* handle = args[0].As<void*>();
+      auto sess = static_cast<TXSession*>(handle);
+      sess->AtForkAfterInParentOrChild();
       return None;
     });
 

@@ -1206,16 +1206,45 @@ std::unique_ptr<TXSession> TXSession::Load(string_view folder,
   return std::move(sess);
 }
 
-void TXSession::AtForkAfterInChild() {
+void TXSession::AtForkBefore() {
   // After fork, the child process inherits the data-structures of the parent
   // process' thread-pool, but since those threads don't exist, the thread-pool
-  // is corrupt. So reinitialize the thread pool here in order to prevent segfaults.
+  // will be corrupt. So we close these threads before fork.
   if (scheduling_pool_) {
     if (options_.share_scheduling_pool) {
       auto op = this->FindOp(ThreadPoolOpClassName, ScheduleThreadPoolOpName);
       if (op) {
         auto pool_op = std::dynamic_pointer_cast<ThreadPoolOp>(op);
-        pool_op->Init();
+        pool_op->AtForkBefore();
+      }
+    }
+    scheduling_pool_ = nullptr;
+    scheduling_pool_executor_ = nullptr;
+  }
+  if (compute_pool_) {
+    if (options_.share_compute_pool) {
+      auto op = this->FindOp(ThreadPoolOpClassName, ComputeThreadPoolOpName);
+      if (op) {
+        auto pool_op = std::dynamic_pointer_cast<ThreadPoolOp>(op);
+        pool_op->AtForkBefore();
+      }
+    }
+    compute_pool_ = nullptr;
+    compute_pool_executor_ = nullptr;
+  }
+}
+
+void TXSession::AtForkAfterInParentOrChild() {
+  // After fork, the child process inherits the data-structures of the parent
+  // process' thread-pool, but since those threads don't exist, the thread-pool
+  // is corrupt. So reinitialize the thread pool here in order to prevent segfaults.
+  if (options_.scheduling_pool_thread_nums > 0) {
+    if (options_.share_scheduling_pool) {
+      auto op = this->FindOp(ThreadPoolOpClassName, ScheduleThreadPoolOpName);
+      if (op) {
+        auto pool_op = std::dynamic_pointer_cast<ThreadPoolOp>(op);
+        pool_op->AtForkAfterInParentOrChild();
+        scheduling_pool_ = pool_op->GetPool();
       }
     } else {
       scheduling_pool_ = std::make_shared<internal::LockBasedThreadPool>(
@@ -1223,12 +1252,13 @@ void TXSession::AtForkAfterInChild() {
     }
     scheduling_pool_executor_ = std::make_shared<ThreadPoolExecutor>(scheduling_pool_, false);
   }
-  if (compute_pool_) {
+  if (options_.compute_pool_thread_nums > 0) {
     if (options_.share_compute_pool) {
       auto op = this->FindOp(ThreadPoolOpClassName, ComputeThreadPoolOpName);
       if (op) {
         auto pool_op = std::dynamic_pointer_cast<ThreadPoolOp>(op);
-        pool_op->Init();
+        pool_op->AtForkAfterInParentOrChild();
+        compute_pool_ = pool_op->GetPool();
       }
     } else {
       compute_pool_ = std::make_shared<internal::LockBasedThreadPool>(

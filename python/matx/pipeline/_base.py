@@ -41,6 +41,15 @@ class TXSession:
         self.__backend_sess_handle = void_p_to_runtime(self.__c_handle)
         register_session_at_fork(self.__c_handle, self)
 
+    def at_fork_before(self):
+        _ffi_api.TXSessionAtForkBefore(self.__c_handle)
+
+    def at_fork_after_in_parent(self):
+        _ffi_api.TXSessionAtForkAfterInParent(self.__c_handle)
+
+    def at_fork_after_in_child(self):
+        _ffi_api.TXSessionAtForkAfterInChild(self.__c_handle)
+
     def __del__(self):
         unregister_session_at_fork(self.__c_handle)
         self.__native_free_func(self.__backend_sess_handle)

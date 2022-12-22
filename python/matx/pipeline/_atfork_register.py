@@ -23,7 +23,6 @@ from typing import List
 
 from .._ffi import void_p_to_runtime
 from .._ffi import to_packed_func
-from . import _ffi_api
 
 
 class AtForkTask:
@@ -54,13 +53,22 @@ class AtForkRegister:
             AtForkRegister.tasks.pop(i)
 
 
-backend_sess_after_in_child = _ffi_api.TXSessionAtForkAfterInChild
+def session_at_fork_before(weak_obj):
+    sess = weak_obj()
+    if sess is not None:
+        sess.at_fork_before()
+
+
+def session_at_fork_after_in_parent(weak_obj):
+    sess = weak_obj()
+    if sess is not None:
+        sess.at_fork_after_in_parent()
 
 
 def session_at_fork_after_in_child(weak_obj):
     sess = weak_obj()
     if sess is not None:
-        backend_sess_after_in_child(sess.c_handle)
+        sess.at_fork_after_in_child()
 
 
 def register_session_at_fork(addr, sess):
@@ -68,14 +76,20 @@ def register_session_at_fork(addr, sess):
         addr = addr.value
     weak_obj = weakref.ref(sess)
 
+    def before():
+        session_at_fork_before(weak_obj)
+
+    def after_in_parent():
+        session_at_fork_after_in_parent(weak_obj)
+
     def after_in_child():
         session_at_fork_after_in_child(weak_obj)
 
     AtForkRegister.register_at_fork(
         handle=addr,
-        before=None,
+        before=before,
         after_in_child=after_in_child,
-        after_in_parent=None
+        after_in_parent=after_in_parent,
     )
 
 

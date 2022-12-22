@@ -26,6 +26,14 @@
 namespace matxscript {
 namespace runtime {
 
+void ThreadPoolOp::AtForkBefore() {
+  pool_ = nullptr;
+}
+
+void ThreadPoolOp::AtForkAfterInParentOrChild() {
+  this->Init();
+}
+
 void ThreadPoolOp::Init() {
   lock_free_ = GetAttr<bool>("lock_free");
   thread_nums_ = GetAttr<int32_t>("thread_nums");
