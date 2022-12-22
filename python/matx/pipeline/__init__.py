@@ -44,30 +44,6 @@ from ._tracing_state import begin_trace, finish_trace
 
 # _ffi_api.SetPythonMode(True)
 
-TRACE = 0
-DEBUG = 1
-INFO = 2
-WARN = 3
-FATAL = 4
-NONE = 1048576
-
-
-def SetLoggerLevel(level):
-    """Set stdcout log level
-
-    Parameters
-    ----------
-    level : enum
-        NONE, FATAL, WARN, INFO, DEBUG, TRACE
-
-    Returns
-    -------
-    """
-    _ffi_api.SetLoggerLevel(level)
-
-
-SetLoggerLevel(INFO)
-
 
 def make_module(func):
     """Experimental
@@ -281,7 +257,6 @@ def _BuildSimpleGraph(op, signatures, num_output):
     sym_output_handles = _ffi_api.SymbolicExecutor_Compose(
         op.native_op, num_output, *sym_handle_list)
     sym_outputs = [Symbol(x) for x in sym_output_handles]
-    result = NONE
     if len(sym_outputs) == 1:
         result = sym_outputs[0]
     else:

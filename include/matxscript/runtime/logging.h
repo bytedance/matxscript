@@ -27,6 +27,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -276,6 +277,31 @@ class DateLogger {
   char buffer_[9];
 };
 
+// class
+class NullStream : public std::ostream {
+ public:
+  NullStream() : std::ostream(nullptr) {
+  }
+  NullStream(const NullStream&) : std::ostream(nullptr) {
+  }
+};
+
+template <class T>
+inline constexpr const NullStream& operator<<(NullStream&& os, const T& value) {
+  return os;
+}
+
+/*
+ * The LoggingLevel is the same as Python builtin logging level
+ */
+enum LoggingLevel { Fatal = 50, ERROR = 40, WARNING = 30, Info = 20, DEBUG = 10, NOTSET = 0 };
+
+extern NullStream null_stream;
+
+void SetLoggingLevel(int64_t level);
+
+int64_t GetLoggingLevel();
+
 #ifndef _LIBCPP_SGX_NO_IOSTREAMS
 class LogMessage {
  public:
@@ -284,7 +310,7 @@ class LogMessage {
 #ifdef __ANDROID__
         log_stream_(std::cout)
 #else
-        log_stream_(std::cerr)
+        log_stream_((GetLoggingLevel() > LoggingLevel::Info) ? null_stream : std::cout)
 #endif
   {
     log_stream_ << "[" << pretty_date_.HumanDate() << "] " << file << ":" << line << ": ";
