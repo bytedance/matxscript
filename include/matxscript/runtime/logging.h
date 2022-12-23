@@ -109,90 +109,10 @@ struct Error : public std::runtime_error {
 namespace matxscript {
 namespace runtime {
 
-// get debug option from env variable.
-inline bool DebugLoggingEnabled() {
-  static int state = 0;
-  if (state == 0) {
-    if (auto var = std::getenv("MATXSCRIPT_LOG_DEBUG")) {
-      if (std::string(var) == "1") {
-        state = 1;
-      } else {
-        state = -1;
-      }
-    } else {
-      // by default hide debug logging.
-      state = -1;
-    }
-  }
-  return state == 1;
-}
-
-class LogCheckError {
- public:
-  LogCheckError() : str(nullptr) {
-  }
-  explicit LogCheckError(const std::string& str_) : str(new std::string(str_)) {
-  }
-  LogCheckError(const LogCheckError& other) = delete;
-  LogCheckError(LogCheckError&& other) : str(other.str) {
-    other.str = nullptr;
-  }
-  ~LogCheckError() {
-    if (str != nullptr)
-      delete str;
-  }
-  operator bool() const {
-    return str != nullptr;
-  }
-  LogCheckError& operator=(const LogCheckError& other) = delete;
-  LogCheckError& operator=(LogCheckError&& other) = delete;
-  std::string* str;
-};
-
-#ifndef MATXSCRIPT_GLOG_DEFINED
-
-#ifndef _LIBCPP_SGX_NO_IOSTREAMS
-#define MATXSCRIPT_DEFINE_CHECK_FUNC(name, op)                                                    \
-  template <typename X, typename Y>                                                               \
-  inline LogCheckError LogCheck##name(const X& x, const Y& y) {                                   \
-    if (x op y)                                                                                   \
-      return LogCheckError();                                                                     \
-    std::ostringstream os;                                                                        \
-    os << " (" << x << " vs. " << y                                                               \
-       << ") "; /* CHECK_XX(x, y) requires x and y can be serialized to string. Use CHECK(x OP y) \
-                   otherwise. NOLINT(*) */                                                        \
-    return LogCheckError(os.str());                                                               \
-  }                                                                                               \
-  inline LogCheckError LogCheck##name(int x, int y) {                                             \
-    return LogCheck##name<int, int>(x, y);                                                        \
-  }
-#else
-#define MATXSCRIPT_DEFINE_CHECK_FUNC(name, op)                  \
-  template <typename X, typename Y>                             \
-  inline LogCheckError LogCheck##name(const X& x, const Y& y) { \
-    if (x op y)                                                 \
-      return LogCheckError();                                   \
-    return LogCheckError("Error.");                             \
-  }                                                             \
-  inline LogCheckError LogCheck##name(int x, int y) {           \
-    return LogCheck##name<int, int>(x, y);                      \
-  }
-#endif
-
 #define MATXSCRIPT_CHECK_BINARY_OP(name, op, x, y)                    \
   if (!((x)op(y)))                                                    \
   ::matxscript::runtime::LogMessageFatal(__FILE__, __LINE__).stream() \
       << "Check failed: " << #x " " #op " " #y << " (" << (x) << " vs. " << (y) << "): "
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-compare"
-MATXSCRIPT_DEFINE_CHECK_FUNC(_LT, <)
-MATXSCRIPT_DEFINE_CHECK_FUNC(_GT, >)
-MATXSCRIPT_DEFINE_CHECK_FUNC(_LE, <=)
-MATXSCRIPT_DEFINE_CHECK_FUNC(_GE, >=)
-MATXSCRIPT_DEFINE_CHECK_FUNC(_EQ, ==)
-MATXSCRIPT_DEFINE_CHECK_FUNC(_NE, !=)
-#pragma GCC diagnostic pop
 
 // Always-on checking
 #define MXCHECK(x) \
@@ -227,25 +147,6 @@ MATXSCRIPT_DEFINE_CHECK_FUNC(_NE, !=)
 #define MXLG MXLOG_INFO.stream()
 #define MXLOG_IF(severity, condition) \
   !(condition) ? (void)0 : ::matxscript::runtime::LogMessageVoidify() & MXLOG(severity)
-
-#if MATXSCRIPT_LOG_DEBUG
-
-#define MXLOG_DFATAL MXLOG_FATAL
-#define MXDFATAL FATAL
-#define MXDLOG(severity) MXLOG_IF(severity, :: ::matxscript::runtime::DebugLoggingEnabled())
-#define MXDLOG_IF(severity, condition) \
-  MXLOG_IF(severity, :: ::matxscript::runtime::DebugLoggingEnabled() && (condition))
-
-#else
-
-#define MXLOG_DFATAL LOG_ERROR
-#define MXDFATAL ERROR
-#define MXDLOG(severity) true ? (void)0 : ::matxscript::runtime::LogMessageVoidify() & LOG(severity)
-#define MXDLOG_IF(severity, condition) \
-  (true || !(condition)) ? (void)0 : ::matxscript::runtime::LogMessageVoidify() & LOG(severity)
-#endif
-
-#endif  // MATXSCRIPT_GLOG_DEFINED
 
 class DateLogger {
  public:
