@@ -1,7 +1,5 @@
 # Copyright 2022 ByteDance Ltd. and/or its affiliates.
 #
-# Acknowledgement: The structure of the Module is inspired by incubator-tvm.
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -19,36 +17,18 @@
 # specific language governing permissions and limitations
 # under the License.
 
-
-from . import _ffi_api
-
-FATAL = 50
-ERROR = 40
-WARNING = 30
-INFO = 20
-DEBUG = 10
-
-__LOGGING_LEVELS = [FATAL, ERROR, WARNING, INFO, DEBUG]
+import unittest
+import matx
 
 
-def set_cpp_logging_level(logging_level):
-    """
-
-    Parameters
-    ----------
-    logging_level : int
-        Set the logging level of CPP
-
-    Returns
-    -------
-
-    """
-    available_logging_level = ['matx.FATAL', 'matx.ERROR', 'matx.WARNING',
-                               'matx.INFO', 'matx.DEBUG']
-    err_msg = f'logging_level must be one of {available_logging_level}. Got {logging_level}'
-    assert logging_level in __LOGGING_LEVELS, err_msg
-    _ffi_api.SetLoggingLevel(logging_level)
+class TestCPPLogging(unittest.TestCase):
+    def test_cpp_logging(self):
+        # check default logging level
+        self.assertEqual(matx.get_cpp_logging_level(), matx.WARNING)
+        # check setting logging level
+        matx.set_cpp_logging_level(matx.DEBUG)
+        self.assertEqual(matx.get_cpp_logging_level(), matx.DEBUG)
 
 
-def get_cpp_logging_level():
-    return _ffi_api.GetLoggingLevel()
+if __name__ == "__main__":
+    unittest.main()

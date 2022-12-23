@@ -315,10 +315,9 @@ MATX_DLL int64_t GetLoggingLevel();
 #ifndef _LIBCPP_SGX_NO_IOSTREAMS
 class LogMessage {
  public:
-  LogMessage(const char* file, int line)
-      : log_stream_((GetLoggingLevel() > LoggingLevel::INFO) ? null_stream : std::cout) {
-    log_stream_ << "[" << pretty_date_.HumanDate() << "] " << file << ":" << line << ": ";
+  LogMessage(const char* file, int line) : LogMessage(file, line, LoggingLevel::INFO) {
   }
+
   LogMessage(const char* file, int line, int64_t level)
       : log_stream_((GetLoggingLevel() > level) ? null_stream : std::cout) {
     log_stream_ << "[" << pretty_date_.HumanDate() << "] " << file << ":" << line << ": ";
