@@ -211,13 +211,15 @@ MATXSCRIPT_DEFINE_CHECK_FUNC(_NE, !=)
    (x)                                                                               \
                : (x))
 
-#if MATXSCRIPT_LOG_CUSTOMIZE
-#define MXLOG_INFO ::matxscript::runtime::CustomLogMessage(__FILE__, __LINE__)
-#else
-#define MXLOG_INFO ::matxscript::runtime::LogMessage(__FILE__, __LINE__)
-#endif
-#define MXLOG_ERROR MXLOG_INFO
-#define MXLOG_WARNING MXLOG_INFO
+#define MXLOG_DEBUG \
+  ::matxscript::runtime::LogMessage(__FILE__, __LINE__, ::matxscript::runtime::LoggingLevel::DEBUG)
+#define MXLOG_INFO \
+  ::matxscript::runtime::LogMessage(__FILE__, __LINE__, ::matxscript::runtime::LoggingLevel::INFO)
+#define MXLOG_ERROR \
+  ::matxscript::runtime::LogMessage(__FILE__, __LINE__, ::matxscript::runtime::LoggingLevel::ERROR)
+#define MXLOG_WARNING                \
+  ::matxscript::runtime::LogMessage( \
+      __FILE__, __LINE__, ::matxscript::runtime::LoggingLevel::WARNING)
 #define MXLOG_FATAL ::matxscript::runtime::LogMessageFatal(__FILE__, __LINE__)
 #define MXLOG_QFATAL MXLOG_FATAL
 
@@ -287,32 +289,38 @@ class NullStream : public std::ostream {
 };
 
 template <class T>
-inline constexpr const NullStream& operator<<(NullStream&& os, const T& value) {
+MATXSCRIPT_ALWAYS_INLINE constexpr NullStream& operator<<(NullStream& os, const T&) {
   return os;
 }
 
 /*
  * The LoggingLevel is the same as Python builtin logging level
  */
-enum LoggingLevel { Fatal = 50, ERROR = 40, WARNING = 30, Info = 20, DEBUG = 10, NOTSET = 0 };
+namespace LoggingLevel {
+static constexpr int64_t FATAL = 50;
+static constexpr int64_t ERROR = 40;
+static constexpr int64_t WARNING = 30;
+static constexpr int64_t WARN = WARNING;
+static constexpr int64_t INFO = 20;
+static constexpr int64_t DEBUG = 10;
+static constexpr int64_t NOTSET = 0;
+};  // namespace LoggingLevel
 
 extern NullStream null_stream;
 
-void SetLoggingLevel(int64_t level);
+MATX_DLL void SetLoggingLevel(int64_t level);
 
-int64_t GetLoggingLevel();
+MATX_DLL int64_t GetLoggingLevel();
 
 #ifndef _LIBCPP_SGX_NO_IOSTREAMS
 class LogMessage {
  public:
   LogMessage(const char* file, int line)
-      :
-#ifdef __ANDROID__
-        log_stream_(std::cout)
-#else
-        log_stream_((GetLoggingLevel() > LoggingLevel::Info) ? null_stream : std::cout)
-#endif
-  {
+      : log_stream_((GetLoggingLevel() > LoggingLevel::INFO) ? null_stream : std::cout) {
+    log_stream_ << "[" << pretty_date_.HumanDate() << "] " << file << ":" << line << ": ";
+  }
+  LogMessage(const char* file, int line, int64_t level)
+      : log_stream_((GetLoggingLevel() > level) ? null_stream : std::cout) {
     log_stream_ << "[" << pretty_date_.HumanDate() << "] " << file << ":" << line << ": ";
   }
   ~LogMessage() {
@@ -330,29 +338,6 @@ class LogMessage {
   LogMessage(const LogMessage&);
   void operator=(const LogMessage&);
 };
-
-// customized logger that can allow user to define where to log the message.
-class CustomLogMessage {
- public:
-  CustomLogMessage(const char* file, int line) {
-    log_stream_ << "[" << DateLogger().HumanDate() << "] " << file << ":" << line << ": ";
-  }
-  ~CustomLogMessage() {
-    Log(log_stream_.str());
-  }
-  std::ostream& stream() {
-    return log_stream_;
-  }
-  /*!
-   * \brief customized logging of the message.
-   * This function won't be implemented by libdmlc
-   * \param msg The message to be logged.
-   */
-  static void Log(const std::string& msg);
-
- private:
-  std::ostringstream log_stream_;
-};
 #else
 class DummyOStream {
  public:
@@ -368,6 +353,8 @@ class LogMessage {
  public:
   LogMessage(const char* file, int line) : log_stream_() {
   }
+  LogMessage(const char* file, int line, int64_t level) : log_stream_() {
+  }
   DummyOStream& stream() {
     return log_stream_;
   }
@@ -379,7 +366,7 @@ class LogMessage {
   LogMessage(const LogMessage&);
   void operator=(const LogMessage&);
 };
-#endif
+#endif  // _LIBCPP_SGX_NO_IOSTREAMS
 
 #if defined(_LIBCPP_SGX_NO_IOSTREAMS)
 class LogMessageFatal : public LogMessage {
