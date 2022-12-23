@@ -27,14 +27,7 @@ from .toolchain import ToolChain
 from . import extension
 from .runtime import msgpack_loads, msgpack_dumps
 from . import text
-
-try:
-    from . import vision
-except RuntimeError as e:
-    import sys
-    print(e, file=sys.stderr)
-    print("vision sub modules requires manually downloading shared lib to matxscript/vision", file=sys.stderr)
-    vision = None
+from . import vision
 
 
 # APIs

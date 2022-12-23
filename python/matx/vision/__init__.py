@@ -21,7 +21,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from .base import CUDA_LIB, LIB
+from .base import VISION_CUDA_LIB, VISION_CPU_LIB
 
 from .auto_contrast_op import AutoContrastOp
 from .average_blur_op import AverageBlurOp
@@ -67,8 +67,6 @@ from .constants._resize_mode import *
 from .constants._data_format import *
 from .constants._flip_mode import *
 from .constants._sync_mode import ASYNC, SYNC, SYNC_CPU
-
-from ._version import __version__, __build_info__
 
 __all__ = [
     "AutoContrastOp",
