@@ -20,31 +20,38 @@
 # under the License.
 
 import os
-import sys
+import logging
+
 from ._libinfo import find_lib_path
 from ._dso_loader import load_bundled_lib
 
-LIB = None
+VISION_CPU_LIB = None
 try:
-    LIB = load_bundled_lib("libbyted_vision_cpu_ops")
-except IOError as e:
-    print(
-        "[WARN][BytedVision] Can't found CUDA HOME. When use GPU Runtime, please set CUDA HOME to LD_LIBRARY_PATH ! ERROR: ",
-        e,
-        file=sys.stderr)
+    VISION_CPU_LIB = load_bundled_lib("libbyted_vision_cpu_ops")
+except FileNotFoundError as e:
+    logging.warning(
+        "The cpu ops in matx.vision is disabled "
+        "because the vision cpu lib is not found! "
+        "Please submit a issue if you need it.")
 except Exception as e:
-    print("[ERROR][BytedVision] Occur Error when load byted_vision cuda ops: ", e, file=sys.stderr)
+    logging.warning(
+        "The cpu ops in matx.vision is disabled "
+        "because the vision lib can't be loaded: ", str(e),
+        "Please submit a issue if you need it.")
 
-CUDA_LIB = None
+VISION_CUDA_LIB = None
 BYTED_VISION_SYNC = os.environ.get('BYTED_VISION_SYNC', '')
 BYTED_VISION_SYNC = BYTED_VISION_SYNC == '1'
 
 try:
-    CUDA_LIB = load_bundled_lib("libbyted_vision_cuda_ops")
-except IOError as e:
-    print(
-        "[WARN][BytedVision] Can't found CUDA HOME. When use GPU Runtime, please set CUDA HOME to LD_LIBRARY_PATH ! ERROR: ",
-        e,
-        file=sys.stderr)
+    VISION_CUDA_LIB = load_bundled_lib("libbyted_vision_cuda_ops")
+except FileNotFoundError as e:
+    logging.warning(
+        "The cuda ops in matx.vision is disabled "
+        "because the vision cuda lib is not found! "
+        "Please submit a issue if you need it.")
 except Exception as e:
-    print("[ERROR][BytedVision] Occur Error when load byted_vision cuda ops: ", e, file=sys.stderr)
+    logging.warning(
+        "The cuda ops in matx.vision is disabled "
+        "because the vision lib can't be loaded: ", str(e),
+        "Please submit a issue if you need it.")
