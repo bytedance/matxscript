@@ -35,10 +35,11 @@ static int64_t logging_level = LoggingLevel::WARNING;
 
 NullStream null_stream = NullStream();
 
-void SetLoggingLevel(int64_t level) {
+MATX_DLL void SetLoggingLevel(int64_t level) {
   logging_level = level;
 }
-int64_t GetLoggingLevel() {
+
+MATX_DLL int64_t GetLoggingLevel() {
   return logging_level;
 }
 
