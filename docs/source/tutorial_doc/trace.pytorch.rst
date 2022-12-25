@@ -45,7 +45,7 @@ From a given ScriptModule and a device id, we can pack a ScriptModule into a mat
 
     import matx
 
-    infer_op = matx.script(cript_model, device=0)
+    infer_op = matx.script(script_model, device=0)
 
 | 2.2 From local file 
 
