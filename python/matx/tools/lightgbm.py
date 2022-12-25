@@ -19,7 +19,8 @@
 
 import math
 from typing import Dict, List, Tuple
-from matx import FTList
+
+from ..typing import FTList
 
 
 def sigmoid(x: float) -> float:
