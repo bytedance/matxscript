@@ -94,7 +94,7 @@ class TorchInferOp(pipeline.ops.OpKernel):
     Parameters
     ----------
     model : TorchModel
-    device: int
+    device: int, str
     output_to_cpu: bool
     """
 
@@ -220,10 +220,15 @@ class PytorchModule(object):
             else:
                 raise PyTorchDeviceNotSetError("device not set")
         else:
-            if device >= 0:
-                self._torch_device = torch.device('cuda:%d' % device)
+            if isinstance(device, int):
+                if device >= 0:
+                    self._torch_device = torch.device('cuda:%d' % device)
+                else:
+                    self._torch_device = torch.device('cpu')
+            elif isinstance(device, str):
+                self._torch_device = torch.device(device)
             else:
-                self._torch_device = torch.device('cpu')
+                raise TypeError(f"invalid device: {device}")
 
         # init model
         if model is None:
@@ -314,7 +319,7 @@ class PytorchModule(object):
             return self._trans_set_(data)
         else:
             if isinstance(data, matx.array.NDArray):
-                return self._torch_from_numpy(data.asnumpy()).to(self._torch_device)
+                return data.torch(copy=False).to(self._torch_device)
             elif isinstance(data, np.ndarray):
                 return self._torch_from_numpy(data).to(self._torch_device)
             else:
@@ -348,14 +353,16 @@ class PytorchModule(object):
             return self._reverse_trans_dict_(data)
         else:
             if isinstance(data, self._torch_Tensor):
+                import torch.utils.dlpack
                 if data.dim() == 0:
                     # 0-dim tensor is not supported
                     data = data.unsqueeze(-1)
-                if not self._output_to_cpu and data.get_device() >= 0:
-                    ctx = "gpu:%d" % data.get_device()
-                    return matx.array.from_numpy(data.detach().cpu().numpy(), ctx)
+                if self._output_to_cpu:
+                    return matx.array.from_dlpack(
+                        torch.utils.dlpack.to_dlpack(data.detach().cpu()))
                 else:
-                    return matx.array.from_numpy(data.detach().cpu().numpy())
+                    return matx.array.from_dlpack(
+                        torch.utils.dlpack.to_dlpack(data.detach()))
             else:
                 return data
 
