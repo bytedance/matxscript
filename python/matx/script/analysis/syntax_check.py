@@ -359,7 +359,7 @@ class ClassSyntaxCheck(ast.NodeVisitor):
                         raise_syntax_error(
                             self.custom_node,
                             stmt,
-                            'Class __init__ functions member should annotation.')
+                            'Class __init__ function members require type annotation.')
 
         if node.name == '__call__':
             self.class_info['has_call'] = True
