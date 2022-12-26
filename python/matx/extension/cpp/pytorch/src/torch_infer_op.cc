@@ -28,6 +28,7 @@
 #include <matxscript/pipeline/internal_helper_funcs.h>
 #include <matxscript/pipeline/tx_session.h>
 #include <matxscript/runtime/container/ndarray.h>
+#include <matxscript/runtime/container/ndarray_helper.h>
 #include <matxscript/runtime/container/string_helper.h>
 #include <matxscript/runtime/container/tuple_ref.h>
 #include <matxscript/runtime/container/unicode_helper.h>
@@ -316,15 +317,37 @@ void TorchInferOp::Init() {
   if (HasAttr("output_to_cpu") && GetAttr<int>("output_to_cpu") == 0) {
     output_to_cpu_ = false;
   }
+  bool has_device_attr = HasAttr("device");
+  int op_device_id = -1;
+  if (has_device_attr) {
+    auto dev = GetAttr<RTValue>("device", RTValue{-1});
+    if (dev.Is<int64_t>()) {
+      op_device_id = dev.AsNoCheck<int64_t>();
+    } else {
+      DLDevice dl_dev;
+      if (dev.Is<string_view>()) {
+        dl_dev = NDArrayHelper::GetDevice(UTF8Decode(dev.AsNoCheck<string_view>()));
+      } else if (dev.Is<unicode_view>()) {
+        dl_dev = NDArrayHelper::GetDevice(dev.AsNoCheck<unicode_view>());
+      } else {
+        THROW_PY_TypeError("invalid device: ", dev);
+      }
+      if (dl_dev.device_type == DLDeviceType::kDLCPU) {
+        op_device_id = -1;
+      } else {
+        op_device_id = dl_dev.device_id;
+      }
+    }
+  }
   int use_device = -1;
   if (device_ == NONE_DEVICE) {
-    if (HasAttr("device")) {
-      use_device = GetAttr<int>("device", -1);
+    if (has_device_attr) {
+      use_device = op_device_id;
       MXLOG(INFO) << "[TorchInferOp] use devices: " << use_device;
     }
   } else {
-    if (HasAttr("device") && (GetAttr<int>("device") < 0)) {
-      use_device = -1;  // 模型在cpu trace不跟随session
+    if (has_device_attr && (op_device_id < 0)) {
+      use_device = -1;  // don't use session's device when the mode is on cpu
       MXLOG(INFO) << "[TorchInferOp] use cpu devices: " << use_device;
     } else {
       use_device = device_;

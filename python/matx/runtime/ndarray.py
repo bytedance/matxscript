@@ -1077,6 +1077,7 @@ def from_numpy(arr, device="cpu"):
 
     Examples:
         >>> import numpy
+        >>> import matx
         >>> arr = numpy.random.rand(2, 3)
         >>> nd = matx.array.from_numpy(arr)
         >>> nd
