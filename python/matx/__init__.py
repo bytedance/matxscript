@@ -28,6 +28,7 @@ from . import extension
 from .runtime import msgpack_loads, msgpack_dumps
 from . import text
 from . import vision
+from . import tools
 
 
 # APIs

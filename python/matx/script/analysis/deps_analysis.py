@@ -133,7 +133,8 @@ class DepsAnalysis(ast.NodeVisitor):
             return False
         if (root_mod in self.SKIP_MODULES
                 and not belong_to_module(dep, self.MATX_MODULE.text)
-                and not belong_to_module(dep, self.MATX_MODULE.vision)):
+                and not belong_to_module(dep, self.MATX_MODULE.vision)
+                and not belong_to_module(dep, self.MATX_MODULE.tools)):
             return False
         if dep in self.SKIP_OBJECTS:
             return False
