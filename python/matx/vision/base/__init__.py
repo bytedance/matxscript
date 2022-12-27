@@ -25,20 +25,6 @@ import logging
 from ._libinfo import find_lib_path
 from ._dso_loader import load_bundled_lib
 
-VISION_CPU_LIB = None
-try:
-    VISION_CPU_LIB = load_bundled_lib("libbyted_vision_cpu_ops")
-except FileNotFoundError as e:
-    logging.warning(
-        "The cpu ops in matx.vision is disabled "
-        "because the vision cpu lib is not found! "
-        "Please submit a issue if you need it.")
-except Exception as e:
-    logging.warning(
-        "The cpu ops in matx.vision is disabled "
-        "because the vision lib can't be loaded: ", str(e),
-        "Please submit a issue if you need it.")
-
 VISION_CUDA_LIB = None
 BYTED_VISION_SYNC = os.environ.get('BYTED_VISION_SYNC', '')
 BYTED_VISION_SYNC = BYTED_VISION_SYNC == '1'
@@ -53,5 +39,19 @@ except FileNotFoundError as e:
 except Exception as e:
     logging.warning(
         "The cuda ops in matx.vision is disabled "
-        "because the vision lib can't be loaded: ", str(e),
+        "because the vision lib can't be loaded: " + str(e) +
+        "Please submit a issue if you need it.")
+
+VISION_CPU_LIB = None
+try:
+    VISION_CPU_LIB = load_bundled_lib("libbyted_vision_cpu_ops")
+except FileNotFoundError as e:
+    logging.warning(
+        "The cpu ops in matx.vision is disabled "
+        "because the vision cpu lib is not found! "
+        "Please submit a issue if you need it.")
+except Exception as e:
+    logging.warning(
+        "The cpu ops in matx.vision is disabled "
+        "because the vision lib can't be loaded: " + str(e) +
         "Please submit a issue if you need it.")
