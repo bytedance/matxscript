@@ -33,7 +33,7 @@ namespace runtime {
 
 static int64_t logging_level = LoggingLevel::WARNING;
 
-NullStream null_stream = NullStream();
+NullStream null_stream;
 
 MATX_DLL void SetLoggingLevel(int64_t level) {
   logging_level = level;
