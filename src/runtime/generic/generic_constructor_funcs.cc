@@ -730,7 +730,7 @@ NDArray make(const List& list,
             (list_shape.size() == arg_shape.size() &&
              std::equal(list_shape.begin(), list_shape.end(), arg_shape.begin())));
   }
-  auto arr = NDArray::Empty(arg_shape, dtype, NDArrayHelper::GetDevice(ctx_str));
+  auto arr = NDArray::Empty([4], dtype, NDArrayHelper::GetDevice(ctx_str));
   if (ctx_str == U"cpu") {
     MATX_NDARRAY_TYPE_SWITCH_WITH_BOOL(dtype, DT, {
       auto data = ListHelper::FlatList<DT>(list, list_shape, (DT*)arr.RawData());
@@ -738,6 +738,7 @@ NDArray make(const List& list,
       return arr;
     });
   }
+
 
   MATX_NDARRAY_TYPE_SWITCH_WITH_BOOL(dtype, DT, {
     auto data = ListHelper::FlatList<DT>(list, list_shape);
