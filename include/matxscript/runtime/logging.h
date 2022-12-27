@@ -185,8 +185,7 @@ class NullStream : public std::ostream {
  public:
   NullStream() : std::ostream(nullptr) {
   }
-  NullStream(const NullStream&) : std::ostream(nullptr) {
-  }
+  NullStream(const NullStream&) = default;
 };
 
 template <class T>
