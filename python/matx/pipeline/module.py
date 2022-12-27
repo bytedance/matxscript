@@ -282,7 +282,10 @@ class JITModule(Module):
         warnings.warn("The function JITModule.Run is deprecated.", DeprecationWarning)
         return self.run(feed_dict)
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
+        if len(args) != 0:
+            # TODO: fixme
+            raise TypeError("Only the kwargs is supported in this version")
         return self.run(kwargs)
 
     def run(self, feed_dict):
