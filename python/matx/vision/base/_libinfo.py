@@ -29,7 +29,7 @@ def find_lib_path(lib_name):
     base_path = os.path.join(base_path, '../')
     api_path = os.path.join(base_path, 'lib/')
     matx_build_path = os.path.join(base_path, '../../../vision')
-    python_lib_path = os.path.join(base_path, '../../lib')
+    python_lib_path = os.path.join(base_path, '../lib')
     dll_path = [base_path, api_path, matx_build_path, python_lib_path]
     if sys.platform.startswith('win32'):
         dll_path = [os.path.join(p, '%s.dll' % lib_name) for p in dll_path]
