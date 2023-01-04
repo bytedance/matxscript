@@ -7,7 +7,7 @@ MatxScript
 [Release Notes](NEWS.md)
 
 
-MatxScript is an ahead of time compiler for a subset of the Python language, with a focus on a unified research and service framework for machine learning
+MatxScript is an ahead of time compiler for a subset of the Python language.
 
 Installation
 -------
