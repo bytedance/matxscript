@@ -14,8 +14,8 @@ def make_app():
     base_path = os.path.split(os.path.realpath(__file__))[0]
     path = base_path + os.sep + "build/html"
     return tornado.web.Application([
-        (r'/matx4/()', MyStaticFileHandler, {'path': path, 'default_filename': 'index.html'}),
-        (r'/matx4/(.*\..*)', MyStaticFileHandler, {'path': path, 'default_filename': 'index.html'}),
+        (r'/matxscript/()', MyStaticFileHandler, {'path': path, 'default_filename': 'index.html'}),
+        (r'/matxscript/(.*\..*)', MyStaticFileHandler, {'path': path, 'default_filename': 'index.html'}),
     ])
 
 

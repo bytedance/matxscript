@@ -6,10 +6,10 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'Matxscript'
+project = 'MATXScript'
 copyright = '2022, Bytedance Inc.'
 author = 'Bytedance Inc.'
-release = '1.8.0.alpha'
+release = '1.8.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

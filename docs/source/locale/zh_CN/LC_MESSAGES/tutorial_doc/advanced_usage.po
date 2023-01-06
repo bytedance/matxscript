@@ -3,38 +3,37 @@
 # This file is distributed under the same license as the Matxscript package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-10 08:52+0800\n"
+"POT-Creation-Date: 2023-01-06 16:24+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.11.0\n"
 
-#: ../../source/tutorial_doc/advanced_usage.rst:2
+#: ../../source/tutorial_doc/advanced_usage.rst:3
 msgid "Multithreading"
 msgstr "并行支持"
 
-#: ../../source/tutorial_doc/advanced_usage.rst:3
+#: ../../source/tutorial_doc/advanced_usage.rst:4
 msgid ""
-"Due to Gobal Interpreter Lock (GIL) implemented in Python interpreter, "
-"multithreading in Python can be truly executed in parallel. In matx, we "
-"implement matx.pmap to support multithreading in C++."
+"Due to Global Interpreter Lock (GIL) implemented in Python interpreter, "
+"multithreading in Python can‘t be truly executed in parallel. In matx, we"
+" implement matx.pmap to support multithreading in native."
 msgstr ""
-"对于原生 python，受限制于 GIL，并行以多进程的方式进行，但在日常使用，由其是 Serving 中，多线程 有着广泛的需求，我们当前支持 "
-"pmap并行原语。"
+"原生 python 受限制于 全局解释器锁 (GIL)，多线程并不会真正并行执行，"
+"在 Matx 中，我们提供了 matx.pmap 原语，提供了后台并行执行能力。"
 
-#: ../../source/tutorial_doc/advanced_usage.rst:20
+#: ../../source/tutorial_doc/advanced_usage.rst:22
 msgid "Regular Expression"
 msgstr "正则表达式"
 
-#: ../../source/tutorial_doc/advanced_usage.rst:21
+#: ../../source/tutorial_doc/advanced_usage.rst:23
 msgid ""
 "Matx implements a builtin regular expression engine based on `PCRE "
 "<https://github.com/PCRE2Project/pcre2>`_."

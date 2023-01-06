@@ -55,4 +55,4 @@ Data preprocessing and postprocessing are two key components in machine learning
 
 Pytorch/TensorFlow Integration
 ==================================
-Matx enables easy integration of existing Pytorch/TensorFlow models into preprocessing and postprocessing pipelines. 
+Matx enables easy integration of existing Pytorch/TensorFlow models into an end-to-end pipelines.

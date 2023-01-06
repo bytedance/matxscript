@@ -3,84 +3,103 @@
 # This file is distributed under the same license as the Matxscript package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-10 03:03+0800\n"
+"POT-Creation-Date: 2023-01-06 17:39+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.11.0\n"
 
-#: ../../source/index.rst:13
-msgid "Introduce to Marxscript"
-msgstr "Matxscript 简介"
-
-#: ../../source/index.rst:21
-msgid "quick start"
-msgstr "快速开始"
-
-#: ../../source/index.rst:30
-msgid "basics"
-msgstr "基础知识"
-
-#: ../../source/index.rst:39
-msgid "Advanced usage"
-msgstr "高级用法"
-
-#: ../../source/index.rst:46
-msgid "performance evaluation"
-msgstr "性能测试"
+#: ../../source/index.rst:45
+msgid "Design Philosophy"
+msgstr "设计哲学"
 
 #: ../../source/index.rst:53
-msgid "Example"
+msgid "Quick Start"
+msgstr "快速开始"
+
+#: ../../source/index.rst:62
+msgid "Basics"
+msgstr "基础知识"
+
+#: ../../source/index.rst:71
+msgid "Advanced"
+msgstr "高级用法"
+
+#: ../../source/index.rst:78
+msgid "Benchmarks"
+msgstr "性能测试"
+
+#: ../../source/index.rst:85
+msgid "Examples"
 msgstr "应用案例"
 
-#: ../../source/index.rst:61
+#: ../../source/index.rst:93
 msgid "API"
 msgstr ""
 
-#: ../../source/index.rst:69
+#: ../../source/index.rst:101
 msgid "Appendix"
 msgstr "附录"
 
 #: ../../source/index.rst:7
-msgid "Welcome to Matxscript's documentation!"
-msgstr ""
+msgid "Welcome to MATXScript's documentation!"
+msgstr "欢迎浏览"
 
 #: ../../source/index.rst:10
 msgid "Introduction"
-msgstr "介绍"
+msgstr "简介"
 
 #: ../../source/index.rst:11
 msgid ""
-"MATXScript is an AOT (ahead of time) compiler. By automatically compiling"
-" a subset of Python into C++, MATXScript unifies deep learning model "
-"training including data preprocessing and postprocessing using Python and"
-" deployment using C++."
-msgstr "MATXScript 是一个 Python 子语言的 Ahead-of-time (AOT) 编译器，通过自动化将 Python 翻译成 C++，可以解决深度学习中训练和服务的割裂问题：用 Python 离线调试/训练，用 C++ 部署上线。"
-
-#: ../../source/index.rst:78
-msgid "Indices and tables"
+"MATXScript(Matx) is a high-performance, extensible Python AOT compiler "
+"that compiles Python class/function to C++ without any runtime overhead. "
+"Typical speedups over Python are on the order of 10-100x. Matx supports "
+"pmap which can lead to speedups many times higher still."
 msgstr ""
+"MATXScript(Matx) 是一个高性能可扩展的 Python 编译器，可以自动化把 Python 类或函数翻译成 C++，运行时完全没有 "
+"Python 开销。在一些典型的场景中，通常可以获得 10-100 倍的性能提升。另外，Matx 通过 pmap "
+"原语支持无锁多线程，在上面基础上，还可以进一步提升性能。"
 
-#: ../../source/index.rst:80
+#: ../../source/index.rst:15
+msgid "Currently matx is widely used in Bytedance. Including:"
+msgstr "当前，Matx 已在字节跳动广泛使用，包括："
+
+#: ../../source/index.rst:17
+msgid "Unify the training and inference for deep learning."
+msgstr "实现了模型的训推一体"
+
+#: ../../source/index.rst:18
+msgid "Accelerate some offline MapReduce tasks."
+msgstr "加速一些 MapReduce 任务"
+
+#: ../../source/index.rst:19
+msgid "Provide flexibility for some C++ engines, etc."
+msgstr "为一些 C++ 引擎提供灵活逻辑热加载能力等等"
+
+#: ../../source/index.rst:23
+msgid "A Quick Example"
+msgstr "简单示例"
+
+#: ../../source/index.rst:110
+msgid "Indices and tables"
+msgstr "索引页面"
+
+#: ../../source/index.rst:112
 msgid ":ref:`genindex`"
 msgstr ""
 
-#: ../../source/index.rst:81
+#: ../../source/index.rst:113
 msgid ":ref:`modindex`"
 msgstr ""
 
-#: ../../source/index.rst:82
+#: ../../source/index.rst:114
 msgid ":ref:`search`"
 msgstr ""
-
-#~ msgid "Contents:"
-#~ msgstr ""
 

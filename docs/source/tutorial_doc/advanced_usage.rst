@@ -1,9 +1,9 @@
 ***************************************
 Multithreading
 ***************************************
-Due to Gobal Interpreter Lock (GIL) implemented in Python interpreter, multithreading in Python can‘t be truly executed in parallel. In matx, we implement matx.pmap to support multithreading in C++.
+Due to Global Interpreter Lock (GIL) implemented in Python interpreter, multithreading in Python can‘t be truly executed in parallel. In matx, we implement matx.pmap to support multithreading in native.
 
-.. code-block:: python3 
+.. code-block:: python
 
     import matx
     from typing import Any, List
@@ -22,7 +22,7 @@ Regular Expression
 ***************************************
 Matx implements a builtin regular expression engine based on `PCRE <https://github.com/PCRE2Project/pcre2>`_.
 
-.. code-block:: python3 
+.. code-block:: python
 
     import matx
     from typing import Any, List

@@ -3,20 +3,27 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Matxscript's documentation!
+Welcome to MATXScript's documentation!
 ======================================
 
 Introduction
 --------------------------------------
 MATXScript(Matx) is a high-performance, extensible Python AOT compiler that compiles Python class/function to C++ without any runtime overhead.
 Typical speedups over Python are on the order of 10-100x. Matx supports pmap which can lead to speedups many times higher still.
-Currently matx is widely used in Bytedance. Including: 1) Unify the training and inference for deep learning; 2) Accelerate some offline MapReduce tasks; 3) Provide flexibility for some C++ engines, etc.
+
+
+Currently matx is widely used in Bytedance. Including:
+
+1) Unify the training and inference for deep learning.
+2) Accelerate some offline MapReduce tasks.
+3) Provide flexibility for some C++ engines, etc.
 
 
 A Quick Example
 --------------------------------------
 
 .. code:: python
+
     import matx
     import timeit
 
@@ -37,7 +44,7 @@ A Quick Example
 
 .. toctree::
    :maxdepth: 1
-   :caption: Introduce to Marxscript
+   :caption: Design Philosophy
    :hidden:
 
    tutorial_doc/design_philosophy
@@ -45,7 +52,7 @@ A Quick Example
 
 .. toctree::
    :maxdepth: 1
-   :caption: quick start
+   :caption: Quick Start
    :hidden:
 
    tutorial_doc/installation
@@ -54,7 +61,7 @@ A Quick Example
 
 .. toctree::
    :maxdepth: 1
-   :caption: basics
+   :caption: Basics
    :hidden:
 
    tutorial_doc/ndarray
@@ -63,21 +70,21 @@ A Quick Example
 
 .. toctree:: 
    :maxdepth: 1
-   :caption: Advanced usage
+   :caption: Advanced
    :hidden:
 
    tutorial_doc/advanced_usage
 
 .. toctree::
    :maxdepth: 1
-   :caption: performance evaluation
+   :caption: Benchmarks
    :hidden:
 
-   tutorial_doc/performance
+   tutorial_doc/benchmarks
 
 .. toctree::
    :maxdepth: 1
-   :caption: Example
+   :caption: Examples
    :hidden:
 
    tutorial_doc/e2e_example

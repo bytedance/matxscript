@@ -3,116 +3,171 @@
 # This file is distributed under the same license as the Matxscript package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-10 03:03+0800\n"
+"POT-Creation-Date: 2023-01-06 18:44+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.11.0\n"
 
 #: ../../source/tutorial_doc/trace.rst:4
 msgid "Trace"
 msgstr ""
 
-#: ../../source/tutorial_doc/trace.rst:7
+#: ../../source/tutorial_doc/trace.rst:8
 msgid "Objective"
 msgstr "目标"
 
-#: ../../source/tutorial_doc/trace.rst:9
+#: ../../source/tutorial_doc/trace.rst:10
 msgid ""
-"Trace can conviencelly pack training code written in Python to a format "
-"that matx c++ interface can recognize and use for online inference. It "
-"records the execution process of given Python code and saves it as a "
-"graph on disk."
-msgstr "将训练代码一键打包成 C++ Server 所需格式，方便优化和 Server 上线服务。"
+"Trace can conveniently record the execution process of Python code and "
+"then generate a Graph which can be saved on disk. In this way, it is very"
+" convenient to distribute and deploy to any place for execution."
+msgstr "Trace 可以追踪记录 Python 代码执行过程，生成 Graph，并支持一键打包，方便分发部署到任意地方执行。"
 
-#: ../../source/tutorial_doc/trace.rst:12
+#: ../../source/tutorial_doc/trace.rst:16
 msgid "What does trace record"
 msgstr "能够记录哪些执行过程？"
 
-#: ../../source/tutorial_doc/trace.rst:14
-msgid ""
-"Trace depends on the execution of the code, so only code executed during "
-"the trace process is recoreded."
-msgstr "Trace 机制是依赖程序执行才能记录，换句话说，能够记录的逻辑需要在运行时被执行到！"
-
-#: ../../source/tutorial_doc/trace.rst:16
-msgid "For now, only the Op Call Graph is saved."
-msgstr "目前只保存 OP Call Graph"
-
-#: ../../source/tutorial_doc/trace.rst:17
-msgid "Only the if-branch executed during trace is recorded."
-msgstr "IF 语句只能记录一个 branch，这个需要灵活把握"
-
 #: ../../source/tutorial_doc/trace.rst:18
+msgid ""
+"Trace depends on the execution of the Python, so only the code executed "
+"during the trace process is recorded."
+msgstr "Trace 机制是依赖 Python 执行才能记录，换句话说，能够记录的逻辑需要在运行时被执行到！"
+
+#: ../../source/tutorial_doc/trace.rst:20
+msgid ""
+"For now, only the Matx-Op Calls are recorded normally and other "
+"statements will be as constants."
+msgstr "当前只能正常记录 Matx Op 的调用，其他语句的执行结果会被当成常量"
+
+#: ../../source/tutorial_doc/trace.rst:21
+msgid "Only the if-branch executed during trace is recorded."
+msgstr "IF 语句只能记录一个 branch，需要灵活把握"
+
+#: ../../source/tutorial_doc/trace.rst:22
 msgid ""
 "For/While is unrolled based on the given input during trace. Usually, "
 "this causes bugs."
 msgstr "For/While 循环会根据当时的输入条件强制展开，通常这意味着 BUG"
 
-#: ../../source/tutorial_doc/trace.rst:19
+#: ../../source/tutorial_doc/trace.rst:23
 msgid "Code after return is discarded."
 msgstr "Return 之后的逻辑会被丢弃，需要灵活把握"
 
-#: ../../source/tutorial_doc/trace.rst:22
+#: ../../source/tutorial_doc/trace.rst:27
 msgid "Restrictions on design pattern"
 msgstr "约束设计模式"
 
-#: ../../source/tutorial_doc/trace.rst:23
+#: ../../source/tutorial_doc/trace.rst:28
 msgid ""
-"To use trace without potential bugs, users need to follow the restrctions"
-" below:"
+"To use trace without potential bugs, users need to follow the "
+"restrictions below:"
 msgstr "使用 Trace 机制是有代价的，需要遵守以下约定："
 
-#: ../../source/tutorial_doc/trace.rst:26
-msgid "Modular design the pipeline. Each module is an operator."
-msgstr "业务需要进行模块设计，每个模块视为一个Op (Operator)"
+#: ../../source/tutorial_doc/trace.rst:30
+msgid "**Modular design the pipeline. Each module is an operator.**"
+msgstr "**业务需要进行模块设计，每个模块视为一个 Operator(Op)**"
 
-#: ../../source/tutorial_doc/trace.rst:27
+#: ../../source/tutorial_doc/trace.rst:32
 msgid ""
 "Take text classification task as an example. Tokenization can be designed"
 "  as an operator. One-hot encoding can be another operator."
-msgstr "比如一个 文本分类的 pipeline，分词可以认为是一个 Op，文本 ID 化也是一个 Op 等等。"
+msgstr "比如一个文本分类的 pipeline，分词可以认为是一个 Op，文本 ID 化也是一个 Op 等等。"
 
-#: ../../source/tutorial_doc/trace.rst:30
-msgid "Organize operators in your pipeline into a DAG"
-msgstr "由 Op 集合组成一个DAG，即为业务的 Pipeline"
+#: ../../source/tutorial_doc/trace.rst:34
+msgid "**Organize operators in your pipeline into a DAG**"
+msgstr "**由 Op 集合组成一个 DAG，即为业务的 Pipeline**"
 
-#: ../../source/tutorial_doc/trace.rst:31
+#: ../../source/tutorial_doc/trace.rst:36
 msgid "Every rectangle in the following chart is considered an Op."
 msgstr "比如下图的文本分类的 pipeline，每个框均是一个 Op，这些 Op 串联起来是一个简单的 DAG"
 
-#: ../../source/tutorial_doc/trace.rst:34
-msgid "Operators can be implemented in C++ or Python"
-msgstr "Op 可以由 C++ 或 Python 开发，不受 Trace 约束"
+#: ../../source/tutorial_doc/trace.rst:38
+msgid "**Operators can be implemented in C++ or Python**"
+msgstr "**Op 可以由 C++ 或 Python 开发，不受 Trace 约束**"
 
-#: ../../source/tutorial_doc/trace.rst:35
+#: ../../source/tutorial_doc/trace.rst:40
 msgid ""
 "For operators implemented in Python. It needs matx.script to be able to "
 "use in trace. Please refer to Script chapter."
-msgstr "对于python开发的op，需要可以被matx.script否则仍会受到trace的约束，具体请参照 Script章节"
+msgstr "使用 Python 编写的 类或函数 需要使用 matx.script 编译成 Op，具体请参照 Script 章节"
 
-#: ../../source/tutorial_doc/trace.rst:38
+#: ../../source/tutorial_doc/trace.rst:44
 msgid "Third party library support."
 msgstr "第三方库支持"
 
-#: ../../source/tutorial_doc/trace.rst:39
+#: ../../source/tutorial_doc/trace.rst:45
 msgid ""
 "When the code being traced contains calls to a third party library such "
 "as requests, then returns from the calls are saved as constant and used "
 "when executing the trace result. In other words, third party libraries "
 "are only called during the generation of the trace file but not called "
 "anymore during loading and running the trace file."
-msgstr "在被trace的函数中如果调用了第三方库比如requests，那么本次的结果将被当做常量保存并且会在之后执行时使用。换句话说，第三方库仅会在生成trace文件时被调用。"
+msgstr ""
+"在被 trace 的函数中如果调用了第三方库比如 "
+"requests，那么本次的结果将被当做常量保存并且会在之后执行时使用。换句话说，第三方库执行的结果被固化成常量了。"
 
-#: ../../source/tutorial_doc/trace.rst:43
+#: ../../source/tutorial_doc/trace.rst:49
+msgid "How do we capture the local files?"
+msgstr "自动打包本地文件"
+
+#: ../../source/tutorial_doc/trace.rst:50
+msgid ""
+"Matxscript can dump the local files used to initialize the ops into the "
+"model directory during tracing, and modify the corresponding path "
+"parameters, so that you can successfully load the matxscript model under "
+"any path without manually packaging and deploying these files. This "
+"brings great convenience for deploying models on server clusters."
+msgstr ""
+"MATXScript 预期可以打包用于初始化 OP "
+"的文件或者目录，并且会自动修改成相对路径。因此，我们可以将打包后的目录移动到任意地方都可以加载执行，这为服务热更新提供了较大的便利。"
+
+#: ../../source/tutorial_doc/trace.rst:52
+msgid "**Which files will be dumped?**"
+msgstr "**哪些文件和目录会被一起打包保存？**"
+
+#: ../../source/tutorial_doc/trace.rst:55
+msgid ""
+"We only trace the files appeared in the initializing parameters. For "
+"example,"
+msgstr "MATXScript 仅打包 class.__init__ 函数中参数对应的本地文件，举例如下，"
+
+#: ../../source/tutorial_doc/trace.rst:88
+msgid ""
+"In this example, assets/vocab.txt will be dumped, but "
+"configs/my_config.json or models/bert1225 will not."
+msgstr ""
+"在这个例子中，assets/vocab.txt 会被打包，但是 configs/my_config.json 和 models/bert1225 "
+"不会。"
+
+#: ../../source/tutorial_doc/trace.rst:90
+msgid ""
+"It is because that we have only one op in pipeline, which is MyOperator, "
+"and only vocab_fn, which is \"assets/vocab.txt\" is a valid file path. "
+"CONFIG_FN is a global variable, we havn't detected such paths used in "
+"__init__() function. As for model_name, we build a path in the __init__()"
+" function, but the value of the parameter is only \"bert1225\", which is "
+"not a valid path(the valid path should be \"models/bert1225\")."
+msgstr ""
+"这主要是因为在 Trace 时 MyOperator.__init__ 参数中，只有 vocab_fn "
+"被赋值为一个有效的文件路径，CONFIG_FN 是一个全局变量，并不会分析它, model_name "
+"初始值并不是一个有效路径，因此这两个都不会被打包。"
+
+#: ../../source/tutorial_doc/trace.rst:92
+msgid ""
+"In a word, we will detect the parameters with type of str, list and "
+"dict(recursively). The parameters should be in the __init__() function of"
+" ops. If the parameter is a valid file path, we'll dump it."
+msgstr "简而言之，我们会分析 Op.__init__ 的参数，如果是字符串类型，并且是一个有效的路径，则会打包。"
+
+#: ../../source/tutorial_doc/trace.rst:97
 msgid "Integration Examples"
 msgstr "集成样例"
 
