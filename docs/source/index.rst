@@ -8,7 +8,32 @@ Welcome to Matxscript's documentation!
 
 Introduction
 --------------------------------------
-MATXScript is an AOT (ahead of time) compiler. By automatically compiling a subset of Python into C++, MATXScript unifies deep learning model training including data preprocessing and postprocessing using Python and deployment using C++. 
+MATXScript(Matx) is a high-performance, extensible Python AOT compiler that compiles Python class/function to C++ without any runtime overhead.
+Typical speedups over Python are on the order of 10-100x. Matx supports pmap which can lead to speedups many times higher still.
+Currently matx is widely used in Bytedance. Including: 1) Unify the training and inference for deep learning; 2) Accelerate some offline MapReduce tasks; 3) Provide flexibility for some C++ engines, etc.
+
+
+A Quick Example
+--------------------------------------
+
+.. code:: python
+    import matx
+    import timeit
+
+    def fib(n: int) -> int:
+        if n <= 1:
+            return n
+        else:
+            return fib(n - 1) + fib(n - 2)
+
+
+    if __name__ == '__main__':
+        fib_script = matx.script(fib)
+
+        # test on Macbook with m1 chip
+        print(f'Python execution time: {timeit.timeit(lambda: fib(30), number=10)}s')  # 1.59s
+        print(f'Matx execution time: {timeit.timeit(lambda: fib_script(30), number=10)}s') # 0.03s
+
 
 .. toctree::
    :maxdepth: 1
