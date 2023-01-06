@@ -22,9 +22,9 @@ Note that we import various types from Python typing module as Matx enforces typ
 *********************************
 2. Constructing Op
 *********************************
-An operation (Op) is a class or a function. 
+An operation (Op) can be a class method or a function.
 
-.. code-block:: python3
+.. code-block:: python
 
     class Text2Ids:
         def __init__(self, texts: List[str]) -> None:
@@ -35,11 +35,11 @@ An operation (Op) is a class or a function.
         def lookup(self, words: List[str]) -> List[int]:
             return [self.table.get(word, -1) for word in words]
 
-.. code-block:: python3
+.. code-block:: python
 
     op = Text2Ids(["hello", "world"])
     examples = "hello world unknown".split()
-    ret = op(examples)
+    ret = op.lookup(examples)
     print(ret)
     # should print out [0, 1, -1]
 
@@ -47,10 +47,10 @@ An operation (Op) is a class or a function.
 3. Script
 *********************************
 
-.. code-block:: python3
+.. code-block:: python
 
-    script_op = matx.script(Text2Ids)(["hello", "world"])
-    ret = script_op(examples)
+    cpp_text2id = matx.script(Text2Ids)(["hello", "world"])
+    ret = cpp_text2id.lookup(examples)
     print(ret)
     # should print out [0, 1, -1]
 
@@ -58,10 +58,10 @@ An operation (Op) is a class or a function.
 4. Trace
 *********************************
 
-.. code-block:: python3
+.. code-block:: python
 
     def wrapper(inputs):
-        return script_op(inputs)
+        return cpp_text2id.lookup(inputs)
 
     # trace and save
     traced = matx.trace(wrapper, examples)

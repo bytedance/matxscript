@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Matxscript \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-20 16:33-0800\n"
+"POT-Creation-Date: 2023-01-06 19:25+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,26 +29,48 @@ msgstr "功能"
 msgid ""
 "matx.script is used to compile Python function/class into corresponding "
 "C++ function/class."
-msgstr "通过matx.script可以将用Python的类/函数翻译成 C++，并提供统一接口，以op的形式集成到整体 pipeline。"
+msgstr "通过 matx.script 可以将 Python 的类/函数翻译成 C++ 对应的实现，并提供统一接口，以 Op 的形式集成到整体流程中。"
 
 #: ../../source/tutorial_doc/script.rst:14
+msgid "Python, Matx"
+msgstr ""
+
+#: ../../source/tutorial_doc/script.rst:14
+msgid "Matx"
+msgstr ""
+
+#: ../../source/tutorial_doc/script.rst:16
+msgid "function"
+msgstr "函数"
+
+#: ../../source/tutorial_doc/script.rst:16
+msgid "Op"
+msgstr ""
+
+#: ../../source/tutorial_doc/script.rst:18
+msgid "class"
+msgstr "类"
+
+#: ../../source/tutorial_doc/script.rst:18
+msgid "Object(Every Method is an Op)"
+msgstr "Object(每个成员函数都是一个 Op)"
+
+#: ../../source/tutorial_doc/script.rst:24
 msgid "Usage"
 msgstr "使用方式"
 
-#: ../../source/tutorial_doc/script.rst:15
+#: ../../source/tutorial_doc/script.rst:25
 msgid ""
-"Note that we enforce type annotation of the class members and signatures "
-"of the functions."
-msgstr "注意：所有的类的成员变量和函数的声明需要强制类型标注（python的typing的link）具体请参照编程规范（link to 编程规范）"
+"Note that we enforce `type annotation "
+"<https://docs.python.org/3.8/library/typing.html>`_ of the class members "
+"and signatures of the functions."
+msgstr "注意：所有的类的成员变量和函数的声明需要强制 `类型标注 <https://docs.python.org/3.8/library/typing.html>`_"
 
-#: ../../source/tutorial_doc/script.rst:19
+#: ../../source/tutorial_doc/script.rst:29
 msgid "Example 1"
 msgstr "案例一"
 
-#: ../../source/tutorial_doc/script.rst:42
+#: ../../source/tutorial_doc/script.rst:52
 msgid "Example 2"
 msgstr "案例二"
-
-#~ msgid "Usage  :meth:`matx.script`"
-#~ msgstr "使用方式"
 

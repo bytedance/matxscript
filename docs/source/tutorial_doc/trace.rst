@@ -7,15 +7,17 @@ Trace
 Objective
 ************************************************
 
-Trace can conviencelly pack training code written in Python to a format that matx c++ interface can recognize and use for online inference. It records the execution process of given Python code and saves it as a graph on disk. 
+Trace can conveniently record the execution process of Python code
+and then generate a Graph which can be saved on disk.
+In this way, it is very convenient to distribute and deploy to any place for execution.
 
 ************************************************
 What does trace record
 ************************************************
 
-| Trace depends on the execution of the code, so only code executed during the trace process is recoreded.
+| Trace depends on the execution of the Python, so only the code executed during the trace process is recorded.
 
-* For now, only the Op Call Graph is saved.
+* For now, only the Matx-Op Calls are recorded normally and other statements will be as constants.
 * Only the if-branch executed during trace is recorded.
 * For/While is unrolled based on the given input during trace. Usually, this causes bugs.
 * Code after return is discarded.
@@ -23,19 +25,19 @@ What does trace record
 ************************************************
 Restrictions on design pattern
 ************************************************
-To use trace without potential bugs, users need to follow the restrctions below:
+To use trace without potential bugs, users need to follow the restrictions below:
 
-Modular design the pipeline. Each module is an operator.
-====================================================================
-Take text classification task as an example. Tokenization can be designed  as an operator. One-hot encoding can be another operator. 
+- **Modular design the pipeline. Each module is an operator.**
 
-Organize operators in your pipeline into a DAG
-====================================================================
-Every rectangle in the following chart is considered an Op.
+   Take text classification task as an example. Tokenization can be designed  as an operator. One-hot encoding can be another operator.
 
-Operators can be implemented in C++ or Python
-====================================================================
-For operators implemented in Python. It needs matx.script to be able to use in trace. Please refer to Script chapter.
+- **Organize operators in your pipeline into a DAG**
+
+   Every rectangle in the following chart is considered an Op.
+
+- **Operators can be implemented in C++ or Python**
+
+   For operators implemented in Python. It needs matx.script to be able to use in trace. Please refer to Script chapter.
 
 ************************************************
 Third party library support.
@@ -47,12 +49,13 @@ How do we capture the local files?
 ************************************************
 Matxscript can dump the local files used to initialize the ops into the model directory during tracing, and modify the corresponding path parameters, so that you can successfully load the matxscript model under any path without manually packaging and deploying these files. This brings great convenience for deploying models on server clusters.
 
-Which files will be dumped?
-====================================================================
-We only trace the files appeared in the initalizing parameters. For example,
+- **Which files will be dumped?**
 
 
-.. code-block:: python3
+We only trace the files appeared in the initializing parameters. For example,
+
+
+.. code-block:: python
 
    import matx
    from typing import Any

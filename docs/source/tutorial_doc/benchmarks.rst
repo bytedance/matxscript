@@ -1,7 +1,7 @@
 .. performance
 
 ######################
-Performance
+Benchmark
 ######################
 
 to be done
