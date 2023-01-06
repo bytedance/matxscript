@@ -51,6 +51,10 @@ echo > ChangeLog
 make -j 8
 make install
 
+if [ "$(uname)" == "Darwin" ]; then
+  install_name_tool -id libpcre.1.dylib ${PCRE_INSTALL_PATH}/lib/libpcre.1.dylib
+fi
+
 # build pcre
 #PCRE_CMAKE_FLAGS=" \
 #-DCMAKE_INSTALL_PREFIX=${PCRE_INSTALL_PATH} \
