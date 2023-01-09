@@ -30,7 +30,7 @@
 namespace matxscript {
 namespace runtime {
 
-MATX_REGISTER_NATIVE_OP(InterpreterOp);
+MATX_REGISTER_NATIVE_OP(InterpreterOp).SetThreadSafety(false);
 
 string_view InterpreterOp::OpCode2Str(int op_code) {
   if (op_code < int(OpCode::OP_CODE_BEGIN) || op_code >= int(OpCode::OP_CODE_END)) {
