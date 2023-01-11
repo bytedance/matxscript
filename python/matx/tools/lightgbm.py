@@ -65,9 +65,7 @@ class LGBMPredictor:
     def eval(self, data: List[float]) -> float:
         # Can't be compiled
         # flat_data: FTList[float] = list(data)
-        flat_data: FTList[float] = []
-        for v in data:
-            flat_data.append(v)
+        flat_data: FTList[float] = [v for v in data]
         s = 0.0
         for tree in self.trees:
             node = 0
