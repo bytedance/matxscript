@@ -52,6 +52,7 @@ make -j 8
 make install
 
 if [ "$(uname)" == "Darwin" ]; then
+  ln -s ${PCRE_INSTALL_PATH}/lib/libpcre.1.dylib ${PCRE_INSTALL_PATH}/../libpcre.1.dylib
   install_name_tool -id libpcre.1.dylib ${PCRE_INSTALL_PATH}/lib/libpcre.1.dylib
 fi
 
