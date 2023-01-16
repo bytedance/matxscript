@@ -380,6 +380,10 @@ def script(compiling_obj, *, share=True, toolchain=None, bundle_args=None):
         raise ValueError('Unsupported build_type: {}'.format(result.build_type))
 
 
+def inductor(compiling_obj, *, share=True, toolchain=None, bundle_args=None):
+    pass
+
+
 def make_session(compiling_obj, method='__call__'):
     from . import pipeline
 
