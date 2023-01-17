@@ -210,6 +210,8 @@ class Module(object):
 
         assert self.type_key == "c"
 
+        breakpoint()
+
         modules = self._collect_dso_modules()
         files = addons if addons else []
         is_system_lib = False

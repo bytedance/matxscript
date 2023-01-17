@@ -30,7 +30,6 @@ from . import text
 from . import vision
 from . import tools
 
-
 # APIs
 __all__ = [
     # functions
@@ -350,6 +349,10 @@ def script(compiling_obj, *args, backend=None, **kwargs):
         elif extension.tensorflow.check(compiling_obj):
             return extension.tensorflow.script(compiling_obj, *args, **kwargs)
         return toolchain.script(compiling_obj, *args, **kwargs)
+
+
+def inductor(compiling_obj, example_inputs, **kwargs):
+    return toolchain.inductor(compiling_obj, example_inputs, **kwargs)
 
 
 def script_embedded_class(code, is_path=False):

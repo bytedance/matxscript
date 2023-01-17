@@ -93,9 +93,16 @@ def find_sys_cc_path():
         raise RuntimeError("win32 is not supported")
     elif sys.platform.startswith('darwin'):
         # maybe we can use clang++
-        cc_bin = "g++"
+        # prioritized compiler defined in CXX
+        if 'CXX' in os.environ:
+            cc_bin = os.environ['CXX']
+        else:
+            cc_bin = "g++"
     else:
-        cc_bin = "g++"
+        if 'CXX' in os.environ:
+            cc_bin = os.environ['CXX']
+        else:
+            cc_bin = "g++"
     return cc_bin
 
 

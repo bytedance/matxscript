@@ -22,6 +22,7 @@ from queue import Queue
 from matx._typed_ast import ast
 from .class_context import ClassContext
 from .function_context import FunctionContext
+from .inductor_context import InductorContext
 from ... import ir as _ir
 
 
@@ -49,7 +50,7 @@ class ASTNode:
         self.raw: Optional[type] = None
         self.span: Span = Span()
         self.ast: Optional[ast.AST] = None
-        self.context: Union[ClassContext, FunctionContext, None] = None
+        self.context: Union[ClassContext, FunctionContext, InductorContext, None] = None
         self.module: Optional[ModuleInfo] = None
         self.deps: Optional[List[ASTNode]] = None
         self.ir_schema = None

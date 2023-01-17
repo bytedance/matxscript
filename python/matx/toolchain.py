@@ -40,6 +40,7 @@ LIB_PATH = os.environ.get('MATX_DSO_DIR', 'dso')
 USE_SO_CACHE = os.environ.get('MATX_USE_SO_CACHE', '').lower() != 'false'
 
 DISABLE_SCRIPT = os.environ.get('MATX_DISABLE_SCRIPT', '').lower() == 'true'
+DISABLE_INDUCTOR = os.environ.get('MATX_DISABLE_INDUCTOR', '').lower() == 'true'
 DISABLE_GENERATE_CC = os.environ.get('MATX_DISABLE_GENERATE_CC', '').lower() == 'true'
 FLAG_COMPILED_OBJECT = object()
 
@@ -296,7 +297,7 @@ def toolchain_build(sc_ctx: context.ScriptContext, toolchain: ToolChain):
         sc_ctx.dso_path = (sc_ctx.dso_path[0], so_path)
 
 
-def build_dso(sc_ctx: context.ScriptContext, use_toolchain=False):
+def build_dso(sc_ctx: context.ScriptContext, use_toolchain=False, compile_options=None):
     rt_mod = sc_ctx.rt_module
     main_node_name = sc_ctx.main_node.context.name
     base_path = path_prefix(sc_ctx)
@@ -305,12 +306,16 @@ def build_dso(sc_ctx: context.ScriptContext, use_toolchain=False):
         sopath = base_path + '.so'
         sopath_cxx11 = base_path + '_cxx11.so'
 
+        # TODO: need to unify the compile options
         base_options = [
             "-std=c++14",
             "-O3",
             "-g",
             "-fdiagnostics-color=always",
             "-Werror=return-type"]
+        if compile_options is not None:
+            assert isinstance(compile_options, List)
+            base_options.extend(compile_options)
         cxx11_with_abi_options = base_options + ["-D_GLIBCXX_USE_CXX11_ABI=1"]
         cxx11_no_abi_options = base_options + ["-D_GLIBCXX_USE_CXX11_ABI=0"]
         sys_cc_path = contrib.cc.find_sys_cc_path()
@@ -380,8 +385,40 @@ def script(compiling_obj, *, share=True, toolchain=None, bundle_args=None):
         raise ValueError('Unsupported build_type: {}'.format(result.build_type))
 
 
-def inductor(compiling_obj, *, share=True, toolchain=None, bundle_args=None):
-    pass
+def inductor(compiling_obj, example_inputs, *, share=True, toolchain=None, bundle_args=None):
+    if DISABLE_SCRIPT:
+        return compiling_obj
+
+    from matx.inductor import from_source
+
+    result: context.ScriptContext = from_source(compiling_obj, example_inputs)
+
+    # TODO: get Pytorch additional compiler flags. Hardcode here for mvp
+    torch_compiler_options = [
+        '-I/Users/bytedance/miniforge3/envs/inductor/lib/python3.10/site-packages/torch/include',
+        '-I/Users/bytedance/miniforge3/envs/inductor/lib/python3.10/site-packages/torch/include/torch/csrc/api/include',
+        '-I/Users/bytedance/miniforge3/envs/inductor/lib/python3.10/site-packages/torch/include/TH',
+        '-I/Users/bytedance/miniforge3/envs/inductor/lib/python3.10/site-packages/torch/include/THC',
+        '-I/Users/bytedance/miniforge3/envs/inductor/include/python3.10',
+        '-lgomp',
+        '-march=native',
+        '-ffast-math',
+        '-fno-finite-math-only',
+        '-fopenmp',
+        '-DC10_USING_CUSTOM_GENERATED_MACROS'
+    ]
+
+
+    build_dso(result, toolchain is not None, compile_options=torch_compiler_options)
+    if toolchain is not None:
+        toolchain_build(result, toolchain)
+
+    if result.build_type is context.BuildType.FUNCTION:
+        return make_jit_op_creator(result, share, bundle_args=bundle_args)()
+    elif result.build_type is context.BuildType.JIT_OBJECT:
+        return make_jit_object_creator(result, share, bundle_args=bundle_args)
+    else:
+        raise ValueError('Unsupported build_type: {}'.format(result.build_type))
 
 
 def make_session(compiling_obj, method='__call__'):

@@ -16,3 +16,13 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+
+
+class InductorContext(object):
+    def __init__(self,
+                 fn_name: str = '<unknown>', ):
+        self.fn_name = fn_name
+
+    @property
+    def name(self):
+        return self.fn_name
