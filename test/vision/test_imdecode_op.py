@@ -21,7 +21,7 @@ import unittest
 import os
 import cv2
 import matx
-from matx.vision import ImdecodeOp, SYNC_CPU
+from matx.vision import ImdecodeOp, SYNC_CPU, ImdecodeNoExceptionOp
 import numpy as np
 os.environ["MATX_NUM_GTHREADS"] = "1"
 script_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
@@ -33,10 +33,18 @@ class TestImdecodeOp(unittest.TestCase):
             script_path, '..', 'data', 'origin_image.jpeg')
         self.image_file2 = os.path.join(
             script_path, '..', 'data', 'example.jpeg')
+        self.image_file3 = os.path.join(
+            script_path, '..', 'data', 'exif_orientation5.jpg')
         with open(self.image_file1, "rb") as fd:
             self.image_content1 = fd.read()
         with open(self.image_file2, "rb") as fd:
             self.image_content2 = fd.read()
+        with open(self.image_file3, "rb") as fd:
+            self.image_content3 = fd.read()
+        self.no_jpeg_file = os.path.join(
+            script_path, "..", "data", "origin_image.sm.webp")
+        with open(self.no_jpeg_file, "rb") as fd:
+            self.no_jpeg_content = fd.read()
         self.device = matx.Device("cpu")
 
     def test_BGR(self):
@@ -87,6 +95,40 @@ class TestImdecodeOp(unittest.TestCase):
         self._helper(r[1], cv_out2)
         self._helper(r[2], cv_out1)
 
+    def test_noexception(self):
+        op = ImdecodeNoExceptionOp(self.device, "BGR")
+        r, flags = op([self.image_content1, self.image_content2,
+                       self.image_content1, self.no_jpeg_content,
+                       self.image_content3])
+        cv_out1 = cv2.imread(self.image_file1)
+        cv_out2 = cv2.imread(self.image_file2)
+        cv_out3 = cv2.imread(self.image_file3)
+        cv_nojpeg = cv2.imread(self.no_jpeg_file)
+        self._helper(r[0], cv_out1)
+        self._helper(r[1], cv_out2)
+        self._helper(r[2], cv_out1)
+        # self._helper(r[4], cv_out3) # do not check exif for now
+        # test fall back to cpu
+        self.assertEqual(np.sum(r[3].asnumpy() - cv_nojpeg), 0)
+        self.assertSequenceEqual([1] * 5, flags)
+
+    def test_noexception2(self):
+        op = ImdecodeNoExceptionOp(self.device, "BGR")
+        content = b'\xe4\xb8\xaa\xe4\xbd\x93\xe5\xaf\xbf\xe5\x91\xbd\xe7\x9a\x84\xe5\xbb\xb6\xe9\x95\xbf\xe6\x98\xaf\xe6\x96\x87\xe6\x98\x8e\xe6\xad\xa5\xe5\x85\xa5\xe8\x80\x81\xe5\xb9\xb4\xe7\x9a\x84\xe7\xac\xac\xe4\xb8\x80\xe4\xb8\xaa\xe6\xa0\x87\xe5\xbf\x97'
+        images, flags = op([self.image_content1, content])
+        cv_out1 = cv2.imread(self.image_file1)
+        self._helper(images[0], cv_out1)
+        self.assertSequenceEqual([1, 0], flags)
+
+    def test_noexception3(self):
+        op = ImdecodeNoExceptionOp(self.device, "BGR")
+        content = b'\xe4\xb8\xaa\xe4\xbd\x93\xe5\xaf\xbf\xe5\x91\xbd\xe7\x9a\x84\xe5\xbb\xb6\xe9\x95\xbf\xe6\x98\xaf\xe6\x96\x87\xe6\x98\x8e\xe6\xad\xa5\xe5\x85\xa5\xe8\x80\x81\xe5\xb9\xb4\xe7\x9a\x84\xe7\xac\xac\xe4\xb8\x80\xe4\xb8\xaa\xe6\xa0\x87\xe5\xbf\x97'
+        images, flags = op([self.image_content1, content, content, self.image_content1, self.image_content1,
+                           self.image_content1, self.image_content1, content, content, self.image_content1, content,])
+        cv_out1 = cv2.imread(self.image_file1)
+        self._helper(images[0], cv_out1)
+        self.assertSequenceEqual([1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0], flags)
+
     def _helper(self, nd_out, cv_out):
         self.assertEqual(np.sum(nd_out.asnumpy() - cv_out), 0)
 
@@ -96,3 +138,4 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
     unittest.main()
+

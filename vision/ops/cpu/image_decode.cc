@@ -65,15 +65,24 @@ class ImageDecodeTask : public internal::LockBasedRunnable {
   ImageDecodeTask(DecodeFunction* decode_func,
                   List::iterator input_first,
                   List::iterator output_first,
-                  int len)
-      : decode_func_(decode_func), input_it_(input_first), output_it_(output_first), len_(len) {
+                  int len,
+                  int offset,
+                  List* flags = nullptr)
+      : decode_func_(decode_func),
+        input_it_(input_first),
+        output_it_(output_first),
+        len_(len),
+        offset_(offset),
+        flags_(flags),
+        no_throw_(flags != nullptr) {
   }
 
   static std::vector<internal::IRunnablePtr> build_tasks(DecodeFunction* decode_func_,
                                                          List::iterator input_first,
                                                          List::iterator output_first,
                                                          int len,
-                                                         int thread_num);
+                                                         int thread_num,
+                                                         List* flags = nullptr);
 
  protected:
   void RunImpl() override;
@@ -83,11 +92,24 @@ class ImageDecodeTask : public internal::LockBasedRunnable {
   List::iterator input_it_;
   List::iterator output_it_;
   int len_;
+  int offset_;
+  List* flags_;
+  const bool no_throw_;
 };
 
 void ImageDecodeTask::RunImpl() {
   for (int i = 0; i < len_; ++i) {
-    *(output_it_ + i) = (*decode_func_)((input_it_ + i)->As<string_view>());
+    if (no_throw_) {
+      try {
+        *(output_it_ + i) = (*decode_func_)((input_it_ + i)->As<string_view>());
+      } catch (...) {
+        flags_->set_item(offset_ + i, false);
+        continue;
+      }
+      flags_->set_item(offset_ + i, true);
+    } else {
+      *(output_it_ + i) = (*decode_func_)((input_it_ + i)->As<string_view>());
+    }
   }
 }
 
@@ -95,13 +117,14 @@ std::vector<internal::IRunnablePtr> ImageDecodeTask::build_tasks(DecodeFunction*
                                                                  List::iterator input_first,
                                                                  List::iterator output_first,
                                                                  int len,
-                                                                 int thread_num) {
+                                                                 int thread_num,
+                                                                 List* flags) {
   std::vector<internal::IRunnablePtr> ret;
   if (len <= thread_num) {
     ret.reserve(len);
     for (int i = 0; i < len; ++i) {
-      ret.emplace_back(
-          std::make_shared<ImageDecodeTask>(decode_func, input_first + i, output_first + i, 1));
+      ret.emplace_back(std::make_shared<ImageDecodeTask>(
+          decode_func, input_first + i, output_first + i, 1, i, flags));
     }
     return ret;
   }
@@ -109,17 +132,20 @@ std::vector<internal::IRunnablePtr> ImageDecodeTask::build_tasks(DecodeFunction*
   ret.reserve(thread_num);
   int step = len / thread_num;
   int remainder = len % thread_num;
+  int curr_offset = 0;
   for (int i = 0; i < remainder; ++i) {
-    ret.emplace_back(
-        std::make_shared<ImageDecodeTask>(decode_func, input_first, output_first, step + 1));
+    ret.emplace_back(std::make_shared<ImageDecodeTask>(
+        decode_func, input_first, output_first, step + 1, curr_offset, flags));
     input_first += step + 1;
     output_first += step + 1;
+    curr_offset += step + 1;
   }
   for (int i = remainder; i < thread_num; ++i) {
-    ret.emplace_back(
-        std::make_shared<ImageDecodeTask>(decode_func, input_first, output_first, step));
+    ret.emplace_back(std::make_shared<ImageDecodeTask>(
+        decode_func, input_first, output_first, step, curr_offset, flags));
     input_first += step;
     output_first += step;
+    curr_offset += step;
   }
   return ret;
 }
@@ -142,14 +168,17 @@ class VisionImdecodeOpCPU : public VisionBaseOpCPU {
     }
   }
 
-  RTValue process(const List& images) {
+  RTValue process(const List& images, List* flags = nullptr) {
     cv::setNumThreads(0);
     if (images.size() == 0) {
       return List();
     }
+    if (flags != nullptr) {
+      flags->resize(images.size());
+    }
     List ret(images.size(), None);
     auto tasks = ImageDecodeTask::build_tasks(
-        &decode_func_, images.begin(), ret.begin(), images.size(), thread_num_ + 1);
+        &decode_func_, images.begin(), ret.begin(), images.size(), thread_num_ + 1, flags);
 
     for (size_t i = 1; i < tasks.size(); ++i) {
       thread_pool_->Enqueue(tasks[i], 0);
@@ -189,6 +218,24 @@ MATX_REGISTER_NATIVE_OBJECT(VisionImdecodeOpCPU)
                                 << args.size();
       return reinterpret_cast<VisionImdecodeOpCPU*>(self)->process(
           args[0].AsObjectView<List>().data());
+    });
+
+using VisionImdecodeNoExceptionOpCPU = VisionImdecodeOpCPU;
+MATX_REGISTER_NATIVE_OBJECT(VisionImdecodeNoExceptionOpCPU)
+    .SetConstructor([](PyArgs args) -> std::shared_ptr<void> {
+      // only use two arguments, args[1] is decoder pool size, with is only used in gpu
+      MXCHECK(args.size() == 3) << "[VisionImdecodeNoExceptionOpCPU] Expect 3 arguments but get "
+                                << args.size();
+      return std::make_shared<VisionImdecodeNoExceptionOpCPU>(args[2], args[0].As<unicode_view>());
+    })
+    .RegisterFunction("process", [](void* self, PyArgs args) -> RTValue {
+      MXCHECK(args.size() == 2)
+          << "[VisionImdecodeNoExceptionOpCPU][func: process] Expect 2 arguments but get "
+          << args.size();
+      List flags;
+      auto ret = reinterpret_cast<VisionImdecodeNoExceptionOpCPU*>(self)->process(
+          args[0].AsObjectView<List>().data(), &flags);
+      return Tuple({ret, flags});
     });
 
 class VisionImdecodeGeneralOp : public VisionBaseOp {
