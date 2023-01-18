@@ -22,6 +22,9 @@ class InductorContext(object):
     def __init__(self,
                  fn_name: str = '<unknown>', ):
         self.fn_name = fn_name
+        self.unbound_name = fn_name
+        self.return_type = None
+        self.arg_types = {}  # Deferred?
 
     @property
     def name(self):

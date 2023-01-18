@@ -37,6 +37,13 @@ def from_source(compiling_obj: type, example_inputs: List[torch.Tensor]) -> cont
         build_module = _ffi.get_global_func("embedded.build.c")
         sc_ctx.rt_module = build_module(code.encode())
 
+        # set args types. # TODO: hardcode for now
+        from .. import ir
+        sc_ctx.main_node.context.arg_types = dict(
+            a=ir.type.NDArrayType(),
+            b=ir.type.NDArrayType()
+        )
+
         return sc_ctx
     except BaseException as e:
         if MATX_DEV_MODE:
