@@ -2,7 +2,7 @@ import inspect
 from typing import List
 
 import torch
-from torch_compiler.manual_codegen import extract_inductor_code, matx_cpp_code_format
+from matx.torch_compiler.codegen import extract_inductor_code, matx_cpp_code_format
 
 from matx.env import MATX_DEV_MODE
 from matx.script import context

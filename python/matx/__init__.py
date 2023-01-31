@@ -351,8 +351,20 @@ def script(compiling_obj, *args, backend=None, **kwargs):
         return toolchain.script(compiling_obj, *args, **kwargs)
 
 
-def inductor(compiling_obj, example_inputs, **kwargs):
-    return toolchain.inductor(compiling_obj, example_inputs, **kwargs)
+def inductor(example_inputs, **kwargs):
+    """
+
+    Args:
+        example_inputs: any nested structure of torch.Tensor that passed into the kernel
+        **kwargs: other keyword arguments passed into toolchain.inductor
+
+    Returns: a wrapper that compiles the compiling_obj into a JIT FUNCTION
+
+    """
+    def inner_inductor(compiling_obj):
+        return toolchain.inductor(compiling_obj, example_inputs, **kwargs)
+
+    return inner_inductor
 
 
 def script_embedded_class(code, is_path=False):
