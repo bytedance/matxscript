@@ -5,7 +5,7 @@ import torch
 
 
 @matx.inductor(example_inputs=[torch.randn(5), torch.randn(5)])
-def kernel(a: matx.NDArray, b: matx.NDArray):
+def add_relu(a: matx.NDArray, b: matx.NDArray):
     c = a + b
     c = torch.nn.functional.relu(c)
     return c,
@@ -23,7 +23,7 @@ def add_json(a: str, b: str) -> str:
     b_tensor = matx.NDArray(arr=b_list, shape=[5], dtype='float32')
     c_tensor = matx.NDArray(arr=b_list, shape=[5], dtype='float32')
 
-    kernel(a_tensor, b_tensor, c_tensor)
+    add_relu(a_tensor, b_tensor, c_tensor)
 
     result_lst = c_tensor.tolist()
 

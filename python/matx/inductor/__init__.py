@@ -12,8 +12,8 @@ from matx.toolchain import path_prefix
 def from_source(compiling_obj: type, example_inputs: List[torch.Tensor]) -> context.ScriptContext:
     try:
 
-        code = extract_inductor_code(compiling_obj, example_inputs)
-        code = matx_cpp_code_format(code)
+        code, kernel_name = extract_inductor_code(compiling_obj, example_inputs)
+        code = matx_cpp_code_format(code, kernel_name)
 
         sc_ctx = context.ScriptContext()
         sc_ctx.build_type = context.BuildType.FUNCTION

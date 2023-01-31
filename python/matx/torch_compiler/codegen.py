@@ -35,7 +35,7 @@ def generate_ndarray_arg_cast(arg_name, arg_index, dtype, message='TODO'):
 
 def get_c_api(kernel_name: str, args: List[cpp_parse.CPPArg], has_return_value) -> str:
     template_with_return = '''
-int kernel__c_api(MATXScriptAny* args, int num_args, MATXScriptAny* out_ret_value, void* resource_handle = nullptr)
+int {}__c_api(MATXScriptAny* args, int num_args, MATXScriptAny* out_ret_value, void* resource_handle = nullptr)
 {{
   TArgs args_t(args, num_args);
 
@@ -63,7 +63,7 @@ int kernel__c_api(MATXScriptAny* args, int num_args, MATXScriptAny* out_ret_valu
 }}
 '''
     template_without_return = '''
-int kernel__c_api(MATXScriptAny* args, int num_args, MATXScriptAny* out_ret_value, void* resource_handle = nullptr)
+int {}__c_api(MATXScriptAny* args, int num_args, MATXScriptAny* out_ret_value, void* resource_handle = nullptr)
 {{
   TArgs args_t(args, num_args);
 
@@ -115,7 +115,7 @@ int kernel__c_api(MATXScriptAny* args, int num_args, MATXScriptAny* out_ret_valu
     pos_arg_cast = (',' + pos_arg_cast_indentation).join(pos_arg_cast_lst)
     args_t_cast = (',' + args_t_cast_indentation).join(args_t_cast_lst)
 
-    return template.format(num_args, arg_names_concat_str, kernel_name, num_args, num_args, kernel_name,
+    return template.format(kernel_name, num_args, arg_names_concat_str, kernel_name, num_args, num_args, kernel_name,
                            pos_arg_cast, kernel_name_indentation, num_args, kernel_name,
                            args_t_cast, kernel_name_indentation)
 
@@ -152,7 +152,7 @@ def extract_cpp_code(code: str):
     return code.split("'''")[1][1:-1]
 
 
-def matx_cpp_code_format(code: str) -> str:
+def matx_cpp_code_format(code: str, kernel_name: str) -> str:
     code = extract_cpp_code(code)
     # split include and kernel code
     first_newline_idx = code.find('\n')
@@ -168,6 +168,8 @@ def matx_cpp_code_format(code: str) -> str:
     kernel_body_str = kernel_code_str[first_open_bracket:]
 
     kernel_declaration = cpp_parse.parse_cpp_declaration(kernel_declaration_str)
+    # TODO: remove this hack after port to C++ codegen
+    kernel_declaration.func_name = kernel_name
 
     kernel_declaration_without_default = copy.deepcopy(kernel_declaration)
     kernel_declaration_without_default.append_arg(SESSION_HANLDER)
@@ -258,4 +260,10 @@ def extract_inductor_code(kernel, example_inputs):
     compile_fx.compile_fx(model, example_inputs_=example_inputs, inner_compile=compile_fx_inner_cpu)
 
     code = fake_callable.code
-    return code
+
+    # By default, Pytorch compiles a Python module with all the C++ kernel with unified name kernel.
+    # The actual kernel name should be kernel.__name__.
+    # TODO: fix this after rewriting inductor codegen to all C++ instead of a Python module
+    kernel_name = kernel.__name__
+
+    return code, kernel_name
