@@ -27,6 +27,7 @@
 #include "matxscript/runtime/container/enumerate.h"
 #include "matxscript/runtime/container/generic_enumerate.h"
 #include "matxscript/runtime/container/generic_zip.h"
+#include "matxscript/runtime/container/ndarray_helper.h"
 #include "matxscript/runtime/ft_container.h"
 #include "matxscript/runtime/generator/generator.h"
 #include "matxscript/runtime/generator/generator_ref.h"
