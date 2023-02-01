@@ -35,6 +35,7 @@ MAGIC_NUMBER = '2_71828182846'
 
 MATX_INCLUDE = '''
 #include "matxscript/runtime/codegen_all_includes.h"
+#include "matxscript/runtime/container/ndarray_helper.h"
 #include <math.h>
 
 using namespace ::matxscript::runtime;
@@ -250,7 +251,7 @@ def generate_kernel_wrapper_body(kernel_declaration: cpp_parse.CPPDeclaration,
     delimiter = ',\n' + ' ' * 10
     kernel_invoke_param_str = delimiter.join(kernel_invoke_param)
     kernel_invoke_str = kernel_declaration.func_name + '(' + '\n' + ' ' * num_space + \
-                        kernel_invoke_param_str + '\n' + ')' + '\n'
+                        kernel_invoke_param_str + '\n' + ');' + '\n'
 
     # step 3: return output as a Tuple
     return_str = generate_kernel_wrapper_return(fake_output)
@@ -269,7 +270,7 @@ def matx_cpp_code_format(code: str, kernel_name: str,
 
     include_code_str, kernel_code_str = split_include_kernel(code)
     # add matx include
-    include_code_str += MATX_INCLUDE
+    include_code_str = MATX_INCLUDE
 
     # extract kernel declaration
     kernel_declaration_str, kernel_body_str = split_declaration_body(kernel_code_str)
@@ -278,7 +279,7 @@ def matx_cpp_code_format(code: str, kernel_name: str,
     kernel_return_type = kernel_declaration.return_type.name
     assert kernel_return_type == 'void', f'The kernel return type must be void, Got {kernel_return_type}'
 
-    kernel_declaration.func_name += MAGIC_NUMBER
+    kernel_declaration.func_name += MAGIC_NUMBER  # TODO: currently, we simply add magic number to avoid conflict
     kernel_code_str = str(kernel_declaration) + kernel_body_str
 
     # here, we keep the original kernel and add a wrapper
@@ -291,14 +292,14 @@ def matx_cpp_code_format(code: str, kernel_name: str,
     kernel_wrapper_declaration_with_default.append_arg(SESSION_HANLDER_WITH_DEAFULT)
 
     # create all the declarations strings
-    function_declaration = [CREATE_NDARRAY_DECLARATION, str(kernel_wrapper_declaration_with_default),
+    function_declaration = [CREATE_NDARRAY_DECLARATION, str(kernel_wrapper_declaration_with_default) + ';',
                             str(kernel_declaration) + ';', get_c_api_declare(kernel_wrapper_declaration.func_name)]
 
     function_declaration_str = '\n\n'.join(function_declaration) + '\n'
 
     # create all the kernel implementation strings including
     # 1. create ndarray. 2. kernel wrapper, 3. kernel, 4. kernel-c-api
-    kernel_wrapper = str(kernel_wrapper_declaration) + kernel_wrapper_body
+    kernel_wrapper = str(kernel_wrapper_declaration_without_default) + kernel_wrapper_body
     kernel_c_api_impl_str = get_c_api(kernel_name=kernel_wrapper_declaration.func_name,
                                       args=kernel_wrapper_declaration.args,
                                       has_return_value=kernel_wrapper_declaration.return_type.name != 'void')
@@ -311,7 +312,7 @@ def matx_cpp_code_format(code: str, kernel_name: str,
     kernel_code_str = '\n\n'.join(kernel_code_str)
 
     # registration str
-    registration_code_str = get_registration_str(kernel_name=kernel_declaration.func_name)
+    registration_code_str = get_registration_str(kernel_name=kernel_wrapper_declaration.func_name)
 
     # final code
     final_code = [include_code_str, kernel_code_str, registration_code_str]

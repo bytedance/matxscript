@@ -2,23 +2,19 @@ import inspect
 from typing import List
 
 import torch
-from matx.torch_compiler.codegen import extract_inductor_code, matx_cpp_code_format
 
 from matx.env import MATX_DEV_MODE
 from matx.script import context
 from matx.toolchain import path_prefix
+from matx.torch_compiler.codegen import extract_inductor_code, matx_cpp_code_format
 
 
 def from_source(compiling_obj: type, example_inputs: List[torch.Tensor]) -> context.ScriptContext:
     try:
-
-        code, kernel_name = extract_inductor_code(compiling_obj, example_inputs)
-        code = matx_cpp_code_format(code, kernel_name)
-
+        # set sc_ctx attributes to be compatible with existing matx code
         sc_ctx = context.ScriptContext()
         sc_ctx.build_type = context.BuildType.FUNCTION
         sc_ctx.main_node.raw = compiling_obj
-        # set sc_ctx attributes to be compatible with existing matx code
         inductor_context = context.InductorContext(fn_name=compiling_obj.__name__)
         sc_ctx.main_node.context = inductor_context
         # set source code TODO: formatting source code
@@ -26,6 +22,18 @@ def from_source(compiling_obj: type, example_inputs: List[torch.Tensor]) -> cont
         # set filename. TODO: this is too hack
         frame = inspect.stack()[3]
         sc_ctx.main_node.span.file_name = frame[0].f_code.co_filename
+
+        # set args types.
+        from .. import ir
+
+        # TODO: currently, we only support argument as NDArray. We may support nested inputs later
+        signature = inspect.signature(compiling_obj)
+        for param in signature.parameters.values():
+            sc_ctx.main_node.context.arg_types[param.name] = ir.type.NDArrayType()
+
+        # compile the kernel and set the code
+        code, kernel_name, fake_output = extract_inductor_code(compiling_obj, example_inputs)
+        code = matx_cpp_code_format(code, kernel_name, example_inputs, fake_output)
 
         # export code
         path = path_prefix(sc_ctx)
@@ -36,13 +44,6 @@ def from_source(compiling_obj: type, example_inputs: List[torch.Tensor]) -> cont
         from .. import _ffi
         build_module = _ffi.get_global_func("embedded.build.c")
         sc_ctx.rt_module = build_module(code.encode())
-
-        # set args types. # TODO: hardcode for now
-        from .. import ir
-        sc_ctx.main_node.context.arg_types = dict(
-            a=ir.type.NDArrayType(),
-            b=ir.type.NDArrayType()
-        )
 
         return sc_ctx
     except BaseException as e:

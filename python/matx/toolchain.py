@@ -400,14 +400,13 @@ def inductor(compiling_obj, example_inputs, *, share=True, toolchain=None, bundl
         '-I/Users/bytedance/miniforge3/envs/inductor/lib/python3.10/site-packages/torch/include/TH',
         '-I/Users/bytedance/miniforge3/envs/inductor/lib/python3.10/site-packages/torch/include/THC',
         '-I/Users/bytedance/miniforge3/envs/inductor/include/python3.10',
-        '-lgomp',
-        '-march=native',
+        # '-lgomp',
+        # '-march=native',
         '-ffast-math',
         '-fno-finite-math-only',
-        '-fopenmp',
+        # '-fopenmp',
         '-DC10_USING_CUSTOM_GENERATED_MACROS'
     ]
-
 
     build_dso(result, toolchain is not None, compile_options=torch_compiler_options)
     if toolchain is not None:
@@ -415,8 +414,6 @@ def inductor(compiling_obj, example_inputs, *, share=True, toolchain=None, bundl
 
     if result.build_type is context.BuildType.FUNCTION:
         return make_jit_op_creator(result, share, bundle_args=bundle_args)()
-    elif result.build_type is context.BuildType.JIT_OBJECT:
-        return make_jit_object_creator(result, share, bundle_args=bundle_args)
     else:
         raise ValueError('Unsupported build_type: {}'.format(result.build_type))
 

@@ -1,10 +1,13 @@
 import json
 
+import numpy as np
+
 import matx
 import torch
 
 
-@matx.inductor(example_inputs=[torch.randn(5), torch.randn(5)])
+@matx.inductor(example_inputs=[torch.from_numpy(np.random.randn(5).astype(np.int32)),
+                               torch.from_numpy(np.random.randn(5).astype(np.int32))])
 def add_relu(a: matx.NDArray, b: matx.NDArray):
     c = a + b
     c = torch.nn.functional.relu(c)
@@ -19,11 +22,10 @@ def add_json(a: str, b: str) -> str:
     a_list = json.loads(a)
     b_list = json.loads(b)
 
-    a_tensor = matx.NDArray(arr=a_list, shape=[5], dtype='float32')
-    b_tensor = matx.NDArray(arr=b_list, shape=[5], dtype='float32')
-    c_tensor = matx.NDArray(arr=b_list, shape=[5], dtype='float32')
+    a_tensor = matx.NDArray(arr=a_list, shape=[5], dtype='int32')
+    b_tensor = matx.NDArray(arr=b_list, shape=[5], dtype='int32')
 
-    add_relu(a_tensor, b_tensor, c_tensor)
+    c_tensor = add_relu(a_tensor, b_tensor)[0]
 
     result_lst = c_tensor.tolist()
 
@@ -31,6 +33,11 @@ def add_json(a: str, b: str) -> str:
 
 
 if __name__ == '__main__':
+    a_tensor = matx.NDArray(arr=[1, 2, 3, 4, 5], shape=[5], dtype='int32')
+    b_tensor = matx.NDArray(arr=[6, 7, 8, 8, 10], shape=[5], dtype='int32')
+    c_tensor = add_relu(a_tensor, b_tensor)
+    print(c_tensor)
+
     print(f'Pytorch version {torch.__version__}')
     a = json.dumps([1, 2, 3, 4, 5])
     b = json.dumps([6, 7, 8, 9, 10])
