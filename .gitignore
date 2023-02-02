@@ -36,3 +36,10 @@ build
 # for vim
 /**/*.swp
 /**/.tasks
+
+
+# for vision
+/vision/*
+~/vision/src
+~/vision/README.md
+

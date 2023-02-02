@@ -15,7 +15,7 @@ message("OpenCV_INSTALL_PATH: " ${OpenCV_INSTALL_PATH})
 set(CV_LIBS opencv_core opencv_imgproc opencv_imgcodecs opencv_calib3d opencv_features2d opencv_flann)
 
 #include matx header
-include_directories(${CMAKE_CURRENT_LIST_DIR}/../include)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/../../include)
 
 #include byted vision cpu
 include_directories(${CMAKE_CURRENT_LIST_DIR})
