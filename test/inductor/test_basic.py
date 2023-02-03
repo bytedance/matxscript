@@ -24,7 +24,9 @@ import numpy as np
 
 
 class BasicTests(unittest.TestCase):
+
     def test_basics(self):
+        # TODO: fix cache_hit issues.
         from matx import toolchain
         toolchain.USE_SO_CACHE = False
 
@@ -49,20 +51,16 @@ class BasicTests(unittest.TestCase):
                 a_tensor = torch.from_numpy(a_numpy)
                 b_tensor = torch.from_numpy(b_numpy)
 
-                a_ndarray = matx.NDArray([], a_numpy.shape, str(a_numpy.dtype))
-                a_ndarray.from_numpy(a_numpy)
-                b_ndarray = matx.NDArray([], b_numpy.shape, str(b_numpy.dtype))
-                b_ndarray.from_numpy(b_numpy)
-
                 c_tensor_expected = add_relu(a_tensor, b_tensor)[0]
-                c_ndarray: matx.NDArray = add_relu_kernel(a_ndarray, b_ndarray)[0]
-                c_tensor = c_ndarray.torch()
+                c_tensor = add_relu_kernel(a_tensor, b_tensor)[0]
 
-                # TODO: there seems a strange cache behavior of JITOp, without the following line,
-                # it fails.
+                # TODO: there seems a strange cache behavior of JITOp, without the
+                # following line, it fails.
                 del add_relu_kernel
 
                 torch.testing.assert_close(c_tensor_expected, c_tensor)
+
+        toolchain.USE_SO_CACHE = True
 
 
 if __name__ == '__main__':

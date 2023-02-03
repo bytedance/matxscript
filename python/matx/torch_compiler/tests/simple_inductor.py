@@ -6,8 +6,8 @@ import matx
 import torch
 
 
-@matx.inductor(example_inputs=[torch.from_numpy(np.random.randn(5).astype(np.int32)),
-                               torch.from_numpy(np.random.randn(5).astype(np.int32))])
+@matx.inductor_script(example_inputs=[torch.from_numpy(np.random.randn(5).astype(np.int32)),
+                                      torch.from_numpy(np.random.randn(5).astype(np.int32))])
 def add_relu(a: matx.NDArray, b: matx.NDArray):
     c = a + b
     c = torch.nn.functional.relu(c)
@@ -35,6 +35,9 @@ def add_json(a: str, b: str) -> str:
 if __name__ == '__main__':
     a_tensor = matx.NDArray(arr=[1, 2, 3, 4, 5], shape=[5], dtype='int32')
     b_tensor = matx.NDArray(arr=[6, 7, 8, 8, 10], shape=[5], dtype='int32')
+
+    a_tensor = a_tensor.torch(copy=True)
+
     c_tensor = add_relu(a_tensor, b_tensor)
     print(c_tensor)
 

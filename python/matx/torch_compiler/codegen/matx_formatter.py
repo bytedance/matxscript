@@ -35,7 +35,6 @@ MAGIC_NUMBER = '2_71828182846'
 
 MATX_INCLUDE = '''
 #include "matxscript/runtime/codegen_all_includes.h"
-#include "matxscript/runtime/container/ndarray_helper.h"
 #include <math.h>
 
 using namespace ::matxscript::runtime;
@@ -49,25 +48,19 @@ extern "C" MATX_DLL MATXScriptFuncRegistry __matxscript_func_registry__;
 
 SESSION_HANLDER = cpp_parse.CPPArg(name=f'handle_{MAGIC_NUMBER}',
                                    type=cpp_parse.CPPType(name='void', is_pointer=True))
-SESSION_HANLDER_WITH_DEAFULT = cpp_parse.CPPArg(name=f'handle_{MAGIC_NUMBER}',
-                                                type=cpp_parse.CPPType(name='void', is_pointer=True),
-                                                default_val='((void*)(int64_t)0)')
-
-CREATE_NDARRAY_DECLARATION = '''
-// helper function to create NDArray
-NDArray createNDArray(const std::string& dtype,
-                      const std::string& device,
-                      const std::vector<int64_t>& arg_shape);
-'''
+SESSION_HANLDER_WITH_DEAFULT = cpp_parse.CPPArg(
+    name=f'handle_{MAGIC_NUMBER}', type=cpp_parse.CPPType(
+        name='void', is_pointer=True), default_val='((void*)(int64_t)0)')
 
 CREATE_NDARRAY_IMPLEMENTATION = '''
-NDArray createNDArray(const std::string& dtype,
-                      const std::string& device,
-                      const std::vector<int64_t>& arg_shape) {
+NDArray createNDArray(const std::string& dtype, const std::string& device, const List& arg_shape) {
   Unicode dtype_str(UTF8Decode(dtype));
   Unicode ctx_str(UTF8Decode(device));
-  DataType data_type(String2DLDataType(UTF8Encode(dtype_str.view())));
-  return NDArray::Empty(arg_shape, data_type, NDArrayHelper::GetDevice(ctx_str));
+
+  auto a = Kernel_NDArray::make(0., arg_shape, dtype_str, ctx_str);
+  // set impl to torch.Tensor
+  a.SetImpl(NDArray::Impl::torchTensor);
+  return a;
 }
 '''
 
@@ -88,13 +81,13 @@ int {}__c_api(MATXScriptAny* args, int num_args, MATXScriptAny* out_ret_value, v
     RTView pos_args[{}];
     helper.unpack(pos_args, args, num_args);  // /Users/bytedance/Developer/open_source_library/matxscript/examples/simple_function.py:5
 
-    auto ret = {}({}, 
+    auto ret = {}({},
                 {}resource_handle);
     RTValue(std::move(ret)).MoveToCHost(out_ret_value);
   }} else {{
     switch(num_args) {{
       case {}: {{
-        auto ret = {}({}, 
+        auto ret = {}({},
                     {}resource_handle);  // /Users/bytedance/Developer/open_source_library/matxscript/examples/simple_function.py:5
         RTValue(std::move(ret)).MoveToCHost(out_ret_value);
       }} break;
@@ -128,9 +121,20 @@ int {}__c_api(MATXScriptAny* args, int num_args, MATXScriptAny* out_ret_value, v
     pos_arg_cast = (',' + pos_arg_cast_indentation).join(pos_arg_cast_lst)
     args_t_cast = (',' + args_t_cast_indentation).join(args_t_cast_lst)
 
-    return template.format(kernel_name, num_args, arg_names_concat_str, kernel_name, num_args, num_args, kernel_name,
-                           pos_arg_cast, kernel_name_indentation, num_args, kernel_name,
-                           args_t_cast, kernel_name_indentation)
+    return template.format(
+        kernel_name,
+        num_args,
+        arg_names_concat_str,
+        kernel_name,
+        num_args,
+        num_args,
+        kernel_name,
+        pos_arg_cast,
+        kernel_name_indentation,
+        num_args,
+        kernel_name,
+        args_t_cast,
+        kernel_name_indentation)
 
 
 def get_registration_str(kernel_name):
@@ -183,8 +187,13 @@ def generate_kernel_wrapper_declaration(kernel_name, example_inputs):
     return_type = cpp_parse.CPPType(name='Tuple', is_pointer=False)
     args = []
     for i in range(len(example_inputs)):
-        arg = cpp_parse.CPPArg(name=f'in_ptr{i}', type=cpp_parse.CPPType(name='NDArray', is_pointer=False),
-                               is_const=False, is_restricted=False)
+        arg = cpp_parse.CPPArg(
+            name=f'in_ptr{i}',
+            type=cpp_parse.CPPType(
+                name='NDArray',
+                is_pointer=False),
+            is_const=False,
+            is_restricted=False)
         args.append(arg)
     kernel_wrapper_declaration = cpp_parse.CPPDeclaration(func_name=kernel_name,
                                                           return_type=return_type,
@@ -193,7 +202,11 @@ def generate_kernel_wrapper_declaration(kernel_name, example_inputs):
     return kernel_wrapper_declaration
 
 
-def generate_ndarray_allocate_statement(output_name: str, dtype: str, device: str, shape: List[int]):
+def generate_ndarray_allocate_statement(
+        output_name: str,
+        dtype: str,
+        device: str,
+        shape: List[int]):
     assert dtype in ['int32', 'int64', 'float32', 'float64']
     assert device == 'cpu'
     assert isinstance(shape, List)
@@ -251,7 +264,7 @@ def generate_kernel_wrapper_body(kernel_declaration: cpp_parse.CPPDeclaration,
     delimiter = ',\n' + ' ' * 10
     kernel_invoke_param_str = delimiter.join(kernel_invoke_param)
     kernel_invoke_str = kernel_declaration.func_name + '(' + '\n' + ' ' * num_space + \
-                        kernel_invoke_param_str + '\n' + ');' + '\n'
+        kernel_invoke_param_str + '\n' + ');' + '\n'
 
     # step 3: return output as a Tuple
     return_str = generate_kernel_wrapper_return(fake_output)
@@ -279,7 +292,8 @@ def matx_cpp_code_format(code: str, kernel_name: str,
     kernel_return_type = kernel_declaration.return_type.name
     assert kernel_return_type == 'void', f'The kernel return type must be void, Got {kernel_return_type}'
 
-    kernel_declaration.func_name += MAGIC_NUMBER  # TODO: currently, we simply add magic number to avoid conflict
+    # TODO: currently, we simply add magic number to avoid conflict
+    kernel_declaration.func_name += MAGIC_NUMBER
     kernel_code_str = str(kernel_declaration) + kernel_body_str
 
     # here, we keep the original kernel and add a wrapper
@@ -292,23 +306,38 @@ def matx_cpp_code_format(code: str, kernel_name: str,
     kernel_wrapper_declaration_with_default.append_arg(SESSION_HANLDER_WITH_DEAFULT)
 
     # create all the declarations strings
-    function_declaration = [CREATE_NDARRAY_DECLARATION, str(kernel_wrapper_declaration_with_default) + ';',
-                            str(kernel_declaration) + ';', get_c_api_declare(kernel_wrapper_declaration.func_name)]
+    CREATE_NDARRAY_DECLARATION = split_declaration_body(CREATE_NDARRAY_IMPLEMENTATION)[0] + ';'
+
+    function_declaration = [
+        CREATE_NDARRAY_DECLARATION,
+        str(kernel_wrapper_declaration_with_default) + ';',
+        str(kernel_declaration) + ';',
+        get_c_api_declare(
+            kernel_wrapper_declaration.func_name)]
 
     function_declaration_str = '\n\n'.join(function_declaration) + '\n'
 
     # create all the kernel implementation strings including
     # 1. create ndarray. 2. kernel wrapper, 3. kernel, 4. kernel-c-api
     kernel_wrapper = str(kernel_wrapper_declaration_without_default) + kernel_wrapper_body
-    kernel_c_api_impl_str = get_c_api(kernel_name=kernel_wrapper_declaration.func_name,
-                                      args=kernel_wrapper_declaration.args,
-                                      has_return_value=kernel_wrapper_declaration.return_type.name != 'void')
+    kernel_c_api_impl_str = get_c_api(
+        kernel_name=kernel_wrapper_declaration.func_name,
+        args=kernel_wrapper_declaration.args,
+        has_return_value=kernel_wrapper_declaration.return_type.name != 'void')
 
-    implementations = [CREATE_NDARRAY_IMPLEMENTATION, kernel_wrapper, kernel_code_str, kernel_c_api_impl_str]
+    implementations = [
+        CREATE_NDARRAY_IMPLEMENTATION,
+        kernel_wrapper,
+        kernel_code_str,
+        kernel_c_api_impl_str]
     implementations_str = '\n\n'.join(implementations) + '\n'
 
     # add namespace
-    kernel_code_str = ['namespace {', function_declaration_str, implementations_str, '} // namespace']
+    kernel_code_str = [
+        'namespace {',
+        function_declaration_str,
+        implementations_str,
+        '} // namespace']
     kernel_code_str = '\n\n'.join(kernel_code_str)
 
     # registration str

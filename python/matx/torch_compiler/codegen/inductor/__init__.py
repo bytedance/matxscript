@@ -96,7 +96,10 @@ def extract_inductor_code(kernel, example_inputs):
     assert_tuple_of_tensors(fake_output)
 
     model = fx.symbolic_trace(kernel)
-    compile_fx.compile_fx(model, example_inputs_=fake_example_inputs, inner_compile=compile_fx_inner_cpu)
+    compile_fx.compile_fx(
+        model,
+        example_inputs_=fake_example_inputs,
+        inner_compile=compile_fx_inner_cpu)
 
     code = fake_callable.code
 

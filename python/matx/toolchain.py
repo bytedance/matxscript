@@ -389,24 +389,24 @@ def inductor(compiling_obj, example_inputs, *, share=True, toolchain=None, bundl
     if DISABLE_SCRIPT:
         return compiling_obj
 
-    from matx.inductor import from_source
+    from .inductor import from_source
 
     result: context.ScriptContext = from_source(compiling_obj, example_inputs)
 
-    # TODO: get Pytorch additional compiler flags. Hardcode here for mvp
-    torch_compiler_options = [
-        '-I/Users/bytedance/miniforge3/envs/inductor/lib/python3.10/site-packages/torch/include',
-        '-I/Users/bytedance/miniforge3/envs/inductor/lib/python3.10/site-packages/torch/include/torch/csrc/api/include',
-        '-I/Users/bytedance/miniforge3/envs/inductor/lib/python3.10/site-packages/torch/include/TH',
-        '-I/Users/bytedance/miniforge3/envs/inductor/lib/python3.10/site-packages/torch/include/THC',
-        '-I/Users/bytedance/miniforge3/envs/inductor/include/python3.10',
-        # '-lgomp',
-        # '-march=native',
-        '-ffast-math',
-        '-fno-finite-math-only',
-        # '-fopenmp',
-        '-DC10_USING_CUSTOM_GENERATED_MACROS'
-    ]
+    from torch._inductor import codecache
+    ipaths, lpaths, libs, macros = codecache.get_include_and_linking_paths(include_pytorch=False)
+
+    # TODO: check whether the following flags are handled by common flags
+    # codecache.get_shared()
+    # codecache.optimization_flags()
+    # codecache.cpp_flags()
+    # codecache.get_warning_all_flag()
+    # codecache.use_custom_generated_macros()
+
+    torch_compiler_options = ipaths.split() + lpaths.split() + libs.split() + macros.split()
+
+    # TODO: fix this on macOS m1.
+    torch_compiler_options.remove('-lgomp')
 
     build_dso(result, toolchain is not None, compile_options=torch_compiler_options)
     if toolchain is not None:
