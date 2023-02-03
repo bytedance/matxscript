@@ -1563,13 +1563,13 @@ NDArray NDArray::as_type(const unicode_view& dtype_str) const {
   return ret;
 }
 
-void NDArray::SetImpl(int64_t impl) {
+void NDArray::SetImpl(NDArray::Impl impl) {
   auto container = this->get_mutable();
-  container->impl_ = impl;
+  container->impl = impl;
 }
 
-int64_t NDArray::GetImpl() const {
-  return this->get_mutable()->impl_;
+NDArray::Impl NDArray::GetImpl() const {
+  return this->get_mutable()->impl;
 }
 
 void NDArray::AssignNDArray(const NDArray& src, NDArray& dst) {

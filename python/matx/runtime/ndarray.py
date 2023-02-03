@@ -19,6 +19,7 @@
 # pylint: disable=invalid-name, unused-import
 """Runtime NDArray API"""
 import ctypes
+import enum
 import numpy as np
 from .. import _ffi
 
@@ -46,11 +47,16 @@ __all__ = [
     "from_dlpack",
 ]
 
+class NDArrayImpl(enum.IntEnum):
+    # The Enum must be consistent with definition in C++
+    NDARRAY = 0
+    NUMPY = 1
+    TF_TENSOR = 2
+    TORCH_TENSOR = 3
 
 def _ndarray_callback(obj):
     obj.__init_self__()
-    return obj
-
+    return obj._to_impl()
 
 @_ffi.register_object("runtime.NDArray", _ndarray_callback)
 class NDArray(Object):
@@ -143,6 +149,28 @@ class NDArray(Object):
 
     def __getstate__(self):
         return _ffi_api.msgpack_dumps(self)
+
+    def _get_impl(self) -> NDArrayImpl:
+        impl_code = _ffi_api.NDArrayGetImpl(self)
+        return NDArrayImpl(impl_code)
+
+    def _set_impl(self, flag: NDArrayImpl):
+        flag = int(flag)
+        return _ffi_api.NDArraySetImpl(self, flag)
+
+    def _to_impl(self):
+        impl = self._get_impl()
+        if impl == NDArrayImpl.NDARRAY:
+            return self
+        elif impl == NDArrayImpl.NUMPY:
+            # TODO: asnumpy returns a copy. Maybe we shouldn't as in Torch.
+            return self.asnumpy()
+        elif impl == NDArrayImpl.TF_TENSOR:
+            raise NotImplementedError
+        elif impl == NDArrayImpl.TORCH_TENSOR:
+            return self.torch(copy=False)
+        else:
+            raise ValueError(f'Unknown impl {impl}')
 
     # -------------------- [begin] methods can be used in script --------------------
     def to_list(self):

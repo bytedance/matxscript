@@ -54,7 +54,7 @@ class NDArray::ContainerBase {
    * np.ndarray, tf.Tensor, torch.Tensor, etc,.
    * Mapping Table: 0: NDArray, 1: np.ndarray, 2: tf.Tensor, 3: torch.Tensor
    */
-  int64_t impl_{0};
+  Impl impl{Impl::ndarray};
  
  protected:
   /*!

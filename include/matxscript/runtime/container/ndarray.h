@@ -45,6 +45,8 @@ class NDArray : public ObjectRef {
   class Container;
   /*! \brief Container type for Object system. */
   using ContainerType = Container;
+  /*! \brief enum of the implementations of the NDArray. */
+  enum Impl { ndarray = 0, numpy = 1, tfTensor = 2, torchTensor = 3 };
   static constexpr bool _type_is_nullable = false;  // disable nullptr for performance
   /*! \brief default constructor */
   NDArray() noexcept = default;
@@ -228,8 +230,8 @@ class NDArray : public ObjectRef {
   NDArray transpose(const Any& axes = None) const;
   NDArray as_type(const unicode_view& dtype_str) const;
  
-  int64_t GetImpl() const;
-  void SetImpl(int64_t impl);
+  NDArray::Impl GetImpl() const;
+  void SetImpl(NDArray::Impl impl);
 
  public:
   static void AssignNDArray(const NDArray& src, NDArray& dst);
