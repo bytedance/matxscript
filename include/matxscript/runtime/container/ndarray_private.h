@@ -55,7 +55,7 @@ class NDArray::ContainerBase {
    * Mapping Table: 0: NDArray, 1: np.ndarray, 2: tf.Tensor, 3: torch.Tensor
    */
   Impl impl{Impl::ndarray};
- 
+
  protected:
   /*!
    * \brief The shape container,

@@ -229,7 +229,7 @@ class NDArray : public ObjectRef {
   int64_t size() const;
   NDArray transpose(const Any& axes = None) const;
   NDArray as_type(const unicode_view& dtype_str) const;
- 
+
   NDArray::Impl GetImpl() const;
   void SetImpl(NDArray::Impl impl);
 
