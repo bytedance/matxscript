@@ -227,6 +227,9 @@ class NDArray : public ObjectRef {
   int64_t size() const;
   NDArray transpose(const Any& axes = None) const;
   NDArray as_type(const unicode_view& dtype_str) const;
+ 
+  int64_t GetImpl() const;
+  void SetImpl(int64_t impl);
 
  public:
   static void AssignNDArray(const NDArray& src, NDArray& dst);
