@@ -102,7 +102,7 @@ __all__ = [
 ]
 
 # version info
-__version__ = "1.8.1.alpha"
+__version__ = "1.8.1"
 __branch__ = None
 __commit_id__ = None
 

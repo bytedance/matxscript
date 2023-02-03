@@ -153,5 +153,18 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayCopyToBytes").set_body([](PyArgs args
   return None;
 });
 
+MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArrayGetImpl").set_body([](PyArgs args) -> RTValue {
+  NDArray data = args[0].As<NDArray>();
+  return static_cast<int64_t>(data.GetImpl());
+});
+
+// TODO: remove this API later. Python shouldn't be able to set impl. For testing purpose only
+MATXSCRIPT_REGISTER_GLOBAL("runtime.NDArraySetImpl").set_body([](PyArgs args) -> RTValue {
+  NDArray data = args[0].As<NDArray>();
+  int64_t flag = args[1].As<int64_t>();
+  data.SetImpl(static_cast<NDArray::Impl>(flag));
+  return None;
+});
+
 }  // namespace runtime
 }  // namespace matxscript

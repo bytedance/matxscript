@@ -955,17 +955,17 @@ static PyObject* MATXScriptAnySwitchToObject(MATXScriptAny* value) {
     PyObjectMATXScriptObjectBase* super = (PyObjectMATXScriptObjectBase*)(result);
     super->handle = value->data.v_handle;
     super->type_code = value->code;
-
+    PyObject* ret = result;
     for (int i = 0; i < OBJECT_CALLBACK_CUR_IDX; ++i) {
       if (OBJECT_CALLBACK_TABLE[i].index == value->code) {
         PyObject* func_args = PyTuple_Pack(1, result);
-        PyObject* ret = PyObject_Call(OBJECT_CALLBACK_TABLE[i].callback, func_args, NULL);
+        ret = PyObject_Call(OBJECT_CALLBACK_TABLE[i].callback, func_args, NULL);
         Py_DECREF(func_args);
-        Py_DECREF(ret);
+        Py_DECREF(result);
         break;
       }
     }
-    return result;
+    return ret;
   }
 }
 
