@@ -47,6 +47,7 @@ __all__ = [
     "from_dlpack",
 ]
 
+
 class NDArrayImpl(enum.IntEnum):
     # The Enum must be consistent with definition in C++
     NDARRAY = 0
@@ -54,9 +55,11 @@ class NDArrayImpl(enum.IntEnum):
     TF_TENSOR = 2
     TORCH_TENSOR = 3
 
+
 def _ndarray_callback(obj):
     obj.__init_self__()
     return obj._to_impl()
+
 
 @_ffi.register_object("runtime.NDArray", _ndarray_callback)
 class NDArray(Object):
