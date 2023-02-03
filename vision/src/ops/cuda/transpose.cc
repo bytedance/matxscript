@@ -18,13 +18,13 @@
  * under the License.
  */
 
+#include "cv_cuda.h"
 #include "matxscript/runtime/container/list_ref.h"
 #include "matxscript/runtime/container/ndarray.h"
 #include "matxscript/runtime/container/unicode_view.h"
 #include "matxscript/runtime/logging.h"
 #include "matxscript/runtime/native_object_registry.h"
 #include "matxscript/runtime/runtime_value.h"
-#include "cv_cuda.h"
 #include "utils/cuda/cuda_op_helper.h"
 #include "utils/cuda/cuda_type_helper.h"
 #include "vision_base_op_gpu.h"

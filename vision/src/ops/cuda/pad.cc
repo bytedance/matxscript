@@ -22,13 +22,13 @@
 #include <matxscript/runtime/py_args.h>
 #include <mutex>
 #include <vector>
+#include "cv_cuda.h"
 #include "matxscript/runtime/container/list_ref.h"
 #include "matxscript/runtime/container/ndarray.h"
 #include "matxscript/runtime/container/tuple_ref.h"
 #include "matxscript/runtime/container/unicode_view.h"
 #include "matxscript/runtime/global_type_index.h"
 #include "matxscript/runtime/runtime_value.h"
-#include "cv_cuda.h"
 #include "utils/cuda/cuda_op_helper.h"
 #include "utils/cuda/cuda_type_helper.h"
 #include "utils/pad_types.h"

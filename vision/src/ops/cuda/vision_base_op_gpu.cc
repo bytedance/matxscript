@@ -30,12 +30,11 @@ namespace cuda {
 using namespace matxscript::runtime;
 
 cudaStream_t VisionBaseOpGPU::getStream() {
-
-  //cudaStream_t t = static_cast<cudaStream_t>(cuda_api_->GetDefaultComputeStream(ctx_));
-  //std::stringstream ss;
-  //ss<<"byted vision thread id"<<std::this_thread::get_id()<<std::endl;
-  //ss<<"byted vision stream: "<<t<<std::endl; 
-  //std::cout<<ss.str();
+  // cudaStream_t t = static_cast<cudaStream_t>(cuda_api_->GetDefaultComputeStream(ctx_));
+  // std::stringstream ss;
+  // ss<<"byted vision thread id"<<std::this_thread::get_id()<<std::endl;
+  // ss<<"byted vision stream: "<<t<<std::endl;
+  // std::cout<<ss.str();
   return static_cast<cudaStream_t>(cuda_api_->GetCurrentThreadStream(ctx_));
 }
 
