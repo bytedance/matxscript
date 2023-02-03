@@ -969,7 +969,6 @@ static PyObject* MATXScriptAnySwitchToObject(MATXScriptAny* value) {
     if (ret == nullptr) {
       ret = result;
     }
-    
     return result;
   }
 }
