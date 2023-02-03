@@ -48,6 +48,14 @@ class NDArray::ContainerBase {
    */
   void* manager_ctx{nullptr};
 
+  /*!
+   * \brief The implementation of the container.
+   * This flag is used to implicitly convert between NDArray and
+   * np.ndarray, tf.Tensor, torch.Tensor, etc,.
+   * Mapping Table: 0: NDArray, 1: np.ndarray, 2: tf.Tensor, 3: torch.Tensor
+   */
+  int64_t impl_{0};
+ 
  protected:
   /*!
    * \brief The shape container,
