@@ -955,7 +955,7 @@ static PyObject* MATXScriptAnySwitchToObject(MATXScriptAny* value) {
     PyObjectMATXScriptObjectBase* super = (PyObjectMATXScriptObjectBase*)(result);
     super->handle = value->data.v_handle;
     super->type_code = value->code;
-    PyObject* ret = nullptr;
+    PyObject* ret = result;
     for (int i = 0; i < OBJECT_CALLBACK_CUR_IDX; ++i) {
       if (OBJECT_CALLBACK_TABLE[i].index == value->code) {
         PyObject* func_args = PyTuple_Pack(1, result);
@@ -965,11 +965,7 @@ static PyObject* MATXScriptAnySwitchToObject(MATXScriptAny* value) {
         break;
       }
     }
-    // if no callback is registered, directly return result.
-    if (ret == nullptr) {
-      ret = result;
-    }
-    return result;
+    return ret;
   }
 }
 
