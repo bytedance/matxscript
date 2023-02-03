@@ -955,7 +955,6 @@ static PyObject* MATXScriptAnySwitchToObject(MATXScriptAny* value) {
     PyObjectMATXScriptObjectBase* super = (PyObjectMATXScriptObjectBase*)(result);
     super->handle = value->data.v_handle;
     super->type_code = value->code;
-    
     PyObject* ret = nullptr;
     for (int i = 0; i < OBJECT_CALLBACK_CUR_IDX; ++i) {
       if (OBJECT_CALLBACK_TABLE[i].index == value->code) {
