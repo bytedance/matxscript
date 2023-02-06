@@ -283,7 +283,7 @@ def matx_cpp_code_format(code: str, kernel_name: str,
 
     include_code_str, kernel_code_str = split_include_kernel(code)
     # add matx include
-    include_code_str = MATX_INCLUDE
+    include_code_str += MATX_INCLUDE
 
     # extract kernel declaration
     kernel_declaration_str, kernel_body_str = split_declaration_body(kernel_code_str)

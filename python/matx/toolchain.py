@@ -421,20 +421,20 @@ def inductor(compiling_obj, example_inputs, *, share=True, toolchain=None, bundl
     result: context.ScriptContext = from_source(compiling_obj, example_inputs)
 
     from torch._inductor import codecache
-    ipaths, lpaths, libs, macros = codecache.get_include_and_linking_paths(include_pytorch=False)
+    ipaths, lpaths, libs, macros = codecache.get_include_and_linking_paths(include_pytorch=False,
+                                                                           vec_isa=codecache.pick_vec_isa())
 
     # TODO: check whether the following flags are handled by common flags
     # codecache.get_shared()
-    # codecache.optimization_flags()
+    optimization_flag = codecache.optimization_flags()
     # codecache.cpp_flags()
     # codecache.get_warning_all_flag()
     # codecache.use_custom_generated_macros()
 
-    torch_compiler_options = ipaths.split() + lpaths.split() + libs.split() + macros.split()
-
-    # TODO: fix this on macOS m1.
-    if '-lomp' in torch_compiler_options:
-        torch_compiler_options.remove('-lomp')
+    torch_compiler_options = []
+    flag_str_lst = [ipaths, lpaths, libs, macros, optimization_flag]
+    for flag_str in flag_str_lst:
+        torch_compiler_options.extend(flag_str.split())
 
     build_dso(result, toolchain is not None, compile_options=torch_compiler_options,
               make_path_prefix=path_prefix_inductor)
