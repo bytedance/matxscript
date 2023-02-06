@@ -19,7 +19,6 @@
 
 
 try:
-    # TODO: consider lazy import this after users called matx.inductor_script
     import torch
     import torch.utils.dlpack
 
