@@ -421,8 +421,8 @@ def inductor(compiling_obj, example_inputs, *, share=True, toolchain=None, bundl
     result: context.ScriptContext = from_source(compiling_obj, example_inputs)
 
     from torch._inductor import codecache
-    ipaths, lpaths, libs, macros = codecache.get_include_and_linking_paths(include_pytorch=False,
-                                                                           vec_isa=codecache.pick_vec_isa())
+    ipaths, lpaths, libs, macros = codecache.get_include_and_linking_paths(
+        include_pytorch=False, vec_isa=codecache.pick_vec_isa())
 
     # TODO: check whether the following flags are handled by common flags
     # codecache.get_shared()
