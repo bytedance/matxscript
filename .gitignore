@@ -40,6 +40,6 @@ build
 
 # for vision
 /vision/*
-~/vision/src
-~/vision/README.md
+!/vision/src
+!/vision/README.md
 
