@@ -351,7 +351,7 @@ def script(compiling_obj, *args, backend=None, **kwargs):
         return toolchain.script(compiling_obj, *args, **kwargs)
 
 
-def inductor_script(example_inputs, **kwargs):
+def inductor(example_inputs, **kwargs):
     """
 
     Args:

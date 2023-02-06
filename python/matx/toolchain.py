@@ -252,6 +252,26 @@ def path_prefix(sc_ctx: context.ScriptContext):
                                                              cache_md5))
 
 
+def path_prefix_inductor(sc_ctx: context.ScriptContext):
+    """inductor path_prefix encodes meta info from example_inputs"""
+    # mkdir LIB_PATH
+    from .__init__ import __version__
+    _mk_lib_dir()
+    # code + sha1(libmatx.so) + commit_id(__version__)
+    dep_source_codes = "".join(dep_node.span.source_code for dep_node in sc_ctx.deps_node)
+    assert isinstance(sc_ctx.main_node.context, context.InductorContext)
+    example_inputs = sc_ctx.main_node.context.example_inputs_spec
+    example_inputs_str = ''.join([str(inputs) for inputs in example_inputs])
+    cache_str = sc_ctx.main_node.span.source_code + dep_source_codes + example_inputs_str + _LIB_SHA1 + __version__
+    cache_md5 = hashlib.md5(cache_str.encode()).hexdigest()[:16]
+    file_name = os.path.splitext(os.path.basename(sc_ctx.main_node.span.file_name))[0]
+    return os.path.abspath('{}/lib{}_{}_{}_plugin_{}'.format(LIB_PATH,
+                                                             file_name,
+                                                             sc_ctx.main_node.span.lineno,
+                                                             sc_ctx.main_node.context.name,
+                                                             cache_md5))
+
+
 def toolchain_path_prefix(sc_ctx: context.ScriptContext, toolchain_str: str):
     from .__init__ import __version__
     # mkdir LIB_PATH
@@ -297,10 +317,13 @@ def toolchain_build(sc_ctx: context.ScriptContext, toolchain: ToolChain):
         sc_ctx.dso_path = (sc_ctx.dso_path[0], so_path)
 
 
-def build_dso(sc_ctx: context.ScriptContext, use_toolchain=False, compile_options=None):
+def build_dso(sc_ctx: context.ScriptContext, use_toolchain=False, compile_options=None, make_path_prefix=None):
     rt_mod = sc_ctx.rt_module
     main_node_name = sc_ctx.main_node.context.name
-    base_path = path_prefix(sc_ctx)
+    if make_path_prefix is None:
+        make_path_prefix = path_prefix
+
+    base_path = make_path_prefix(sc_ctx)
 
     with contrib.util.filelock(base_path):
         sopath = base_path + '.so'
@@ -389,7 +412,7 @@ def inductor(compiling_obj, example_inputs, *, share=True, toolchain=None, bundl
     if DISABLE_SCRIPT:
         return compiling_obj
 
-    from .inductor import from_source
+    from .script.inductor import from_source
 
     result: context.ScriptContext = from_source(compiling_obj, example_inputs)
 
@@ -408,7 +431,8 @@ def inductor(compiling_obj, example_inputs, *, share=True, toolchain=None, bundl
     # TODO: fix this on macOS m1.
     torch_compiler_options.remove('-lgomp')
 
-    build_dso(result, toolchain is not None, compile_options=torch_compiler_options)
+    build_dso(result, toolchain is not None, compile_options=torch_compiler_options,
+              make_path_prefix=path_prefix_inductor)
     if toolchain is not None:
         toolchain_build(result, toolchain)
 

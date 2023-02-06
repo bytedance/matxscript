@@ -22,47 +22,53 @@ from typing import List
 
 import torch
 
-from matx.env import MATX_DEV_MODE
-from matx.script import context
-from matx.toolchain import path_prefix
 from matx.torch_compiler.codegen import extract_inductor_code, matx_cpp_code_format
+from .tensor_spec import TensorSpec
+from .. import context, analysis
+from ... import _ffi
+from ... import ir
+from ...env import MATX_DEV_MODE
+
+
+def _embedded_inductor_ctx(compiling_obj, example_inputs):
+    code = _obtain_inductor_code(compiling_obj, example_inputs)
+    build_module = _ffi.get_global_func("embedded.build.c")
+    sc_ctx = context.ScriptContext()
+    sc_ctx.main_node.raw = compiling_obj
+    if isinstance(code, str):
+        code = code.encode()
+    sc_ctx.rt_module = build_module(code)
+    example_inputs_spec = [TensorSpec.from_tensor(inputs) for inputs in example_inputs]
+    sc_ctx.main_node.context = context.InductorContext(fn_name=compiling_obj.__name__,
+                                                       example_inputs_spec=example_inputs_spec)
+    return sc_ctx
+
+
+def _pass(sc_ctx: context.ScriptContext):
+    src_anls = analysis.SourceAnalysis()
+    src_anls.run(sc_ctx)
+
+
+def _obtain_inductor_code(compiling_obj, example_inputs):
+    # compile the kernel and set the code
+    code, kernel_name, fake_output = extract_inductor_code(compiling_obj, example_inputs)
+    code = matx_cpp_code_format(code, kernel_name, example_inputs, fake_output)
+    return code
 
 
 def from_source(compiling_obj: type, example_inputs: List[torch.Tensor]) -> context.ScriptContext:
     try:
-        # set sc_ctx attributes to be compatible with existing matx code
-        sc_ctx = context.ScriptContext()
-        sc_ctx.build_type = context.BuildType.FUNCTION
-        sc_ctx.main_node.raw = compiling_obj
-        inductor_context = context.InductorContext(fn_name=compiling_obj.__name__)
-        sc_ctx.main_node.context = inductor_context
-        # set source code TODO: formatting source code
-        sc_ctx.main_node.span.source_code = inspect.getsource(compiling_obj)
-        # set filename. TODO: this is too hack
-        frame = inspect.stack()[3]
-        sc_ctx.main_node.span.file_name = frame[0].f_code.co_filename
+        # TODO: allow generalized way to specify example_inputs
+        sc_ctx = _embedded_inductor_ctx(compiling_obj, example_inputs)
+        # set filename.
+        _pass(sc_ctx)
+        analysis.BuildTypeAnalysis().run(sc_ctx)
 
         # set args types.
-        from .. import ir
-
         # TODO: currently, we only support argument as NDArray. We may support nested inputs later
         signature = inspect.signature(compiling_obj)
         for param in signature.parameters.values():
             sc_ctx.main_node.context.arg_types[param.name] = ir.type.NDArrayType()
-
-        # compile the kernel and set the code
-        code, kernel_name, fake_output = extract_inductor_code(compiling_obj, example_inputs)
-        code = matx_cpp_code_format(code, kernel_name, example_inputs, fake_output)
-
-        # export code
-        path = path_prefix(sc_ctx)
-        with open(path, 'w') as f:
-            f.write(code)
-
-        # set rt_module
-        from .. import _ffi
-        build_module = _ffi.get_global_func("embedded.build.c")
-        sc_ctx.rt_module = build_module(code.encode())
 
         return sc_ctx
     except BaseException as e:

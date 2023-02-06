@@ -26,10 +26,6 @@ import numpy as np
 class BasicTests(unittest.TestCase):
 
     def test_basics(self):
-        # TODO: fix cache_hit issues.
-        from matx import toolchain
-        toolchain.USE_SO_CACHE = False
-
         def add_relu(a, b):
             c = a + b
             c = torch.nn.functional.relu(c)
@@ -46,21 +42,14 @@ class BasicTests(unittest.TestCase):
                 example_inputs = [torch.from_numpy(np.random.randn(*size).astype(dtype)),
                                   torch.from_numpy(np.random.randn(*size).astype(dtype))]
 
-                add_relu_kernel = matx.inductor_script(example_inputs)(add_relu)
+                add_relu_kernel = matx.inductor(example_inputs)(add_relu)
 
                 a_tensor = torch.from_numpy(a_numpy)
                 b_tensor = torch.from_numpy(b_numpy)
 
                 c_tensor_expected = add_relu(a_tensor, b_tensor)[0]
                 c_tensor = add_relu_kernel(a_tensor, b_tensor)[0]
-
-                # TODO: there seems a strange cache behavior of JITOp, without the
-                # following line, it fails.
-                del add_relu_kernel
-
                 torch.testing.assert_close(c_tensor_expected, c_tensor)
-
-        toolchain.USE_SO_CACHE = True
 
 
 if __name__ == '__main__':

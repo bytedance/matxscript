@@ -30,7 +30,7 @@ class BuildTypeAnalysis:
         node_ctx = sc_ctx.main_node.context
         if isinstance(node_ctx, context.ClassContext):
             build_type = context.BuildType.JIT_OBJECT
-        elif isinstance(node_ctx, context.FunctionContext):
+        elif isinstance(node_ctx, (context.FunctionContext, context.InductorContext)):
             build_type = context.BuildType.FUNCTION
         else:
             raise RuntimeError("Only one-function, one-class source code is allowed")

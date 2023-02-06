@@ -20,11 +20,13 @@
 
 class InductorContext(object):
     def __init__(self,
-                 fn_name: str = '<unknown>', ):
+                 fn_name: str = '<unknown>',
+                 example_inputs_spec=None):
         self.fn_name = fn_name
         self.unbound_name = fn_name
         self.return_type = None
         self.arg_types = {}  # Deferred?
+        self.example_inputs_spec = example_inputs_spec
 
     @property
     def name(self):
