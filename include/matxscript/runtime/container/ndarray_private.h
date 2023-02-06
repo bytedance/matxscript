@@ -145,10 +145,8 @@ class NDArray::Container : public Object, public NDArray::ContainerBase {
 
   // Information for object protocol.
   static constexpr const uint32_t _type_index = TypeIndex::kRuntimeNDArray;
-  static constexpr const uint32_t _type_child_slots = 0;
-  static constexpr const uint32_t _type_child_slots_can_overflow = true;
   static constexpr const char* _type_key = "runtime.NDArray";
-  MATXSCRIPT_DECLARE_BASE_OBJECT_INFO(NDArray::Container, Object);
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(NDArray::Container, Object);
 
  protected:
   friend class NDArray::Internal;
