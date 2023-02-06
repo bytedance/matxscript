@@ -1,4 +1,4 @@
-name: Test Inductor
+name: Test Python Inductor
 
 on:
   push:
@@ -22,5 +22,5 @@ jobs:
         run: gcc --version
       - name: Install MATXScript Requirements
         run: pip3 install -r python/requirements.txt
-      - name: PyTorch Extension Test
+      - name: Python Inductor Test
         run: bash ci/run_py_inductor_test.sh
