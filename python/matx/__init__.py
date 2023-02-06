@@ -40,6 +40,7 @@ __all__ = [
     "trace",
     "script",
     "script_embedded_class",
+    "inductor",
     "save",
     "load",
     "get_cflags",
