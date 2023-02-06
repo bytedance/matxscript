@@ -262,8 +262,8 @@ def path_prefix_inductor(sc_ctx: context.ScriptContext):
     assert isinstance(sc_ctx.main_node.context, context.InductorContext)
     example_inputs = sc_ctx.main_node.context.example_inputs_spec
     example_inputs_str = ''.join([str(inputs) for inputs in example_inputs])
-    cache_str = sc_ctx.main_node.span.source_code + \
-        dep_source_codes + example_inputs_str + _LIB_SHA1 + __version__
+    cache_str = sc_ctx.main_node.span.source_code + dep_source_codes
+    cache_str += example_inputs_str + _LIB_SHA1 + __version__
     cache_md5 = hashlib.md5(cache_str.encode()).hexdigest()[:16]
     file_name = os.path.splitext(os.path.basename(sc_ctx.main_node.span.file_name))[0]
     return os.path.abspath('{}/lib{}_{}_{}_plugin_{}'.format(LIB_PATH,
@@ -433,7 +433,8 @@ def inductor(compiling_obj, example_inputs, *, share=True, toolchain=None, bundl
     torch_compiler_options = ipaths.split() + lpaths.split() + libs.split() + macros.split()
 
     # TODO: fix this on macOS m1.
-    torch_compiler_options.remove('-lgomp')
+    if '-lomp' in torch_compiler_options:
+        torch_compiler_options.remove('-lomp')
 
     build_dso(result, toolchain is not None, compile_options=torch_compiler_options,
               make_path_prefix=path_prefix_inductor)

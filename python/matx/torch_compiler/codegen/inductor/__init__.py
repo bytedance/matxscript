@@ -57,20 +57,28 @@ def compile_fx_inner_cpu(
     # lift the maximum depth of the Python interpreter stack
     # to adapt large/deep models
     compile_fx.sys.setrecursionlimit(max(compile_fx.sys.getrecursionlimit(), 2000))
+
     V.debug.fx_graph(gm, example_inputs)
+
     shape_env = compile_fx._shape_env_from_inputs(example_inputs)
-    fake_mode = compile_fx.fake_mode_from_tensors(example_inputs)
-    graph = compile_fx.GraphLowering(
-        gm,
-        shape_env=shape_env,
-        num_static_inputs=num_fixed,
-        graph_id=graph_id,
-        fake_mode=fake_mode,
-    )
-    with V.set_graph_handler(graph):
-        graph.run(*example_inputs)
-        code = graph.codegen()
-        fake_callable.set_code(code)
+    fake_mode = compile_fx.fake_mode_from_tensors(
+        example_inputs
+    ) or torch._subclasses.FakeTensorMode(allow_non_fake_inputs=True)
+
+    with V.set_fake_mode(fake_mode):
+        compile_fx.pattern_matcher.fx_passes(gm)
+        V.debug.fx_graph_transformed(gm, example_inputs)
+
+        graph = compile_fx.GraphLowering(
+            gm,
+            shape_env=shape_env,
+            num_static_inputs=num_fixed,
+            graph_id=graph_id,
+        )
+        with V.set_graph_handler(graph):
+            graph.run(*example_inputs)
+            code = graph.codegen()
+            fake_callable.set_code(code)
 
     return fake_callable
 
