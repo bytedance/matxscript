@@ -40,6 +40,7 @@ LIB_PATH = os.environ.get('MATX_DSO_DIR', 'dso')
 USE_SO_CACHE = os.environ.get('MATX_USE_SO_CACHE', '').lower() != 'false'
 
 DISABLE_SCRIPT = os.environ.get('MATX_DISABLE_SCRIPT', '').lower() == 'true'
+DISABLE_INDUCTOR = os.environ.get('MATX_DISABLE_INDUCTOR', '').lower() == 'true'
 DISABLE_GENERATE_CC = os.environ.get('MATX_DISABLE_GENERATE_CC', '').lower() == 'true'
 FLAG_COMPILED_OBJECT = object()
 
@@ -251,6 +252,27 @@ def path_prefix(sc_ctx: context.ScriptContext):
                                                              cache_md5))
 
 
+def path_prefix_inductor(sc_ctx: context.ScriptContext):
+    """inductor path_prefix encodes meta info from example_inputs"""
+    # mkdir LIB_PATH
+    from .__init__ import __version__
+    _mk_lib_dir()
+    # code + sha1(libmatx.so) + commit_id(__version__)
+    dep_source_codes = "".join(dep_node.span.source_code for dep_node in sc_ctx.deps_node)
+    assert isinstance(sc_ctx.main_node.context, context.InductorContext)
+    example_inputs = sc_ctx.main_node.context.example_inputs_spec
+    example_inputs_str = ''.join([str(inputs) for inputs in example_inputs])
+    cache_str = sc_ctx.main_node.span.source_code + dep_source_codes
+    cache_str += example_inputs_str + _LIB_SHA1 + __version__
+    cache_md5 = hashlib.md5(cache_str.encode()).hexdigest()[:16]
+    file_name = os.path.splitext(os.path.basename(sc_ctx.main_node.span.file_name))[0]
+    return os.path.abspath('{}/lib{}_{}_{}_plugin_{}'.format(LIB_PATH,
+                                                             file_name,
+                                                             sc_ctx.main_node.span.lineno,
+                                                             sc_ctx.main_node.context.name,
+                                                             cache_md5))
+
+
 def toolchain_path_prefix(sc_ctx: context.ScriptContext, toolchain_str: str):
     from .__init__ import __version__
     # mkdir LIB_PATH
@@ -296,21 +318,31 @@ def toolchain_build(sc_ctx: context.ScriptContext, toolchain: ToolChain):
         sc_ctx.dso_path = (sc_ctx.dso_path[0], so_path)
 
 
-def build_dso(sc_ctx: context.ScriptContext, use_toolchain=False):
+def build_dso(sc_ctx: context.ScriptContext,
+              use_toolchain=False,
+              compile_options=None,
+              make_path_prefix=None):
     rt_mod = sc_ctx.rt_module
     main_node_name = sc_ctx.main_node.context.name
-    base_path = path_prefix(sc_ctx)
+    if make_path_prefix is None:
+        make_path_prefix = path_prefix
+
+    base_path = make_path_prefix(sc_ctx)
 
     with contrib.util.filelock(base_path):
         sopath = base_path + '.so'
         sopath_cxx11 = base_path + '_cxx11.so'
 
+        # TODO: need to unify the compile options
         base_options = [
             "-std=c++14",
             "-O3",
             "-g",
             "-fdiagnostics-color=always",
             "-Werror=return-type"]
+        if compile_options is not None:
+            assert isinstance(compile_options, List)
+            base_options.extend(compile_options)
         cxx11_with_abi_options = base_options + ["-D_GLIBCXX_USE_CXX11_ABI=1"]
         cxx11_no_abi_options = base_options + ["-D_GLIBCXX_USE_CXX11_ABI=0"]
         sys_cc_path = contrib.cc.find_sys_cc_path()
@@ -376,6 +408,41 @@ def script(compiling_obj, *, share=False, toolchain=None, bundle_args=None):
         return make_jit_op_creator(result, share, bundle_args=bundle_args)()
     elif result.build_type is context.BuildType.JIT_OBJECT:
         return make_jit_object_creator(result, share, bundle_args=bundle_args)
+    else:
+        raise ValueError('Unsupported build_type: {}'.format(result.build_type))
+
+
+def inductor(compiling_obj, example_inputs, *, share=True, toolchain=None, bundle_args=None):
+    if DISABLE_SCRIPT:
+        return compiling_obj
+
+    from .script.inductor import from_source
+
+    result: context.ScriptContext = from_source(compiling_obj, example_inputs)
+
+    from torch._inductor import codecache
+    ipaths, lpaths, libs, macros = codecache.get_include_and_linking_paths(
+        include_pytorch=False, vec_isa=codecache.pick_vec_isa())
+
+    # TODO: check whether the following flags are handled by common flags
+    # codecache.get_shared()
+    optimization_flag = codecache.optimization_flags()
+    # codecache.cpp_flags()
+    # codecache.get_warning_all_flag()
+    # codecache.use_custom_generated_macros()
+
+    torch_compiler_options = []
+    flag_str_lst = [ipaths, lpaths, libs, macros, optimization_flag]
+    for flag_str in flag_str_lst:
+        torch_compiler_options.extend(flag_str.split())
+
+    build_dso(result, toolchain is not None, compile_options=torch_compiler_options,
+              make_path_prefix=path_prefix_inductor)
+    if toolchain is not None:
+        toolchain_build(result, toolchain)
+
+    if result.build_type is context.BuildType.FUNCTION:
+        return make_jit_op_creator(result, share, bundle_args=bundle_args)()
     else:
         raise ValueError('Unsupported build_type: {}'.format(result.build_type))
 

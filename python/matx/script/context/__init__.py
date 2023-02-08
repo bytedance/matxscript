@@ -23,3 +23,4 @@ from .script_context import ScriptContext
 from .class_context import ClassContext, GetClassAttr
 from .function_context import FunctionContext, FunctionType
 from .scope_context import ScopeContext
+from .inductor_context import InductorContext

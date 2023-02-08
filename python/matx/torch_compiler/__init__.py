@@ -17,24 +17,16 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from .. import context
+minimum_torch_version = '2.0.0.dev'
 
+try:
+    import torch
 
-class BuildTypeAnalysis:
+    assert torch.__version__ >= minimum_torch_version
 
-    def __init__(self) -> None:
-        self.change = False
-
-    def run(self, sc_ctx: context.ScriptContext):
-        self.change = False
-        node_ctx = sc_ctx.main_node.context
-        if isinstance(node_ctx, context.ClassContext):
-            build_type = context.BuildType.JIT_OBJECT
-        elif isinstance(node_ctx, (context.FunctionContext, context.InductorContext)):
-            build_type = context.BuildType.FUNCTION
-        else:
-            raise RuntimeError("Only one-function, one-class source code is allowed")
-        if sc_ctx.build_type != build_type:
-            self.change = True
-            sc_ctx.build_type = build_type
-        return self.change
+except ModuleNotFoundError:
+    print(f'torch is not installed. matx.inductor requires torch >= {minimum_torch_version}')
+    raise
+except AssertionError:
+    print(f'matx.inductor requires torch >= {minimum_torch_version}')
+    raise

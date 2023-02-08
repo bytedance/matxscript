@@ -1,0 +1,26 @@
+name: Test Python Inductor
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+      - name: Prepare PyTorch 2.0 nightly
+        run: pip3 install --pre torch==2.0.0.dev20230205 --index-url https://download.pytorch.org/whl/nightly/cpu
+      - name: Echo GCC version
+        run: gcc --version
+      - name: Install MATXScript Requirements
+        run: pip3 install -r python/requirements.txt
+      - name: Python Inductor Test
+        run: bash ci/run_py_inductor_test.sh

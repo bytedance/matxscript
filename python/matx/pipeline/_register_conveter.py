@@ -17,6 +17,16 @@
 # specific language governing permissions and limitations
 # under the License.
 
+
+try:
+    import torch
+    import torch.utils.dlpack
+
+    HAS_TORCH = True
+except:
+    HAS_TORCH = False
+
+import matx
 from .._ffi._selector import _set_fast_pipeline_object_converter
 from .._ffi._selector import _set_class_symbol
 from .symbol import BaseSymbol
@@ -29,9 +39,13 @@ def _pipeline_object_converter(value):
         return value.native_op
     if isinstance(value, OpKernel):
         return value.native_op
+    if HAS_TORCH and isinstance(value, torch.Tensor):
+        return matx.array.from_dlpack(torch.utils.dlpack.to_dlpack(value))
     return value
 
 
 _PipelineClasses = (JitObject, OpKernel,)
+if HAS_TORCH:
+    _PipelineClasses += (torch.Tensor,)
 _set_fast_pipeline_object_converter(_PipelineClasses, _pipeline_object_converter)
 _set_class_symbol(BaseSymbol)
