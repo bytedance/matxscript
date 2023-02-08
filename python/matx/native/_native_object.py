@@ -105,11 +105,11 @@ def set_class_method(cls):
         setattr(cls, func_name, func)
 
 
-class NativeClass:
+class NativeClass(NativeObject):
     __MATX_NATIVE_OBJECT__ = True
 
     def __init__(self, *args):
-        self.ud_ref = _ffi_api.CreateNativeObject(self.__class__.__name__.encode(), *args)
+        super(NativeClass, self).__init__(self.__class__.__name__, *args)
 
 
 def load_native_object(module):
@@ -120,7 +120,7 @@ def load_native_object(module):
             if inspect.isclass(res) and issubclass(res, NativeClass):
                 continue
             else:
-                raise RuntimeError("{} is aleady registered in matx.native module".format(name))
+                raise RuntimeError("{} is already registered in matx.native module".format(name))
         cls = type(name, (NativeClass, ), {})
         set_class_method(cls)
         setattr(module, name, cls)
