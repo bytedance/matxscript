@@ -30,7 +30,7 @@ def _pipeline_object_converter(value):
         return value.native_op
     if isinstance(value, OpKernel):
         return value.native_op
-    if isinstance(value, (NativeObject)):
+    if isinstance(value, NativeObject):
         return value.ud_ref
     return value
 
