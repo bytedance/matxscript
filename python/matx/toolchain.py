@@ -100,7 +100,7 @@ class ToolChain:
             self.toolchain, self.kwargs)
 
 
-def make_jit_op_creator(sc_ctx: context.ScriptContext, share=True, bundle_args=None):
+def make_jit_op_creator(sc_ctx: context.ScriptContext, share=False, bundle_args=None):
     assert sc_ctx.build_type == context.BuildType.FUNCTION
     main_func_name = sc_ctx.main_node.context.name
     jit_obj_creator = make_jit_object_creator(sc_ctx, share, bundle_args=bundle_args)
@@ -115,7 +115,7 @@ def make_jit_op_creator(sc_ctx: context.ScriptContext, share=True, bundle_args=N
     return jit_op_creator
 
 
-def make_jit_object_creator(sc_ctx: context.ScriptContext, share=True, bundle_args=None):
+def make_jit_object_creator(sc_ctx: context.ScriptContext, share=False, bundle_args=None):
     from .pipeline.jit_object import FuncMeta, FuncParam, ClassMeta
     from .pipeline.jit_object import restore_user_behavior
     is_function = sc_ctx.build_type == context.BuildType.FUNCTION
@@ -351,7 +351,7 @@ def disable_script():
     DISABLE_SCRIPT = True
 
 
-def script(compiling_obj, *, share=True, toolchain=None, bundle_args=None):
+def script(compiling_obj, *, share=False, toolchain=None, bundle_args=None):
     """Entry function for compiling. Given a python object including function,
     simple class, compile it to a matx4 object which mostly
     keep the behavior of the original python object.
