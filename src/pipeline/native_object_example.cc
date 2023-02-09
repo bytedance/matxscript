@@ -43,7 +43,7 @@ class MySimpleNativeDataExample {
     return content;
   }
 
- private:
+ public:
   String content;
 };
 
@@ -144,6 +144,36 @@ MATX_REGISTER_NATIVE_OBJECT(MyDeviceOpExample)
                       })
     .RegisterFunction("pool_size", [](void* self, PyArgs args) -> RTValue {
       return reinterpret_cast<MyDeviceOpExample*>(self)->pool_size(args);
+    });
+
+class EchoServiceExample {
+ public:
+  EchoServiceExample() {
+  }
+  virtual ~EchoServiceExample() = default;
+
+  int echo(const MySimpleNativeDataExample& req, MySimpleNativeDataExample& rsp) {
+    std::cout << "req content: " << req.get_content() << std::endl;
+    rsp.content = "[Response] " + req.content;
+    return 0;
+  }
+};
+
+MATX_REGISTER_NATIVE_OBJECT(EchoServiceExample)
+    .SetConstructor([](PyArgs args) -> std::shared_ptr<void> {
+      return std::make_shared<EchoServiceExample>();
+    })
+    .RegisterFunction("echo", [](void* self, PyArgs args) -> RTValue {
+      auto p = reinterpret_cast<EchoServiceExample*>(self);
+
+      auto ud0 = args[0].AsObjectView<UserDataRef>();
+      auto udp0 = (NativeObject*)(ud0.data()->ud_ptr);
+      auto req = static_cast<MySimpleNativeDataExample*>(udp0->opaque_ptr_.get());
+
+      auto ud1 = args[1].AsObjectView<UserDataRef>();
+      auto udp1 = (NativeObject*)(ud1.data()->ud_ptr);
+      auto rsp = static_cast<MySimpleNativeDataExample*>(udp1->opaque_ptr_.get());
+      return p->echo(*req, *rsp);
     });
 
 }  // namespace

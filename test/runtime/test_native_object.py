@@ -16,25 +16,26 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-
-from .._ffi._selector import _set_fast_pipeline_object_converter
-from .._ffi._selector import _set_class_symbol
-from .symbol import BaseSymbol
-from ..native import NativeObject
-from .ops import OpKernel
-from .jit_object import JitObject
+import unittest
+import matx
 
 
-def _pipeline_object_converter(value):
-    if isinstance(value, JitObject):
-        return value.native_op
-    if isinstance(value, OpKernel):
-        return value.native_op
-    if isinstance(value, NativeObject):
-        return value.ud_ref
-    return value
+class TestRuntimeNativeObject(unittest.TestCase):
+
+    def setUp(self) -> None:
+        pass
+
+    def test_native_object(self):
+        echo_stub = matx.make_native_object("EchoServiceExample", )
+        req = matx.make_native_object("MySimpleNativeDataExample")
+        rsp = matx.make_native_object("MySimpleNativeDataExample")
+        ret = echo_stub.echo(req, rsp)
+        self.assertEqual(rsp.get_content(), b"[Response] hello")
+        return ret
 
 
-_PipelineClasses = (JitObject, OpKernel, NativeObject,)
-_set_fast_pipeline_object_converter(_PipelineClasses, _pipeline_object_converter)
-_set_class_symbol(BaseSymbol)
+if __name__ == "__main__":
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    unittest.main()
