@@ -303,8 +303,12 @@ OpKernelPtr TXSession::CreateOp(string_view class_name, Dict attrs, string_view 
   }
   bool share = reg_ptr->threadsafety_;
   if (class_name == "JitObject") {
+#ifdef MATXSCRIPT_DISABLE_SHARE_JIT_OBJECT
+    share = false;
+#else
     JitObjectPtr jit_ptr = try_get_jit_object(ud);
     share &= jit_ptr->options_.share;
+#endif
   }
   if (share) {
     ud_cache_->Set(class_name, op_ptr->name_, std::move(ud));
