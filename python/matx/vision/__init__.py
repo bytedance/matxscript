@@ -38,6 +38,7 @@ from .gauss_noise_op import GaussNoiseOp
 from .gaussian_blur_op import GaussianBlurOp
 from .hist_equalize_op import HistEqualizeOp
 from .imdecode_op import ImdecodeOp, ImdecodeRandomCropOp, ImdecodeNoExceptionOp, ImdecodeNoExceptionRandomCropOp
+from .imencode_op import ImencodeOp, ImencodeNoExceptionOp
 from .invert_op import InvertOp
 from .laplacian_blur_op import LaplacianBlurOp
 from .median_blur_op import MedianBlurOp
