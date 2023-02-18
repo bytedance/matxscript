@@ -41,11 +41,10 @@ MATX_REGISTER_NATIVE_OBJECT(VisionImencodeGeneralOp)
       return reinterpret_cast<VisionImencodeGeneralOp*>(self)->process(args);
     });
 
-
-
 class VisionImencodeNoExceptionOpGeneralOp : public VisionBaseOp {
  public:
-  VisionImencodeNoExceptionOpGeneralOp(PyArgs args) : VisionBaseOp(args, "VisionImencodeNoExceptionOp") {
+  VisionImencodeNoExceptionOpGeneralOp(PyArgs args)
+      : VisionBaseOp(args, "VisionImencodeNoExceptionOp") {
   }
   ~VisionImencodeNoExceptionOpGeneralOp() = default;
 };
@@ -57,7 +56,6 @@ MATX_REGISTER_NATIVE_OBJECT(VisionImencodeNoExceptionOpGeneralOp)
     .RegisterFunction("process", [](void* self, PyArgs args) -> RTValue {
       return reinterpret_cast<VisionImencodeNoExceptionOpGeneralOp*>(self)->process(args);
     });
-
 
 }  // namespace ops
 }  // namespace byted_matx_vision

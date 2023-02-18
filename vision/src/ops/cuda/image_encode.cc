@@ -32,17 +32,17 @@ using namespace matxscript::runtime;
 class EncoderHandlerImpl {
  public:
   static std::unique_ptr<EncoderHandlerImpl> build(cuda_op::Encoder::handle_sharedPtr nvjpeg_handle,
-                                           cuda_op::Encoder::param_sharedPtr param,
-                                            cuda_op::DataShape shape,
-                                           int device_id) {
-    auto encoder_ptr = std::make_shared<cuda_op::Encoder>(shape, shape, std::move(nvjpeg_handle), std::move(param));
+                                                   cuda_op::Encoder::param_sharedPtr param,
+                                                   cuda_op::DataShape shape,
+                                                   int device_id) {
+    auto encoder_ptr = std::make_shared<cuda_op::Encoder>(
+        shape, shape, std::move(nvjpeg_handle), std::move(param));
     auto ptr = std::make_unique<EncoderHandlerImpl>(std::move(encoder_ptr), device_id);
     return std::move(ptr);
   }
 
-  EncoderHandlerImpl(std::shared_ptr<cuda_op::Encoder> arg_encoder,
-              int device_id)
-        : encoder(std::move(arg_encoder)) {
+  EncoderHandlerImpl(std::shared_ptr<cuda_op::Encoder> arg_encoder, int device_id)
+      : encoder(std::move(arg_encoder)) {
     ctx.device_type = kDLCUDA;
     ctx.device_id = device_id;
     api = DeviceAPI::Get(ctx);
@@ -50,7 +50,7 @@ class EncoderHandlerImpl {
     encoder->createState(static_cast<cudaStream_t>(stream));
   }
 
-  EncoderHandlerImpl(){
+  EncoderHandlerImpl() {
     api->FreeStream(ctx, stream);
   }
 
@@ -68,7 +68,11 @@ using HandlerPool = vision::BoundedObjectPool<EncoderHandlerImpl>;
 
 class VisionImencodeOpGPU : public VisionBaseOpGPU {
  public:
-  VisionImencodeOpGPU(const Any& session_info, const unicode_view& in_fmt, const int quality, const bool optimized_Huffman, int pool_size);
+  VisionImencodeOpGPU(const Any& session_info,
+                      const unicode_view& in_fmt,
+                      const int quality,
+                      const bool optimized_Huffman,
+                      int pool_size);
 
   RTValue process(const List& arg_images, List* flags);
 
@@ -91,7 +95,7 @@ class VisionImencodeOpGPU : public VisionBaseOpGPU {
   ::matxscript::runtime::internal::IThreadPool* local_thread_pool_ = nullptr;
   int pool_size_;
   std::shared_ptr<HandlerPool> handler_pool_;
- 
+
  public:
   nvjpegInputFormat_t input_format_;
   cuda_op::Encoder::handle_sharedPtr nvjpeg_handle;
@@ -114,8 +118,8 @@ class EncodeTaskOutput {
 };
 
 class ImageEncodeTask : public internal::LockBasedRunnable {
-public:
-     ImageEncodeTask(VisionImencodeOpGPU* op,
+ public:
+  ImageEncodeTask(VisionImencodeOpGPU* op,
                   List::iterator input_first,
                   std::vector<EncodeTaskOutput>::iterator output_first,
                   int len,
@@ -131,13 +135,13 @@ public:
       int thread_num,
       bool no_throw);
 
-protected:
+ protected:
   void RunImpl() override;
   void encode(List::iterator& input_it,
               std::vector<EncodeTaskOutput>::iterator& output_it,
               std::shared_ptr<EncoderHandlerImpl>& handler);
 
-private:
+ private:
   VisionImencodeOpGPU* op_;
   List::iterator input_it_;
   std::vector<EncodeTaskOutput>::iterator output_it_;
@@ -148,46 +152,45 @@ private:
 void ImageEncodeTask::encode(List::iterator& input_it,
                              std::vector<EncodeTaskOutput>::iterator& output_it,
                              std::shared_ptr<EncoderHandlerImpl>& handler) {
+  auto view_elem = input_it->AsObjectView<NDArray>();
+  const NDArray& input_nd = view_elem.data();
 
-    auto view_elem = input_it->AsObjectView<NDArray>();
-    const NDArray& input_nd = view_elem.data();
+  std::vector<int64_t>&& src_shape = input_nd.Shape();
 
-    std::vector<int64_t> &&src_shape = input_nd.Shape();
+  MXCHECK(src_shape[2] == 3) << "The inputs must have 3 channels";
 
-    MXCHECK(src_shape[2]==3) << "The inputs must have 3 channels";
+  cuda_op::DataShape shape;
+  shape.N = 1;
+  shape.C = 3;
+  shape.H = src_shape[0];
+  shape.W = src_shape[1];
 
-    cuda_op::DataShape shape;
-    shape.N = 1;
-    shape.C = 3;
-    shape.H = src_shape[0];
-    shape.W = src_shape[1];
+  auto data_type = DLDataTypeToOpencvCudaType(input_nd.DataType());
+  MXCHECK(data_type == cuda_op::kCV_8U || data_type == cuda_op::kCV_8S)
+      << "The data type of the inputs must be uint8 or int8";
 
+  cudaStream_t cu_stream = static_cast<cudaStream_t>(handler->stream);
+  auto& encoder_ptr = handler->encoder;
+  auto& image_binary = output_it->image_binary;
 
-    auto data_type = DLDataTypeToOpencvCudaType(input_nd.DataType());
-    MXCHECK(data_type==cuda_op::kCV_8U || data_type == cuda_op::kCV_8S)<< "The data type of the inputs must be uint8 or int8";
+  size_t max_buffer_size = encoder_ptr->calMaxEncodedDataSize(shape);
 
+  image_binary.resize(max_buffer_size);
+  unsigned char* binary_data = (unsigned char*)image_binary.data();
+  unsigned char* input_data = (unsigned char*)(input_nd->data);
+  ;
 
-    cudaStream_t cu_stream  = static_cast<cudaStream_t>(handler->stream);
-    auto &encoder_ptr = handler->encoder;
-    auto &image_binary = output_it->image_binary;
+  size_t actual_jpeg_length = max_buffer_size;
 
-    size_t max_buffer_size = encoder_ptr->calMaxEncodedDataSize(shape);
+  encoder_ptr->createState(cu_stream);
+  MXCHECK(encoder_ptr->encode(input_data, op_->input_format_, data_type, shape, cu_stream) ==
+          EXIT_SUCCESS)
+      << "[ImencodeGPU] failed to start encoding.";
 
-    image_binary.resize(max_buffer_size);
-    unsigned char * binary_data = (unsigned char *) image_binary.data();
-    unsigned char * input_data = (unsigned char*) (input_nd->data);;
+  MXCHECK(encoder_ptr->retrieveToHost(binary_data, actual_jpeg_length, cu_stream) == EXIT_SUCCESS)
+      << "[ImencodeGPU] failed to retrieve the encoded image to host.";
 
-
-    size_t actual_jpeg_length = max_buffer_size;
-
-    encoder_ptr->createState(cu_stream);
-    MXCHECK(encoder_ptr->encode(input_data, op_->input_format_, data_type, shape, cu_stream) == EXIT_SUCCESS)
-          << "[ImencodeGPU] failed to start encoding.";
-
-    MXCHECK(encoder_ptr->retrieveToHost(binary_data, actual_jpeg_length, cu_stream) == EXIT_SUCCESS)
-          << "[ImencodeGPU] failed to retrieve the encoded image to host.";
-
-    CHECK_CUDA_CALL(cudaEventRecord(output_it->finish_event, cu_stream));
+  CHECK_CUDA_CALL(cudaEventRecord(output_it->finish_event, cu_stream));
 }
 
 void ImageEncodeTask::RunImpl() {
@@ -204,9 +207,9 @@ void ImageEncodeTask::RunImpl() {
         encode(input_it, output_it, handler);
       } catch (...) {
         output_it->success = false;
+      }
     }
   }
-}
 }
 
 std::vector<internal::IRunnablePtr> ImageEncodeTask::build_tasks(
@@ -244,17 +247,11 @@ std::vector<internal::IRunnablePtr> ImageEncodeTask::build_tasks(
   return ret;
 }
 
-
-
-
-
-
 }  // namespace
-
 
 VisionImencodeOpGPU::VisionImencodeOpGPU(const Any& session_info,
                                          const unicode_view& in_fmt,
-                                         const int quality, 
+                                         const int quality,
                                          const bool optimized_Huffman,
                                          int pool_size)
     : VisionBaseOpGPU(session_info) {
@@ -267,7 +264,8 @@ VisionImencodeOpGPU::VisionImencodeOpGPU(const Any& session_info,
   pool_size_ = pool_size;
   cv::setNumThreads(0);
   nvjpeg_handle = cuda_op::Encoder::createHandler();
-  nvjpeg_param = cuda_op::Encoder::createParameter(nvjpeg_handle, getStream(), quality, optimized_Huffman);
+  nvjpeg_param =
+      cuda_op::Encoder::createParameter(nvjpeg_handle, getStream(), quality, optimized_Huffman);
   cuda_op::DataShape dummy_shape;
   dummy_shape.N = 1;
   dummy_shape.C = 3;
@@ -277,7 +275,8 @@ VisionImencodeOpGPU::VisionImencodeOpGPU(const Any& session_info,
   std::vector<std::unique_ptr<EncoderHandlerImpl>> handlers;
   handlers.reserve(pool_size_);
   for (int i = 0; i < pool_size_; ++i) {
-    handlers.push_back(std::move(EncoderHandlerImpl::build(nvjpeg_handle, nvjpeg_param, dummy_shape, device_id_)));
+    handlers.push_back(
+        std::move(EncoderHandlerImpl::build(nvjpeg_handle, nvjpeg_param, dummy_shape, device_id_)));
   }
   handler_pool_ = std::make_shared<HandlerPool>(std::move(handlers));
 }
@@ -336,7 +335,7 @@ nvjpegInputFormat_t VisionImencodeOpGPU::parse_fmt(const unicode_view& fmt) {
     return NVJPEG_INPUT_BGRI;
   }
   MXTHROW << "Image Encode: output format [" << fmt << "] is invalid, please check carefully.";
-  return NVJPEG_INPUT_RGBI ;
+  return NVJPEG_INPUT_RGBI;
 }
 
 MATX_REGISTER_NATIVE_OBJECT(VisionImencodeOpGPU)
@@ -344,8 +343,11 @@ MATX_REGISTER_NATIVE_OBJECT(VisionImencodeOpGPU)
       MXCHECK_EQ(args.size(), 5) << "[VsionImencodeOpGPU] Expect 5 arguments but get "
                                  << args.size();
 
-      return std::make_shared<VisionImencodeOpGPU>(
-          args[4], args[0].As<unicode_view>(), args[1].As<int>(), args[2].As<bool>(), args[3].As<int>());
+      return std::make_shared<VisionImencodeOpGPU>(args[4],
+                                                   args[0].As<unicode_view>(),
+                                                   args[1].As<int>(),
+                                                   args[2].As<bool>(),
+                                                   args[3].As<int>());
     })
     .RegisterFunction("process", [](void* self, PyArgs args) -> RTValue {
       MXCHECK_EQ(args.size(), 1) << "[VsionImencodeOpGPU] Expect 1 arguments but get "
@@ -359,8 +361,11 @@ MATX_REGISTER_NATIVE_OBJECT(VisionImencodeNoExceptionOpGPU)
     .SetConstructor([](PyArgs args) -> std::shared_ptr<void> {
       MXCHECK_EQ(args.size(), 5) << "[VsionImencodeOpGPU] Expect 5 arguments but get "
                                  << args.size();
-      return std::make_shared<VisionImencodeOpGPU>(
-          args[4], args[0].As<unicode_view>(), args[1].As<int>(), args[2].As<bool>(), args[3].As<int>());
+      return std::make_shared<VisionImencodeOpGPU>(args[4],
+                                                   args[0].As<unicode_view>(),
+                                                   args[1].As<int>(),
+                                                   args[2].As<bool>(),
+                                                   args[3].As<int>());
     })
     .RegisterFunction("process", [](void* self, PyArgs args) -> RTValue {
       MXCHECK_EQ(args.size(), 1) << "[VisionImencodeOpGPU] Expect 1 arguments but get "
@@ -370,21 +375,6 @@ MATX_REGISTER_NATIVE_OBJECT(VisionImencodeNoExceptionOpGPU)
           args[0].AsObjectView<List>().data(), &flags);
       return Tuple({ret, flags});
     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }  // namespace cuda
 }  // namespace ops

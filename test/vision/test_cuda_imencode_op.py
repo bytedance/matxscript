@@ -31,7 +31,7 @@ class TestImencodeOp(unittest.TestCase):
 
     def _helper(self, bv_out):
         for i in range(3):
-            diff = np.abs(bv_out[i].astype(int) -  self.images[i].astype(int))
+            diff = np.abs(bv_out[i].astype(int) - self.images[i].astype(int))
             max_diff = np.max(diff)
             self.assertLessEqual(max_diff, 6)
 
@@ -42,7 +42,7 @@ class TestImencodeOp(unittest.TestCase):
             script_path, '..', 'data', 'example.jpeg')
         image_file3 = os.path.join(
             script_path, '..', 'data', 'exif_orientation5.jpg')
-        
+
         image1 = cv2.imread(image_file1)
         image2 = cv2.imread(image_file2)
         image3 = cv2.imread(image_file3)
@@ -53,7 +53,6 @@ class TestImencodeOp(unittest.TestCase):
 
         return super().setUp()
 
-        
     def test_BGR(self):
         op = byted_vision.ImencodeOp(self.device, "BGR", 100, False)
         r = op(self.image_nd)
@@ -61,7 +60,6 @@ class TestImencodeOp(unittest.TestCase):
         out2 = cv2.imdecode(np.asarray(bytearray(r[1]), dtype="uint8"), cv2.IMREAD_COLOR)
         out3 = cv2.imdecode(np.asarray(bytearray(r[2]), dtype="uint8"), cv2.IMREAD_COLOR)
         self._helper([out1, out2, out3])
-        
 
     def test_scripted_BGR(self):
         op = matx.script(byted_vision.ImencodeOp)(self.device, "BGR", 100, False)
@@ -75,12 +73,28 @@ class TestImencodeOp(unittest.TestCase):
         op = byted_vision.ImencodeOp(self.device, "RGB", 100, False)
         r = op(self.image_nd)
 
-        out1 = cv2.cvtColor(cv2.imdecode(np.asarray(bytearray(r[0])), cv2.IMREAD_COLOR), cv2.COLOR_RGB2BGR)
-        out2 = cv2.cvtColor(cv2.imdecode(np.asarray(bytearray(r[1])), cv2.IMREAD_COLOR), cv2.COLOR_RGB2BGR)
-        out3 = cv2.cvtColor(cv2.imdecode(np.asarray(bytearray(r[2])), cv2.IMREAD_COLOR), cv2.COLOR_RGB2BGR)
+        out1 = cv2.cvtColor(
+            cv2.imdecode(
+                np.asarray(
+                    bytearray(
+                        r[0])),
+                cv2.IMREAD_COLOR),
+            cv2.COLOR_RGB2BGR)
+        out2 = cv2.cvtColor(
+            cv2.imdecode(
+                np.asarray(
+                    bytearray(
+                        r[1])),
+                cv2.IMREAD_COLOR),
+            cv2.COLOR_RGB2BGR)
+        out3 = cv2.cvtColor(
+            cv2.imdecode(
+                np.asarray(
+                    bytearray(
+                        r[2])),
+                cv2.IMREAD_COLOR),
+            cv2.COLOR_RGB2BGR)
         self._helper([out1, out2, out3])
-
-
 
 
 if __name__ == "__main__":

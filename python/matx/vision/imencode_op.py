@@ -107,7 +107,8 @@ class _ImencodeNoExceptionOpImpl:
             pool_size,
             device())
 
-    def __call__(self, images: List[matx.runtime.NDArray]) -> Tuple[List[matx.runtime.NDArray], List[int]]:
+    def __call__(self, images: List[matx.runtime.NDArray]
+                 ) -> Tuple[List[matx.runtime.NDArray], List[int]]:
         return self.op.process(images)
 
 

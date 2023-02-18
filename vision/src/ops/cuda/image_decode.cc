@@ -55,8 +55,8 @@ struct DecoderHandlerImpl {
   DeviceAPI* api;
   MATXScriptDevice ctx;
   DecoderHandlerImpl(std::shared_ptr<cuda_op::decode_params_t> arg_params,
-              std::shared_ptr<cuda_op::Decoder> arg_decoder,
-              int device_id)
+                     std::shared_ptr<cuda_op::Decoder> arg_decoder,
+                     int device_id)
       : params(std::move(arg_params)), decoder(std::move(arg_decoder)) {
     ctx.device_type = kDLCUDA;
     ctx.device_id = device_id;
@@ -67,22 +67,23 @@ struct DecoderHandlerImpl {
     api->FreeStream(ctx, stream);
   }
 
-  static std::unique_ptr<DecoderHandlerImpl> build_default(nvjpegOutputFormat_t format, int device_id) {
+  static std::unique_ptr<DecoderHandlerImpl> build_default(nvjpegOutputFormat_t format,
+                                                           int device_id) {
     return build(format, device_id, nullptr);
   }
 
   static std::unique_ptr<DecoderHandlerImpl> build_crop(nvjpegOutputFormat_t format,
-                                                 int device_id,
-                                                 const std::pair<float, float>& scale,
-                                                 const std::pair<float, float>& ratio) {
+                                                        int device_id,
+                                                        const std::pair<float, float>& scale,
+                                                        const std::pair<float, float>& ratio) {
     cuda_op::RandomCropGenerator* crop_generator = new cuda_op::RandomCropGenerator(ratio, scale);
     return build(format, device_id, crop_generator);
   }
 
  private:
   static std::unique_ptr<DecoderHandlerImpl> build(nvjpegOutputFormat_t format,
-                                            int device_id,
-                                            cuda_op::RandomCropGenerator* crop_generator);
+                                                   int device_id,
+                                                   cuda_op::RandomCropGenerator* crop_generator);
 };
 
 using HandlerPool = vision::BoundedObjectPool<DecoderHandlerImpl>;
@@ -327,9 +328,8 @@ cv::Mat CpuDecodeRGB(const string_view& image_binary) {
 
 }  // namespace
 
-std::unique_ptr<DecoderHandlerImpl> DecoderHandlerImpl::build(nvjpegOutputFormat_t fmt,
-                                                int device_id,
-                                                cuda_op::RandomCropGenerator* crop_generator) {
+std::unique_ptr<DecoderHandlerImpl> DecoderHandlerImpl::build(
+    nvjpegOutputFormat_t fmt, int device_id, cuda_op::RandomCropGenerator* crop_generator) {
   cuda_op::DataShape max_input_shape, max_output_shape;
   int max_batch_size = 1;
   max_output_shape.N = max_batch_size;
@@ -401,7 +401,8 @@ VisionImdecodeOpGPU::VisionImdecodeOpGPU(const Any& session_info,
   std::vector<std::unique_ptr<DecoderHandlerImpl>> handlers;
   handlers.reserve(pool_size_);
   for (int i = 0; i < pool_size_; ++i) {
-    handlers.push_back(DecoderHandlerImpl::build_crop(output_format_, device_id_, scale_pair, ratio_pair));
+    handlers.push_back(
+        DecoderHandlerImpl::build_crop(output_format_, device_id_, scale_pair, ratio_pair));
   }
   handler_pool_ = std::make_shared<HandlerPool>(std::move(handlers));
 }
