@@ -48,13 +48,13 @@ namespace cuda {
 
 using namespace matxscript::runtime;
 
-struct HandlerImpl {
+struct DecoderHandlerImpl {
   std::shared_ptr<cuda_op::decode_params_t> params;
   std::shared_ptr<cuda_op::Decoder> decoder;
   MATXScriptStreamHandle stream;  // 每个decoder独立stream
   DeviceAPI* api;
   MATXScriptDevice ctx;
-  HandlerImpl(std::shared_ptr<cuda_op::decode_params_t> arg_params,
+  DecoderHandlerImpl(std::shared_ptr<cuda_op::decode_params_t> arg_params,
               std::shared_ptr<cuda_op::Decoder> arg_decoder,
               int device_id)
       : params(std::move(arg_params)), decoder(std::move(arg_decoder)) {
@@ -63,15 +63,15 @@ struct HandlerImpl {
     api = DeviceAPI::Get(ctx);
     stream = api->CreateStream(ctx);
   }
-  ~HandlerImpl() {
+  ~DecoderHandlerImpl() {
     api->FreeStream(ctx, stream);
   }
 
-  static std::unique_ptr<HandlerImpl> build_default(nvjpegOutputFormat_t format, int device_id) {
+  static std::unique_ptr<DecoderHandlerImpl> build_default(nvjpegOutputFormat_t format, int device_id) {
     return build(format, device_id, nullptr);
   }
 
-  static std::unique_ptr<HandlerImpl> build_crop(nvjpegOutputFormat_t format,
+  static std::unique_ptr<DecoderHandlerImpl> build_crop(nvjpegOutputFormat_t format,
                                                  int device_id,
                                                  const std::pair<float, float>& scale,
                                                  const std::pair<float, float>& ratio) {
@@ -80,12 +80,12 @@ struct HandlerImpl {
   }
 
  private:
-  static std::unique_ptr<HandlerImpl> build(nvjpegOutputFormat_t format,
+  static std::unique_ptr<DecoderHandlerImpl> build(nvjpegOutputFormat_t format,
                                             int device_id,
                                             cuda_op::RandomCropGenerator* crop_generator);
 };
 
-using HandlerPool = vision::BoundedObjectPool<HandlerImpl>;
+using HandlerPool = vision::BoundedObjectPool<DecoderHandlerImpl>;
 
 typedef cv::Mat (*DecodeFuncPtr)(const string_view& image_binary);
 
@@ -165,7 +165,7 @@ class ImageDecodeTask : public internal::LockBasedRunnable {
   void RunImpl() override;
   void decode(List::iterator& input_it,
               std::vector<DecodeTaskOutput>::iterator& output_it,
-              std::shared_ptr<HandlerImpl>& handler);
+              std::shared_ptr<DecoderHandlerImpl>& handler);
 
  private:
   VisionImdecodeOpGPU* op_;
@@ -186,7 +186,7 @@ bool ImageDecodeTask::is_jpeg(const char* image_data, size_t size) {
 
 void ImageDecodeTask::decode(List::iterator& input_it,
                              std::vector<DecodeTaskOutput>::iterator& output_it,
-                             std::shared_ptr<HandlerImpl>& handler) {
+                             std::shared_ptr<DecoderHandlerImpl>& handler) {
   int max_batch_size = 1;
   int channel = 3;
   auto view = input_it->As<string_view>();
@@ -327,7 +327,7 @@ cv::Mat CpuDecodeRGB(const string_view& image_binary) {
 
 }  // namespace
 
-std::unique_ptr<HandlerImpl> HandlerImpl::build(nvjpegOutputFormat_t fmt,
+std::unique_ptr<DecoderHandlerImpl> DecoderHandlerImpl::build(nvjpegOutputFormat_t fmt,
                                                 int device_id,
                                                 cuda_op::RandomCropGenerator* crop_generator) {
   cuda_op::DataShape max_input_shape, max_output_shape;
@@ -348,7 +348,7 @@ std::unique_ptr<HandlerImpl> HandlerImpl::build(nvjpegOutputFormat_t fmt,
   auto params =
       std::shared_ptr<cuda_op::decode_params_t>(new cuda_op::decode_params_t, params_deleter);
   decoder->prepareDecoderParams("", max_batch_size, fmt, *params);
-  auto ptr = std::make_unique<HandlerImpl>(std::move(params), std::move(decoder), device_id);
+  auto ptr = std::make_unique<DecoderHandlerImpl>(std::move(params), std::move(decoder), device_id);
   return ptr;
 }
 
@@ -365,10 +365,10 @@ VisionImdecodeOpGPU::VisionImdecodeOpGPU(const Any& session_info,
   pool_size_ = pool_size;
   cv::setNumThreads(0);
   parse_fmt(out_fmt);
-  std::vector<std::unique_ptr<HandlerImpl>> handlers;
+  std::vector<std::unique_ptr<DecoderHandlerImpl>> handlers;
   handlers.reserve(pool_size_);
   for (int i = 0; i < pool_size_; ++i) {
-    handlers.push_back(HandlerImpl::build_default(output_format_, device_id_));
+    handlers.push_back(DecoderHandlerImpl::build_default(output_format_, device_id_));
   }
   handler_pool_ = std::make_shared<HandlerPool>(std::move(handlers));
 }
@@ -398,10 +398,10 @@ VisionImdecodeOpGPU::VisionImdecodeOpGPU(const Any& session_info,
   }
   std::pair<float, float> ratio_pair({ratio[0].As<float>(), ratio[1].As<float>()});
   std::pair<float, float> scale_pair({scale[0].As<float>(), scale[1].As<float>()});
-  std::vector<std::unique_ptr<HandlerImpl>> handlers;
+  std::vector<std::unique_ptr<DecoderHandlerImpl>> handlers;
   handlers.reserve(pool_size_);
   for (int i = 0; i < pool_size_; ++i) {
-    handlers.push_back(HandlerImpl::build_crop(output_format_, device_id_, scale_pair, ratio_pair));
+    handlers.push_back(DecoderHandlerImpl::build_crop(output_format_, device_id_, scale_pair, ratio_pair));
   }
   handler_pool_ = std::make_shared<HandlerPool>(std::move(handlers));
 }
