@@ -29,31 +29,33 @@ namespace cuda {
 
 using namespace matxscript::runtime;
 
-class HandlerImpl {
+class EncoderHandlerImpl {
  public:
-  static std::unique_ptr<HandlerImpl> build(cuda_op::Encoder::handle_sharedPtr nvjpeg_handle,
-                                            cuda_op::Encoder::param_sharedPtr param,
+  static std::unique_ptr<EncoderHandlerImpl> build(cuda_op::Encoder::handle_sharedPtr nvjpeg_handle,
+                                           cuda_op::Encoder::param_sharedPtr param,
                                             cuda_op::DataShape shape,
-                                            int device_id) {
-
+                                           int device_id) {
     auto encoder_ptr = std::make_shared<cuda_op::Encoder>(shape, shape, std::move(nvjpeg_handle), std::move(param));
-    // problem here
-    auto ptr = std::make_unique<HandlerImpl>(std::move(encoder_ptr), device_id);
-    return ptr;
+    auto ptr = std::make_unique<EncoderHandlerImpl>(std::move(encoder_ptr), device_id);
+    return std::move(ptr);
   }
 
-  HandlerImpl(std::shared_ptr<cuda_op::Encoder> arg_encoder,
+  EncoderHandlerImpl(std::shared_ptr<cuda_op::Encoder> arg_encoder,
               int device_id)
         : encoder(std::move(arg_encoder)) {
-    //ctx.device_type = kDLCUDA;
-    //ctx.device_id = device_id;
-    //api = DeviceAPI::Get(ctx);
-    //stream = api->CreateStream(ctx);
-    //encoder->createState(static_cast<cudaStream_t>(stream));
+    ctx.device_type = kDLCUDA;
+    ctx.device_id = device_id;
+    api = DeviceAPI::Get(ctx);
+    stream = api->CreateStream(ctx);
+    encoder->createState(static_cast<cudaStream_t>(stream));
   }
 
-  ~HandlerImpl() {
-    //api->FreeStream(ctx, stream);
+  EncoderHandlerImpl(){
+    api->FreeStream(ctx, stream);
+  }
+
+  ~EncoderHandlerImpl() {
+    api->FreeStream(ctx, stream);
   }
 
   std::shared_ptr<cuda_op::Encoder> encoder;
@@ -62,7 +64,7 @@ class HandlerImpl {
   MATXScriptDevice ctx;
 };
 
-using HandlerPool = vision::BoundedObjectPool<HandlerImpl>;
+using HandlerPool = vision::BoundedObjectPool<EncoderHandlerImpl>;
 
 class VisionImencodeOpGPU : public VisionBaseOpGPU {
  public:
@@ -133,7 +135,7 @@ protected:
   void RunImpl() override;
   void encode(List::iterator& input_it,
               std::vector<EncodeTaskOutput>::iterator& output_it,
-              std::shared_ptr<HandlerImpl>& handler);
+              std::shared_ptr<EncoderHandlerImpl>& handler);
 
 private:
   VisionImencodeOpGPU* op_;
@@ -145,7 +147,7 @@ private:
 
 void ImageEncodeTask::encode(List::iterator& input_it,
                              std::vector<EncodeTaskOutput>::iterator& output_it,
-                             std::shared_ptr<HandlerImpl>& handler) {
+                             std::shared_ptr<EncoderHandlerImpl>& handler) {
 
     auto view_elem = input_it->AsObjectView<NDArray>();
     const NDArray& input_nd = view_elem.data();
@@ -165,7 +167,7 @@ void ImageEncodeTask::encode(List::iterator& input_it,
     MXCHECK(data_type==cuda_op::kCV_8U || data_type == cuda_op::kCV_8S)<< "The data type of the inputs must be uint8 or int8";
 
 
-     cudaStream_t cu_stream  = static_cast<cudaStream_t>(handler->stream);
+    cudaStream_t cu_stream  = static_cast<cudaStream_t>(handler->stream);
     auto &encoder_ptr = handler->encoder;
     auto &image_binary = output_it->image_binary;
 
@@ -256,12 +258,6 @@ VisionImencodeOpGPU::VisionImencodeOpGPU(const Any& session_info,
                                          const bool optimized_Huffman,
                                          int pool_size)
     : VisionBaseOpGPU(session_info) {
-    
-      std::cout<<"quality: "<<quality<<std::endl;
-      std::cout<<"optimized_Huffman: "<<optimized_Huffman<<std::endl;
-      std::cout<<"pool size: "<<pool_size<<std::endl;
-      std::cout<<"fmt: "<< in_fmt<<std::endl;
-      std::cout<<"device: "<< device_id_<<std::endl;
   MXCHECK(pool_size > 1)
       << "[VisionImencodeOpGPU] pool size must be greater then one and power of 2";
   MXCHECK_EQ((pool_size & (pool_size - 1)), 0)
@@ -270,47 +266,36 @@ VisionImencodeOpGPU::VisionImencodeOpGPU(const Any& session_info,
       new ::matxscript::runtime::internal::LockBasedThreadPool(pool_size, "ImencodeThreadPool");
   pool_size_ = pool_size;
   cv::setNumThreads(0);
-std::cout<<"266"<<std::endl;
   nvjpeg_handle = cuda_op::Encoder::createHandler();
   nvjpeg_param = cuda_op::Encoder::createParameter(nvjpeg_handle, getStream(), quality, optimized_Huffman);
-std::cout<<"269"<<std::endl;
   cuda_op::DataShape dummy_shape;
   dummy_shape.N = 1;
   dummy_shape.C = 3;
   dummy_shape.H = 1024;
   dummy_shape.W = 1024;
-std::cout<<"275"<<std::endl;
   input_format_ = parse_fmt(in_fmt);
-std::cout<<"277"<<std::endl;
-  std::vector<std::unique_ptr<HandlerImpl>> handlers;
+  std::vector<std::unique_ptr<EncoderHandlerImpl>> handlers;
   handlers.reserve(pool_size_);
-std::cout<<"ok"<<std::endl;
   for (int i = 0; i < pool_size_; ++i) {
-    handlers.push_back(HandlerImpl::build(nvjpeg_handle, nvjpeg_param, dummy_shape, device_id_));
+    handlers.push_back(std::move(EncoderHandlerImpl::build(nvjpeg_handle, nvjpeg_param, dummy_shape, device_id_)));
   }
   handler_pool_ = std::make_shared<HandlerPool>(std::move(handlers));
-  std::cout<<"finish construct"<<std::endl;
 }
 
 RTValue VisionImencodeOpGPU::process(const List& arg_images, List* flags) {
-  std::cout<<"process"<<std::endl;
   // prepare input & output
   check_and_set_device(device_id_);
   auto images = check_copy(arg_images, ctx_, getStream());
-    std::cout<<"290"<<std::endl;
   if (images.size() == 0) {
     return List();
   }
   std::vector<EncodeTaskOutput> outputs(images.size());
-  std::cout<<"295"<<std::endl;
   bool no_throw = (flags != nullptr);
   auto tasks = ImageEncodeTask::build_tasks(
       this, images.begin(), outputs.begin(), outputs.size(), pool_size_, no_throw);
-  std::cout<<"299"<<std::endl;
   for (size_t i = 0; i < tasks.size(); ++i) {
     local_thread_pool_->Enqueue(tasks[i], 0);
   }
-  std::cout<<"303"<<std::endl;
   std::exception_ptr eptr;
   for (size_t i = 0; i < tasks.size(); ++i) {
     try {
@@ -325,7 +310,6 @@ RTValue VisionImencodeOpGPU::process(const List& arg_images, List* flags) {
   if (eptr) {
     std::rethrow_exception(eptr);
   }
-  std::cout<<"318"<<std::endl;
   List ret;
   ret.reserve(images.size());
 
@@ -335,14 +319,12 @@ RTValue VisionImencodeOpGPU::process(const List& arg_images, List* flags) {
       flags->push_back(output.success);
     }
   }
-  std::cout<<"328"<<std::endl;
   for (auto& output : outputs) {
     if (output.success) {
       cudaEventSynchronize(output.finish_event);
     }
     ret.push_back(std::move(output.image_binary));
   }
-  std::cout<<"335"<<std::endl;
   return ret;
 }
 
@@ -366,7 +348,6 @@ MATX_REGISTER_NATIVE_OBJECT(VisionImencodeOpGPU)
           args[4], args[0].As<unicode_view>(), args[1].As<int>(), args[2].As<bool>(), args[3].As<int>());
     })
     .RegisterFunction("process", [](void* self, PyArgs args) -> RTValue {
-      std::cout<<"process 360"<<std::endl;
       MXCHECK_EQ(args.size(), 1) << "[VsionImencodeOpGPU] Expect 1 arguments but get "
                                  << args.size();
       return reinterpret_cast<VisionImencodeOpGPU*>(self)->process(
@@ -382,7 +363,6 @@ MATX_REGISTER_NATIVE_OBJECT(VisionImencodeNoExceptionOpGPU)
           args[4], args[0].As<unicode_view>(), args[1].As<int>(), args[2].As<bool>(), args[3].As<int>());
     })
     .RegisterFunction("process", [](void* self, PyArgs args) -> RTValue {
-            std::cout<<"process 376"<<std::endl;
       MXCHECK_EQ(args.size(), 1) << "[VisionImencodeOpGPU] Expect 1 arguments but get "
                                  << args.size();
       List flags;

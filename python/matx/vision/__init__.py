@@ -91,6 +91,8 @@ __all__ = [
     "ImdecodeRandomCropOp",
     "ImdecodeNoExceptionOp",
     "ImdecodeNoExceptionRandomCropOp",
+    "ImencodeOp",
+    "ImencodeNoExceptionOp",
     "InvertOp",
     "LaplacianBlurOp",
     "MedianBlurOp",

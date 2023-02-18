@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <cv_cuda.h>
+#include <opencv_cuda.h>
 #include <matxscript/runtime/data_type.h>
 #include <unordered_map>
 #include "matxscript/runtime/container/unicode_view.h"
