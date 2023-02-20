@@ -18,9 +18,6 @@ for a, b, c in os.walk('./'):
         if cc.startswith('test_') and cc.endswith('.py'):
             test_files.append(os.path.join(a, cc))
 
-PYTHONPATH = os.path.join(ROOT_PATH, 'python')
-os.environ['PYTHONPATH'] = PYTHONPATH + ':' + os.environ.get('PYTHONPATH', '')
-
 ###############################################################################
 # run all test script
 ###############################################################################

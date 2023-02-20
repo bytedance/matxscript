@@ -18,8 +18,8 @@
  * under the License.
  */
 
-#include <cv_cuda.h>
 #include <opencv2/opencv.hpp>
+#include <opencv_cuda.h>
 #include "matxscript/runtime/container/list_ref.h"
 #include "matxscript/runtime/container/ndarray.h"
 #include "matxscript/runtime/container/unicode_view.h"

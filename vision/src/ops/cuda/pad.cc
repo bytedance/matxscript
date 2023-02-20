@@ -20,9 +20,9 @@
 
 #include <matxscript/runtime/native_object_registry.h>
 #include <matxscript/runtime/py_args.h>
+#include <opencv_cuda.h>
 #include <mutex>
 #include <vector>
-#include "cv_cuda.h"
 #include "matxscript/runtime/container/list_ref.h"
 #include "matxscript/runtime/container/ndarray.h"
 #include "matxscript/runtime/container/tuple_ref.h"
