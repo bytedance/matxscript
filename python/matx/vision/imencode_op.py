@@ -108,7 +108,7 @@ class _ImencodeNoExceptionOpImpl:
             device())
 
     def __call__(self, images: List[matx.runtime.NDArray]
-                 ) -> Tuple[List[matx.runtime.NDArray], List[int]]:
+                 ) -> Tuple[List[bytes], List[int]]:
         return self.op.process(images)
 
 
@@ -136,7 +136,7 @@ class ImencodeNoExceptionOp:
             device, fmt, quality, optimized_Huffman, pool_size)
 
     def __call__(self, images: List[matx.runtime.NDArray]
-                 ) -> Tuple[List[matx.runtime.NDArray], List[int]]:
+                 ) -> Tuple[List[bytes], List[int]]:
         """
 
         Args:

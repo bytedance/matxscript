@@ -114,6 +114,7 @@ class EncodeTaskOutput {
   }
   cudaEvent_t finish_event;
   matxscript::runtime::String image_binary;
+  size_t binary_length;
   bool success = true;
 };
 
@@ -178,16 +179,15 @@ void ImageEncodeTask::encode(List::iterator& input_it,
   image_binary.resize(max_buffer_size);
   unsigned char* binary_data = (unsigned char*)image_binary.data();
   unsigned char* input_data = (unsigned char*)(input_nd->data);
-  ;
 
-  size_t actual_jpeg_length = max_buffer_size;
+  output_it->binary_length = max_buffer_size;
 
   encoder_ptr->createState(cu_stream);
   MXCHECK(encoder_ptr->encode(input_data, op_->input_format_, data_type, shape, cu_stream) ==
           EXIT_SUCCESS)
       << "[ImencodeGPU] failed to start encoding.";
 
-  MXCHECK(encoder_ptr->retrieveToHost(binary_data, actual_jpeg_length, cu_stream) == EXIT_SUCCESS)
+  MXCHECK(encoder_ptr->retrieveToHost(binary_data, output_it->binary_length, cu_stream) == EXIT_SUCCESS)
       << "[ImencodeGPU] failed to retrieve the encoded image to host.";
 
   CHECK_CUDA_CALL(cudaEventRecord(output_it->finish_event, cu_stream));
@@ -321,6 +321,7 @@ RTValue VisionImencodeOpGPU::process(const List& arg_images, List* flags) {
   for (auto& output : outputs) {
     if (output.success) {
       cudaEventSynchronize(output.finish_event);
+      output.image_binary.resize(output.binary_length, '\0');
     }
     ret.push_back(std::move(output.image_binary));
   }
