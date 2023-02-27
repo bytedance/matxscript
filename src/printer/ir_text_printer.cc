@@ -46,8 +46,6 @@ Doc IRTextPrinter::Print(const ObjectRef& node) {
     return PrintArray(node.as<ArrayNode>());
   } else if (node->IsInstance<StringNode>()) {
     return PrintString(node.as<StringNode>());
-  } else if (node->IsInstance<ir::TupleNode>()) {
-    return PrintTuple(node.as<ir::TupleNode>());
   } else if (node->IsInstance<PrimFuncNode>()) {
     return PrintFunc(Downcast<PrimFunc>(node));
   } else if (node->IsInstance<FunctionNode>()) {
@@ -180,7 +178,17 @@ Doc IRTextPrinter::PrintArray(const ArrayNode* op) {
   return doc;
 }
 
-Doc IRTextPrinter::PrintTuple(const ir::TupleNode* op) {
+Doc IRTextPrinter::VisitExpr_(const ir::RangeExprNode* op) {
+  Doc doc;
+  doc << "range(";
+  doc << Print(op->start) << ", ";
+  doc << Print(op->stop) << ", ";
+  doc << Print(op->step);
+  doc << ')';
+  return doc;
+}
+
+Doc IRTextPrinter::VisitExpr_(const ir::TupleNode* op) {
   Doc doc;
   doc << '(';
   for (size_t i = 0; i < op->fields.size(); ++i) {

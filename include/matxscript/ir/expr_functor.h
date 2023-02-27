@@ -261,7 +261,6 @@ class HLOExprFunctor<R(const HLOExpr& n, Args...)> {
   // var/const/let/call...
   virtual R VisitExpr_(const GlobalVarNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const HLOVarNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
-  virtual R VisitExpr_(const TupleNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const CallNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const ConstructorNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const HLOIteratorNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
@@ -280,6 +279,10 @@ class HLOExprFunctor<R(const HLOExpr& n, Args...)> {
   virtual R VisitExpr_(const HLOMoveNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const HLOEnumerateNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const HLOZipNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
+
+  // kernel or script
+  virtual R VisitExpr_(const TupleNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
+  virtual R VisitExpr_(const RangeExprNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
 
   virtual R VisitExprDefault_(const Object* op, Args...) {
     MXTHROW << "[" << runtime::DemangleType(typeid(*this).name()) << "] Do not have a default for "
@@ -310,7 +313,6 @@ class HLOExprFunctor<R(const HLOExpr& n, Args...)> {
     // var/const/let/call...
     IR_EXPR_FUNCTOR_DISPATCH(HLOVarNode);
     IR_EXPR_FUNCTOR_DISPATCH(GlobalVarNode);
-    IR_EXPR_FUNCTOR_DISPATCH(TupleNode);
     IR_EXPR_FUNCTOR_DISPATCH(CallNode);
     IR_EXPR_FUNCTOR_DISPATCH(ConstructorNode);
     IR_EXPR_FUNCTOR_DISPATCH(InitializerListNode);
@@ -329,6 +331,9 @@ class HLOExprFunctor<R(const HLOExpr& n, Args...)> {
     IR_EXPR_FUNCTOR_DISPATCH(HLOMoveNode);
     IR_EXPR_FUNCTOR_DISPATCH(HLOEnumerateNode);
     IR_EXPR_FUNCTOR_DISPATCH(HLOZipNode);
+    // kernel or script
+    IR_EXPR_FUNCTOR_DISPATCH(TupleNode);
+    IR_EXPR_FUNCTOR_DISPATCH(RangeExprNode);
 
     return vtable;
   }
@@ -429,7 +434,6 @@ class MATX_DLL ExprVisitor : public PrimExprFunctor<void(const PrimExpr&)>,
 
   void VisitExpr_(const HLOVarNode* op) override;
   void VisitExpr_(const GlobalVarNode* op) override;
-  void VisitExpr_(const TupleNode* op) override;
   void VisitExpr_(const CallNode* op) override;
   void VisitExpr_(const ConstructorNode* op) override;
   void VisitExpr_(const InitializerListNode* op) override;
@@ -443,6 +447,10 @@ class MATX_DLL ExprVisitor : public PrimExprFunctor<void(const PrimExpr&)>,
   void VisitExpr_(const HLOMoveNode* op) override;
   void VisitExpr_(const HLOEnumerateNode* op) override;
   void VisitExpr_(const HLOZipNode* op) override;
+
+  // kernel or script
+  void VisitExpr_(const TupleNode* op) override;
+  void VisitExpr_(const RangeExprNode* op) override;
 };
 
 /*!
@@ -534,7 +542,6 @@ class MATX_DLL ExprMutator : public PrimExprFunctor<PrimExpr(const PrimExpr&)>,
 
   HLOExpr VisitExpr_(const HLOVarNode* op) override;
   HLOExpr VisitExpr_(const GlobalVarNode* op) override;
-  HLOExpr VisitExpr_(const TupleNode* op) override;
   HLOExpr VisitExpr_(const CallNode* op) override;
   HLOExpr VisitExpr_(const ConstructorNode* op) override;
   HLOExpr VisitExpr_(const InitializerListNode* op) override;
@@ -550,6 +557,10 @@ class MATX_DLL ExprMutator : public PrimExprFunctor<PrimExpr(const PrimExpr&)>,
   HLOExpr VisitExpr_(const HLOMoveNode* op) override;
   HLOExpr VisitExpr_(const HLOEnumerateNode* op) override;
   HLOExpr VisitExpr_(const HLOZipNode* op) override;
+
+  // kernel or script
+  HLOExpr VisitExpr_(const TupleNode* op) override;
+  HLOExpr VisitExpr_(const RangeExprNode* op) override;
 
  public:
   /*!

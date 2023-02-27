@@ -1,7 +1,5 @@
 // Copyright 2022 ByteDance Ltd. and/or its affiliates.
 /*
- * Acknowledgement: This file originates from incubator-tvm
- *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -21,65 +19,57 @@
  */
 #pragma once
 
-#include <matxscript/ir/prim_expr.h>
+#include <matxscript/ir/base.h>
 
 namespace matxscript {
 namespace ir {
 
 /*! \brief range over one dimension */
-class RangeNode : public Object {
+class RangeExprNode : public HLOExprNode {
  public:
-  /*! \brief beginning of the node */
-  PrimExpr min;
-  /*! \brief the extend of range */
-  PrimExpr extent;
-  /*! \brief constructor */
-  RangeNode() {
-  }
-  RangeNode(PrimExpr min, PrimExpr extent) : min(min), extent(extent) {
-  }
+  /*! \brief the start of the node */
+  PrimExpr start;
+  /*! \brief the stop of range */
+  PrimExpr stop;
+  /*! \brief the step of range */
+  PrimExpr step;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("min", &min);
-    v->Visit("extent", &extent);
+    v->Visit("start", &start);
+    v->Visit("stop", &stop);
+    v->Visit("stop", &step);
   }
 
-  bool SEqualReduce(const RangeNode* other, SEqualReducer equal) const {
-    return equal(min, other->min) && equal(extent, other->extent);
+  bool SEqualReduce(const RangeExprNode* other, SEqualReducer equal) const {
+    return equal(start, other->start) && equal(stop, other->stop) && equal(step, other->step);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(min);
-    hash_reduce(extent);
+    hash_reduce(start);
+    hash_reduce(stop);
+    hash_reduce(step);
   }
 
-  static constexpr const char* _type_key = "Range";
+  static constexpr const char* _type_key = "RangeExpr";
   static constexpr const bool _type_has_method_sequal_reduce = true;
   static constexpr const bool _type_has_method_shash_reduce = true;
-  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(RangeNode, Object);
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(RangeExprNode, HLOExprNode);
 };
 
-/*! \brief Range constainer  */
-class Range : public ObjectRef {
+/*! \brief RangeExpr container  */
+class RangeExpr : public HLOExpr {
  public:
   /*!
    * \brief constructor by begin and end
-   * \param begin The begin of the range.
-   * \param end The end of the range.
+   * \param start The begin of the range.
+   * \param stop The end of the range.
+   * \param step The step of the range.
+   * \param span The source code info.
    */
-  MATX_DLL Range(PrimExpr begin, PrimExpr end);
-  /*!
-   * \brief construct a new range with min and extent
-   *  The corresponding constructor is removed,
-   *  because that is counter convention of tradition meaning
-   *  of range(begin, end)
-   *
-   * \param min The minimum range.
-   * \param extent The extent of the range.
-   */
-  static Range FromMinExtent(PrimExpr min, PrimExpr extent);
+  MATX_DLL RangeExpr(PrimExpr start, PrimExpr stop, PrimExpr step, Span span = Span());
+
   // declare range.
-  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(Range, ObjectRef, RangeNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(RangeExpr, HLOExpr, RangeExprNode);
 };
 
 }  // namespace ir

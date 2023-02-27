@@ -137,6 +137,8 @@ class IRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
   Doc VisitExpr_(const HLOMoveNode* op) override;
   Doc VisitExpr_(const HLOEnumerateNode* op) override;
   Doc VisitExpr_(const HLOZipNode* op) override;
+  Doc VisitExpr_(const ir::TupleNode* op) override;
+  Doc VisitExpr_(const ir::RangeExprNode* op) override;
   Doc VisitExprDefault_(const Object* op) override;
 
   // Begin stmt
@@ -193,7 +195,6 @@ class IRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
   Doc PrintString(const StringNode* op) {
     return Doc::StrLiteral(op->data_container);
   }
-  Doc PrintTuple(const ir::TupleNode* op);
 
   /*!
    * \brief special method to print out data type
