@@ -24,6 +24,7 @@ from .base import SourceName, Span, Node
 from .base import structural_equal, assert_structural_equal, structural_hash
 from .base import BaseExpr, PrimExpr, HLOExpr, Range
 from .type import Type, TypeKind, PrimType, PointerType, TypeVar, GlobalTypeVar, TupleType
+from .type import RangeType
 from .type import FuncType
 from .type import ObjectType, StringType, UnicodeType, ListType, DictType, SetType
 from .type import IteratorType, FileType, VoidType, UserDataType

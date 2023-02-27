@@ -203,6 +203,19 @@ class GlobalTypeVar(Type):
         return TypeCall(self, args)
 
 
+@_ffi.register_object("RangeType")
+class RangeType(Type):
+    """The range type.
+
+    Parameters
+    ----------
+
+    """
+
+    def __init__(self, ):
+        self.__init_handle_by_constructor__(_ffi_api.RangeType, )
+
+
 @_ffi.register_object("TupleType")
 class TupleType(Type):
     """The type of tuple values.

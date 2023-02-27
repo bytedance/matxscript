@@ -60,6 +60,9 @@ void TypeVisitor::VisitType_(const FuncTypeNode* op) {
   this->VisitType(op->ret_type);
 }
 
+void TypeVisitor::VisitType_(const RangeTypeNode* op) {
+}
+
 void TypeVisitor::VisitType_(const TupleTypeNode* op) {
   for (const Type& t : op->fields) {
     this->VisitType(t);
@@ -196,6 +199,10 @@ Type TypeMutator::VisitType_(const FuncTypeNode* op) {
   if (!changed)
     return GetRef<Type>(op);
   return FuncType(new_args, new_ret_type, type_params, type_constraints);
+}
+
+Type TypeMutator::VisitType_(const RangeTypeNode* op) {
+  return GetRef<Type>(op);
 }
 
 Type TypeMutator::VisitType_(const TupleTypeNode* op) {

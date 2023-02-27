@@ -390,6 +390,55 @@ class GlobalTypeVar : public Type {
 };
 
 /*!
+ * \brief The type of range.
+ * \sa RangeType
+ */
+class RangeTypeNode : public TypeNode {
+ public:
+  RangeTypeNode() {
+  }
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("span", &span);
+  }
+
+  bool SEqualReduce(const RangeTypeNode* other, SEqualReducer equal) const {
+    return true;
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+  }
+
+  bool Iterable() const override {
+    return true;
+  }
+
+  bool HasBeginEnd() const override {
+    return true;
+  }
+
+  runtime::Unicode GetPythonTypeName() const override {
+    return U"range";
+  }
+
+  static constexpr const char* _type_key = "RangeType";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(RangeTypeNode, TypeNode);
+};
+
+/*!
+ * \brief Managed reference to RangeTypeNode.
+ * \sa RangeTypeNode.
+ */
+class RangeType : public Type {
+ public:
+  /*!
+   * \brief Constructor
+   * \param span The span of the type.
+   */
+  MATX_DLL explicit RangeType(Span span = Span());
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(RangeType, Type, RangeTypeNode);
+};
+
+/*!
  * \brief The type of tuple values.
  * \sa TupleType
  */

@@ -167,6 +167,7 @@ class IRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
   Doc PrintType(const Type& type);
   Doc VisitType_(const PrimTypeNode* node) override;
   Doc VisitType_(const PointerTypeNode* node) override;
+  Doc VisitType_(const RangeTypeNode* node) override;
   Doc VisitType_(const TupleTypeNode* node) override;
   Doc VisitType_(const ObjectTypeNode* node) override;
   Doc VisitType_(const UnicodeTypeNode* node) override;
