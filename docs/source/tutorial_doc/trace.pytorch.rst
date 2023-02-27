@@ -53,7 +53,7 @@ From a given ScriptModule and a device id, we can pack a ScriptModule into a mat
 
     import matx
 
-    infer_op = matx.script("model", device=0)
+    infer_op = matx.script("model", backend='pytorch', device=0)
 
 | 3. Now we can use infer_op as a normal matx op or call it in pipeline for trace. Notice that the inputs for calling infer_op are the same as ScriptModule, but users have to substitute torch.tensor with matx.NDArray.
 
