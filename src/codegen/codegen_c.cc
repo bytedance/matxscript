@@ -784,8 +784,11 @@ void CodeGenC::PrintType(const Type& type, std::ostream& os) {  // NOLINT(*)
     os << "const ";
     PrintType(ptr->value, os);
     os << "&";
+  } else if (auto* ptr = type.as<RangeTypeNode>()) {
+    MXLOG(FATAL)
+        << "RangeType should be decomposed by compiler. Please contact the developer to resolve the issue";
   } else {
-    MXLOG(FATAL) << "Type " << type << " does not have a corresponding C Type";
+    MXLOG(FATAL) << "Type " << type << " does not have a corresponding Runtime Type";
   }
 }
 

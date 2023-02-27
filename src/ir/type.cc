@@ -213,6 +213,26 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "TupleTypeNode(" << node->fields << ")";
     });
 
+// Range Type
+RangeType::RangeType(Span span) {
+  ObjectPtr<RangeTypeNode> n = make_object<RangeTypeNode>();
+  n->span = std::move(span);
+  data_ = std::move(n);
+}
+
+MATXSCRIPT_REGISTER_NODE_TYPE(RangeTypeNode);
+
+MATXSCRIPT_REGISTER_GLOBAL("ir.RangeType").set_body_typed([]() {
+  static RangeType range_t{Span(nullptr)};
+  return range_t;
+});
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
+    .set_dispatch<RangeTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
+      auto* node = static_cast<const RangeTypeNode*>(ref.get());
+      p->stream << "RangeTypeNode";
+    });
+
 // Object Type
 ObjectType::ObjectType(bool is_view, Span span) {
   ObjectPtr<ObjectTypeNode> n = make_object<ObjectTypeNode>();

@@ -699,6 +699,12 @@ Doc IRTextPrinter::VisitType_(const PointerTypeNode* node) {
   return doc;
 }
 
+Doc IRTextPrinter::VisitType_(const RangeTypeNode* node) {
+  Doc doc;
+  doc << "Range";
+  return doc;
+}
+
 Doc IRTextPrinter::VisitType_(const TupleTypeNode* node) {
   std::vector<Doc> fields;
   for (Type field : node->fields) {

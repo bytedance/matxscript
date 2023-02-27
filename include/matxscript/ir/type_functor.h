@@ -89,6 +89,7 @@ class TypeFunctor<R(const Type& n, Args...)> {
   virtual R VisitType_(const TypeVarNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
   virtual R VisitType_(const TypeConstraintNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
   virtual R VisitType_(const FuncTypeNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
+  virtual R VisitType_(const RangeTypeNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
   virtual R VisitType_(const TupleTypeNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
   virtual R VisitType_(const GlobalTypeVarNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
   virtual R VisitType_(const PrimTypeNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
@@ -122,6 +123,7 @@ class TypeFunctor<R(const Type& n, Args...)> {
     MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(TypeVarNode);
     MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(TypeConstraintNode);
     MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(FuncTypeNode);
+    MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(RangeTypeNode);
     MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(TupleTypeNode);
     MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(GlobalTypeVarNode);
     MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(PrimTypeNode);
@@ -154,6 +156,7 @@ class MATX_DLL TypeVisitor : public TypeFunctor<void(const Type& n)> {
  public:
   void VisitType_(const TypeVarNode* op) override;
   void VisitType_(const FuncTypeNode* op) override;
+  void VisitType_(const RangeTypeNode* op) override;
   void VisitType_(const TupleTypeNode* op) override;
   void VisitType_(const GlobalTypeVarNode* op) override;
   void VisitType_(const PrimTypeNode* op) override;
@@ -183,6 +186,7 @@ class MATX_DLL TypeMutator : public TypeFunctor<Type(const Type& n)> {
   Type VisitType(const Type& t) override;
   Type VisitType_(const TypeVarNode* op) override;
   Type VisitType_(const FuncTypeNode* op) override;
+  Type VisitType_(const RangeTypeNode* op) override;
   Type VisitType_(const TupleTypeNode* op) override;
   Type VisitType_(const GlobalTypeVarNode* op) override;
   Type VisitType_(const PrimTypeNode* op) override;
