@@ -140,7 +140,7 @@ void ExprVisitor::VisitExpr_(const RangeExprNode* op) {
   this->VisitExpr(op->step);
 }
 
-void ExprVisitor::VisitExpr_(const TupleNode* op) {
+void ExprVisitor::VisitExpr_(const TupleExprNode* op) {
   this->VisitSpan(op->span);
   for (auto field : op->fields) {
     if (field->IsInstance<PrimExprNode>()) {
@@ -557,7 +557,7 @@ Type ExprMutator::VisitType(const Type& t) {
 }
 
 // kernel or script
-HLOExpr ExprMutator::VisitExpr_(const TupleNode* op) {
+HLOExpr ExprMutator::VisitExpr_(const TupleExprNode* op) {
   runtime::Array<BaseExpr> fields;
   bool all_fields_unchanged = true;
   for (auto field : op->fields) {
@@ -574,7 +574,7 @@ HLOExpr ExprMutator::VisitExpr_(const TupleNode* op) {
   if (all_fields_unchanged) {
     return GetRef<HLOExpr>(op);
   } else {
-    return Tuple(fields, op->span);
+    return TupleExpr(fields, op->span);
   }
 }
 

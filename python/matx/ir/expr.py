@@ -1224,8 +1224,8 @@ class GlobalVar(HLOExpr):
         )
 
 
-@_ffi.register_object("ir.Tuple")
-class Tuple(HLOExprWithOp):
+@_ffi.register_object("ir.TupleExpr")
+class TupleExpr(HLOExprWithOp):
     """Tuple expression that groups several fields together.
 
     Parameters
@@ -1235,7 +1235,7 @@ class Tuple(HLOExprWithOp):
     """
 
     def __init__(self, fields, span=Span()):
-        self.__init_handle_by_constructor__(_ffi_api.Tuple, _to_ir(fields), span)
+        self.__init_handle_by_constructor__(_ffi_api.TupleExpr, _to_ir(fields), span)
 
     def __getitem__(self, index):
         if index >= len(self):

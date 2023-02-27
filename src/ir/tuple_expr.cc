@@ -32,23 +32,23 @@ namespace ir {
 
 using namespace runtime;
 
-Tuple::Tuple(Array<BaseExpr> fields, Span span) {
-  ObjectPtr<TupleNode> n = make_object<TupleNode>();
+TupleExpr::TupleExpr(Array<BaseExpr> fields, Span span) {
+  ObjectPtr<TupleExprNode> n = make_object<TupleExprNode>();
   n->fields = std::move(fields);
   n->span = std::move(span);
   data_ = std::move(n);
 }
 
-MATXSCRIPT_REGISTER_NODE_TYPE(TupleNode);
+MATXSCRIPT_REGISTER_NODE_TYPE(TupleExprNode);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.Tuple").set_body_typed([](Array<BaseExpr> fields, Span span) {
-  return Tuple(std::move(fields), std::move(span));
+MATXSCRIPT_REGISTER_GLOBAL("ir.TupleExpr").set_body_typed([](Array<BaseExpr> fields, Span span) {
+  return TupleExpr(std::move(fields), std::move(span));
 });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<TupleNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const TupleNode*>(ref.get());
-      p->stream << "Tuple(" << node->fields << ")";
+    .set_dispatch<TupleExprNode>([](const ObjectRef& ref, ReprPrinter* p) {
+      auto* node = static_cast<const TupleExprNode*>(ref.get());
+      p->stream << "TupleExpr(" << node->fields << ")";
     });
 
 }  // namespace ir
