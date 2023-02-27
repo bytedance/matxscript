@@ -137,7 +137,7 @@ class IRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
   Doc VisitExpr_(const HLOMoveNode* op) override;
   Doc VisitExpr_(const HLOEnumerateNode* op) override;
   Doc VisitExpr_(const HLOZipNode* op) override;
-  Doc VisitExpr_(const ir::TupleNode* op) override;
+  Doc VisitExpr_(const ir::TupleExprNode* op) override;
   Doc VisitExpr_(const ir::RangeExprNode* op) override;
   Doc VisitExprDefault_(const Object* op) override;
 

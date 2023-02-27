@@ -188,9 +188,9 @@ Doc IRTextPrinter::VisitExpr_(const ir::RangeExprNode* op) {
   return doc;
 }
 
-Doc IRTextPrinter::VisitExpr_(const ir::TupleNode* op) {
+Doc IRTextPrinter::VisitExpr_(const ir::TupleExprNode* op) {
   Doc doc;
-  doc << '(';
+  doc << "tuple(";
   for (size_t i = 0; i < op->fields.size(); ++i) {
     if (i != 0) {
       doc << ", ";

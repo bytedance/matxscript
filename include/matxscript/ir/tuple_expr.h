@@ -30,10 +30,10 @@
 namespace matxscript {
 namespace ir {
 
-/*! \brief Tuple container */
-class TupleNode : public HLOExprNode {
+/*! \brief TupleExpr container */
+class TupleExprNode : public HLOExprNode {
  public:
-  /*! \brief the fields of the tuple */
+  /*! \brief the fields of the TupleExpr */
   runtime::Array<BaseExpr> fields;
 
   void VisitAttrs(AttrVisitor* v) {
@@ -42,7 +42,7 @@ class TupleNode : public HLOExprNode {
     v->Visit("_checked_type_", &checked_type_);
   }
 
-  bool SEqualReduce(const TupleNode* other, SEqualReducer equal) const {
+  bool SEqualReduce(const TupleExprNode* other, SEqualReducer equal) const {
     // specially handle empty tuple as a constant is not a graph node.
     if (fields.size() == other->fields.size() && fields.size() == 0) {
       return true;
@@ -59,20 +59,20 @@ class TupleNode : public HLOExprNode {
     }
   }
 
-  static constexpr const char* _type_key = "ir.Tuple";
-  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(TupleNode, HLOExprNode);
+  static constexpr const char* _type_key = "ir.TupleExpr";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(TupleExprNode, HLOExprNode);
 };
 
-class Tuple : public HLOExpr {
+class TupleExpr : public HLOExpr {
  public:
   /*!
    * \brief The constructor
-   * \param fields The fields of a tuple.
+   * \param fields The fields of a TupleExpr.
    * \param span The source span of the expression.
    */
-  MATX_DLL explicit Tuple(runtime::Array<BaseExpr> fields, Span span = Span());
+  MATX_DLL explicit TupleExpr(runtime::Array<BaseExpr> fields, Span span = Span());
 
-  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(Tuple, HLOExpr, TupleNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(TupleExpr, HLOExpr, TupleExprNode);
 };
 
 }  // namespace ir
