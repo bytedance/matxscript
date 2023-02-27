@@ -22,7 +22,7 @@ from .constexpr import const, generic_const
 
 from .base import SourceName, Span, Node
 from .base import structural_equal, assert_structural_equal, structural_hash
-from .base import BaseExpr, PrimExpr, HLOExpr, Range
+from .base import BaseExpr, PrimExpr, HLOExpr
 from .type import Type, TypeKind, PrimType, PointerType, TypeVar, GlobalTypeVar, TupleType
 from .type import RangeType
 from .type import FuncType
@@ -41,6 +41,7 @@ from .expr import PrimLE, PrimGT, PrimGE, PrimAnd, PrimOr, PrimNot
 from .expr import PrimSelect, PrimCall, CallEffectKind, PrimLet
 from .expr import GlobalVar, Call, InitializerList, InitializerDict
 from .expr import HLOVar, NoneExpr, EnumAttr, HLOCast
+from .expr import RangeExpr
 
 from .stmt import Stmt, LetStmt, AssertStmt, For, While, Break, Continue
 # from .stmt import BufferStore, BufferRealize, Store, ProducerStore, Allocate, AttrStmt

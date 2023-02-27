@@ -1249,6 +1249,39 @@ class Tuple(HLOExprWithOp):
         raise TypeError("astype cannot be used on tuple")
 
 
+@_ffi.register_object
+class RangeExpr(HLOExpr):
+    """Represent a range in MATX IR. The semantic is equivalent to python
+
+    Parameters
+    ----------
+    start : PrimExpr
+        The start value of the range.
+
+    stop : PrimExpr
+        The start value of the range.
+
+    step : Optional[PrimExpr]
+        The end value of the range.
+    """
+
+    def __init__(self, start, stop, step=None):
+        if step is None:
+            self.__init_handle_by_constructor__(
+                _ffi_api.RangeExpr,
+                _to_ir(start),
+                _to_ir(stop),
+                _to_ir(1),
+            )
+        else:
+            self.__init_handle_by_constructor__(
+                _ffi_api.RangeExpr,
+                _to_ir(start),
+                _to_ir(stop),
+                _to_ir(step),
+            )
+
+
 @_ffi.register_object("ir.HLOVar")
 class HLOVar(HLOExprWithOp):
     """A local variable in high level expr.

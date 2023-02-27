@@ -216,7 +216,7 @@ class CodeGenC : public PrimExprFunctor<void(const PrimExpr&, std::ostream&)>,
   void VisitExpr_(const StringImmNode* op, std::ostream& os) override;   // NOLINT(*)
   void VisitExpr_(const UnicodeImmNode* op, std::ostream& os) override;  // NOLINT(*)
   void VisitExpr_(const InitializerListNode* op, std::ostream& os) override;
-  // statment
+  // statement
   void VisitStmt_(const AllocaVarStmtNode* op, std::ostream& os) override;
   void VisitStmt_(const AssignStmtNode* op, std::ostream& os) override;
   void VisitStmt_(const ReturnStmtNode* op, std::ostream& os) override;

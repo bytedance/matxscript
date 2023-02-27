@@ -133,6 +133,13 @@ void ExprVisitor::VisitExpr_(const GlobalVarNode* op) {
   this->VisitSpan(op->span);
 }
 
+void ExprVisitor::VisitExpr_(const RangeExprNode* op) {
+  this->VisitSpan(op->span);
+  this->VisitExpr(op->start);
+  this->VisitExpr(op->stop);
+  this->VisitExpr(op->step);
+}
+
 void ExprVisitor::VisitExpr_(const TupleNode* op) {
   this->VisitSpan(op->span);
   for (auto field : op->fields) {
@@ -393,27 +400,6 @@ HLOExpr ExprMutator::VisitExpr_(const GlobalVarNode* op) {
   return GetRef<HLOExpr>(op);
 }
 
-HLOExpr ExprMutator::VisitExpr_(const TupleNode* op) {
-  runtime::Array<BaseExpr> fields;
-  bool all_fields_unchanged = true;
-  for (auto field : op->fields) {
-    if (field->IsInstance<PrimExprNode>()) {
-      auto new_field = this->VisitExpr(Downcast<PrimExpr>(field));
-      fields.push_back(new_field);
-      all_fields_unchanged &= new_field.same_as(field);
-    } else {
-      auto new_field = this->VisitExpr(Downcast<HLOExpr>(field));
-      fields.push_back(new_field);
-      all_fields_unchanged &= new_field.same_as(field);
-    }
-  }
-  if (all_fields_unchanged) {
-    return GetRef<HLOExpr>(op);
-  } else {
-    return Tuple(fields, op->span);
-  }
-}
-
 HLOExpr ExprMutator::VisitExpr_(const CallNode* call_node) {
   auto new_op = this->VisitExpr(call_node->op);
   bool unchanged = call_node->op.same_as(new_op);
@@ -568,6 +554,39 @@ HLOExpr ExprMutator::VisitExpr_(const HLOZipNode* op) {
 
 Type ExprMutator::VisitType(const Type& t) {
   return t;
+}
+
+// kernel or script
+HLOExpr ExprMutator::VisitExpr_(const TupleNode* op) {
+  runtime::Array<BaseExpr> fields;
+  bool all_fields_unchanged = true;
+  for (auto field : op->fields) {
+    if (field->IsInstance<PrimExprNode>()) {
+      auto new_field = this->VisitExpr(Downcast<PrimExpr>(field));
+      fields.push_back(new_field);
+      all_fields_unchanged &= new_field.same_as(field);
+    } else {
+      auto new_field = this->VisitExpr(Downcast<HLOExpr>(field));
+      fields.push_back(new_field);
+      all_fields_unchanged &= new_field.same_as(field);
+    }
+  }
+  if (all_fields_unchanged) {
+    return GetRef<HLOExpr>(op);
+  } else {
+    return Tuple(fields, op->span);
+  }
+}
+
+HLOExpr ExprMutator::VisitExpr_(const RangeExprNode* op) {
+  auto start = this->VisitExpr(op->start);
+  auto stop = this->VisitExpr(op->stop);
+  auto step = this->VisitExpr(op->step);
+  if (start.same_as(op->start) && stop.same_as(op->stop) && step.same_as(op->step)) {
+    return GetRef<HLOExpr>(op);
+  } else {
+    return RangeExpr(std::move(start), std::move(stop), std::move(step), op->span);
+  }
 }
 
 }  // namespace ir
