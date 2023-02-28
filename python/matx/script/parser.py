@@ -887,16 +887,19 @@ class MATXScriptParser(ast.NodeVisitor):
             self.context.pop_scope()
             tmp_stmts = []
             if not isinstance(start, (_ir.IntImm, _ir.FloatImm, _ir.PrimVar)):
+                start = _generic._cast_to_prim_int(start, span)
                 tmp_name = "%s_start_%d" % (node.target.id, self.gen_random())
                 start_stmt = _ir.AllocaVarStmt(tmp_name, _ir.PrimType('int64'), start, span)
                 start = start_stmt.var
                 tmp_stmts.append(start_stmt)
             if not isinstance(stop, (_ir.IntImm, _ir.FloatImm, _ir.PrimVar)):
+                stop = _generic._cast_to_prim_int(stop, span)
                 tmp_name = "%s_stop_%d" % (node.target.id, self.gen_random())
                 stop_stmt = _ir.AllocaVarStmt(tmp_name, _ir.PrimType('int64'), stop, span)
                 stop = stop_stmt.var
                 tmp_stmts.append(stop_stmt)
             if not isinstance(step, (_ir.IntImm, _ir.FloatImm, _ir.PrimVar)):
+                step = _generic._cast_to_prim_int(step, span)
                 tmp_name = "%s_step_%d" % (node.target.id, self.gen_random())
                 step_stmt = _ir.AllocaVarStmt(tmp_name, _ir.PrimType('int64'), step, span)
                 step = step_stmt.var

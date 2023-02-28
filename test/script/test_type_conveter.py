@@ -62,6 +62,17 @@ class TestTypeConverter(unittest.TestCase):
         tx_ret = matx.script(test_dict_pop)()
         assert py_ret == tx_ret
 
+    def test_for_range(self):
+        def for_range_sum(a: Any, b: Any, c: Any) -> Any:
+            s = 0
+            for i in range(a, b, c):
+                s += 1
+            return s
+
+        py_ret = for_range_sum(1, 10, 1)
+        tx_ret = matx.script(for_range_sum)(1, 10, 1)
+        assert py_ret == tx_ret
+
 
 if __name__ == "__main__":
     import logging
