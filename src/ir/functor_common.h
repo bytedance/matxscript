@@ -40,19 +40,8 @@ inline void VisitArray(const runtime::Array<T>& arr, F fvisit) {
 
 // Implementation of mutators
 template <typename T, typename F>
-inline runtime::Array<T> MutateArray(const runtime::Array<T>& arr,
-                                     F fmutate,
-                                     bool allow_copy_on_write = false) {
-  if (allow_copy_on_write) {
-    // if we allow copy on write, we can directly
-    // call the inplace mutate function.
-    const_cast<runtime::Array<T>&>(arr).MutateByApply(fmutate);
-    return arr;
-  } else {
-    runtime::Array<T> copy = arr;
-    copy.MutateByApply(fmutate);
-    return copy;
-  }
+inline runtime::Array<T> MutateArray(const runtime::Array<T>& arr, F fmutate) {
+  return arr.Map(fmutate);
 }
 
 }  // namespace ir
