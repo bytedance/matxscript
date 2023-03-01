@@ -357,7 +357,7 @@ PrimExpr ExprMutator::VisitExpr_(const PrimLetNode* op) {
 
 PrimExpr ExprMutator::VisitExpr_(const PrimCallNode* op) {
   auto fmutate = [this](const PrimExpr& e) { return this->VisitExpr(e); };
-  runtime::Array<PrimExpr> args = MutateArray(op->args, fmutate);
+  runtime::Array<PrimExpr> args = op->args.Map(fmutate);
 
   if (args.same_as(op->args)) {
     return GetRef<PrimExpr>(op);
