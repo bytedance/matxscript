@@ -28,6 +28,7 @@
 
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/base.h>
+#include <matxscript/ir/range_expr.h>
 #include <matxscript/runtime/data_type.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/object.h>
@@ -125,6 +126,70 @@ class PrimVar : public PrimExpr {
   }
   /*! \brief type indicate the container type */
   using ContainerType = PrimVarNode;
+};
+
+/******************************************************************************
+ * Some Generic Structures consisting of PrimVar and PrimExpr
+ *****************************************************************************/
+
+/*!
+ * \brief An iteration variable representing an iteration
+ *  over a one dimensional interval.
+ *
+ *  The dtype of the extent of the `dom` of the IterVar must match the dtype of the internal Var.
+ */
+class PrimIterVarNode : public Object {
+ public:
+  /*!
+   * \brief the domain of iteration, if known, can be None
+   *  For the intermediate schedule node, before schedule.
+   */
+  RangeExpr dom;
+  /*! \brief The looping variable */
+  PrimVar var;
+  /*!
+   * \brief Span that points to the original source code.
+   *        Reserved debug information.
+   */
+  mutable Span span;
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("dom", &dom);
+    v->Visit("var", &var);
+    v->Visit("span", &span);
+  }
+
+  bool SEqualReduce(const PrimIterVarNode* other, SEqualReducer equal) const {
+    return equal(dom, other->dom) && equal.DefEqual(var, other->var);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    hash_reduce(dom);
+    hash_reduce.DefHash(var);
+  }
+
+  static constexpr const char* _type_key = "ir.PrimIterVar";
+  static constexpr const bool _type_has_method_sequal_reduce = true;
+  static constexpr const bool _type_has_method_shash_reduce = true;
+  MATXSCRIPT_DECLARE_BASE_OBJECT_INFO(PrimIterVarNode, Object);
+};
+
+/*!
+ * \brief Iteration Variable,
+ *  represents an iteration over an integer interval.
+ *
+ *  The dtype of the extent of the `dom` of the IterVar must match the dtype of the internal Var.
+ */
+class PrimIterVar : public ObjectRef {
+ public:
+  MATX_DLL PrimIterVar(RangeExpr dom, PrimVar var, Span span = Span());
+  /*!
+   * \return the corresponding var in the IterVar.
+   */
+  inline operator PrimExpr() const;
+
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(PrimIterVar, ObjectRef, PrimIterVarNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(PrimIterVarNode);
 };
 
 }  // namespace ir

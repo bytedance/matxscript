@@ -70,5 +70,22 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << op->name_hint;
     });
 
+// PrimIterVar
+PrimIterVar::PrimIterVar(RangeExpr dom, PrimVar var, Span span) {
+  ObjectPtr<PrimIterVarNode> n = make_object<PrimIterVarNode>();
+  MXCHECK(var.dtype().is_int()) << "Expect var type is 'int' but get '" << var.dtype() << "'";
+  n->dom = std::move(dom);
+  n->var = std::move(var);
+  n->span = std::move(span);
+  data_ = std::move(n);
+}
+
+MATXSCRIPT_REGISTER_GLOBAL("ir.PrimIterVar")
+    .set_body_typed([](RangeExpr dom, PrimVar var, Span span) {
+      return PrimIterVar(std::move(dom), std::move(var), std::move(span));
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(PrimIterVarNode);
+
 }  // namespace ir
 }  // namespace matxscript
