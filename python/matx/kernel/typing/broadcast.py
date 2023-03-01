@@ -42,13 +42,12 @@ def calculate_output_axis(arr1_shape, arr2_shape, axis_idx):
             SyntaxError(f"{arr1_shape} cannot broadcast with {arr2_shape} "
                         f"because {axis1} is not equal to {axis2}.")
 
-    if any([is_symbol(axis1), is_symbol(axis2)]):
-        if is_symbol(axis1):
-            raise SyntaxError(f"{arr1_shape} cannot broadcast with {arr2_shape} "
-                              f"because {axis1} is a symbol but {axis2} is not.")
-        else:
-            raise SyntaxError(f"{arr1_shape} cannot broadcast with {arr2_shape}"
-                              f" because {axis1} is not a symbol but {axis2} is.")
+    if is_symbol(axis1):
+        raise SyntaxError(f"{arr1_shape} cannot broadcast with {arr2_shape} "
+                          f"because {axis1} is a symbol but {axis2} is not.")
+    if is_symbol(axis2):
+        raise SyntaxError(f"{arr1_shape} cannot broadcast with {arr2_shape}"
+                          f" because {axis1} is not a symbol but {axis2} is.")
 
     if axis1 == axis2:
         return axis1

@@ -40,7 +40,7 @@ class ScalarType(NDArrayType):
 
     def __getitem__(self, shape) -> NDArrayType:
         if isinstance(shape, list) or isinstance(shape, tuple):
-            if tuple(shape) == [1]:
+            if list(shape) == [1]:
                 return self
             return NDArrayType(tuple(shape), self.dtype)
         if shape == 1:
