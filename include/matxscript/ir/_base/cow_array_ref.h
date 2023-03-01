@@ -300,6 +300,7 @@ class Array : public ObjectRef {
    * be dereferenced into a type that can be stored in an Array<T>, and
    * false otherwise.
    */
+  // clang-format off
   template <typename ValueType, typename IterType>
   struct is_valid_iterator
       : std::integral_constant<
@@ -311,6 +312,7 @@ class Array : public ObjectRef {
   template <typename ValueType, typename IterType>
   struct is_valid_iterator<Optional<ValueType>, IterType> : is_valid_iterator<ValueType, IterType> {
   };
+  // clang-format on
 
  public:
   using value_type = T;
