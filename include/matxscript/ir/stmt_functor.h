@@ -35,6 +35,7 @@
 #include <matxscript/ir/expr.h>
 #include <matxscript/ir/expr_functor.h>
 #include <matxscript/ir/stmt.h>
+#include <matxscript/ir/tensor_stmt.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/functor.h>
 
@@ -111,6 +112,8 @@ class StmtFunctor<R(const Stmt& n, Args... args)> {
   virtual R VisitStmt_(const ExprStmtNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
   virtual R VisitStmt_(const HLOYieldNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
 
+  virtual R VisitStmt_(const ComputeBlockNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
+
   virtual R VisitStmtDefault_(const Object* op, Args...) {
     MXLOG(FATAL) << "Do not have a default for " << op->GetTypeKey();
     return R();
@@ -139,6 +142,8 @@ class StmtFunctor<R(const Stmt& n, Args... args)> {
     IR_STMT_FUNCTOR_DISPATCH(ContinueNode);
     IR_STMT_FUNCTOR_DISPATCH(ExprStmtNode);
     IR_STMT_FUNCTOR_DISPATCH(HLOYieldNode);
+
+    IR_STMT_FUNCTOR_DISPATCH(ComputeBlockNode);
     return vtable;
   }
 };
@@ -178,6 +183,8 @@ class MATX_DLL StmtVisitor : protected StmtFunctor<void(const Stmt&)> {
   void VisitStmt_(const ContinueNode* op) override;
   void VisitStmt_(const ExprStmtNode* op) override;
   void VisitStmt_(const HLOYieldNode* op) override;
+
+  void VisitStmt_(const ComputeBlockNode* op) override;
 };
 
 /*!
@@ -274,6 +281,8 @@ class MATX_DLL StmtMutator : protected StmtFunctor<Stmt(const Stmt&)> {
   Stmt VisitStmt_(const ContinueNode* op) override;
   Stmt VisitStmt_(const ExprStmtNode* op) override;
   Stmt VisitStmt_(const HLOYieldNode* op) override;
+
+  Stmt VisitStmt_(const ComputeBlockNode* op) override;
 
   /*!
    * \brief Alternative advance method for SeqStmtNode.

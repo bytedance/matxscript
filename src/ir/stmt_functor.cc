@@ -168,6 +168,28 @@ void StmtVisitor::VisitStmt_(const HLOYieldNode* op) {
   this->VisitExpr(op->label);
 }
 
+void StmtVisitor::VisitStmt_(const ComputeBlockNode* op) {
+  auto fn_visit_buffer_region = [this](const BufferRegion& s) {
+    for (const auto& range : s->region) {
+      this->VisitExpr(range);
+    }
+  };
+  VisitArray(op->iter_vars, [this](const PrimIterVar& iter_var) {
+    this->VisitExpr(iter_var->dom);
+    this->VisitExpr(iter_var->var);
+  });
+  VisitArray(op->reads, fn_visit_buffer_region);
+  VisitArray(op->writes, fn_visit_buffer_region);
+  VisitArray(op->match_buffers,
+             [fn_visit_buffer_region](const MatchBufferRegion& match_buffer_region) {
+               fn_visit_buffer_region(match_buffer_region->source);
+             });
+  if (op->init.defined()) {
+    this->VisitStmt(op->init.value());
+  }
+  this->VisitStmt(op->body);
+}
+
 class StmtMutator::Internal {
  public:
   /*!
@@ -210,8 +232,54 @@ class StmtMutator::Internal {
     return MutateArray(self, arr, fmutate);
   }
 
+  static Array<HLOExpr> Mutate(StmtMutator* self, const Array<HLOExpr>& arr) {
+    auto fmutate = [self](const HLOExpr& e) { return self->VisitExpr(e); };
+    return MutateArray(self, arr, fmutate);
+  }
+
   static Array<Stmt> Mutate(StmtMutator* self, const Array<Stmt>& arr) {
     auto fmutate = [self](const Stmt& s) { return self->VisitStmt(s); };
+    return MutateArray(self, arr, fmutate);
+  }
+
+  static Array<PrimIterVar> Mutate(StmtMutator* self, const Array<PrimIterVar>& arr) {
+    auto fn_mutate = [self](const PrimIterVar& iter_var) {
+      RangeExpr dom = Downcast<RangeExpr>(self->VisitExpr(iter_var->dom));
+      // TODO: Why is tvm ignoring visit iter_var->var？
+      PrimVar var = Downcast<PrimVar>(self->VisitExpr(iter_var->var));
+      if (dom.same_as(iter_var->dom) && var.same_as(iter_var->var)) {
+        return iter_var;
+      } else {
+        return PrimIterVar(std::move(dom), std::move(var));
+      }
+    };
+    return MutateArray(self, arr, fn_mutate);
+  }
+
+  static Array<BufferRegion> Mutate(StmtMutator* self, const Array<BufferRegion>& arr) {
+    auto fmutate = [self](const BufferRegion& buffer_region) {
+      Array<RangeExpr> region = Downcast<Array<RangeExpr>>(
+          Mutate(self, runtime::Downcast<Array<HLOExpr>>(buffer_region->region)));
+      if (region.same_as(buffer_region->region)) {
+        return buffer_region;
+      } else {
+        return BufferRegion(buffer_region->buffer, region);
+      }
+    };
+    return MutateArray(self, arr, fmutate);
+  }
+
+  static Array<MatchBufferRegion> Mutate(StmtMutator* self, const Array<MatchBufferRegion>& arr) {
+    auto fmutate = [self](const MatchBufferRegion& match_buffer_region) {
+      Array<RangeExpr> region = Downcast<Array<RangeExpr>>(
+          Mutate(self, runtime::Downcast<Array<HLOExpr>>(match_buffer_region->source->region)));
+      if (region.same_as(match_buffer_region->source->region)) {
+        return match_buffer_region;
+      } else {
+        return MatchBufferRegion(match_buffer_region->buffer,
+                                 BufferRegion(match_buffer_region->source->buffer, region));
+      }
+    };
     return MutateArray(self, arr, fmutate);
   }
 };
@@ -584,6 +652,32 @@ Stmt StmtMutator::VisitStmt_(const HLOYieldNode* op) {
     n->symbol = std::move(symbol);
     n->label = std::move(label);
     n->span = op->span;
+    return Stmt(n);
+  }
+}
+
+Stmt StmtMutator::VisitStmt_(const ComputeBlockNode* op) {
+  Array<PrimIterVar> iter_vars = Internal::Mutate(this, op->iter_vars);
+  Array<BufferRegion> reads = Internal::Mutate(this, op->reads);
+  Array<BufferRegion> writes = Internal::Mutate(this, op->writes);
+  Array<MatchBufferRegion> match_buffers = Internal::Mutate(this, op->match_buffers);
+  Optional<Stmt> init = runtime::NullOpt;
+  if (op->init.defined()) {
+    init = VisitStmt(op->init.value());
+  }
+  Stmt body = VisitStmt(op->body);
+  if (iter_vars.same_as(op->iter_vars) && reads.same_as(op->reads) && writes.same_as(op->writes) &&
+      body.same_as(op->body) && init.same_as(op->init) &&
+      match_buffers.same_as(op->match_buffers)) {
+    return GetRef<ComputeBlock>(op);
+  } else {
+    auto n = CopyOnWrite(op);
+    n->iter_vars = std::move(iter_vars);
+    n->reads = std::move(reads);
+    n->writes = std::move(writes);
+    n->body = std::move(body);
+    n->init = std::move(init);
+    n->match_buffers = std::move(match_buffers);
     return Stmt(n);
   }
 }
