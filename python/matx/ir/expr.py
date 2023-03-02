@@ -362,7 +362,7 @@ class PrimIterVar(Object, ExprOp):
         var = PrimVar(name, dtype=dtype, span=span) if not isinstance(var, PrimVar) else var
         if dom is not None:
             assert (
-                    var.dtype == dom.stop.dtype
+                var.dtype == dom.stop.dtype
             ), "PrimIterVar's Var dtype must match its domain's dtype"
         self.__init_handle_by_constructor__(
             _ffi_api.IterVar, dom, var, span  # type: ignore
