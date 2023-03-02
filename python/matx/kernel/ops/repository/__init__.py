@@ -18,4 +18,5 @@
 #   * under the License.
 #   */
 
-from .repository import OpReplacementRepo
+
+from repository import OpReplacementRepo
