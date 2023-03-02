@@ -216,6 +216,7 @@ class MATX_DLL DeviceAPI {
 };
 
 class DeviceStreamGuard {
+ public:
   DeviceStreamGuard(MATXScriptDevice ctx, std::shared_ptr<void> stream);
   virtual ~DeviceStreamGuard();
 
