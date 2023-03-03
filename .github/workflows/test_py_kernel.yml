@@ -1,0 +1,22 @@
+name: Test Python Script 3.7
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.7'
+      - name: install requirements
+        run: pip3 install msgpack && pip3 install numpy && pip3 install sympy
+      - name: Test Python Script
+        run: python3 ci/run_py_script_test.py
