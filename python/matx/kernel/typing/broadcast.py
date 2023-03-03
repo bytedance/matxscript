@@ -57,11 +57,20 @@ def calculate_output_axis(arr1_shape, arr2_shape, axis_idx):
 
 def broadcast_with_scalar(arr1_shape, arr2_shape):
     if is_scalar_shape(arr1_shape) and is_scalar_shape(arr2_shape):
-        return arr1_shape, arr1_shape, arr2_shape
+        if len(arr1_shape) > len(arr2_shape):
+            return arr1_shape, arr1_shape, arr2_shape
+        else:
+            return arr2_shape, arr1_shape, arr2_shape
     if is_scalar_shape(arr1_shape):
-        return arr2_shape, arr1_shape, arr2_shape
+        padding = max(0, len(arr1_shape) - len(arr2_shape))
+        padding_shape = [1] * padding
+        new_arr2_shape = padding_shape + arr2_shape
+        return new_arr2_shape, arr1_shape, new_arr2_shape
     else:
-        return arr1_shape, arr1_shape, arr2_shape
+        padding = max(0, len(arr2_shape) - len(arr1_shape))
+        padding_shape = [1] * padding
+        new_arr1_shape = padding_shape + arr1_shape
+        return new_arr1_shape, new_arr1_shape, arr2_shape
 
 
 def broadcast(arr1_shape, arr2_shape):

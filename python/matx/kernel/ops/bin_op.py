@@ -22,7 +22,7 @@
 from functools import partial
 
 from repository import OpReplacementRepo
-from .base import *
+from .base_op import *
 from .utils import *
 
 

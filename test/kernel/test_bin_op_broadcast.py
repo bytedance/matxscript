@@ -92,6 +92,54 @@ class TestBroadCast(unittest.TestCase):
         self.assertEqual(expected_broadcast_shape1, actual_broadcast_shape1)
         self.assertEqual(expected_broadcast_shape2, actual_broadcast_shape2)
 
+    def test_nested_scalar1_nd_shape1(self):
+        shape1 = [1, 1, 1, 1]
+        shape2 = [3, 2]
+        expected_result_shape = [1, 1, 3, 2]
+        expected_broadcast_shape1 = [1, 1, 1, 1]
+        expected_broadcast_shape2 = [1, 1, 3, 2]
+
+        rc = broadcast(shape1, shape2)
+        actual_result_shape = rc[0]
+        actual_broadcast_shape1 = rc[1]
+        actual_broadcast_shape2 = rc[2]
+
+        self.assertEqual(expected_result_shape, actual_result_shape)
+        self.assertEqual(expected_broadcast_shape1, actual_broadcast_shape1)
+        self.assertEqual(expected_broadcast_shape2, actual_broadcast_shape2)
+
+    def test_nested_scalar1_nd_shape2(self):
+        shape1 = [1, 1]
+        shape2 = [3, 2]
+        expected_result_shape = [3, 2]
+        expected_broadcast_shape1 = [1, 1]
+        expected_broadcast_shape2 = [3, 2]
+
+        rc = broadcast(shape1, shape2)
+        actual_result_shape = rc[0]
+        actual_broadcast_shape1 = rc[1]
+        actual_broadcast_shape2 = rc[2]
+
+        self.assertEqual(expected_result_shape, actual_result_shape)
+        self.assertEqual(expected_broadcast_shape1, actual_broadcast_shape1)
+        self.assertEqual(expected_broadcast_shape2, actual_broadcast_shape2)
+
+    def test_two_nested_scalar(self):
+        shape1 = [1, 1]
+        shape2 = [3, 2]
+        expected_result_shape = [3, 2]
+        expected_broadcast_shape1 = [1, 1]
+        expected_broadcast_shape2 = [3, 2]
+
+        rc = broadcast(shape1, shape2)
+        actual_result_shape = rc[0]
+        actual_broadcast_shape1 = rc[1]
+        actual_broadcast_shape2 = rc[2]
+
+        self.assertEqual(expected_result_shape, actual_result_shape)
+        self.assertEqual(expected_broadcast_shape1, actual_broadcast_shape1)
+        self.assertEqual(expected_broadcast_shape2, actual_broadcast_shape2)
+
     def test_symbol_eq_shape(self):
         N = sympy.Symbol('N')
         M = sympy.Symbol('M')
