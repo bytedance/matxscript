@@ -17,3 +17,5 @@
 #   * specific language governing permissions and limitations
 #   * under the License.
 #   */
+
+from .repository import OpReplacementRepo

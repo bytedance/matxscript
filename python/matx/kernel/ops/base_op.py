@@ -18,21 +18,13 @@
 #   * under the License.
 #   */
 
+class KernelBaseOp:
+    opname = None
+    operator = None
 
-import numbers
-
-from .kernel_type import NDArrayType, is_symbol
-
-
-def is_scalar(x: NDArrayType):
-    return is_scalar_shape(x.shape)
-
-
-def is_scalar_shape(shape):
-    if is_symbol(shape[0]):
-        return False
-    if isinstance(shape[0], numbers.Number):
-        return shape[0] == 1
-    if len(shape) == 1:
-        return is_scalar_shape(shape[0])
-    return False
+    def __init__(self):
+        if self.opname is None or self.operator is None:
+            raise SyntaxError("opname and/or operator has to be defined")
+        self.result_dtype = None
+        self.result_shape = None
+        self.result_type = None

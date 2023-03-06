@@ -19,20 +19,4 @@
 #   */
 
 
-import numbers
-
-from .kernel_type import NDArrayType, is_symbol
-
-
-def is_scalar(x: NDArrayType):
-    return is_scalar_shape(x.shape)
-
-
-def is_scalar_shape(shape):
-    if is_symbol(shape[0]):
-        return False
-    if isinstance(shape[0], numbers.Number):
-        return shape[0] == 1
-    if len(shape) == 1:
-        return is_scalar_shape(shape[0])
-    return False
+from .repository import OpReplacementRepo
