@@ -338,6 +338,37 @@ class PrimVar(PrimExprWithOp):
         self.__init_handle_by_constructor__(_ffi_api.PrimVar, _to_ir(name), _to_ir(dtype), span)
 
 
+@_ffi.register_object("ir.PrimIterVar")
+class PrimIterVar(Object, ExprOp):
+    """Represent iteration variable.
+    IterVar represents axis iterations in the computation.
+    Parameters
+    ----------
+    dom : RangeExpr
+        The domain of the iteration.
+    var : Union[Var, str]
+        The internal variable that is used for iteration.
+    span : Optional[Span]
+        The location of this itervar in the source code.
+    """
+
+    def __init__(self, dom, var, span=None):
+        if dom is not None:
+            if not isinstance(dom, RangeExpr):
+                raise TypeError("dom need to be RangeExpr")
+
+        name = var if var is not None else "iter"
+        dtype = "int32" if dom is None else dom.stop.dtype
+        var = PrimVar(name, dtype=dtype, span=span) if not isinstance(var, PrimVar) else var
+        if dom is not None:
+            assert (
+                var.dtype == dom.stop.dtype
+            ), "PrimIterVar's Var dtype must match its domain's dtype"
+        self.__init_handle_by_constructor__(
+            _ffi_api.IterVar, dom, var, span  # type: ignore
+        )
+
+
 @_ffi.register_object
 class FloatImm(PrimExprWithOp):
     """Float constant.

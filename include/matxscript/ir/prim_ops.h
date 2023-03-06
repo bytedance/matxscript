@@ -685,11 +685,15 @@ inline bool is_const_number(const PrimExpr& x);
  * \param freduce The reduction function.
  * \param init_value The initial value.
  * \param values The values to be folded.
+ * \param span The location of the fold in the source.
  * \return The result.
  * \tparam FReduce The type of the reduction.
  */
 template <typename FReduce>
-inline PrimExpr foldl(FReduce freduce, PrimExpr init_value, const runtime::Array<PrimExpr>& values);
+inline PrimExpr foldl(FReduce freduce,
+                      PrimExpr init_value,
+                      const runtime::Array<PrimExpr>& values,
+                      Span span = Span());
 
 /*!
  * \brief Check whether x is a constant power of two
@@ -760,7 +764,9 @@ inline PrimExpr MakeConstScalar(runtime::DataType t, ValueType value, Span span 
   if (t.is_uint()) {
     // Use IntImm if it is a small integer
     uint64_t uval = static_cast<uint64_t>(value);
-    if (uval <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
+    if (value < static_cast<ValueType>(0)) {
+      MXLOG(FATAL) << "cannot make uint from negative value " << value;
+    } else if (uval <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
       return IntImm(t, static_cast<int64_t>(value), span);
     } else {
       uint64_t mask = (static_cast<uint64_t>(1) << 32U) - 1U;
@@ -798,9 +804,10 @@ inline PrimExpr make_zero(runtime::DataType t, Span span) {
 template <typename FReduce>
 inline PrimExpr foldl(FReduce freduce,
                       PrimExpr init_value,
-                      const runtime::Array<PrimExpr>& values) {
+                      const runtime::Array<PrimExpr>& values,
+                      Span span) {
   for (PrimExpr val : values) {
-    init_value = freduce(init_value, val);
+    init_value = freduce(init_value, val, span);
   }
   return init_value;
 }
