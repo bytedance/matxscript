@@ -30,7 +30,7 @@ class NDArrayType:
         self.symbol_list = [axis for axis in shape if is_symbol(axis)]
 
     def __repr__(self):
-        return f'NDArray (dtype={self.dtype.name}, shape={self.shape})'
+        return f'NDArray (dtype={self.dtype}, shape={self.shape})'
 
 
 class ScalarType(NDArrayType):
@@ -48,4 +48,4 @@ class ScalarType(NDArrayType):
         return NDArrayType((shape,), self.dtype)
 
     def __repr__(self) -> str:
-        return f'Scalar (dtype={self.dtype.name}, storage={self.storage})'
+        return f'Scalar (dtype={self.dtype}, storage={self.storage})'
