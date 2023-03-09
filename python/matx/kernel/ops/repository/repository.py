@@ -21,7 +21,7 @@
 import itertools
 from typing import Any, Callable, Dict, Tuple, Type, Union, Set
 
-MethodType = Callable[..., Tuple[str]]  # todo why tuple string
+MethodType = Callable[..., Tuple[str]]
 
 
 def _get_all_bases(class_or_name: Union[str, Type]) -> Set[str]:

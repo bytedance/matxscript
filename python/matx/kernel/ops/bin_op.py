@@ -18,12 +18,13 @@
 #   * under the License.
 #   */
 
-
 from functools import partial
 
 from repository import OpReplacementRepo
 from .base_op import *
 from .utils import *
+from ...ir.expr import RangeExpr, PrimIterVar, PrimAdd
+from ...ir.tensor_stmt import ComputeBlock, Buffer, BufferRegion
 
 
 class ArithmeticBinaryOp(KernelBaseOp):
@@ -67,7 +68,25 @@ class DivOp(ArithmeticBinaryOp):
     operator = '/'
 
 
-def array_array_binary_op(lhs: str, rhs: str, op_class: ArithmeticBinaryOp.__class__):
+def array_array_binary_op(lhs: Buffer, rhs: Buffer, dst: Buffer, lhs_type: type, rhs_type: type,
+                          op_class: ArithmeticBinaryOp.__class__):
+    op: ArithmeticBinaryOp = op_class(lhs_type, rhs_type)
+
+    lhs_ranges = [RangeExpr(0, dim) for dim in op.lhs_shape]
+    rhs_ranges = [RangeExpr(0, dim) for dim in op.rhs_dtype]
+    dst_ranges = [RangeExpr(0, dim) for dim in op.result_shape]
+    iter_vars = [PrimIterVar(dom, None) for dom in dst_ranges]
+    lhs_buffer_region = BufferRegion(lhs, lhs_ranges)
+    rhs_buffer_region = BufferRegion(rhs, rhs_ranges)
+    det_buffer_region = BufferRegion(dst, dst_ranges)
+    reads = [lhs_buffer_region, rhs_buffer_region]
+    writes = [det_buffer_region]
+    name_hint = f"{lhs} {op.opname} {rhs}"
+    element_op = PrimAdd()  # todo what to fill here?
+    body = None
+    compute_block = ComputeBlock(iter_vars, reads, writes, name_hint, body)
+
+    # todo finish it.
     pass
 
 
