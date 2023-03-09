@@ -97,6 +97,77 @@ class TestImencodeOp(unittest.TestCase):
         self._helper([out1, out2, out3])
 
 
+class TestImencodeOpNDArray(unittest.TestCase):
+
+    def _helper(self, bv_out):
+        for i in range(3):
+            diff = np.abs(bv_out[i].astype(int) - self.images[i].astype(int))
+            max_diff = np.max(diff)
+            self.assertLessEqual(max_diff, 6)
+
+    def setUp(self) -> None:
+        image_file1 = os.path.join(
+            script_path, '..', 'data', 'origin_image.jpeg')
+        image_file2 = os.path.join(
+            script_path, '..', 'data', 'example.jpeg')
+        image_file3 = os.path.join(
+            script_path, '..', 'data', 'exif_orientation5.jpg')
+
+        image1 = cv2.resize(cv2.imread(image_file1), (500, 400))
+        image2 = cv2.resize(cv2.imread(image_file2), (500, 400))
+        image3 = cv2.resize(cv2.imread(image_file3), (500, 400))
+        self.images = [image1, image2, image3]
+
+        self.image_nd = matx.runtime.ndarray.stack(
+            [matx.array.from_numpy(i, "cpu") for i in self.images])
+        self.device = matx.Device("gpu:0")
+
+        return super().setUp()
+
+    def test_BGR(self):
+        op = byted_vision.ImencodeOp(self.device, "BGR", 100, False)
+        r = op(self.image_nd)
+        out1 = cv2.imdecode(np.asarray(bytearray(r[0]), dtype="uint8"), cv2.IMREAD_COLOR)
+        out2 = cv2.imdecode(np.asarray(bytearray(r[1]), dtype="uint8"), cv2.IMREAD_COLOR)
+        out3 = cv2.imdecode(np.asarray(bytearray(r[2]), dtype="uint8"), cv2.IMREAD_COLOR)
+        self._helper([out1, out2, out3])
+
+    def test_scripted_BGR(self):
+        op = matx.script(byted_vision.ImencodeOp)(self.device, "BGR", 100, False)
+        r = op(self.image_nd)
+        out1 = cv2.imdecode(np.asarray(bytearray(r[0])), cv2.IMREAD_COLOR)
+        out2 = cv2.imdecode(np.asarray(bytearray(r[1])), cv2.IMREAD_COLOR)
+        out3 = cv2.imdecode(np.asarray(bytearray(r[2])), cv2.IMREAD_COLOR)
+        self._helper([out1, out2, out3])
+
+    def test_RGB(self):
+        op = byted_vision.ImencodeOp(self.device, "RGB", 100, False)
+        r = op(self.image_nd)
+
+        out1 = cv2.cvtColor(
+            cv2.imdecode(
+                np.asarray(
+                    bytearray(
+                        r[0])),
+                cv2.IMREAD_COLOR),
+            cv2.COLOR_RGB2BGR)
+        out2 = cv2.cvtColor(
+            cv2.imdecode(
+                np.asarray(
+                    bytearray(
+                        r[1])),
+                cv2.IMREAD_COLOR),
+            cv2.COLOR_RGB2BGR)
+        out3 = cv2.cvtColor(
+            cv2.imdecode(
+                np.asarray(
+                    bytearray(
+                        r[2])),
+                cv2.IMREAD_COLOR),
+            cv2.COLOR_RGB2BGR)
+        self._helper([out1, out2, out3])
+
+
 if __name__ == "__main__":
     import logging
 
