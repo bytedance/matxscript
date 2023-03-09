@@ -248,7 +248,7 @@ class ComputeBlock(Stmt):
         if annotations is None:
             annotations = {}
         self.__init_handle_by_constructor__(
-            _ffi_api.Block,  # type: ignore
+            _ffi_api.ComputeBlock,  # type: ignore
             iter_vars,
             reads,
             writes,
@@ -287,7 +287,7 @@ class ComputeBlockRealize(Stmt):
         if isinstance(predicate, bool):
             predicate = const(predicate, "bool")
         self.__init_handle_by_constructor__(
-            _ffi_api.BlockRealize,  # type: ignore
+            _ffi_api.ComputeBlockRealize,  # type: ignore
             iter_values,
             predicate,
             block,
