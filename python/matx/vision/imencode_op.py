@@ -65,7 +65,7 @@ class ImencodeOp:
         self.op: _ImencodeOpImpl = matx.script(
             _ImencodeOpImpl)(device, fmt, quality, optimized_Huffman, pool_size)
 
-    def __call__(self, images: List[matx.runtime.NDArray]) -> List[bytes]:
+    def __call__(self, images: Any) -> List[bytes]:
         """ there is no sync model as all data will be on cpu before the return
 
         Args:
@@ -86,6 +86,12 @@ class ImencodeOp:
         >>> encode_op = ImencodeOp(device, "BGR")
         >>> r = encode_op([nds])
         """
+
+        if isinstance(images, matx.runtime.NDArray):
+            nd_list:List[matx.runtime.NDArray] = []
+            for i in range(images.shape[0]):
+                nd_list.append(images[i])
+            return self.op(nd_list)
         return self.op(images)
 
 
