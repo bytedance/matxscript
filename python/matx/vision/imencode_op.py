@@ -89,7 +89,8 @@ class ImencodeOp:
 
         if isinstance(images, matx.runtime.NDArray):
             nd_list: List[matx.runtime.NDArray] = []
-            for i in range(images.shape[0]):
+            shape: List[int] = images.shape()
+            for i in range(shape[0]):
                 nd_list.append(images[i])
             return self.op(nd_list)
         return self.op(images)
@@ -141,7 +142,7 @@ class ImencodeNoExceptionOp:
         self.op: _ImencodeNoExceptionOpImpl = matx.script(_ImencodeNoExceptionOpImpl)(
             device, fmt, quality, optimized_Huffman, pool_size)
 
-    def __call__(self, images: List[matx.runtime.NDArray]
+    def __call__(self, images: Any
                  ) -> Tuple[List[bytes], List[int]]:
         """
 
@@ -163,4 +164,10 @@ class ImencodeNoExceptionOp:
         >>> encode_op = ImencodeOp(device, "BGR")
         >>> r = encode_op([nds])
         """
+        if isinstance(images, matx.runtime.NDArray):
+            nd_list: List[matx.runtime.NDArray] = []
+            shape: List[int] = images.shape()
+            for i in range(shape[0]):
+                nd_list.append(images[i])
+            return self.op(nd_list)
         return self.op(images)
