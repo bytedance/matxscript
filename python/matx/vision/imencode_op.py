@@ -88,7 +88,7 @@ class ImencodeOp:
         """
 
         if isinstance(images, matx.runtime.NDArray):
-            nd_list:List[matx.runtime.NDArray] = []
+            nd_list: List[matx.runtime.NDArray] = []
             for i in range(images.shape[0]):
                 nd_list.append(images[i])
             return self.op(nd_list)

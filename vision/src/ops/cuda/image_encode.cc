@@ -187,7 +187,8 @@ void ImageEncodeTask::encode(List::iterator& input_it,
           EXIT_SUCCESS)
       << "[ImencodeGPU] failed to start encoding.";
 
-  MXCHECK(encoder_ptr->retrieveToHost(binary_data, output_it->binary_length, cu_stream) == EXIT_SUCCESS)
+  MXCHECK(encoder_ptr->retrieveToHost(binary_data, output_it->binary_length, cu_stream) ==
+          EXIT_SUCCESS)
       << "[ImencodeGPU] failed to retrieve the encoded image to host.";
 
   CHECK_CUDA_CALL(cudaEventRecord(output_it->finish_event, cu_stream));
