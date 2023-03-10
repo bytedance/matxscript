@@ -38,12 +38,12 @@ class FuseContAnyGetSetItemOptimizer : public StmtExprMutator {
   HLOExpr VisitExpr_(const CallNode* op) override {
     if (op->op.same_as(builtin::object___setitem__())) {
       MXCHECK(op->args.size() == 3) << "internal error";
-      runtime::Array<BaseExpr> keys;
+      Array<BaseExpr> keys;
       keys.push_back(op->args[1]);
       auto self = FlatContCallArgs(op->args[0], keys);
       if (!keys.empty()) {
-        runtime::Array<BaseExpr> reverse_keys(keys.rbegin(), keys.rend());
-        runtime::Array<BaseExpr> call_args;
+        Array<BaseExpr> reverse_keys(keys.rbegin(), keys.rend());
+        Array<BaseExpr> call_args;
         call_args.push_back(self);
         call_args.push_back(InitializerList(std::move(reverse_keys), op->span));
         call_args.push_back(op->args[2]);
@@ -55,12 +55,12 @@ class FuseContAnyGetSetItemOptimizer : public StmtExprMutator {
       }
     } else if (op->op.same_as(builtin::object___getitem__())) {
       MXCHECK(op->args.size() == 2) << "internal error";
-      runtime::Array<BaseExpr> keys;
+      Array<BaseExpr> keys;
       keys.push_back(op->args[1]);
       auto self = FlatContCallArgs(op->args[0], keys);
       if (!keys.empty()) {
-        runtime::Array<BaseExpr> reverse_keys(keys.rbegin(), keys.rend());
-        runtime::Array<BaseExpr> call_args;
+        Array<BaseExpr> reverse_keys(keys.rbegin(), keys.rend());
+        Array<BaseExpr> call_args;
         call_args.push_back(self);
         call_args.push_back(InitializerList(std::move(reverse_keys), op->span));
         return Call(op->checked_type(),
@@ -74,7 +74,7 @@ class FuseContAnyGetSetItemOptimizer : public StmtExprMutator {
   }
 
  protected:
-  static BaseExpr FlatContCallArgs(const BaseExpr& op, runtime::Array<BaseExpr>& keys) {
+  static BaseExpr FlatContCallArgs(const BaseExpr& op, Array<BaseExpr>& keys) {
     auto* call_node = op.as<CallNode>();
     if (!call_node) {
       return op;

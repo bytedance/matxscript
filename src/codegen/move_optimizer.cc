@@ -44,13 +44,13 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.MoveOptimizer_GetMoveVarAndLineno").set_body_type
 MATXSCRIPT_REGISTER_GLOBAL("ir.MoveOptimizerAnalysis").set_body_typed([](BaseFunc f) {
   MoveOptimizerAnalysis analysis;
   auto& result = analysis.run(f);
-  runtime::Array<runtime::StringRef> pairs;
+  Array<StringRef> pairs;
   for (auto& var_last_usage : result) {
     std::stringstream os;
     if (var_last_usage.first && var_last_usage.second) {
       os << "var: " << runtime::GetRef<BaseExpr>(var_last_usage.first)
          << ", stmt: " << runtime::GetRef<Stmt>(var_last_usage.second);
-      pairs.push_back(runtime::StringRef(os.str()));
+      pairs.push_back(StringRef(os.str()));
     }
   }
   return runtime::RTValue(pairs);

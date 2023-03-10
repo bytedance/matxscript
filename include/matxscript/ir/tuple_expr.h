@@ -34,7 +34,7 @@ namespace ir {
 class TupleExprNode : public HLOExprNode {
  public:
   /*! \brief the fields of the TupleExpr */
-  runtime::Array<BaseExpr> fields;
+  Array<BaseExpr> fields;
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("fields", &fields);
@@ -70,7 +70,7 @@ class TupleExpr : public HLOExpr {
    * \param fields The fields of a TupleExpr.
    * \param span The source span of the expression.
    */
-  MATX_DLL explicit TupleExpr(runtime::Array<BaseExpr> fields, Span span = Span());
+  MATX_DLL explicit TupleExpr(Array<BaseExpr> fields, Span span = Span());
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(TupleExpr, HLOExpr, TupleExprNode);
 };

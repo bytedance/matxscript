@@ -41,9 +41,7 @@ namespace ir {
 
 using ::matxscript::runtime::Downcast;
 using ::matxscript::runtime::make_object;
-using ::matxscript::runtime::ReprPrinter;
 using ::matxscript::runtime::String;
-using ::matxscript::runtime::StringNode;
 
 // ExprStmt
 ExprStmt::ExprStmt(BaseExpr expr, Span span) {
@@ -354,7 +352,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 // AutoFor
 const char* AutoFor::TEMP_VALUE_VAR_KEY = "value_var";
 const char* AutoFor::TEMP_ENUMERATE_POS_VAR_KEY = "enumerate_pos_var";
-AutoFor::AutoFor(runtime::Array<BaseExpr> loop_vars, BaseExpr container, Stmt body, Span span) {
+AutoFor::AutoFor(Array<BaseExpr> loop_vars, BaseExpr container, Stmt body, Span span) {
   MXCHECK(loop_vars.defined() && !loop_vars.empty());
   MXCHECK(container.defined());
   MXCHECK(body.defined());
@@ -373,7 +371,7 @@ AutoFor::AutoFor(runtime::Array<BaseExpr> loop_vars, BaseExpr container, Stmt bo
 
   ObjectPtr<AutoForNode> node = make_object<AutoForNode>();
   String temp_name;
-  runtime::Array<Type> loop_var_types;
+  Array<Type> loop_var_types;
   for (auto i = 0; i < loop_vars.size(); ++i) {
     if (i > 0) {
       temp_name += "_";
@@ -477,7 +475,7 @@ AutoFor::AutoFor(runtime::Array<BaseExpr> loop_vars, BaseExpr container, Stmt bo
 }
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.AutoFor")
-    .set_body_typed([](runtime::Array<BaseExpr> loop_var,
+    .set_body_typed([](Array<BaseExpr> loop_var,
                        BaseExpr container,
                        Stmt body,
                        Span span = Span()) {
@@ -566,7 +564,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "continue\n";
     });
 
-SeqStmt::SeqStmt(runtime::Array<Stmt> seq, Span span) {
+SeqStmt::SeqStmt(Array<Stmt> seq, Span span) {
   auto node = make_object<SeqStmtNode>();
   node->seq = std::move(seq);
   node->span = std::move(span);
@@ -574,10 +572,9 @@ SeqStmt::SeqStmt(runtime::Array<Stmt> seq, Span span) {
 }
 
 // SeqStmt
-MATXSCRIPT_REGISTER_GLOBAL("ir.SeqStmt")
-    .set_body_typed([](runtime::Array<Stmt> seq, Span span = Span()) {
-      return SeqStmt(std::move(seq), std::move(span));
-    });
+MATXSCRIPT_REGISTER_GLOBAL("ir.SeqStmt").set_body_typed([](Array<Stmt> seq, Span span = Span()) {
+  return SeqStmt(std::move(seq), std::move(span));
+});
 
 MATXSCRIPT_REGISTER_NODE_TYPE(SeqStmtNode);
 
@@ -670,7 +667,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     });
 
 // TryExcept
-TryExcept::TryExcept(Stmt body, runtime::Array<ExceptionHandler> handlers, Span span) {
+TryExcept::TryExcept(Stmt body, Array<ExceptionHandler> handlers, Span span) {
   MXCHECK(body.defined()) << "body is not defined!!!";
   MXCHECK(handlers.defined() && handlers.size() == 1)
       << "only one except handler is supported now!!!";
@@ -683,7 +680,7 @@ TryExcept::TryExcept(Stmt body, runtime::Array<ExceptionHandler> handlers, Span 
 
 MATXSCRIPT_REGISTER_NODE_TYPE(TryExceptNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.TryExcept")
-    .set_body_typed([](Stmt body, runtime::Array<ExceptionHandler> handlers, Span span = Span()) {
+    .set_body_typed([](Stmt body, Array<ExceptionHandler> handlers, Span span = Span()) {
       return TryExcept(std::move(body), std::move(handlers), std::move(span));
     });
 

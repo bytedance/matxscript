@@ -29,14 +29,14 @@
 #include <matxscript/runtime/str_escape.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
 // SEQualReduce traits for runtime containers.
 struct StringNodeTrait {
   static constexpr const std::nullptr_t VisitAttrs = nullptr;
 
   static void SHashReduce(const StringNode* key, SHashReducer hash_reduce) {
     hash_reduce->SHashReduceHashedValue(
-        BytesHash(key->data_container.data(), key->data_container.size()));
+        runtime::BytesHash(key->data_container.data(), key->data_container.size()));
   }
 
   static bool SEqualReduce(const StringNode* lhs, const StringNode* rhs, SEqualReducer equal) {
@@ -58,8 +58,10 @@ StringNode::operator StringNode::self_view() const noexcept {
 
 MATXSCRIPT_REGISTER_OBJECT_TYPE(StringNode);
 MATXSCRIPT_REGISTER_REFLECTION_VTABLE(StringNode, StringNodeTrait)
-    .set_creator([](const String& bytes) { return ObjectInternal::GetObjectPtr(StringRef(bytes)); })
-    .set_repr_bytes([](const Object* n) -> String {
+    .set_creator([](const runtime::String& bytes) {
+      return runtime::ObjectInternal::GetObjectPtr(StringRef(bytes));
+    })
+    .set_repr_bytes([](const Object* n) -> runtime::String {
       return static_cast<const StringNode*>(n)->data_container;
     });
 
@@ -95,49 +97,50 @@ StringRef::self_view StringRef::view() const noexcept {
   return d ? self_view{d->operator self_view()} : self_view();
 }
 
-StringRef::operator String() const {
+StringRef::operator runtime::String() const {
   MX_DPTR(String);
-  return d ? d->data_container : String{};
+  return d ? d->data_container : runtime::String{};
 }
 
 // default constructors
 StringRef::StringRef() {
-  data_ = make_object<StringNode>();
+  data_ = runtime::make_object<StringNode>();
 }
 
 //  constructors from other
-StringRef::StringRef(String other) {
-  data_ = make_object<StringNode>(std::move(other));
+StringRef::StringRef(runtime::String other) {
+  data_ = runtime::make_object<StringNode>(std::move(other));
 }
 
-StringRef::StringRef(const value_type* const data) : StringRef(String(data)) {
+StringRef::StringRef(const value_type* const data) : StringRef(runtime::String(data)) {
 }
 
-StringRef::StringRef(const value_type* data, size_type len) : StringRef(String(data, len)) {
+StringRef::StringRef(const value_type* data, size_type len)
+    : StringRef(runtime::String(data, len)) {
 }
 
 // assign from other
-StringRef& StringRef::operator=(String other) {
+StringRef& StringRef::operator=(runtime::String other) {
   MX_DPTR(String);
   if (d) {
     d->data_container = std::move(other);
   } else {
-    data_ = make_object<StringNode>(std::move(other));
+    data_ = runtime::make_object<StringNode>(std::move(other));
   }
   return *this;
 }
 
 StringRef& StringRef::operator=(const value_type* other) {
-  return operator=(String(other));
+  return operator=(runtime::String(other));
 }
 
 // Member functions
 StringNode* StringRef::CopyOnWrite() {
   if (data_.get() == nullptr) {
-    data_ = make_object<StringNode>();
+    data_ = runtime::make_object<StringNode>();
   } else if (!data_.unique()) {
     auto fbs = GetStringNode()->data_container;
-    data_ = make_object<StringNode>(fbs);
+    data_ = runtime::make_object<StringNode>(fbs);
   }
   return GetStringNode();
 }
@@ -146,7 +149,7 @@ int StringRef::compare(const StringRef& other) const {
   return view().compare(other.view());
 }
 
-int StringRef::compare(const String& other) const {
+int StringRef::compare(const runtime::String& other) const {
   return view().compare(other);
 }
 
@@ -187,17 +190,17 @@ StringNode* StringRef::GetStringNode() const {
 
 StringNode* StringRef::CreateOrGetStringNode() {
   if (!data_.get()) {
-    data_ = make_object<StringNode>();
+    data_ = runtime::make_object<StringNode>();
   }
   return static_cast<StringNode*>(data_.get());
 }
 
-MATXSCRIPT_REGISTER_GLOBAL("runtime.String").set_body_typed([](String str) {
+MATXSCRIPT_REGISTER_GLOBAL("runtime.String").set_body_typed([](runtime::String str) {
   return StringRef(std::move(str));
 });
 
 MATXSCRIPT_REGISTER_GLOBAL("runtime.GetFFIString").set_body_typed([](StringRef str) {
-  return str.operator String();
+  return str.operator runtime::String();
 });
 
 // runtime member function
@@ -259,5 +262,5 @@ typename StringRef::const_reverse_iterator StringRef::rend() const {
   return const_reverse_iterator(begin());
 }
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

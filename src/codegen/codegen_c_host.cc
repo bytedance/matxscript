@@ -94,7 +94,7 @@ void CodeGenCHost::AddUserStructInitDeclaration(const ClassType& cls_ty,
   // init function wrapper
   if (init_func.defined()) {
     auto raw_params = init_func->GetParams();
-    runtime::Array<BaseExpr> params;
+    Array<BaseExpr> params;
     params.reserve(raw_params.size());
     for (size_t i = 1; i < raw_params.size(); ++i) {
       params.push_back(raw_params[i]);
@@ -491,7 +491,7 @@ void CodeGenCHost::DefineUserStructInitFunc(const ClassType& cls_ty, const BaseF
   // __init__
   if (init_func.defined()) {
     auto raw_params = init_func->GetParams();
-    runtime::Array<BaseExpr> params;
+    Array<BaseExpr> params;
     params.reserve(raw_params.size());
     for (size_t i = 1; i < raw_params.size(); ++i) {
       params.push_back(raw_params[i]);
@@ -814,7 +814,7 @@ void CodeGenCHost::AddFunction(const BaseFunc& f) {
 }
 
 namespace {
-String GenTemplateDeclare(const runtime::Array<BaseExpr>& params) {
+String GenTemplateDeclare(const Array<BaseExpr>& params) {
   std::stringstream template_stream;
   // begin print generator
   if (!params.empty()) {
@@ -829,7 +829,7 @@ String GenTemplateDeclare(const runtime::Array<BaseExpr>& params) {
   }
   return template_stream.str();
 }
-String GenTemplateComposeType(const String& prefix, const runtime::Array<BaseExpr>& params) {
+String GenTemplateComposeType(const String& prefix, const Array<BaseExpr>& params) {
   std::stringstream template_stream;
   template_stream << prefix;
   // begin print generator
@@ -874,7 +874,7 @@ void CodeGenCHost::AddYieldFunction(const BaseFunc& f, const std::vector<HLOYiel
   String yield_value_name = "generator_value__";
 
   // init var
-  runtime::Map<BaseExpr, BaseExpr> func_var_map;
+  Map<BaseExpr, BaseExpr> func_var_map;
   BaseFunc f_no_alloca = SubstituteYieldFunctionVars(f, func_var_map);
   for (auto var_pair : func_var_map) {
     AllocVarID(var_pair.first);
@@ -1161,8 +1161,8 @@ void CodeGenCHost::PrintPackedFunctionMacro(const BaseFunc& f) {
 void CodeGenCHost::PrintPackedFunctionMacro(const String& global_symbol,
                                             const String& bound_symbol,
                                             const Type& ret_type,
-                                            const runtime::Array<BaseExpr>& args,
-                                            const runtime::Array<BaseExpr>& default_args,
+                                            const Array<BaseExpr>& args,
+                                            const Array<BaseExpr>& default_args,
                                             bool first_arg_is_self,
                                             bool capture_session_handle,
                                             const Span& span) {
@@ -1369,7 +1369,7 @@ static Function GetUnboundFunction(const Function& f) {
   new_self_node->vid = Id("self");
   HLOVar self(new_self_node);
   params.Set(0, self);
-  runtime::Array<BaseExpr> pass_args;
+  Array<BaseExpr> pass_args;
   for (auto i = 1; i < params.size(); ++i) {
     pass_args.push_back(params[i]);
   }
@@ -1393,7 +1393,7 @@ runtime::Module BuildCHost(IRModule mod) {
   FuseContBinaryAddOptimizer fuse_cont_bin_add_opt;
   FuseContAnyGetSetItemOptimizer fuse_cont_get_set_item_opt;
   FuseContCasterOptimizer fuse_cont_caster_opt;
-  runtime::Map<GlobalVar, BaseFunc> mod_functions;
+  Map<GlobalVar, BaseFunc> mod_functions;
   for (auto kv : mod->functions) {
     auto func = fuse_cont_bin_add_opt.run(kv.second);
     func = fuse_cont_get_set_item_opt.run(func);
@@ -1525,7 +1525,7 @@ runtime::Module BuildCHost(IRModule mod) {
       auto wrapper_func = FunctionNameRules::add_wrapper_suffix(kv.second->GetGlobalName());
       auto raw_params = kv.second->GetParams();
       MXCHECK((!raw_params.empty())) << "__init__ function has no self arg ???";
-      auto new_params = runtime::Array<BaseExpr>();
+      auto new_params = Array<BaseExpr>();
       for (auto i = 1; i < raw_params.size(); ++i) {
         new_params.push_back(raw_params[i]);
       }

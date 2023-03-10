@@ -197,7 +197,7 @@ static runtime::RTValue TryFusedNDArrayGetItem(BaseExpr container, BaseExpr inde
       } else {
         MXTHROW << "[__getitem__] key must be int type";
       }
-      runtime::Array<BaseExpr> new_args = {
+      Array<BaseExpr> new_args = {
           HLOCastPrim(runtime::DataType(kDLInt, 64, 1), call_node->args[1]), std::move(index)};
       InitializerList call_args(std::move(new_args));
       return Call(ObjectType(),
@@ -212,7 +212,7 @@ static runtime::RTValue TryFusedNDArrayGetItem(BaseExpr container, BaseExpr inde
         MXTHROW << "[__getitem__] key must be int type";
       }
       InitializerList old_call_args = runtime::Downcast<InitializerList>(call_node->args[1]);
-      runtime::Array<BaseExpr> new_args;
+      Array<BaseExpr> new_args;
       for (auto& oa : old_call_args->fields) {
         new_args.push_back(oa);
       }
@@ -236,7 +236,7 @@ static runtime::RTValue TryFusedNDArraySetItem(BaseExpr container, BaseExpr inde
       } else {
         MXTHROW << "[__getitem__] key must be int type";
       }
-      runtime::Array<BaseExpr> new_args = {
+      Array<BaseExpr> new_args = {
           HLOCastPrim(runtime::DataType(kDLInt, 64, 1), call_node->args[1]), std::move(index)};
       InitializerList call_args(std::move(new_args));
       return Call(ObjectType(),
@@ -251,7 +251,7 @@ static runtime::RTValue TryFusedNDArraySetItem(BaseExpr container, BaseExpr inde
         MXTHROW << "[__getitem__] key must be int type";
       }
       InitializerList old_call_args = runtime::Downcast<InitializerList>(call_node->args[1]);
-      runtime::Array<BaseExpr> new_args;
+      Array<BaseExpr> new_args;
       for (auto& oa : old_call_args->fields) {
         new_args.push_back(oa);
       }

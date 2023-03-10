@@ -69,7 +69,7 @@ class OpNode : public HLOExprNode {
    */
   StringRef description;
   /* \brief Information of input arguments to the operator */
-  runtime::Array<AttrFieldInfo> arguments;
+  Array<AttrFieldInfo> arguments;
   /*!
    * \brief The type key of the attribute field
    *  This can be empty, in which case it defaults to anything.
@@ -129,9 +129,9 @@ class OpNode : public HLOExprNode {
 
   // friend class
   template <typename>
-  friend class runtime::AttrRegistryMapContainerMap;
+  friend class AttrRegistryMapContainerMap;
   template <typename, typename>
-  friend class runtime::AttrRegistry;
+  friend class AttrRegistry;
   friend class OpRegEntry;
 
   // Program internal unique index of operator.
@@ -188,8 +188,7 @@ class Op : public HLOExpr {
    * \param key The attribute key
    * \return The attr map.
    */
-  MATX_DLL static const runtime::AttrRegistryMapContainerMap<Op>& GetAttrMapContainer(
-      const StringRef& key);
+  MATX_DLL static const AttrRegistryMapContainerMap<Op>& GetAttrMapContainer(const StringRef& key);
 };
 
 /*!
@@ -279,7 +278,7 @@ class OpRegEntry {
 
  private:
   template <typename, typename>
-  friend class runtime::AttrRegistry;
+  friend class AttrRegistry;
   // the name
   std::string name;
   /*! \brief The operator */
@@ -297,7 +296,7 @@ class OpRegEntry {
  * \tparam ValueType The type of the value stored in map.
  */
 template <typename ValueType>
-class OpAttrMap : public runtime::AttrRegistryMap<Op, ValueType> {
+class OpAttrMap : public AttrRegistryMap<Op, ValueType> {
  public:
   /*!
    * \brief get the corresponding value element at op with default value.
@@ -308,7 +307,7 @@ class OpAttrMap : public runtime::AttrRegistryMap<Op, ValueType> {
    */
   inline ValueType get(const HLOExpr& expr, ValueType def_value) const;
 
-  using TParent = runtime::AttrRegistryMap<Op, ValueType>;
+  using TParent = AttrRegistryMap<Op, ValueType>;
   using TParent::count;
   using TParent::get;
   using TParent::operator[];
@@ -316,7 +315,7 @@ class OpAttrMap : public runtime::AttrRegistryMap<Op, ValueType> {
  private:
   friend class Op;
   // constructor
-  explicit OpAttrMap(const runtime::AttrRegistryMapContainerMap<Op>& map) : TParent(map) {
+  explicit OpAttrMap(const AttrRegistryMapContainerMap<Op>& map) : TParent(map) {
   }
 };
 

@@ -40,11 +40,11 @@ namespace ir {
 /*!
  * \brief Global symbol of the op after lowering.
  */
-using TGlobalSymbol = runtime::StringRef;
+using TGlobalSymbol = StringRef;
 using TGlobalIsGenericBuiltinOp = bool;
 using TGlobalIsGenericBuiltinSliceOp = bool;
 using TGlobalIsExplicitContainerOp = bool;
-using TKernelMethodName = runtime::StringRef;
+using TKernelMethodName = StringRef;
 
 /*!
  * \brief Whether the op is overloaded for vector form.

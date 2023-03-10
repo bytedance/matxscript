@@ -28,18 +28,19 @@
 // StringRef is only for IR
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
 
-// Forward declare TArgValue
-class StringNode;
+using runtime::Object;
+using runtime::ObjectPtr;
+using runtime::ObjectRef;
 
 /*! \brief An object representing string. It's POD type. */
 class StringNode : public Object {
  public:
-  using DataContainer = String;
-  using self_view = string_view;
+  using DataContainer = runtime::String;
+  using self_view = runtime::string_view;
 
-  static constexpr const uint32_t _type_index = TypeIndex::kRuntimeStringRef;
+  static constexpr const uint32_t _type_index = runtime::TypeIndex::kRuntimeStringRef;
   static constexpr const char* _type_key = "runtime.StringRef";
   MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(StringNode, Object);
 
@@ -63,9 +64,9 @@ class StringRef : public ObjectRef {
 
  public:
   // data holder
-  using self_view = string_view;
+  using self_view = runtime::string_view;
   using size_type = self_view::size_type;
-  static constexpr size_type npos = string_view::npos;
+  static constexpr size_type npos = self_view::npos;
   // types
   using traits_type = std::char_traits<char>;
   using value_type = char;
@@ -112,12 +113,12 @@ class StringRef : public ObjectRef {
   StringRef& operator=(StringRef&& other) = default;
 
   // constructor from other
-  StringRef(String other);
+  StringRef(runtime::String other);
   StringRef(const value_type* const data);
   StringRef(const value_type* data, size_type len);
 
   // assign from other
-  StringRef& operator=(String other);
+  StringRef& operator=(runtime::String other);
   StringRef& operator=(const char* other);
 
   inline bool operator==(self_view other) const noexcept {
@@ -155,7 +156,7 @@ class StringRef : public ObjectRef {
    * \return zero if both char sequences compare equal. negative if this appear
    * before other, positive otherwise.
    */
-  int compare(const String& other) const;
+  int compare(const runtime::String& other) const;
 
   /*!
    * \brief Compares this to other
@@ -208,18 +209,18 @@ class StringRef : public ObjectRef {
   }
 #endif
   // clang-format on
-  operator String() const;
+  operator runtime::String() const;
 
   /*!
    * \brief Check if a TArgValue can be converted to StringRef, i.e. it can be String or
    * StringRef \param val The value to be checked \return A boolean indicating if val can be
    * converted to StringRef
    */
-  inline static bool CanConvertFrom(const Any& val) {
-    return val.type_code() == TypeIndex::kRuntimeString ||
-           val.type_code() == TypeIndex::kRuntimeUnicode ||
-           val.type_code() == TypeIndex::kRuntimeStringRef ||
-           val.type_code() == TypeIndex::kRuntimeDataType;
+  inline static bool CanConvertFrom(const runtime::Any& val) {
+    return val.type_code() == runtime::TypeIndex::kRuntimeString ||
+           val.type_code() == runtime::TypeIndex::kRuntimeUnicode ||
+           val.type_code() == runtime::TypeIndex::kRuntimeStringRef ||
+           val.type_code() == runtime::TypeIndex::kRuntimeDataType;
   }
 
   static StringRef Concat(self_view lhs, self_view rhs);
@@ -235,7 +236,7 @@ class StringRef : public ObjectRef {
   friend StringRef operator+(const StringRef& lhs, const StringRef& rhs);
   friend StringRef operator+(const StringRef& lhs, const char* rhs);
   friend StringRef operator+(const char* lhs, const StringRef& rhs);
-  friend struct ::matxscript::runtime::ObjectEqual;
+  friend struct ::matxscript::ir::ObjectEqual;
 };
 
 // Overload + operator
@@ -256,43 +257,46 @@ inline std::ostream& operator<<(std::ostream& out, const StringRef& input) {
   return out;
 }
 
+}  // namespace ir
+
+namespace runtime {
 template <>
-inline StringRef Any::As<StringRef>() const {
+inline ir::StringRef Any::As<ir::StringRef>() const {
   switch (value_.code) {
     case TypeIndex::kRuntimeString: {
-      return StringRef(AsNoCheck<String>());
+      return ir::StringRef(AsNoCheck<String>());
     } break;
     case TypeIndex::kRuntimeDataType: {
       return DLDataType2String(value_.data.v_type);
     } break;
     case TypeIndex::kRuntimeUnicode: {
-      return StringRef(AsNoCheck<Unicode>().encode());
+      return ir::StringRef(AsNoCheck<Unicode>().encode());
     } break;
     default: {
-      return AsObjectRef<StringRef>();
+      return AsObjectRef<ir::StringRef>();
     } break;
   }
 }
 
 template <>
-inline StringRef Any::AsNoCheck<StringRef>() const {
-  return As<StringRef>();
+inline ir::StringRef Any::AsNoCheck<ir::StringRef>() const {
+  return As<ir::StringRef>();
 }
-
 }  // namespace runtime
+
 }  // namespace matxscript
 
 namespace std {
 
 template <>
-struct hash<::matxscript::runtime::StringRef> {
-  std::size_t operator()(const ::matxscript::runtime::StringRef& str) const {
+struct hash<::matxscript::ir::StringRef> {
+  std::size_t operator()(const ::matxscript::ir::StringRef& str) const {
     return ::matxscript::runtime::BytesHash(str.data(), str.size());
   }
 };
 
 template <>
-struct equal_to<::matxscript::runtime::StringRef> {
+struct equal_to<::matxscript::ir::StringRef> {
   std::size_t operator()(const ::matxscript::runtime::string_view& lhs,
                          const ::matxscript::runtime::string_view& rhs) const {
     return lhs == rhs;

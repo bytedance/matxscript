@@ -99,7 +99,7 @@ BaseExpr logic_not(BaseExpr a, Span span) {
 BaseExpr abs(BaseExpr a, Span span) {
   StringRef op_name = "call_extern";
   Type ret_type = a->checked_type();
-  runtime::Array<BaseExpr> call_args{StringImm("ArithOps::abs"), std::move(a)};
+  Array<BaseExpr> call_args{StringImm("ArithOps::abs"), std::move(a)};
   return Call(ret_type, Op::Get("ir." + op_name), call_args, std::move(span));
 }
 

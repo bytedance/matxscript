@@ -44,7 +44,7 @@ class FuseContBinaryAddOptimizer : public StmtExprMutator {
         return FlatContCallArgs(Call(op->checked_type(),
                                      IsStringType(op_type) ? builtin::str_fused_concat()
                                                            : builtin::unicode_fused_concat(),
-                                     runtime::Array<BaseExpr>{lhs, rhs},
+                                     ir::Array<BaseExpr>{lhs, rhs},
                                      op->span)
                                     .get());
       }
@@ -59,7 +59,7 @@ class FuseContBinaryAddOptimizer : public StmtExprMutator {
       return runtime::GetRef<HLOExpr>(op);
     }
     const auto* fused_op = &op->op;
-    runtime::Array<BaseExpr> call_args;
+    ir::Array<BaseExpr> call_args;
     std::function<void(const CallNode*)> func_flat_args;
     func_flat_args = [&](const CallNode* op) {
       if (op->op.same_as(*fused_op)) {

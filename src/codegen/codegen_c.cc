@@ -95,8 +95,8 @@ void CodeGenC::ReserveKeywordsAsUnique() {
 }
 
 void CodeGenC::PrintLineVars(std::ostream& os,
-                             const runtime::Array<BaseExpr>& params,
-                             const runtime::Array<BaseExpr>& default_params,
+                             const Array<BaseExpr>& params,
+                             const Array<BaseExpr>& default_params,
                              bool alloc_var,
                              bool with_var_name,
                              bool with_var_type,
@@ -172,8 +172,8 @@ void CodeGenC::AddFunction(const PrimFunc& f) {
   this->PrintFuncPrefix(f->ret_type);
   this->stream << " " << f->GetGlobalName() << "(";
   PrintLineVars(this->stream,
-                Downcast<runtime::Array<BaseExpr>>(f->params),
-                Downcast<runtime::Array<BaseExpr>>(f->default_params),
+                Downcast<Array<BaseExpr>>(f->params),
+                Downcast<Array<BaseExpr>>(f->default_params),
                 true,
                 true,
                 true,
@@ -251,8 +251,8 @@ void CodeGenC::PrintFinalReturn() {
 void CodeGenC::PrintPackedFunctionMacro(const String& global_symbol,
                                         const String& bound_symbol,
                                         const Type& ret_type,
-                                        const runtime::Array<BaseExpr>& args,
-                                        const runtime::Array<BaseExpr>& default_args,
+                                        const Array<BaseExpr>& args,
+                                        const Array<BaseExpr>& default_args,
                                         bool first_arg_is_self,
                                         bool capture_session_handle,
                                         const Span& span) {
@@ -1406,8 +1406,7 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
     String type;
     Type ir_type;
   };
-  auto FuncGetVarReprs = [this,
-                          op](const runtime::Array<BaseExpr>& expr_arr) -> std::vector<VarInfo> {
+  auto FuncGetVarReprs = [this, op](const Array<BaseExpr>& expr_arr) -> std::vector<VarInfo> {
     std::vector<VarInfo> results;
     for (auto& local_var : expr_arr) {
       std::stringstream ss;

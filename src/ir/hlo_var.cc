@@ -32,7 +32,6 @@ namespace matxscript {
 namespace ir {
 
 using runtime::make_object;
-using runtime::ReprPrinter;
 
 MATXSCRIPT_REGISTER_NODE_TYPE(IdNode);
 

@@ -32,7 +32,7 @@
 #include <matxscript/runtime/container.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
 
 /*!
  * \brief Generic attribute map.
@@ -59,7 +59,7 @@ class AttrRegistryMapContainerMap {
    * \param key The key to the map
    * \return the const reference to the content value.
    */
-  const RTValue& operator[](const KeyType& key) const {
+  const runtime::RTValue& operator[](const KeyType& key) const {
     MXCHECK(key.defined());
     const uint32_t idx = key->AttrRegistryIndex();
     MXCHECK(idx < data_.size() && data_[idx].second != 0)
@@ -88,7 +88,7 @@ class AttrRegistryMapContainerMap {
   /*! \brief The name of the attr field */
   StringRef attr_name_;
   /*! \brief The internal data. */
-  std::vector<std::pair<RTValue, int>> data_;
+  std::vector<std::pair<runtime::RTValue, int>> data_;
   /*! \brief The constructor */
   AttrRegistryMapContainerMap() = default;
   template <typename, typename>
@@ -141,5 +141,5 @@ class AttrRegistryMap {
   const AttrRegistryMapContainerMap<KeyType>& map_;
 };
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

@@ -36,7 +36,11 @@
 #include <matxscript/runtime/object.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using runtime::Object;
+using runtime::ObjectPtr;
+using runtime::ObjectRef;
 
 /*! \brief Helper to represent nullptr for optional. */
 struct NullOptType {};
@@ -175,7 +179,7 @@ class Optional : public ObjectRef {
   static constexpr bool _type_is_nullable = true;
 };
 
-constexpr runtime::NullOptType NullOpt{};
+constexpr NullOptType NullOpt{};
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

@@ -29,7 +29,9 @@
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using namespace runtime;
 
 // Attr getter.
 class AttrGetter : public AttrVisitor {
@@ -308,5 +310,5 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.NodeGetAttr").set_body(NodeGetAttr);
 MATXSCRIPT_REGISTER_GLOBAL("runtime.NodeListAttrNames").set_body(NodeListAttrNames);
 
 MATXSCRIPT_REGISTER_GLOBAL("runtime.MakeNode").set_body(MakeNode);
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

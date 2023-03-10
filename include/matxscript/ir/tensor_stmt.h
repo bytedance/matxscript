@@ -68,7 +68,7 @@ class BufferNode : public Object {
    * BufferLoad/BufferStore nodes, and used by the low-level code
    * generators.
    */
-  runtime::Array<PrimExpr> shape;
+  Array<PrimExpr> shape;
   /*!
    * \brief Separators between input axes when generating flattened output axes
    *
@@ -77,12 +77,12 @@ class BufferNode : public Object {
    * non-flat memory, each entry in axis_separators should be the
    * first input axis that is part of a new flattened axis.
    */
-  runtime::Array<IntImm> axis_separators;
+  Array<IntImm> axis_separators;
   /*!
    * \brief The strides of each dimension
    *  This can be an empty array, indicating array is contiguous
    */
-  runtime::Array<PrimExpr> strides;
+  Array<PrimExpr> strides;
   /*! \brief The offset in terms of number of dtype elements (including lanes) */
   PrimExpr elem_offset;
   // Meta data
@@ -164,14 +164,14 @@ class Buffer : public ObjectRef {
   // A default value will be picked.
   MATX_DLL Buffer(PrimVar data,
                   runtime::DataType dtype,
-                  runtime::Array<PrimExpr> shape,
-                  runtime::Array<PrimExpr> strides,
+                  Array<PrimExpr> shape,
+                  Array<PrimExpr> strides,
                   PrimExpr elem_offset,
                   StringRef name,
                   int data_alignment,
                   int offset_factor,
                   BufferType buffer_type,
-                  runtime::Array<IntImm> axis_separators = {},
+                  Array<IntImm> axis_separators = {},
                   Span span = Span());
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(Buffer, ObjectRef, BufferNode);
@@ -190,7 +190,7 @@ class BufferRegionNode : public Object {
   /*! \brief The buffer of the buffer region. */
   Buffer buffer;
   /*! \brief The region array of the buffer region. */
-  runtime::Array<RangeExpr> region;
+  Array<RangeExpr> region;
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("buffer", &buffer);
@@ -218,7 +218,7 @@ class BufferRegionNode : public Object {
  */
 class BufferRegion : public ObjectRef {
  public:
-  MATX_DLL explicit BufferRegion(Buffer buffer, runtime::Array<RangeExpr> region);
+  MATX_DLL explicit BufferRegion(Buffer buffer, Array<RangeExpr> region);
 
   /*!
    * \brief Create a BufferRegion which is full region of the given buffer.
@@ -233,7 +233,7 @@ class BufferRegion : public ObjectRef {
    * \param indices The access point indices of the buffer
    * \return The BufferRegion which is the single point of the given buffer.
    */
-  MATX_DLL static BufferRegion FromPoint(Buffer buffer, runtime::Array<PrimExpr> indices);
+  MATX_DLL static BufferRegion FromPoint(Buffer buffer, Array<PrimExpr> indices);
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(BufferRegion, ObjectRef, BufferRegionNode);
   MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(BufferRegionNode);
@@ -308,11 +308,11 @@ class MatchBufferRegion : public ObjectRef {
 class ComputeBlockNode : public StmtNode {
  public:
   /*! \brief The variables of the block. */
-  runtime::Array<PrimIterVar> iter_vars;
+  Array<PrimIterVar> iter_vars;
   /*! \brief The read buffer regions of the block. */
-  runtime::Array<BufferRegion> reads;
+  Array<BufferRegion> reads;
   /*! \brief The write buffer regions of the block. */
-  runtime::Array<BufferRegion> writes;
+  Array<BufferRegion> writes;
   /*! \brief The name_hint of the block. */
   StringRef name_hint;
   /*! \brief The body of the block. */
@@ -324,13 +324,13 @@ class ComputeBlockNode : public StmtNode {
    *  We also provide primitives to decompose the init into a separate block during scheduling.
    *  Init field is `NullOpt` if there is no reduction iter_vars
    */
-  runtime::Optional<Stmt> init;
+  Optional<Stmt> init;
   /*! \brief The buffer allocated in the block. */
-  runtime::Array<Buffer> alloc_buffers;
+  Array<Buffer> alloc_buffers;
   /*! \brief The match buffer regions. */
-  runtime::Array<MatchBufferRegion> match_buffers;
+  Array<MatchBufferRegion> match_buffers;
   /*! \brief The annotation of the block. */
-  runtime::Map<StringRef, ObjectRef> annotations;
+  Map<StringRef, ObjectRef> annotations;
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("iter_vars", &iter_vars);
@@ -375,15 +375,15 @@ class ComputeBlockNode : public StmtNode {
 class ComputeBlock : public Stmt {
  public:
   MATX_DLL explicit ComputeBlock(
-      runtime::Array<PrimIterVar> iter_vars,
-      runtime::Array<BufferRegion> reads,
-      runtime::Array<BufferRegion> writes,
+      Array<PrimIterVar> iter_vars,
+      Array<BufferRegion> reads,
+      Array<BufferRegion> writes,
       StringRef name_hint,
       Stmt body,
-      runtime::Optional<Stmt> init = runtime::NullOpt,
-      runtime::Array<Buffer> alloc_buffers = runtime::Array<Buffer>(),
-      runtime::Array<MatchBufferRegion> match_buffers = runtime::Array<MatchBufferRegion>(),
-      runtime::Map<StringRef, ObjectRef> annotations = runtime::Map<StringRef, ObjectRef>(),
+      Optional<Stmt> init = NullOpt,
+      Array<Buffer> alloc_buffers = Array<Buffer>(),
+      Array<MatchBufferRegion> match_buffers = Array<MatchBufferRegion>(),
+      Map<StringRef, ObjectRef> annotations = Map<StringRef, ObjectRef>(),
       Span span = Span());
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(ComputeBlock, Stmt, ComputeBlockNode);
@@ -396,7 +396,7 @@ class ComputeBlock : public Stmt {
 class ComputeBlockRealizeNode : public StmtNode {
  public:
   /*! \brief The corresponding values of the iter vars. */
-  runtime::Array<PrimExpr> iter_values;
+  Array<PrimExpr> iter_values;
   /*!
    * \brief The predicate of the block realization, the block will only be executed when the
    * predicate is true.
@@ -432,7 +432,7 @@ class ComputeBlockRealizeNode : public StmtNode {
  */
 class ComputeBlockRealize : public Stmt {
  public:
-  MATX_DLL explicit ComputeBlockRealize(runtime::Array<PrimExpr> iter_values,
+  MATX_DLL explicit ComputeBlockRealize(Array<PrimExpr> iter_values,
                                         PrimExpr predicate,
                                         ComputeBlock block,
                                         Span span = Span());

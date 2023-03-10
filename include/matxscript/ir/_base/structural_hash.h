@@ -30,7 +30,11 @@
 #include <matxscript/runtime/runtime_value.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using runtime::Object;
+using runtime::ObjectPtr;
+using runtime::ObjectRef;
 
 /*!
  * \brief Hash definition of base value classes.
@@ -61,23 +65,23 @@ class BaseValueHash {
     return std::hash<std::string>()(key);
   }
 
-  size_t operator()(string_view key) const {
-    return std::hash<string_view>()(key);
+  size_t operator()(runtime::string_view key) const {
+    return std::hash<runtime::string_view>()(key);
   }
 
-  size_t operator()(unicode_view key) const {
-    return std::hash<unicode_view>()(key);
+  size_t operator()(runtime::unicode_view key) const {
+    return std::hash<runtime::unicode_view>()(key);
   }
 
-  size_t operator()(const String& key) const {
-    return std::hash<String>()(key);
+  size_t operator()(const runtime::String& key) const {
+    return std::hash<runtime::String>()(key);
   }
 
-  size_t operator()(const Unicode& key) const {
-    return std::hash<Unicode>()(key);
+  size_t operator()(const runtime::Unicode& key) const {
+    return std::hash<runtime::Unicode>()(key);
   }
 
-  size_t operator()(const DataType& key) const {
+  size_t operator()(const runtime::DataType& key) const {
     return std::hash<int32_t>()(static_cast<int32_t>(key.code()) |
                                 (static_cast<int32_t>(key.bits()) << 8) |
                                 (static_cast<int32_t>(key.lanes()) << 16));
@@ -111,7 +115,7 @@ class StructuralHash : public BaseValueHash {
    */
   MATX_DLL size_t operator()(const ObjectRef& key) const;
 
-  MATX_DLL size_t operator()(const RTValue& key) const;
+  MATX_DLL size_t operator()(const runtime::RTValue& key) const;
 };
 
 /*!
@@ -205,7 +209,7 @@ class SHashReducer {
     return handler_->SHashReduce(key, map_free_vars_);
   }
 
-  void operator()(const RTValue& key) const;
+  void operator()(const runtime::RTValue& key) const;
 
   /*!
    * \brief Push hash of key to the current sequence of hash values.
@@ -240,5 +244,5 @@ class SHashReducer {
   bool map_free_vars_;
 };
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

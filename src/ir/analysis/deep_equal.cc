@@ -57,7 +57,7 @@ class DeepCmpSEqualHandler : public SEqualReducer::Handler {
 
  private:
   // reflection vtable
-  runtime::ReflectionVTable* vtable_ = runtime::ReflectionVTable::Global();
+  ReflectionVTable* vtable_ = ReflectionVTable::Global();
 };
 
 bool ExprDeepEqual::operator()(const PrimExpr& lhs, const PrimExpr& rhs) const {

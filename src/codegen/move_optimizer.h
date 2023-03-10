@@ -328,11 +328,11 @@ class MoveOptimizerMutator : public StmtExprMutator {
         }
         auto count = counter.run(stmt, var_node);
         if (count == 1) {
-          auto vmap = [&](const HLOVar& var) -> runtime::Optional<HLOExpr> {
+          auto vmap = [&](const HLOVar& var) -> Optional<HLOExpr> {
             if (var.get() == var_node) {
               return HLOMove(var, var->span);
             }
-            return runtime::Optional<HLOExpr>(nullptr);
+            return Optional<HLOExpr>(nullptr);
           };
           stmt = Substitute(stmt, vmap);
         }

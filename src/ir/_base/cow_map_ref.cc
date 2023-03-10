@@ -33,7 +33,10 @@
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using runtime::PyArgs;
+using runtime::RTValue;
 
 /******************************************************************************
  * Map container
@@ -84,7 +87,7 @@ struct MapNodeTrait {
     using KV = std::pair<StringRef, ObjectRef>;
     std::vector<KV> temp;
     for (const auto& kv : *key) {
-      temp.push_back(std::make_pair(Downcast<StringRef>(kv.first), kv.second));
+      temp.push_back(std::make_pair(runtime::Downcast<StringRef>(kv.first), kv.second));
     }
     // sort by the hash key of the keys.
     std::sort(temp.begin(), temp.end(), [](const KV& lhs, const KV& rhs) {
@@ -160,11 +163,11 @@ struct MapNodeTrait {
 
 MATXSCRIPT_REGISTER_OBJECT_TYPE(MapNode);
 MATXSCRIPT_REGISTER_REFLECTION_VTABLE(MapNode, MapNodeTrait)
-    .set_creator([](const String&) -> ObjectPtr<Object> { return MapNode::Empty(); });
+    .set_creator([](const runtime::String&) -> ObjectPtr<Object> { return MapNode::Empty(); });
 
 MATXSCRIPT_REGISTER_GLOBAL("runtime.Map").set_body([](PyArgs args) -> RTValue {
   MXCHECK_EQ(args.size() % 2, 0);
-  std::unordered_map<ObjectRef, ObjectRef, ObjectPtrHash, ObjectPtrEqual> data;
+  std::unordered_map<ObjectRef, ObjectRef, runtime::ObjectPtrHash, runtime::ObjectPtrEqual> data;
   for (int i = 0; i < args.size(); i += 2) {
     ObjectRef k =
         StringRef::CanConvertFrom(args[i]) ? args[i].As<StringRef>() : args[i].As<ObjectRef>();
@@ -211,7 +214,7 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.MapItems").set_body([](PyArgs args) -> RTVal
   Array<ObjectRef> rkvs;
   for (const auto& kv : *n) {
     if (kv.first->IsInstance<StringNode>()) {
-      rkvs.push_back(Downcast<StringRef>(kv.first));
+      rkvs.push_back(runtime::Downcast<StringRef>(kv.first));
     } else {
       rkvs.push_back(kv.first);
     }
@@ -227,7 +230,7 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.MapKeys").set_body([](PyArgs args) -> RTValu
   Array<ObjectRef> keys;
   for (const auto& kv : *n) {
     if (kv.first->IsInstance<StringNode>()) {
-      keys.push_back(Downcast<StringRef>(kv.first));
+      keys.push_back(runtime::Downcast<StringRef>(kv.first));
     } else {
       keys.push_back(kv.first);
     }
@@ -255,7 +258,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
           p->stream << ", ";
         }
         if (it->first->IsInstance<StringNode>()) {
-          p->stream << '\"' << Downcast<StringRef>(it->first) << "\": ";
+          p->stream << '\"' << runtime::Downcast<StringRef>(it->first) << "\": ";
         } else {
           p->Print(it->first);
           p->stream << ": ";
@@ -267,5 +270,5 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 
 MATX_DLL constexpr uint64_t DenseMapNode::kNextProbeLocation[];
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

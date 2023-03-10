@@ -25,7 +25,7 @@
 #pragma once
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
 
 namespace detail {
 
@@ -51,5 +51,5 @@ inline void for_each(const F& f, Args&&... args) {  // NOLINT(*)
 
 }  // namespace detail
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript
