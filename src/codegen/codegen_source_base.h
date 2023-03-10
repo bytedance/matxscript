@@ -171,7 +171,7 @@ runtime::Module SourceModuleCreate(runtime::String code, runtime::String fmt);
 runtime::Module CSourceModuleCreate(const runtime::String& code,
                                     const runtime::String& fmt,
                                     const runtime::String& symbol = "",
-                                    const runtime::Array<runtime::StringRef>& const_vars = {});
+                                    const ir::Array<ir::StringRef>& const_vars = {});
 
 }  // namespace codegen
 }  // namespace matxscript

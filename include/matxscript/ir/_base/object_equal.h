@@ -24,7 +24,11 @@
 #include <matxscript/runtime/object.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using runtime::Object;
+using runtime::ObjectPtr;
+using runtime::ObjectRef;
 
 struct ObjectEqual {
   /*!
@@ -38,5 +42,5 @@ struct ObjectEqual {
   bool operator()(const ObjectRef& a, const ObjectRef& b) const;
 };
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

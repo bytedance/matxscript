@@ -54,7 +54,7 @@ class ConstructorNode : public HLOExprNode {
   /*! \brief The name (only a hint) */
   StringRef name_hint;
   /*! \brief Input to the constructor. */
-  runtime::Array<Type> inputs;
+  Array<Type> inputs;
   /*! \brief The datatype the constructor will construct. */
   GlobalTypeVar belong_to;
   /*! \brief Index in the table of constructors (set when the type is registered). */
@@ -101,7 +101,7 @@ class Constructor : public HLOExpr {
    */
   MATX_DLL Constructor(Type ret_type,
                        StringRef name_hint,
-                       runtime::Array<Type> inputs,
+                       Array<Type> inputs,
                        GlobalTypeVar belong_to);
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(Constructor, HLOExpr, ConstructorNode);
@@ -114,11 +114,11 @@ class ClassTypeNode : public TypeNode {
   int64_t tag = 0;
   Type base;
   GlobalTypeVar header;
-  runtime::Array<StringRef> var_names;
-  runtime::Array<Type> var_types;
-  runtime::Array<StringRef> func_names;
-  runtime::Array<StringRef> unbound_func_names;
-  runtime::Array<FuncType> func_types;
+  Array<StringRef> var_names;
+  Array<Type> var_types;
+  Array<StringRef> func_names;
+  Array<StringRef> unbound_func_names;
+  Array<FuncType> func_types;
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("tag", &py_type_id);
@@ -156,8 +156,8 @@ class ClassTypeNode : public TypeNode {
 
   Type GetItem(const StringRef& name) const;
 
-  runtime::Array<StringRef> GetVarNamesLookupTable() const;
-  runtime::Array<Type> GetVarTypesLookupTable() const;
+  Array<StringRef> GetVarNamesLookupTable() const;
+  Array<Type> GetVarTypesLookupTable() const;
 
   runtime::Unicode GetPythonTypeName() const override {
     return header->name_hint.operator runtime::String().decode();
@@ -196,11 +196,11 @@ class ClassType : public Type {
   MATX_DLL ClassType(uint64_t py_type_id,
                      GlobalTypeVar header,
                      Type base,
-                     runtime::Array<StringRef> var_names,
-                     runtime::Array<Type> var_types,
-                     runtime::Array<StringRef> func_names,
-                     runtime::Array<StringRef> unbound_func_names,
-                     runtime::Array<FuncType> func_types);
+                     Array<StringRef> var_names,
+                     Array<Type> var_types,
+                     Array<StringRef> func_names,
+                     Array<StringRef> unbound_func_names,
+                     Array<FuncType> func_types);
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(ClassType, Type, ClassTypeNode);
 };

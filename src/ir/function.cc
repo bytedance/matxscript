@@ -117,16 +117,16 @@ FuncType PrimFuncNode::func_type_annotation() const {
   return FuncType(param_types, ret_type, {}, {});
 }
 
-runtime::Array<BaseExpr> PrimFuncNode::GetParams() const {
-  runtime::Array<BaseExpr> result;
+Array<BaseExpr> PrimFuncNode::GetParams() const {
+  Array<BaseExpr> result;
   for (auto& param : params) {
     result.push_back(param);
   }
   return result;
 }
 
-runtime::Array<BaseExpr> PrimFuncNode::GetDefaultParams() const {
-  return Downcast<runtime::Array<BaseExpr>>(default_params);
+Array<BaseExpr> PrimFuncNode::GetDefaultParams() const {
+  return Downcast<Array<BaseExpr>>(default_params);
 }
 
 Type PrimFuncNode::GetReturnType() const {
@@ -215,11 +215,11 @@ FuncType FunctionNode::func_type_annotation() const {
   return FuncType(param_types, ret_type, this->type_params, {});
 }
 
-runtime::Array<BaseExpr> FunctionNode::GetParams() const {
+Array<BaseExpr> FunctionNode::GetParams() const {
   return params;
 }
 
-runtime::Array<BaseExpr> FunctionNode::GetDefaultParams() const {
+Array<BaseExpr> FunctionNode::GetDefaultParams() const {
   return default_params;
 }
 
@@ -302,11 +302,11 @@ FuncType LambdaFunctionNode::func_type_annotation() const {
   return FuncType(param_types, ret_type, {}, {});
 }
 
-runtime::Array<BaseExpr> LambdaFunctionNode::GetParams() const {
+Array<BaseExpr> LambdaFunctionNode::GetParams() const {
   return params;
 }
 
-runtime::Array<BaseExpr> LambdaFunctionNode::GetDefaultParams() const {
+Array<BaseExpr> LambdaFunctionNode::GetDefaultParams() const {
   return {};
 }
 

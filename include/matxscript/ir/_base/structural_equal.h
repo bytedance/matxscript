@@ -32,7 +32,11 @@
 #include <matxscript/runtime/runtime_value.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using runtime::Object;
+using runtime::ObjectPtr;
+using runtime::ObjectRef;
 
 /*!
  * \brief Equality definition of base value class.
@@ -63,19 +67,19 @@ class BaseValueEqual {
   bool operator()(const std::string& lhs, const std::string& rhs) const {
     return lhs == rhs;
   }
-  bool operator()(string_view lhs, string_view rhs) const {
+  bool operator()(runtime::string_view lhs, runtime::string_view rhs) const {
     return lhs == rhs;
   }
-  bool operator()(unicode_view lhs, unicode_view rhs) const {
+  bool operator()(runtime::unicode_view lhs, runtime::unicode_view rhs) const {
     return lhs == rhs;
   }
-  bool operator()(const String& lhs, const String& rhs) const {
+  bool operator()(const runtime::String& lhs, const runtime::String& rhs) const {
     return lhs == rhs;
   }
-  bool operator()(const Unicode& lhs, const Unicode& rhs) const {
+  bool operator()(const runtime::Unicode& lhs, const runtime::Unicode& rhs) const {
     return lhs == rhs;
   }
-  bool operator()(const DataType& lhs, const DataType& rhs) const {
+  bool operator()(const runtime::DataType& lhs, const runtime::DataType& rhs) const {
     return lhs == rhs;
   }
   template <typename ENum, typename = typename std::enable_if<std::is_enum<ENum>::value>::type>
@@ -119,7 +123,7 @@ class StructuralEqual : public BaseValueEqual {
   MATX_DLL bool operator()(const ObjectRef& lhs, const ObjectRef& rhs) const;
 
   // RTValue
-  MATX_DLL bool operator()(const RTValue& lhs, const RTValue& rhs) const;
+  MATX_DLL bool operator()(const runtime::RTValue& lhs, const runtime::RTValue& rhs) const;
 };
 
 /*!
@@ -183,7 +187,7 @@ class SEqualReducer : public BaseValueEqual {
   bool operator()(const ObjectRef& lhs, const ObjectRef& rhs) const {
     return handler_->SEqualReduce(lhs, rhs, map_free_vars_);
   }
-  bool operator()(const RTValue& lhs, const RTValue& rhs) const;
+  bool operator()(const runtime::RTValue& lhs, const runtime::RTValue& rhs) const;
   /*!
    * \brief Reduce condition to comparison of two definitions,
    *        where free vars can be mapped.
@@ -242,5 +246,5 @@ class SEqualReducer : public BaseValueEqual {
   bool map_free_vars_;
 };
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

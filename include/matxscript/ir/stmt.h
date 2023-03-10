@@ -353,7 +353,7 @@ class AssertStmt : public Stmt {
 class SeqStmtNode : public StmtNode {
  public:
   /*! \brief internal sequence content. */
-  runtime::Array<Stmt> seq;
+  Array<Stmt> seq;
 
   /*! \return get the size of the sequence */
   size_t size() const {
@@ -389,7 +389,7 @@ class SeqStmt : public Stmt {
    * \brief Construct SeqStmt.
    * \param seq The sequence.
    */
-  MATX_DLL explicit SeqStmt(runtime::Array<Stmt> seq, Span span = Span());
+  MATX_DLL explicit SeqStmt(Array<Stmt> seq, Span span = Span());
 
   /*! \return get the size of the sequence */
   size_t size() const {
@@ -419,8 +419,8 @@ class SeqStmt : public Stmt {
    */
   template <typename... Args>
   static Stmt Flatten(Args&&... seq_args) {
-    runtime::Array<Stmt> seq;
-    runtime::detail::for_each(Flattener(&seq), std::forward<Args>(seq_args)...);
+    Array<Stmt> seq;
+    detail::for_each(Flattener(&seq), std::forward<Args>(seq_args)...);
     if (seq.size() == 1)
       return seq[0];
     return SeqStmt(seq);
@@ -428,7 +428,7 @@ class SeqStmt : public Stmt {
   /*! \brief Helper class to flatten sequence of arguments into Array. */
   class Flattener {
    public:
-    explicit Flattener(runtime::Array<Stmt>* seq) : seq_(seq) {
+    explicit Flattener(Array<Stmt>* seq) : seq_(seq) {
     }
 
     void operator()(size_t i, const Stmt& stmt) const {
@@ -449,7 +449,7 @@ class SeqStmt : public Stmt {
     }
 
    private:
-    runtime::Array<Stmt>* seq_;
+    Array<Stmt>* seq_;
   };
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(SeqStmt, Stmt, SeqStmtNode);
@@ -545,7 +545,7 @@ class ExceptionHandler : public Stmt {
 class TryExceptNode : public StmtNode {
  public:
   Stmt body;
-  runtime::Array<ExceptionHandler> handlers;
+  Array<ExceptionHandler> handlers;
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("body", &body);
@@ -571,7 +571,7 @@ class TryExceptNode : public StmtNode {
  */
 class TryExcept : public Stmt {
  public:
-  MATX_DLL TryExcept(Stmt body, runtime::Array<ExceptionHandler> handlers, Span span = Span());
+  MATX_DLL TryExcept(Stmt body, Array<ExceptionHandler> handlers, Span span = Span());
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(TryExcept, Stmt, TryExceptNode);
 };
@@ -754,21 +754,21 @@ class AutoForNode : public StmtNode {
   /*! \brief The container value of iteration. */
   BaseExpr raw_container;
   /*! \brief The temp container value of iteration. */
-  runtime::Array<BaseExpr> eval_containers;
+  Array<BaseExpr> eval_containers;
   /*! \brief The loop iter variable. */
-  runtime::Array<BaseExpr> iter_vars;  // make_iterable or iter_begin
+  Array<BaseExpr> iter_vars;  // make_iterable or iter_begin
   /*! \brief The loop iter end variable. */
-  runtime::Array<BaseExpr> iter_end_vars;  // has_next or iter_end
+  Array<BaseExpr> iter_end_vars;  // has_next or iter_end
   /*! \brief The loop var holder. */
-  runtime::Array<BaseExpr> loop_vars_holder;  // for view optimizer
+  Array<BaseExpr> loop_vars_holder;  // for view optimizer
   /*! \brief The loop variable. */
-  runtime::Array<BaseExpr> loop_vars;  // x, y, z...
+  Array<BaseExpr> loop_vars;  // x, y, z...
   /*! \brief The body of the for loop. */
   Stmt body;
 
   /*! \brief internal use, only for yield. */
   bool yield_mode = false;
-  runtime::Map<StringRef, BaseExpr> temp_vars;
+  Map<StringRef, BaseExpr> temp_vars;
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("iter_var", &iter_vars);
@@ -819,15 +819,12 @@ class AutoFor : public Stmt {
   static const char* TEMP_ENUMERATE_POS_VAR_KEY;
 
   MATX_DLL AutoFor(BaseExpr loop_var, BaseExpr container, Stmt body, Span span = Span())
-      : AutoFor(runtime::Array<BaseExpr>{std::move(loop_var)},
+      : AutoFor(Array<BaseExpr>{std::move(loop_var)},
                 std::move(container),
                 std::move(body),
                 std::move(span)) {
   }
-  MATX_DLL AutoFor(runtime::Array<BaseExpr> loop_vars,
-                   BaseExpr container,
-                   Stmt body,
-                   Span span = Span());
+  MATX_DLL AutoFor(Array<BaseExpr> loop_vars, BaseExpr container, Stmt body, Span span = Span());
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(AutoFor, Stmt, AutoForNode);
 };

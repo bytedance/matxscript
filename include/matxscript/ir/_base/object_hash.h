@@ -24,7 +24,11 @@
 #include <matxscript/runtime/object.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using runtime::Object;
+using runtime::ObjectPtr;
+using runtime::ObjectRef;
 
 struct ObjectHash {
   /*!
@@ -37,5 +41,5 @@ struct ObjectHash {
   size_t operator()(const ObjectRef& a) const;
 };
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

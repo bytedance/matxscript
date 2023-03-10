@@ -32,7 +32,9 @@
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using namespace runtime;
 
 // Define the dispatch function here since primary user is in this file.
 bool ReflectionVTable::SEqualReduce(const Object* self,
@@ -317,5 +319,5 @@ bool SEqualReducer::operator()(const RTValue& lhs, const RTValue& rhs) const {
   return false;
 }
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

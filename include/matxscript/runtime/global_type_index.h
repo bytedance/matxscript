@@ -63,13 +63,13 @@ static constexpr int32_t kRuntimeObject = kRoot;
 static constexpr int32_t kRuntimeModule = 1;
 /*! \brief runtime::NDArray. */
 static constexpr int32_t kRuntimeNDArray = 2;
-/*! \brief runtime::StringRef. */
+/*! \brief ir::StringRef. */
 static constexpr int32_t kRuntimeStringRef = 3;
 /*! \brief There is no UnicodeRef anymore */
 // static constexpr int32_t kRuntimeUnicodeRef = 4;
-/*! \brief runtime::Array. */
+/*! \brief ir::Array. */
 static constexpr int32_t kRuntimeArray = 5;
-/*! \brief runtime::Map. */
+/*! \brief ir::Map. */
 static constexpr int32_t kRuntimeMap = 6;
 /*! \brief runtime::List. */
 static constexpr int32_t kRuntimeList = 7;

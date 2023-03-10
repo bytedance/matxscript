@@ -24,7 +24,6 @@
 namespace matxscript {
 namespace ir {
 namespace builtin {
-using ::matxscript::runtime::Array;
 
 #define MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC(OpName) \
   const Op& OpName() {                                \

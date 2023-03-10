@@ -38,7 +38,7 @@
 #include <matxscript/runtime/container.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
 
 /*!
  * \brief Implementation of registry with attributes.
@@ -75,7 +75,7 @@ class AttrRegistry {
     uint32_t registry_index = static_cast<uint32_t>(entries_.size());
     auto entry = std::unique_ptr<EntryType>(new EntryType(registry_index));
     auto* eptr = entry.get();
-    eptr->name = name.operator String();
+    eptr->name = name.operator runtime::String();
     entry_map_[name] = eptr;
     entries_.emplace_back(std::move(entry));
     return *eptr;
@@ -100,7 +100,10 @@ class AttrRegistry {
    * \param value The value to be set.
    * \param plevel The support level.
    */
-  void UpdateAttr(const StringRef& attr_name, const KeyType& key, RTValue value, int plevel) {
+  void UpdateAttr(const StringRef& attr_name,
+                  const KeyType& key,
+                  runtime::RTValue value,
+                  int plevel) {
     std::lock_guard<std::mutex> lock(mutex_);
     auto& op_map = attrs_[attr_name];
     if (op_map == nullptr) {
@@ -110,9 +113,9 @@ class AttrRegistry {
 
     uint32_t index = key->AttrRegistryIndex();
     if (op_map->data_.size() <= index) {
-      op_map->data_.resize(index + 1, std::make_pair(RTValue(), 0));
+      op_map->data_.resize(index + 1, std::make_pair(runtime::RTValue(), 0));
     }
-    std::pair<RTValue, int>& p = op_map->data_[index];
+    std::pair<runtime::RTValue, int>& p = op_map->data_[index];
     MXCHECK(p.second != plevel) << "Attribute " << attr_name << " of " << key->AttrRegistryName()
                                 << " is already registered with same plevel=" << plevel;
     MXCHECK(value.type_code() != runtime::TypeIndex::kRuntimeNullptr)
@@ -136,7 +139,7 @@ class AttrRegistry {
     }
     uint32_t index = key->AttrRegistryIndex();
     if (op_map->data_.size() > index) {
-      op_map->data_[index] = std::make_pair(RTValue(), 0);
+      op_map->data_[index] = std::make_pair(runtime::RTValue(), 0);
     }
   }
 
@@ -183,5 +186,5 @@ class AttrRegistry {
   std::unordered_map<StringRef, std::unique_ptr<AttrRegistryMapContainerMap<KeyType>>> attrs_;
 };
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

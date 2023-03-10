@@ -33,7 +33,6 @@ namespace ir {
 using runtime::Object;
 using runtime::ObjectPtr;
 using runtime::ObjectRef;
-using runtime::StringRef;
 
 /*!
  * \brief The source name in the Span
@@ -46,13 +45,13 @@ class SourceName;
 class SourceNameNode : public Object {
  public:
   /*! \brief The source name. */
-  runtime::StringRef name;
+  StringRef name;
   // override attr visitor
-  void VisitAttrs(runtime::AttrVisitor* v) {
+  void VisitAttrs(AttrVisitor* v) {
     v->Visit("name", &name);
   }
 
-  bool SEqualReduce(const SourceNameNode* other, runtime::SEqualReducer equal) const {
+  bool SEqualReduce(const SourceNameNode* other, SEqualReducer equal) const {
     return equal(name, other->name);
   }
 
@@ -96,19 +95,19 @@ class SpanNode : public Object {
   StringRef source_code;
 
   // override attr visitor
-  void VisitAttrs(runtime::AttrVisitor* v) {
+  void VisitAttrs(AttrVisitor* v) {
     v->Visit("file_name", &file_name);
     v->Visit("lineno", &lineno);
     v->Visit("func_name", &func_name);
     v->Visit("source_code", &source_code);
   }
 
-  bool SEqualReduce(const SpanNode* other, runtime::SEqualReducer equal) const {
+  bool SEqualReduce(const SpanNode* other, SEqualReducer equal) const {
     return equal(file_name, other->file_name) && equal(lineno, other->lineno) &&
            equal(func_name, other->func_name) && equal(source_code, other->source_code);
   }
 
-  void SHashReduce(runtime::SHashReducer hash_reduce) const {
+  void SHashReduce(SHashReducer hash_reduce) const {
     hash_reduce(file_name);
     hash_reduce(lineno);
     hash_reduce(func_name);

@@ -52,7 +52,7 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.StringImm").set_body_typed([](StringRef s, Span s
   return StringImm(std::move(s), std::move(span));
 });
 
-UnicodeImm::UnicodeImm(runtime::StringRef value, Span span) {
+UnicodeImm::UnicodeImm(StringRef value, Span span) {
   ObjectPtr<UnicodeImmNode> node = runtime::make_object<UnicodeImmNode>();
   node->value = std::move(value);
   node->checked_type_ = UnicodeType(true);
@@ -144,7 +144,7 @@ static Type InferAddOpType(const Type& lhs_raw, const Type& rhs_raw) {
     }
   } else if (auto* lhs_tup_node = lhs_type.as<TupleTypeNode>()) {
     if (auto* rhs_tup_node = rhs_type.as<TupleTypeNode>()) {
-      runtime::Array<Type> fields = Concat(lhs_tup_node->fields, rhs_tup_node->fields);
+      Array<Type> fields = Concat(lhs_tup_node->fields, rhs_tup_node->fields);
       return TupleType(fields);
     } else if (IsObjectType(rhs_type)) {
       return ObjectType();
@@ -155,7 +155,7 @@ static Type InferAddOpType(const Type& lhs_raw, const Type& rhs_raw) {
     }
   } else if (auto* rhs_tup_node = rhs_type.as<TupleTypeNode>()) {
     if (auto* lhs_tup_node = lhs_type.as<TupleTypeNode>()) {
-      runtime::Array<Type> fields = Concat(lhs_tup_node->fields, rhs_tup_node->fields);
+      Array<Type> fields = Concat(lhs_tup_node->fields, rhs_tup_node->fields);
       return TupleType(fields);
     } else if (IsObjectType(lhs_type)) {
       return ObjectType();
@@ -1138,7 +1138,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 HLOZip::HLOZip(Array<BaseExpr> values, Span span) {
   MXCHECK(values.defined());
   ObjectPtr<HLOZipNode> node = make_object<HLOZipNode>();
-  runtime::Array<Type> sub_value_types;
+  Array<Type> sub_value_types;
   bool has_begin_end = true;
   for (auto& cons : values) {
     sub_value_types.push_back(InferIteratorValueType(cons->checked_type()));

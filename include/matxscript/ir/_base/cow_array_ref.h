@@ -42,10 +42,14 @@
 #include <matxscript/runtime/variadic_traits.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using runtime::Object;
+using runtime::ObjectPtr;
+using runtime::ObjectRef;
 
 /*! \brief array node content in array */
-class ArrayNode : public Object, public InplaceArrayBase<ArrayNode, ObjectRef> {
+class ArrayNode : public Object, public runtime::InplaceArrayBase<ArrayNode, ObjectRef> {
  public:
   /*! \return The size of the array */
   size_t size() const {
@@ -139,7 +143,7 @@ class ArrayNode : public Object, public InplaceArrayBase<ArrayNode, ObjectRef> {
     return p;
   }
 
-  static constexpr const uint32_t _type_index = TypeIndex::kRuntimeArray;
+  static constexpr const uint32_t _type_index = runtime::TypeIndex::kRuntimeArray;
   static constexpr const char* _type_key = "Array";
   MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(ArrayNode, Object);
 
@@ -166,7 +170,7 @@ class ArrayNode : public Object, public InplaceArrayBase<ArrayNode, ObjectRef> {
    */
   static ObjectPtr<ArrayNode> Empty(int64_t n = kInitSize) {
     MXCHECK_GE(n, 0);
-    ObjectPtr<ArrayNode> p = make_inplace_array_object<ArrayNode, ObjectRef>(n);
+    ObjectPtr<ArrayNode> p = runtime::make_inplace_array_object<ArrayNode, ObjectRef>(n);
     p->capacity_ = n;
     p->size_ = 0;
     return p;
@@ -271,7 +275,7 @@ class ArrayNode : public Object, public InplaceArrayBase<ArrayNode, ObjectRef> {
   friend class Array;
 
   // To specialize make_object<ArrayNode>
-  friend ObjectPtr<ArrayNode> make_object<>();
+  friend ObjectPtr<ArrayNode> runtime::make_object<>();
 };
 
 /*!
@@ -356,7 +360,7 @@ class Array : public ObjectRef {
   template <typename IterType>
   Array(IterType first, IterType last) {
     static_assert(is_valid_iterator<T, IterType>::value,
-                  "IterType cannot be inserted into a matxscript::runtime::Array<T>");
+                  "IterType cannot be inserted into a matxscript::ir::Array<T>");
     Assign(first, last);
   }
 
@@ -413,8 +417,8 @@ class Array : public ObjectRef {
       return DowncastNoCheck<T>(n);
     }
   };
-  using iterator = IteratorAdapter<ValueConverter, const ObjectRef*>;
-  using reverse_iterator = ReverseIteratorAdapter<ValueConverter, const ObjectRef*>;
+  using iterator = runtime::IteratorAdapter<ValueConverter, const ObjectRef*>;
+  using reverse_iterator = runtime::ReverseIteratorAdapter<ValueConverter, const ObjectRef*>;
 
   /*! \return begin iterator */
   iterator begin() const {
@@ -523,7 +527,7 @@ class Array : public ObjectRef {
   template <typename IterType>
   void insert(iterator position, IterType first, IterType last) {
     static_assert(is_valid_iterator<T, IterType>::value,
-                  "IterType cannot be inserted into a matxscript::runtime::Array<T>");
+                  "IterType cannot be inserted into a matxscript::ir::Array<T>");
     if (first == last) {
       return;
     }
@@ -657,7 +661,8 @@ class Array : public ObjectRef {
    *
    * \return The transformed array.
    */
-  template <typename F, typename U = typename variadic_details::function_signature<F>::return_type>
+  template <typename F,
+            typename U = typename runtime::variadic_details::function_signature<F>::return_type>
   Array<U> Map(F fmap) const {
     return Array<U>(MapHelper(data_, fmap));
   }
@@ -778,7 +783,8 @@ class Array : public ObjectRef {
    * or copy-on-write optimizations were applicable, may be the same
    * underlying array as the `data` parameter.
    */
-  template <typename F, typename U = typename variadic_details::function_signature<F>::return_type>
+  template <typename F,
+            typename U = typename runtime::variadic_details::function_signature<F>::return_type>
   static ObjectPtr<Object> MapHelper(ObjectPtr<Object> data, F fmap) {
     if (data == nullptr) {
       return nullptr;
@@ -879,16 +885,18 @@ inline Array<T> Concat(Array<T> lhs, const Array<T>& rhs) {
   }
   return std::move(lhs);
 }
+}  // namespace ir
 
+namespace runtime {
 // Specialize make_object<ArrayNode> to make sure it is correct.
 template <>
-inline ObjectPtr<ArrayNode> make_object() {
-  return ArrayNode::Empty();
+inline ObjectPtr<ir::ArrayNode> make_object() {
+  return ir::ArrayNode::Empty();
 }
 
 namespace TypeIndex {
 template <typename T>
-struct type_index_traits<Array<T>> {
+struct type_index_traits<ir::Array<T>> {
   static constexpr int32_t value = kRuntimeArray;
 };
 }  // namespace TypeIndex

@@ -191,7 +191,7 @@ void WarnIfMalformed(const IRModule& mod, Function func) {
 void IRModuleNode::AddExportFunction(const StringRef& func_name) {
   const auto* BaseFuncWithAttr =
       ::matxscript::runtime::FunctionRegistry::Get("ir.BaseFuncWithAttr");
-  runtime::Map<GlobalVar, BaseFunc> new_functions;
+  Map<GlobalVar, BaseFunc> new_functions;
   for (auto kv : functions) {
     if (kv.first->name_hint == func_name) {
       BaseFunc func =

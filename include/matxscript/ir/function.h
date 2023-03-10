@@ -104,24 +104,25 @@ class BaseFuncNode : public HLOExprNode {
    * \endcode
    */
   template <typename TObjectRef>
-  runtime::Optional<TObjectRef> GetAttr(
+  Optional<TObjectRef> GetAttr(
       const StringRef& attr_key,
-      runtime::Optional<TObjectRef> default_value = runtime::Optional<TObjectRef>(nullptr)) const {
+      Optional<TObjectRef> default_value = Optional<TObjectRef>(nullptr)) const {
     static_assert(std::is_base_of<ObjectRef, TObjectRef>::value,
                   "Can only call GetAttr with ObjectRef types.");
     if (!attrs.defined())
       return default_value;
     auto it = attrs->dict.find(attr_key);
     if (it != attrs->dict.end()) {
-      return runtime::Downcast<runtime::Optional<TObjectRef>>((*it).second);
+      return runtime::Downcast<Optional<TObjectRef>>((*it).second);
     } else {
       return default_value;
     }
   }
   // variant that uses TObjectRef to enable implicit conversion to default value.
   template <typename TObjectRef>
-  runtime::Optional<TObjectRef> GetAttr(const StringRef& attr_key, TObjectRef default_value) const {
-    return GetAttr<TObjectRef>(attr_key, runtime::Optional<TObjectRef>(default_value));
+  Optional<TObjectRef> GetAttr(const StringRef& attr_key, TObjectRef&& default_value) const {
+    return GetAttr<TObjectRef>(attr_key,
+                               Optional<TObjectRef>(std::forward<TObjectRef>(default_value)));
   }
   /*!
    * \brief Check whether the function has an non-zero integer attr.
@@ -158,8 +159,8 @@ class BaseFuncNode : public HLOExprNode {
   MATX_DLL bool IsClassMember() const;
   MATX_DLL StringRef GetBelongToClassName() const;
 
-  MATX_DLL virtual runtime::Array<BaseExpr> GetParams() const = 0;
-  MATX_DLL virtual runtime::Array<BaseExpr> GetDefaultParams() const = 0;
+  MATX_DLL virtual Array<BaseExpr> GetParams() const = 0;
+  MATX_DLL virtual Array<BaseExpr> GetDefaultParams() const = 0;
   MATX_DLL virtual Type GetReturnType() const = 0;
   MATX_DLL virtual StringRef GetReprName() const = 0;
   MATX_DLL virtual Stmt GetBody() const = 0;
@@ -215,7 +216,7 @@ inline TFunc WithAttr(TFunc func, StringRef attr_key, ObjectRef attr_value) {
   if (node->attrs.defined()) {
     node->attrs.CopyOnWrite()->dict.Set(attr_key, attr_value);
   } else {
-    runtime::Map<StringRef, ObjectRef> dict = {{attr_key, attr_value}};
+    Map<StringRef, ObjectRef> dict = {{attr_key, attr_value}};
     node->attrs = DictAttrs(dict);
   }
   return func;
@@ -232,14 +233,14 @@ inline TFunc WithAttr(TFunc func, StringRef attr_key, ObjectRef attr_value) {
 class PrimFuncNode : public BaseFuncNode {
  public:
   /*! \brief Function parameters */
-  runtime::Array<PrimVar> params;
-  runtime::Array<PrimExpr> default_params;
+  Array<PrimVar> params;
+  Array<PrimExpr> default_params;
   /*! \brief The body of the function */
   Stmt body;
   /*! \brief The return type of the function. */
   Type ret_type;
 
-  void VisitAttrs(runtime::AttrVisitor* v) {
+  void VisitAttrs(AttrVisitor* v) {
     v->Visit("params", &params);
     v->Visit("default_params", &default_params);
     v->Visit("body", &body);
@@ -273,8 +274,8 @@ class PrimFuncNode : public BaseFuncNode {
    */
   MATX_DLL FuncType func_type_annotation() const override;
 
-  MATX_DLL runtime::Array<BaseExpr> GetParams() const override;
-  MATX_DLL runtime::Array<BaseExpr> GetDefaultParams() const override;
+  MATX_DLL Array<BaseExpr> GetParams() const override;
+  MATX_DLL Array<BaseExpr> GetDefaultParams() const override;
   MATX_DLL Type GetReturnType() const override;
   MATX_DLL Stmt GetBody() const override;
   MATX_DLL StringRef GetReprName() const override;
@@ -298,8 +299,8 @@ class PrimFunc : public BaseFunc {
    * \param buffer_map The buffer map for parameter buffer unpacking.
    * \param attrs Additional function attributes.
    */
-  MATX_DLL PrimFunc(runtime::Array<PrimVar> params,
-                    runtime::Array<PrimExpr> default_params,
+  MATX_DLL PrimFunc(Array<PrimVar> params,
+                    Array<PrimExpr> default_params,
                     Stmt body,
                     Type ret_type = VoidType(),
                     DictAttrs attrs = NullValue<DictAttrs>(),
@@ -316,8 +317,8 @@ class PrimFunc : public BaseFunc {
 class FunctionNode : public BaseFuncNode {
  public:
   /*! \brief Function parameters */
-  runtime::Array<BaseExpr> params;
-  runtime::Array<BaseExpr> default_params;
+  Array<BaseExpr> params;
+  Array<BaseExpr> default_params;
   /*!
    * \brief
    * The expression which represents the computation of the function,
@@ -334,9 +335,9 @@ class FunctionNode : public BaseFuncNode {
    *
    * \note This can be usually empty for non-polymorphic functions.
    */
-  runtime::Array<TypeVar> type_params;
+  Array<TypeVar> type_params;
 
-  void VisitAttrs(runtime::AttrVisitor* v) {
+  void VisitAttrs(AttrVisitor* v) {
     v->Visit("params", &params);
     v->Visit("default_params", &default_params);
     v->Visit("body", &body);
@@ -374,8 +375,8 @@ class FunctionNode : public BaseFuncNode {
    */
   MATX_DLL FuncType func_type_annotation() const override;
 
-  MATX_DLL runtime::Array<BaseExpr> GetParams() const override;
-  MATX_DLL runtime::Array<BaseExpr> GetDefaultParams() const override;
+  MATX_DLL Array<BaseExpr> GetParams() const override;
+  MATX_DLL Array<BaseExpr> GetDefaultParams() const override;
   MATX_DLL Type GetReturnType() const override;
   MATX_DLL Stmt GetBody() const override;
   MATX_DLL StringRef GetReprName() const override;
@@ -399,11 +400,11 @@ class Function : public BaseFunc {
    * \param attrs Additional function attributes.
    * \param span The span of the function.
    */
-  MATX_DLL Function(runtime::Array<BaseExpr> params,
-                    runtime::Array<BaseExpr> default_params,
+  MATX_DLL Function(Array<BaseExpr> params,
+                    Array<BaseExpr> default_params,
                     Stmt body,
                     Type ret_type,
-                    runtime::Array<TypeVar> ty_params,
+                    Array<TypeVar> ty_params,
                     DictAttrs attrs = NullValue<DictAttrs>(),
                     Span span = Span());
 
@@ -418,8 +419,8 @@ class Function : public BaseFunc {
 class LambdaFunctionNode : public BaseFuncNode {
  public:
   /*! \brief Function parameters */
-  runtime::Array<BaseExpr> params;
-  runtime::Array<BaseExpr> captures;
+  Array<BaseExpr> params;
+  Array<BaseExpr> captures;
   /*!
    * \brief
    * The expression which represents the computation of the function,
@@ -430,7 +431,7 @@ class LambdaFunctionNode : public BaseFuncNode {
   /*! \brief User annotated return type of the function. */
   Type ret_type;
 
-  void VisitAttrs(runtime::AttrVisitor* v) {
+  void VisitAttrs(AttrVisitor* v) {
     v->Visit("params", &params);
     v->Visit("captures", &captures);
     v->Visit("body", &body);
@@ -465,8 +466,8 @@ class LambdaFunctionNode : public BaseFuncNode {
    */
   MATX_DLL FuncType func_type_annotation() const override;
 
-  MATX_DLL runtime::Array<BaseExpr> GetParams() const override;
-  MATX_DLL runtime::Array<BaseExpr> GetDefaultParams() const override;
+  MATX_DLL Array<BaseExpr> GetParams() const override;
+  MATX_DLL Array<BaseExpr> GetDefaultParams() const override;
   MATX_DLL Type GetReturnType() const override;
   MATX_DLL Stmt GetBody() const override;
   MATX_DLL StringRef GetReprName() const override;
@@ -490,8 +491,8 @@ class LambdaFunction : public BaseFunc {
    * \param attrs Additional function attributes.
    * \param span The span of the function.
    */
-  MATX_DLL LambdaFunction(runtime::Array<BaseExpr> captures,
-                          runtime::Array<BaseExpr> params,
+  MATX_DLL LambdaFunction(Array<BaseExpr> captures,
+                          Array<BaseExpr> params,
                           Stmt body,
                           Type ret_type,
                           DictAttrs attrs = NullValue<DictAttrs>(),

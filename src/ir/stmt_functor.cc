@@ -38,12 +38,9 @@
 namespace matxscript {
 namespace ir {
 
-using ::matxscript::runtime::Array;
 using ::matxscript::runtime::Downcast;
 using ::matxscript::runtime::GetRef;
-using ::matxscript::runtime::Map;
 using ::matxscript::runtime::NativeFunction;
-using ::matxscript::runtime::Optional;
 
 void StmtVisitor::VisitStmt_(const AllocaVarStmtNode* op) {
   this->VisitExpr(op->var);
@@ -385,42 +382,42 @@ Stmt StmtMutator::VisitStmt_(const AutoForNode* op) {
   Stmt body = this->VisitStmt(op->body);
   same &= body.same_as(op->body);
 
-  runtime::Array<BaseExpr> loop_vars;
+  Array<BaseExpr> loop_vars;
   for (auto i = 0; i < op->loop_vars.size(); ++i) {
     BaseExpr loop_var = this->VisitExpr(op->loop_vars[i]);
     same &= loop_var.same_as(op->loop_vars[i]);
     loop_vars.push_back(std::move(loop_var));
   }
 
-  runtime::Array<BaseExpr> loop_vars_holder;
+  Array<BaseExpr> loop_vars_holder;
   for (auto i = 0; i < op->loop_vars_holder.size(); ++i) {
     BaseExpr loop_var_holder = this->VisitExpr(op->loop_vars_holder[i]);
     same &= loop_var_holder.same_as(op->loop_vars_holder[i]);
     loop_vars_holder.push_back(std::move(loop_var_holder));
   }
 
-  runtime::Array<BaseExpr> iter_vars;
+  Array<BaseExpr> iter_vars;
   for (auto i = 0; i < op->iter_vars.size(); ++i) {
     BaseExpr iter_var = this->VisitExpr(op->iter_vars[i]);
     same &= iter_var.same_as(op->iter_vars[i]);
     iter_vars.push_back(std::move(iter_var));
   }
 
-  runtime::Array<BaseExpr> iter_end_vars;
+  Array<BaseExpr> iter_end_vars;
   for (auto i = 0; i < op->iter_end_vars.size(); ++i) {
     BaseExpr iter_end_var = this->VisitExpr(op->iter_end_vars[i]);
     same &= iter_end_var.same_as(op->iter_end_vars[i]);
     iter_end_vars.push_back(std::move(iter_end_var));
   }
 
-  runtime::Array<BaseExpr> eval_containers;
+  Array<BaseExpr> eval_containers;
   for (auto i = 0; i < op->eval_containers.size(); ++i) {
     BaseExpr eval_cons = this->VisitExpr(op->eval_containers[i]);
     same &= eval_cons.same_as(op->eval_containers[i]);
     eval_containers.push_back(std::move(eval_cons));
   }
 
-  runtime::Map<StringRef, BaseExpr> temp_vars;
+  Map<StringRef, BaseExpr> temp_vars;
   for (auto temp_var_iter : op->temp_vars) {
     BaseExpr new_temp_var = this->VisitExpr(temp_var_iter.second);
     same &= new_temp_var.same_as(temp_var_iter.second);
@@ -661,7 +658,7 @@ Stmt StmtMutator::VisitStmt_(const ComputeBlockNode* op) {
   Array<BufferRegion> reads = Internal::Mutate(this, op->reads);
   Array<BufferRegion> writes = Internal::Mutate(this, op->writes);
   Array<MatchBufferRegion> match_buffers = Internal::Mutate(this, op->match_buffers);
-  Optional<Stmt> init = runtime::NullOpt;
+  Optional<Stmt> init = NullOpt;
   if (op->init.defined()) {
     init = VisitStmt(op->init.value());
   }
@@ -730,14 +727,14 @@ HLOExpr StmtExprMutator::VisitExpr_(const PrimFuncNode* op) {
   all_fields_unchanged &= ret_type.same_as(op->ret_type);
 
   // params
-  runtime::Array<PrimVar> params;
+  Array<PrimVar> params;
   for (auto param : op->params) {
     auto new_param = this->VisitExpr(param);
     params.push_back(Downcast<PrimVar>(new_param));
     all_fields_unchanged &= new_param.same_as(param);
   }
 
-  runtime::Array<PrimExpr> default_params;
+  Array<PrimExpr> default_params;
   for (auto param : op->default_params) {
     auto new_param = this->VisitExpr(param);
     default_params.push_back(Downcast<PrimExpr>(new_param));
@@ -763,14 +760,14 @@ HLOExpr StmtExprMutator::VisitExpr_(const FunctionNode* op) {
   all_fields_unchanged &= ret_type.same_as(op->ret_type);
 
   // params
-  runtime::Array<BaseExpr> params;
+  Array<BaseExpr> params;
   for (auto param : op->params) {
     auto new_param = this->VisitExpr(param);
     params.push_back(new_param);
     all_fields_unchanged &= new_param.same_as(param);
   }
 
-  runtime::Array<BaseExpr> default_params;
+  Array<BaseExpr> default_params;
   for (auto param : op->default_params) {
     auto new_param = this->VisitExpr(param);
     default_params.push_back(new_param);
@@ -782,7 +779,7 @@ HLOExpr StmtExprMutator::VisitExpr_(const FunctionNode* op) {
   all_fields_unchanged &= body.same_as(op->body);
 
   // type_params
-  runtime::Array<TypeVar> type_params;
+  Array<TypeVar> type_params;
   for (auto param_t : op->type_params) {
     if (param_t.defined()) {
       auto new_param_t = this->VisitType(param_t);
@@ -808,14 +805,14 @@ HLOExpr StmtExprMutator::VisitExpr_(const LambdaFunctionNode* op) {
   all_fields_unchanged &= ret_type.same_as(op->ret_type);
 
   // params
-  runtime::Array<BaseExpr> params;
+  Array<BaseExpr> params;
   for (auto param : op->params) {
     auto new_param = this->VisitExpr(param);
     params.push_back(new_param);
     all_fields_unchanged &= new_param.same_as(param);
   }
 
-  runtime::Array<BaseExpr> captures;
+  Array<BaseExpr> captures;
   for (auto param : op->captures) {
     auto new_param = this->VisitExpr(param);
     captures.push_back(new_param);
@@ -942,7 +939,7 @@ class IRSubstitue : public StmtExprMutator {
       : vmap_base_(std::move(vmap)) {
   }
   explicit IRSubstitue(std::function<Optional<PrimExpr>(const PrimVar&)> vmap) {
-    vmap_base_ = [&vmap](const BaseExpr& var) -> runtime::Optional<BaseExpr> {
+    vmap_base_ = [&vmap](const BaseExpr& var) -> Optional<BaseExpr> {
       if (var->IsInstance<PrimVarNode>()) {
         PrimVar prim_var = Downcast<PrimVar>(var);
         auto ret = vmap(prim_var);
@@ -955,7 +952,7 @@ class IRSubstitue : public StmtExprMutator {
   }
 
   explicit IRSubstitue(std::function<Optional<HLOExpr>(const HLOVar&)> vmap) {
-    vmap_base_ = [&vmap](const BaseExpr& var) -> runtime::Optional<BaseExpr> {
+    vmap_base_ = [&vmap](const BaseExpr& var) -> Optional<BaseExpr> {
       if (var->IsInstance<HLOVarNode>()) {
         HLOVar hlo_var = Downcast<HLOVar>(var);
         auto ret = vmap(hlo_var);

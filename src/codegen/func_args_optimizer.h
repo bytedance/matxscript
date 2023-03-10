@@ -102,8 +102,8 @@ class FuncArgsOptimizerMutator {
     }
     auto hlo_func = runtime::Downcast<Function>(f);
     auto new_func_node = runtime::make_object<FunctionNode>(*hlo_func.get());
-    runtime::Array<BaseExpr> new_args;
-    runtime::Map<HLOVar, HLOExpr> value_map;
+    Array<BaseExpr> new_args;
+    Map<HLOVar, HLOExpr> value_map;
     for (auto& arg : new_func_node->params) {
       if (mutator_args.count(arg.get())) {
         if (auto* arg_ptr = arg.as<HLOVarNode>()) {

@@ -147,10 +147,10 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "GlobalTypeVar(" << node->name_hint << ", " << node->kind << ")";
     });
 
-FuncType::FuncType(runtime::Array<Type> arg_types,
+FuncType::FuncType(Array<Type> arg_types,
                    Type ret_type,
-                   runtime::Array<TypeVar> type_params,
-                   runtime::Array<TypeConstraint> type_constraints,
+                   Array<TypeVar> type_params,
+                   Array<TypeConstraint> type_constraints,
                    Span span) {
   ObjectPtr<FuncTypeNode> n = make_object<FuncTypeNode>();
   n->arg_types = std::move(arg_types);
@@ -164,10 +164,10 @@ FuncType::FuncType(runtime::Array<Type> arg_types,
 MATXSCRIPT_REGISTER_NODE_TYPE(FuncTypeNode);
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.FuncType")
-    .set_body_typed([](runtime::Array<Type> arg_types,
+    .set_body_typed([](Array<Type> arg_types,
                        Type ret_type,
-                       runtime::Array<TypeVar> type_params,
-                       runtime::Array<TypeConstraint> type_constraints) {
+                       Array<TypeVar> type_params,
+                       Array<TypeConstraint> type_constraints) {
       return FuncType(std::move(arg_types),
                       std::move(ret_type),
                       std::move(type_params),
@@ -181,7 +181,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
                 << node->ret_type << ", " << node->type_constraints << ")";
     });
 
-TupleType::TupleType(runtime::Array<Type> fields, bool is_std_tuple, Span span) {
+TupleType::TupleType(Array<Type> fields, bool is_std_tuple, Span span) {
   ObjectPtr<TupleTypeNode> n = make_object<TupleTypeNode>();
   n->fields = std::move(fields);
   n->is_std_tuple = is_std_tuple;
@@ -190,12 +190,12 @@ TupleType::TupleType(runtime::Array<Type> fields, bool is_std_tuple, Span span) 
 }
 
 TupleType TupleType::Empty() {
-  return TupleType(runtime::Array<Type>(), false);
+  return TupleType(Array<Type>(), false);
 }
 
 MATXSCRIPT_REGISTER_NODE_TYPE(TupleTypeNode);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.TupleType").set_body_typed([](runtime::Array<Type> fields) {
+MATXSCRIPT_REGISTER_GLOBAL("ir.TupleType").set_body_typed([](Array<Type> fields) {
   return TupleType(std::move(fields));
 });
 
@@ -838,7 +838,7 @@ Type InferLiftType(const Type& t1, const Type& t2) {
       if (tup_ty->fields.size() != other_node->fields.size()) {
         return any_type;
       }
-      runtime::Array<Type> tup_fields;
+      Array<Type> tup_fields;
       for (size_t i = 0; i < tup_ty->fields.size(); ++i) {
         tup_fields.push_back(InferLiftType(tup_ty->fields[i], other_node->fields[i]));
       }

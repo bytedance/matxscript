@@ -67,8 +67,8 @@ class CodeGenCHost final : public CodeGenC {
   void PrintPackedFunctionMacro(const String& global_symbol,
                                 const String& bound_symbol,
                                 const Type& ret_type,
-                                const runtime::Array<BaseExpr>& args,
-                                const runtime::Array<BaseExpr>& default_args,
+                                const Array<BaseExpr>& args,
+                                const Array<BaseExpr>& default_args,
                                 bool first_arg_is_self,
                                 bool capture_session_handle,
                                 const Span& span) final;

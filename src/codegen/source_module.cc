@@ -35,6 +35,7 @@ namespace matxscript {
 namespace codegen {
 
 using namespace runtime;
+using namespace ir;
 
 // Simulator function
 class SourceModuleNode : public runtime::ModuleNode {

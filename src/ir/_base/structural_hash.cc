@@ -33,7 +33,9 @@
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using namespace runtime;
 
 // Define the dispatch functio here since primary user is in this file.
 void ReflectionVTable::SHashReduce(const Object* self, SHashReducer reducer) const {
@@ -328,5 +330,5 @@ void SHashReducer::operator()(const RTValue& key) const {
   }
 }
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

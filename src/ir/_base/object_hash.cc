@@ -24,17 +24,17 @@
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
 
 size_t ObjectHash::operator()(const ObjectRef& a) const {
   const Object* obj_ptr = a.get();
-  switch (a->type_index_) {
-    case TypeIndex::kRuntimeStringRef: {
+  switch (a->type_index()) {
+    case runtime::TypeIndex::kRuntimeStringRef: {
       auto node = reinterpret_cast<const StringNode*>(obj_ptr);
-      return BytesHash(node->data_container.data(), node->data_container.size());
+      return runtime::BytesHash(node->data_container.data(), node->data_container.size());
     } break;
     default: {
-      return ObjectPtrHash()(a);
+      return runtime::ObjectPtrHash()(a);
     } break;
   }
 }
@@ -44,8 +44,8 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.ObjectRefHash").set_body_typed([](ObjectRef 
 });
 
 MATXSCRIPT_REGISTER_GLOBAL("runtime.ObjectPtrHash").set_body_typed([](ObjectRef obj) {
-  return static_cast<int64_t>(ObjectPtrHash()(obj));
+  return static_cast<int64_t>(runtime::ObjectPtrHash()(obj));
 });
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

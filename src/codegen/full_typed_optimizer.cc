@@ -62,8 +62,8 @@ static bool ListOrSetCheckNthTypeEqual(const Type& var_type, const CallNode* cal
 
     arg_i_node = RemoveMoveAndCast(arg_i_node);
     const auto& arg_i_type = RemoveReference(arg_i_node->checked_type());
-    return runtime::StructuralEqual()(arg_i_origin_type, item_type) ||
-           runtime::StructuralEqual()(arg_i_type, item_type);
+    return StructuralEqual()(arg_i_origin_type, item_type) ||
+           StructuralEqual()(arg_i_type, item_type);
   }
   return false;
 }
@@ -166,7 +166,7 @@ bool FullTypedOptimizerAnalysis::IsCandidate(const BaseExprNode* var, const Base
   return false;
 }
 
-static runtime::Array<BaseExpr> GetListLiteralValues(const BaseExprNode* init) {
+static Array<BaseExpr> GetListLiteralValues(const BaseExprNode* init) {
   if (init->IsInstance<InitializerListNode>()) {
     return static_cast<const InitializerListNode*>(init)->fields;
   }
@@ -191,7 +191,7 @@ static runtime::Array<BaseExpr> GetListLiteralValues(const BaseExprNode* init) {
   return {};
 }
 
-static runtime::Map<BaseExpr, BaseExpr> GetDictLiteralValues(const BaseExprNode* init) {
+static Map<BaseExpr, BaseExpr> GetDictLiteralValues(const BaseExprNode* init) {
   if (init->IsInstance<InitializerDictNode>()) {
     return static_cast<const InitializerDictNode*>(init)->fields;
   }

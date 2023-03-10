@@ -358,7 +358,7 @@ int MATXScriptFuncCall_PYTHON_C_API(MATXScriptFunctionHandle func,
     } break;
 #ifdef MATX_RUNTIME_ENABLE_STRINGREF
     case TypeIndex::kRuntimeStringRef: {
-      auto ref = rv.AsObjectRefNoCheck<StringRef>();
+      auto ref = rv.AsObjectRefNoCheck<matxscript::ir::StringRef>();
       String(ref.data(), ref.size()).MoveTo(ret_val);
     } break;
 #endif

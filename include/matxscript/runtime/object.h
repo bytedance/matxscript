@@ -297,8 +297,6 @@ class Object {
   template <typename>
   friend class ObjectPtr;
   friend class ObjectInternal;
-  friend class ObjectHash;
-  friend class ObjectEqual;
   friend class RTValue;
   friend class RTView;
   template <typename>

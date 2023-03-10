@@ -33,7 +33,10 @@
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using runtime::PyArgs;
+using runtime::RTValue;
 
 /******************************************************************************
  * Array container
@@ -62,12 +65,14 @@ struct ArrayNodeTrait {
 
 MATXSCRIPT_REGISTER_OBJECT_TYPE(ArrayNode);
 MATXSCRIPT_REGISTER_REFLECTION_VTABLE(ArrayNode, ArrayNodeTrait)
-    .set_creator([](const String&) -> ObjectPtr<Object> { return make_object<ArrayNode>(); });
+    .set_creator([](const runtime::String&) -> ObjectPtr<Object> {
+      return runtime::make_object<ArrayNode>();
+    });
 
 MATXSCRIPT_REGISTER_GLOBAL("runtime.Array").set_body([](PyArgs args) -> RTValue {
   std::vector<ObjectRef> data;
   for (int i = 0; i < args.size(); ++i) {
-    if (args[i].type_code() == TypeIndex::kRuntimeNullptr) {
+    if (args[i].type_code() == runtime::TypeIndex::kRuntimeNullptr) {
       data.push_back(ObjectRef(nullptr));
     } else if (args[i].type_code() >= 0) {
       data.push_back(args[i].As<ObjectRef>());
@@ -128,5 +133,5 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ']';
     });
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

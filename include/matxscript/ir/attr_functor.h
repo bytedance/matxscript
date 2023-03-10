@@ -42,7 +42,6 @@
 namespace matxscript {
 namespace ir {
 
-using ::matxscript::runtime::ArrayNode;
 using ::matxscript::runtime::NodeFunctor;
 
 template <typename FType>

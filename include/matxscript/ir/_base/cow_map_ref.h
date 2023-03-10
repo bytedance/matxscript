@@ -43,7 +43,11 @@
 #include <matxscript/runtime/object.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using runtime::Object;
+using runtime::ObjectPtr;
+using runtime::ObjectRef;
 
 /*! \brief Shared content of all specializations of hash map */
 class MapNode : public Object {
@@ -728,7 +732,7 @@ class DenseMapNode : public MapNode {
   static ObjectPtr<DenseMapNode> Empty(uint32_t fib_shift, uint64_t n_slots) {
     MXCHECK_GT(n_slots, uint64_t(SmallMapNode::kMaxSize));
     MXCHECK_EQ((n_slots & -n_slots), n_slots);
-    ObjectPtr<DenseMapNode> p = make_object<DenseMapNode>();
+    ObjectPtr<DenseMapNode> p = runtime::make_object<DenseMapNode>();
     uint64_t n_blocks = CalcNumBlocks(n_slots - 1);
     Block* block = p->data_ = new Block[n_blocks];
     p->slots_ = n_slots - 1;
@@ -745,7 +749,7 @@ class DenseMapNode : public MapNode {
    * \return The object created
    */
   static ObjectPtr<DenseMapNode> CopyFrom(DenseMapNode* from) {
-    ObjectPtr<DenseMapNode> p = make_object<DenseMapNode>();
+    ObjectPtr<DenseMapNode> p = runtime::make_object<DenseMapNode>();
     uint64_t n_blocks = CalcNumBlocks(from->slots_);
     p->data_ = new Block[n_blocks];
     p->slots_ = from->slots_;
@@ -1389,13 +1393,6 @@ class Map : public ObjectRef {
   }
 };
 
-namespace TypeIndex {
-template <typename K, typename V>
-struct type_index_traits<Map<K, V>> {
-  static constexpr int32_t value = kRuntimeMap;
-};
-}  // namespace TypeIndex
-
 /*!
  * \brief Merge two Maps.
  * \param lhs the first Map to merge.
@@ -1413,5 +1410,17 @@ inline Map<K, V> Merge(Map<K, V> lhs, const Map<K, V>& rhs) {
   return std::move(lhs);
 }
 
+}  // namespace ir
+
+namespace runtime {
+namespace TypeIndex {
+
+template <typename K, typename V>
+struct type_index_traits<ir::Map<K, V>> {
+  static constexpr int32_t value = kRuntimeMap;
+};
+
+}  // namespace TypeIndex
 }  // namespace runtime
+
 }  // namespace matxscript
