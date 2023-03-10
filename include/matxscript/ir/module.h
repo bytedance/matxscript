@@ -55,9 +55,9 @@ class IRModule;
 class IRModuleNode : public Object {
  public:
   /*! \brief A map from ids to all global functions. */
-  runtime::Map<GlobalVar, BaseFunc> functions;
+  Map<GlobalVar, BaseFunc> functions;
   /*! \brief A map from global type vars to User type data. */
-  runtime::Map<GlobalTypeVar, ClassType> type_definitions;
+  Map<GlobalTypeVar, ClassType> type_definitions;
 
   IRModuleNode() {
   }
@@ -160,7 +160,7 @@ class IRModuleNode : public Object {
    * \brief Collect all global vars defined in this module.
    * \returns An array of global vars
    */
-  MATX_DLL runtime::Array<GlobalVar> GetGlobalVars() const;
+  MATX_DLL Array<GlobalVar> GetGlobalVars() const;
 
   /*!
    * \brief Look up a global function by its name.
@@ -173,7 +173,7 @@ class IRModuleNode : public Object {
    * \brief Collect all global type vars defined in this module.
    * \returns An array of global type vars
    */
-  MATX_DLL runtime::Array<GlobalTypeVar> GetGlobalTypeVars() const;
+  MATX_DLL Array<GlobalTypeVar> GetGlobalTypeVars() const;
 
   /*!
    * \brief Look up a global function by its variable.
@@ -224,12 +224,12 @@ class IRModuleNode : public Object {
   /*! \brief A map from string names to global variables that
    * ensures global uniqueness.
    */
-  runtime::Map<StringRef, GlobalVar> global_var_map_;
+  Map<StringRef, GlobalVar> global_var_map_;
 
   /*! \brief A map from string names to global type variables (ADT names)
    * that ensures global uniqueness.
    */
-  runtime::Map<StringRef, GlobalTypeVar> global_type_var_map_;
+  Map<StringRef, GlobalTypeVar> global_type_var_map_;
 
   /*! \brief The files previously imported, required to ensure
       importing is idempotent for each module.
@@ -252,12 +252,12 @@ class IRModule : public ObjectRef {
    * \param map The module source map.
    */
   MATX_DLL explicit IRModule(
-      runtime::Map<GlobalVar, BaseFunc> functions,
-      runtime::Map<GlobalTypeVar, ClassType> type_definitions = {},
+      Map<GlobalVar, BaseFunc> functions,
+      Map<GlobalTypeVar, ClassType> type_definitions = {},
       std::unordered_set<StringRef> import_set = std::unordered_set<StringRef>{});
 
   /*! \brief default constructor */
-  IRModule() : IRModule(runtime::Map<GlobalVar, BaseFunc>({})) {
+  IRModule() : IRModule(Map<GlobalVar, BaseFunc>({})) {
   }
   /*!
    * \brief constructor
@@ -284,10 +284,9 @@ class IRModule : public ObjectRef {
    *
    * \returns A module with expr set as the main function.
    */
-  MATX_DLL static IRModule FromExpr(
-      const HLOExpr& expr,
-      const runtime::Map<GlobalVar, BaseFunc>& global_funcs = {},
-      const runtime::Map<GlobalTypeVar, ClassType>& type_definitions = {});
+  MATX_DLL static IRModule FromExpr(const HLOExpr& expr,
+                                    const Map<GlobalVar, BaseFunc>& global_funcs = {},
+                                    const Map<GlobalTypeVar, ClassType>& type_definitions = {});
 
   /*! \brief Declare the container type. */
   using ContainerType = IRModuleNode;

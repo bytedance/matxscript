@@ -32,7 +32,7 @@ namespace ir {
 
 // Implementation of Visitors
 template <typename T, typename F>
-inline void VisitArray(const runtime::Array<T>& arr, F fvisit) {
+inline void VisitArray(const Array<T>& arr, F fvisit) {
   for (size_t i = 0; i < arr.size(); i++) {
     fvisit(arr[i]);
   }
@@ -40,7 +40,7 @@ inline void VisitArray(const runtime::Array<T>& arr, F fvisit) {
 
 // Implementation of mutators
 template <typename T, typename F>
-inline runtime::Array<T> MutateArray(const runtime::Array<T>& arr, F fmutate) {
+inline Array<T> MutateArray(const Array<T>& arr, F fmutate) {
   return arr.Map(fmutate);
 }
 

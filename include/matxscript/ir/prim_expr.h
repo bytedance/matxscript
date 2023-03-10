@@ -47,18 +47,18 @@ class IntImmNode : public PrimExprNode {
   /*! \brief the Internal value. */
   int64_t value;
 
-  void VisitAttrs(runtime::AttrVisitor* v) {
+  void VisitAttrs(AttrVisitor* v) {
     v->Visit("dtype", &dtype);
     v->Visit("value", &value);
     v->Visit("span", &span);
     v->Visit("_checked_type_", &checked_type_);
   }
 
-  bool SEqualReduce(const IntImmNode* other, runtime::SEqualReducer equal) const {
+  bool SEqualReduce(const IntImmNode* other, SEqualReducer equal) const {
     return equal(dtype, other->dtype) && equal(value, other->value);
   }
 
-  void SHashReduce(runtime::SHashReducer hash_reduce) const {
+  void SHashReduce(SHashReducer hash_reduce) const {
     hash_reduce(dtype);
     hash_reduce(value);
   }
@@ -93,18 +93,18 @@ class FloatImmNode : public PrimExprNode {
   /*! \brief The constant value content. */
   double value;
 
-  void VisitAttrs(runtime::AttrVisitor* v) {
+  void VisitAttrs(AttrVisitor* v) {
     v->Visit("dtype", &dtype);
     v->Visit("value", &value);
     v->Visit("span", &span);
     v->Visit("_checked_type_", &checked_type_);
   }
 
-  bool SEqualReduce(const FloatImmNode* other, runtime::SEqualReducer equal) const {
+  bool SEqualReduce(const FloatImmNode* other, SEqualReducer equal) const {
     return equal(dtype, other->dtype) && equal(value, other->value);
   }
 
-  void SHashReduce(runtime::SHashReducer hash_reduce) const {
+  void SHashReduce(SHashReducer hash_reduce) const {
     hash_reduce(dtype);
     hash_reduce(value);
   }
@@ -864,7 +864,7 @@ class PrimCallNode : public PrimExprNode {
   HLOExpr op;
 
   /*! \brief The arguments. */
-  runtime::Array<PrimExpr> args;
+  Array<PrimExpr> args;
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("dtype", &dtype);
     v->Visit("op", &op);
@@ -893,10 +893,7 @@ class PrimCallNode : public PrimExprNode {
  */
 class PrimCall : public PrimExpr {
  public:
-  MATX_DLL PrimCall(runtime::DataType dtype,
-                    HLOExpr op,
-                    runtime::Array<PrimExpr> args,
-                    Span span = Span());
+  MATX_DLL PrimCall(runtime::DataType dtype, HLOExpr op, Array<PrimExpr> args, Span span = Span());
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(PrimCall, PrimExpr, PrimCallNode);
 };
 

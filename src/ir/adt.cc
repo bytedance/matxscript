@@ -70,11 +70,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 ClassType::ClassType(uint64_t py_type_id,
                      GlobalTypeVar header,
                      Type base,
-                     runtime::Array<StringRef> var_names,
-                     runtime::Array<Type> var_types,
-                     runtime::Array<StringRef> func_names,
-                     runtime::Array<StringRef> unbound_func_names,
-                     runtime::Array<FuncType> func_types) {
+                     Array<StringRef> var_names,
+                     Array<Type> var_types,
+                     Array<StringRef> func_names,
+                     Array<StringRef> unbound_func_names,
+                     Array<FuncType> func_types) {
   ObjectPtr<ClassTypeNode> n = make_object<ClassTypeNode>();
   n->py_type_id = py_type_id;
   n->header = std::move(header);
@@ -115,7 +115,7 @@ Type ClassTypeNode::GetItem(const StringRef& name) const {
   }
 }
 
-runtime::Array<StringRef> ClassTypeNode::GetVarNamesLookupTable() const {
+Array<StringRef> ClassTypeNode::GetVarNamesLookupTable() const {
   if (base.defined()) {
     // base0 vars
     // base1 vars
@@ -130,7 +130,7 @@ runtime::Array<StringRef> ClassTypeNode::GetVarNamesLookupTable() const {
   return var_names;
 }
 
-runtime::Array<Type> ClassTypeNode::GetVarTypesLookupTable() const {
+Array<Type> ClassTypeNode::GetVarTypesLookupTable() const {
   if (base.defined()) {
     // base0 var types
     // base1 var types
@@ -192,11 +192,11 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.ClassType")
     .set_body_typed([](uint64_t py_type_id,
                        GlobalTypeVar header,
                        Type base,
-                       runtime::Array<StringRef> var_names,
-                       runtime::Array<Type> var_types,
-                       runtime::Array<StringRef> func_names,
-                       runtime::Array<StringRef> unbound_func_names,
-                       runtime::Array<FuncType> func_types) {
+                       Array<StringRef> var_names,
+                       Array<Type> var_types,
+                       Array<StringRef> func_names,
+                       Array<StringRef> unbound_func_names,
+                       Array<FuncType> func_types) {
       return ClassType(py_type_id,
                        std::move(header),
                        std::move(base),

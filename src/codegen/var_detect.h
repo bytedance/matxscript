@@ -44,7 +44,7 @@ class VarDetector : public StmtExprVisitor {
   }
 
  private:
-  std::unordered_set<BaseExpr, runtime::ObjectHash, runtime::ObjectEqual> vars_;
+  std::unordered_set<BaseExpr, ObjectHash, ObjectEqual> vars_;
 };
 
 class RemoveVarDefine : public StmtExprMutator {
@@ -69,7 +69,7 @@ class RemoveVarDefine : public StmtExprMutator {
   }
 };
 
-BaseFunc SubstituteYieldFunctionVars(BaseFunc f, runtime::Map<BaseExpr, BaseExpr>& var_map) {
+BaseFunc SubstituteYieldFunctionVars(BaseFunc f, Map<BaseExpr, BaseExpr>& var_map) {
   auto make_new_var = [](BaseExpr var) -> BaseExpr {
     if (var->IsInstance<PrimVarNode>()) {
       PrimVar prim_var = runtime::Downcast<PrimVar>(var);
@@ -99,15 +99,15 @@ BaseFunc SubstituteYieldFunctionVars(BaseFunc f, runtime::Map<BaseExpr, BaseExpr
   // remove var define
   auto f_no_alloca = RemoveVarDefine().MutateFunc(f);
   // replace var
-  auto FuncSubstitute = [&var_map](const BaseExpr& var) -> runtime::Optional<BaseExpr> {
+  auto FuncSubstitute = [&var_map](const BaseExpr& var) -> Optional<BaseExpr> {
     auto it = var_map.find(var);
     if (it != var_map.end())
       return (*it).second;
-    return runtime::Optional<BaseExpr>(nullptr);
+    return Optional<BaseExpr>(nullptr);
   };
   f_no_alloca = runtime::Downcast<BaseFunc>(Substitute(f_no_alloca, FuncSubstitute));
 
-  runtime::Array<Stmt> assgin_stmts;
+  Array<Stmt> assgin_stmts;
   if (auto node_prim = f.as<PrimFuncNode>()) {
     for (auto& param : node_prim->params) {
       assgin_stmts.push_back(AssignStmt(var_map[param], param));

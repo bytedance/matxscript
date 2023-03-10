@@ -36,7 +36,7 @@
 #include <matxscript/runtime/object.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
 
 /*!
  * \brief Visitor class for to get the attributesof a AST/IR node.
@@ -54,12 +54,10 @@ class AttrVisitor {
   MATX_DLL virtual void Visit(const char* key, uint64_t* value) = 0;
   MATX_DLL virtual void Visit(const char* key, int* value) = 0;
   MATX_DLL virtual void Visit(const char* key, bool* value) = 0;
-  MATX_DLL virtual void Visit(const char* key, std::string* value) = 0;
-  MATX_DLL virtual void Visit(const char* key, String* value) = 0;
-  MATX_DLL virtual void Visit(const char* key, Unicode* value) = 0;
+  MATX_DLL virtual void Visit(const char* key, runtime::String* value) = 0;
   MATX_DLL virtual void Visit(const char* key, void** value) = 0;
-  MATX_DLL virtual void Visit(const char* key, DataType* value) = 0;
-  MATX_DLL virtual void Visit(const char* key, NDArray* value) = 0;
+  MATX_DLL virtual void Visit(const char* key, runtime::DataType* value) = 0;
+  MATX_DLL virtual void Visit(const char* key, runtime::NDArray* value) = 0;
   MATX_DLL virtual void Visit(const char* key, ObjectRef* value) = 0;
   template <typename ENum, typename = typename std::enable_if<std::is_enum<ENum>::value>::type>
   void Visit(const char* key, ENum* ptr) {
@@ -99,13 +97,13 @@ class ReflectionVTable {
    *        If this is not empty then FReprBytes must be defined for the object.
    * \return The created function.
    */
-  typedef ObjectPtr<Object> (*FCreate)(const String& repr_bytes);
+  typedef ObjectPtr<Object> (*FCreate)(const runtime::String& repr_bytes);
   /*!
    * \brief Function to get a byte representation that can be used to recover the object.
    * \param node The node pointer.
    * \return bytes The bytes that can be used to recover the object.
    */
-  typedef String (*FReprBytes)(const Object* self);
+  typedef runtime::String (*FReprBytes)(const Object* self);
   /*!
    * \brief Dispatch the VisitAttrs function.
    * \param self The pointer to the object.
@@ -119,7 +117,7 @@ class ReflectionVTable {
    *                   simply queries if the ReprBytes function exists for the type.
    * \return Whether repr bytes exists
    */
-  inline bool GetReprBytes(const Object* self, String* repr_bytes) const;
+  inline bool GetReprBytes(const Object* self, runtime::String* repr_bytes) const;
   /*!
    * \brief Dispatch the SEqualReduce function.
    * \param self The pointer to the object.
@@ -142,8 +140,8 @@ class ReflectionVTable {
    * \param type_key The type key of the object.
    * \param repr_bytes Bytes representation of the object if any.
    */
-  MATX_DLL ObjectPtr<Object> CreateInitObject(const String& type_key,
-                                              const String& repr_bytes = "") const;
+  MATX_DLL ObjectPtr<Object> CreateInitObject(const runtime::String& type_key,
+                                              const runtime::String& repr_bytes = "") const;
   /*!
    * \brief Create an object by giving kwargs about its fields.
    *
@@ -151,7 +149,7 @@ class ReflectionVTable {
    * \param kwargs the arguments in format key1, value1, ..., key_n, value_n.
    * \return The created object.
    */
-  MATX_DLL ObjectRef CreateObject(const String& type_key, const PyArgs& kwargs);
+  MATX_DLL ObjectRef CreateObject(const runtime::String& type_key, const runtime::PyArgs& kwargs);
   /*!
    * \brief Create an object by giving kwargs about its fields.
    *
@@ -159,7 +157,8 @@ class ReflectionVTable {
    * \param kwargs The field arguments.
    * \return The created object.
    */
-  MATX_DLL ObjectRef CreateObject(const String& type_key, const Map<StringRef, ObjectRef>& kwargs);
+  MATX_DLL ObjectRef CreateObject(const runtime::String& type_key,
+                                  const Map<StringRef, ObjectRef>& kwargs);
   /*!
    * \brief Get an field object by the attr name.
    * \param self The pointer to the object.
@@ -167,13 +166,13 @@ class ReflectionVTable {
    * \return The corresponding attribute value.
    * \note This function will throw an exception if the object does not contain the field.
    */
-  MATX_DLL RTValue GetAttr(Object* self, const StringRef& attr_name) const;
+  MATX_DLL runtime::RTValue GetAttr(Object* self, const StringRef& attr_name) const;
 
   /*!
    * \brief List all the fields in the object.
    * \return All the fields.
    */
-  MATX_DLL std::vector<String> ListAttrNames(Object* self) const;
+  MATX_DLL std::vector<runtime::String> ListAttrNames(Object* self) const;
 
   /*! \return The global singleton. */
   MATX_DLL static ReflectionVTable* Global();
@@ -227,9 +226,8 @@ class ReflectionVTable::Registry {
   uint32_t type_index_;
 };
 
-#define TVM_REFLECTION_REG_VAR_DEF                                                     \
-  static MATXSCRIPT_ATTRIBUTE_UNUSED ::matxscript::runtime::ReflectionVTable::Registry \
-      __make_reflectiion
+#define TVM_REFLECTION_REG_VAR_DEF \
+  static MATXSCRIPT_ATTRIBUTE_UNUSED ::matxscript::ir::ReflectionVTable::Registry __make_reflectiion
 
 /*!
  * \brief Directly register reflection VTable.
@@ -266,19 +264,19 @@ class ReflectionVTable::Registry {
  */
 #define MATXSCRIPT_REGISTER_REFLECTION_VTABLE(TypeName, TraitName) \
   MATXSCRIPT_STR_CONCAT(TVM_REFLECTION_REG_VAR_DEF, __COUNTER__) = \
-      ::matxscript::runtime::ReflectionVTable::Global()->Register<TypeName, TraitName>()
+      ::matxscript::ir::ReflectionVTable::Global()->Register<TypeName, TraitName>()
 
 /*!
  * \brief Register a node type to object registry and reflection registry.
  * \param TypeName The name of the type.
  * \note This macro will call MATXSCRIPT_REGISTER_OBJECT_TYPE for the type as well.
  */
-#define MATXSCRIPT_REGISTER_NODE_TYPE(TypeName)                                                   \
-  MATXSCRIPT_REGISTER_OBJECT_TYPE(TypeName);                                                      \
-  MATXSCRIPT_REGISTER_REFLECTION_VTABLE(TypeName,                                                 \
-                                        ::matxscript::runtime::detail::ReflectionTrait<TypeName>) \
-      .set_creator([](const ::matxscript::runtime::String&) -> ObjectPtr<Object> {                \
-        return ::matxscript::runtime::make_object<TypeName>();                                    \
+#define MATXSCRIPT_REGISTER_NODE_TYPE(TypeName)                                              \
+  MATXSCRIPT_REGISTER_OBJECT_TYPE(TypeName);                                                 \
+  MATXSCRIPT_REGISTER_REFLECTION_VTABLE(TypeName,                                            \
+                                        ::matxscript::ir::detail::ReflectionTrait<TypeName>) \
+      .set_creator([](const ::matxscript::runtime::String&) -> ObjectPtr<Object> {           \
+        return ::matxscript::runtime::make_object<TypeName>();                               \
       })
 
 // Implementation details
@@ -381,13 +379,12 @@ inline ReflectionVTable::Registry ReflectionVTable::Register() {
     fshash_reduce_.resize(tindex + 1, nullptr);
   }
   // functor that implemnts the redirection.
-  fvisit_attrs_[tindex] = ::matxscript::runtime::detail::SelectVisitAttrs<T, TraitName>::VisitAttrs;
+  fvisit_attrs_[tindex] = ::matxscript::ir::detail::SelectVisitAttrs<T, TraitName>::VisitAttrs;
 
   fsequal_reduce_[tindex] =
-      ::matxscript::runtime::detail::SelectSEqualReduce<T, TraitName>::SEqualReduce;
+      ::matxscript::ir::detail::SelectSEqualReduce<T, TraitName>::SEqualReduce;
 
-  fshash_reduce_[tindex] =
-      ::matxscript::runtime::detail::SelectSHashReduce<T, TraitName>::SHashReduce;
+  fshash_reduce_[tindex] = ::matxscript::ir::detail::SelectSHashReduce<T, TraitName>::SHashReduce;
 
   return Registry(this, tindex);
 }
@@ -403,7 +400,7 @@ inline void ReflectionVTable::VisitAttrs(Object* self, AttrVisitor* visitor) con
   }
 }
 
-inline bool ReflectionVTable::GetReprBytes(const Object* self, String* repr_bytes) const {
+inline bool ReflectionVTable::GetReprBytes(const Object* self, runtime::String* repr_bytes) const {
   uint32_t tindex = self->type_index();
   if (tindex < frepr_bytes_.size() && frepr_bytes_[tindex] != nullptr) {
     if (repr_bytes != nullptr) {
@@ -415,5 +412,11 @@ inline bool ReflectionVTable::GetReprBytes(const Object* self, String* repr_byte
   }
 }
 
-}  // namespace runtime
+/*!
+ * \brief Given an object and an address of its attribute, return the key of the attribute.
+ * \return nullptr if no attribute with the given address exists.
+ */
+Optional<StringRef> GetAttrKeyByAddress(const Object* object, const void* attr_address);
+
+}  // namespace ir
 }  // namespace matxscript

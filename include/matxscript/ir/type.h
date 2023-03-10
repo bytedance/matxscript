@@ -60,12 +60,9 @@
 namespace matxscript {
 namespace ir {
 
-using runtime::AttrVisitor;
 using runtime::Object;
 using runtime::ObjectPtr;
 using runtime::ObjectRef;
-using runtime::SEqualReducer;
-using runtime::SHashReducer;
 
 /*!
  * \brief Type is the base type of all types.
@@ -127,7 +124,7 @@ class TypeNode : public Object {
 class Type : public ObjectRef {
  public:
   bool operator==(const Type& other) const {
-    return runtime::StructuralEqual()(*this, other);
+    return StructuralEqual()(*this, other);
   }
   bool operator!=(const Type& other) const {
     return !operator==(other);
@@ -446,7 +443,7 @@ class TupleTypeNode : public TypeNode {
  public:
   bool is_std_tuple = false;
   /*! \brief The type of each field in the tuple. */
-  runtime::Array<Type> fields;
+  Array<Type> fields;
 
   TupleTypeNode() {
   }
@@ -504,11 +501,11 @@ class TupleType : public Type {
    * \param fields Fields in the tuple.
    * \param span The span of the type.
    */
-  MATX_DLL explicit TupleType(runtime::Array<Type> fields, Span span = Span())
+  MATX_DLL explicit TupleType(Array<Type> fields, Span span = Span())
       : TupleType(std::move(fields), false, std::move(span)) {
   }
 
-  MATX_DLL explicit TupleType(runtime::Array<Type> fields, bool is_std_tuple, Span span = Span());
+  MATX_DLL explicit TupleType(Array<Type> fields, bool is_std_tuple, Span span = Span());
 
   /*!
    * \brief Create an empty tuple type that constains nothing.
@@ -566,18 +563,18 @@ class TypeConstraint : public Type {
 class FuncTypeNode : public TypeNode {
  public:
   /*! \brief type type of arguments */
-  runtime::Array<Type> arg_types;
+  Array<Type> arg_types;
   /*! \brief The type of return value. */
   Type ret_type;
   // The following fields are used in polymorphic(template) functions
   // For normal functions, the following two fields will be empty.
   /*! \brief The type parameters of the function */
-  runtime::Array<TypeVar> type_params;
+  Array<TypeVar> type_params;
   /*!
    * \brief potential constraint the type need to obey
    * \note this field is reserved for futher purposes.
    */
-  runtime::Array<TypeConstraint> type_constraints;
+  Array<TypeConstraint> type_constraints;
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("arg_types", &arg_types);
@@ -623,10 +620,10 @@ class FuncType : public Type {
    * \param span The span information.
    * \sa FuncTypeNode for more docs about these fields.
    */
-  MATX_DLL FuncType(runtime::Array<Type> arg_types,
+  MATX_DLL FuncType(Array<Type> arg_types,
                     Type ret_type,
-                    runtime::Array<TypeVar> type_params,
-                    runtime::Array<TypeConstraint> type_constraints,
+                    Array<TypeVar> type_params,
+                    Array<TypeConstraint> type_constraints,
                     Span span = Span());
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(FuncType, Type, FuncTypeNode);

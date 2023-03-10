@@ -692,7 +692,7 @@ inline bool is_const_number(const PrimExpr& x);
 template <typename FReduce>
 inline PrimExpr foldl(FReduce freduce,
                       PrimExpr init_value,
-                      const runtime::Array<PrimExpr>& values,
+                      const Array<PrimExpr>& values,
                       Span span = Span());
 
 /*!
@@ -804,7 +804,7 @@ inline PrimExpr make_zero(runtime::DataType t, Span span) {
 template <typename FReduce>
 inline PrimExpr foldl(FReduce freduce,
                       PrimExpr init_value,
-                      const runtime::Array<PrimExpr>& values,
+                      const Array<PrimExpr>& values,
                       Span span) {
   for (PrimExpr val : values) {
     init_value = freduce(init_value, val, span);

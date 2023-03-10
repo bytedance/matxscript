@@ -47,14 +47,14 @@ using ::matxscript::runtime::RTView;
 // Buffer
 Buffer::Buffer(PrimVar data,
                runtime::DataType dtype,
-               runtime::Array<PrimExpr> shape,
-               runtime::Array<PrimExpr> strides,
+               Array<PrimExpr> shape,
+               Array<PrimExpr> strides,
                PrimExpr elem_offset,
                StringRef name,
                int data_alignment,
                int offset_factor,
                BufferType buffer_type,
-               runtime::Array<IntImm> axis_separators,
+               Array<IntImm> axis_separators,
                Span span) {
   runtime::DataType storage_dtype = dtype;
   // specially handle bool
@@ -114,20 +114,20 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.Buffer").set_body([](PyArgs args) -> RTValue {
   auto buffer_type = args[8].As<StringRef>();
   BufferType type = (buffer_type == "auto_broadcast") ? kAutoBroadcast : kDefault;
   return Buffer(MATXSCRIPT_TYPE_AS(args[0], PrimVar),
-                MATXSCRIPT_TYPE_AS(args[1], runtime::DataType),
-                MATXSCRIPT_TYPE_AS(args[2], runtime::Array<PrimExpr>),
-                MATXSCRIPT_TYPE_AS(args[3], runtime::Array<PrimExpr>),
+                args[1].As<runtime::DataType>(),
+                MATXSCRIPT_TYPE_AS(args[2], Array<PrimExpr>),
+                MATXSCRIPT_TYPE_AS(args[3], Array<PrimExpr>),
                 MATXSCRIPT_TYPE_AS(args[4], PrimExpr),
                 MATXSCRIPT_TYPE_AS(args[5], StringRef),
                 MATXSCRIPT_TYPE_AS(args[6], int),
                 MATXSCRIPT_TYPE_AS(args[7], int),
                 type,
-                MATXSCRIPT_TYPE_AS(args[9], runtime::Array<IntImm>),
+                MATXSCRIPT_TYPE_AS(args[9], Array<IntImm>),
                 MATXSCRIPT_TYPE_AS(args[10], Span));
 });
 
 // BufferRegion
-BufferRegion::BufferRegion(Buffer buffer, runtime::Array<RangeExpr> region) {
+BufferRegion::BufferRegion(Buffer buffer, Array<RangeExpr> region) {
   MXCHECK_EQ(buffer->shape.size(), region.size())
       << "The dimension between " << buffer << " and region " << region
       << " mismatched, the buffer is " << buffer;
@@ -138,15 +138,15 @@ BufferRegion::BufferRegion(Buffer buffer, runtime::Array<RangeExpr> region) {
 }
 
 BufferRegion BufferRegion::FullRegion(Buffer buffer) {
-  runtime::Array<RangeExpr> region;
+  Array<RangeExpr> region;
   for (PrimExpr extent : buffer->shape) {
     region.push_back(RangeExpr(0, extent, 1));
   }
   return BufferRegion(std::move(buffer), std::move(region));
 }
 
-BufferRegion BufferRegion::FromPoint(Buffer buffer, runtime::Array<PrimExpr> indices) {
-  runtime::Array<RangeExpr> region;
+BufferRegion BufferRegion::FromPoint(Buffer buffer, Array<PrimExpr> indices) {
+  Array<RangeExpr> region;
   for (const PrimExpr& index : indices) {
     region.push_back(RangeExpr(index, add(index, 1), 1));
   }
@@ -154,7 +154,7 @@ BufferRegion BufferRegion::FromPoint(Buffer buffer, runtime::Array<PrimExpr> ind
 }
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.BufferRegion")
-    .set_body_typed([](Buffer buffer, runtime::Array<RangeExpr> region) {
+    .set_body_typed([](Buffer buffer, Array<RangeExpr> region) {
       return BufferRegion(std::move(buffer), std::move(region));
     });
 
@@ -173,15 +173,15 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.MatchBufferRegion")
 MATXSCRIPT_REGISTER_NODE_TYPE(MatchBufferRegionNode);
 
 // ComputeBlock
-ComputeBlock::ComputeBlock(runtime::Array<PrimIterVar> iter_vars,
-                           runtime::Array<BufferRegion> reads,
-                           runtime::Array<BufferRegion> writes,
+ComputeBlock::ComputeBlock(Array<PrimIterVar> iter_vars,
+                           Array<BufferRegion> reads,
+                           Array<BufferRegion> writes,
                            StringRef name_hint,
                            Stmt body,
-                           runtime::Optional<Stmt> init,
-                           runtime::Array<Buffer> alloc_buffers,
-                           runtime::Array<MatchBufferRegion> match_buffers,
-                           runtime::Map<StringRef, ObjectRef> annotations,
+                           Optional<Stmt> init,
+                           Array<Buffer> alloc_buffers,
+                           Array<MatchBufferRegion> match_buffers,
+                           Map<StringRef, ObjectRef> annotations,
                            Span span) {
   ObjectPtr<ComputeBlockNode> node = runtime::make_object<ComputeBlockNode>();
   node->iter_vars = std::move(iter_vars);
@@ -200,15 +200,15 @@ ComputeBlock::ComputeBlock(runtime::Array<PrimIterVar> iter_vars,
 MATXSCRIPT_REGISTER_NODE_TYPE(ComputeBlockNode);
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.ComputeBlock")
-    .set_body_typed([](runtime::Array<PrimIterVar> iter_vars,
-                       runtime::Array<BufferRegion> reads,
-                       runtime::Array<BufferRegion> writes,
+    .set_body_typed([](Array<PrimIterVar> iter_vars,
+                       Array<BufferRegion> reads,
+                       Array<BufferRegion> writes,
                        StringRef name_hint,
                        Stmt body,
-                       runtime::Optional<Stmt> init,
-                       runtime::Array<Buffer> alloc_buffers,
-                       runtime::Array<MatchBufferRegion> match_buffers,
-                       runtime::Map<StringRef, ObjectRef> annotations,
+                       Optional<Stmt> init,
+                       Array<Buffer> alloc_buffers,
+                       Array<MatchBufferRegion> match_buffers,
+                       Map<StringRef, ObjectRef> annotations,
                        Span span) {
       return ComputeBlock(std::move(iter_vars),
                           std::move(reads),
@@ -223,7 +223,7 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.ComputeBlock")
     });
 
 // ComputeBlockRealize
-ComputeBlockRealize::ComputeBlockRealize(runtime::Array<PrimExpr> values,
+ComputeBlockRealize::ComputeBlockRealize(Array<PrimExpr> values,
                                          PrimExpr predicate,
                                          ComputeBlock block,
                                          Span span) {
@@ -240,13 +240,11 @@ ComputeBlockRealize::ComputeBlockRealize(runtime::Array<PrimExpr> values,
 }
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.ComputeBlockRealize")
-    .set_body_typed([](runtime::Array<PrimExpr> iter_values,
-                       PrimExpr predicate,
-                       ComputeBlock block,
-                       Span span) {
-      return ComputeBlockRealize(
-          std::move(iter_values), std::move(predicate), std::move(block), std::move(span));
-    });
+    .set_body_typed(
+        [](Array<PrimExpr> iter_values, PrimExpr predicate, ComputeBlock block, Span span) {
+          return ComputeBlockRealize(
+              std::move(iter_values), std::move(predicate), std::move(block), std::move(span));
+        });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(ComputeBlockRealizeNode);
 

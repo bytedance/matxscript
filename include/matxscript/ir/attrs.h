@@ -150,7 +150,7 @@ class BaseAttrsNode : public Object {
    * \brief Get the field information
    * \return The fields in the Attrs.
    */
-  MATX_DLL virtual runtime::Array<AttrFieldInfo> ListFieldInfo() const = 0;
+  MATX_DLL virtual Array<AttrFieldInfo> ListFieldInfo() const = 0;
 
   static constexpr const bool _type_has_method_sequal_reduce = true;
   static constexpr const bool _type_has_method_shash_reduce = true;
@@ -176,7 +176,7 @@ class Attrs : public ObjectRef {
 class DictAttrsNode : public BaseAttrsNode {
  public:
   /*! \brief internal attrs map */
-  runtime::Map<StringRef, ObjectRef> dict;
+  Map<StringRef, ObjectRef> dict;
 
   bool SEqualReduce(const DictAttrsNode* other, SEqualReducer equal) const {
     return equal(dict, other->dict);
@@ -189,7 +189,7 @@ class DictAttrsNode : public BaseAttrsNode {
   // implementations
   void VisitAttrs(AttrVisitor* v) final;
   void VisitNonDefaultAttrs(AttrVisitor* v) final;
-  runtime::Array<AttrFieldInfo> ListFieldInfo() const final;
+  Array<AttrFieldInfo> ListFieldInfo() const final;
   // type info
   static constexpr const char* _type_key = "DictAttrs";
   MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(DictAttrsNode, BaseAttrsNode);
@@ -206,7 +206,7 @@ class DictAttrs : public Attrs {
    * \param dict The attributes.
    * \return The dict attributes.
    */
-  MATX_DLL explicit DictAttrs(runtime::Map<StringRef, ObjectRef> dict);
+  MATX_DLL explicit DictAttrs(Map<StringRef, ObjectRef> dict);
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(DictAttrs, Attrs, DictAttrsNode);
   MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(DictAttrsNode);
@@ -382,7 +382,7 @@ class AttrDocVisitor {
     return AttrDocEntry(info);
   }
 
-  runtime::Array<AttrFieldInfo> fields_;
+  Array<AttrFieldInfo> fields_;
 };
 
 class AttrExistVisitor {
@@ -417,7 +417,7 @@ struct AttrTriggerNonDefaultEntry {
     return *this;
   }
   TSelf& set_default(const T& value) {
-    if (runtime::StructuralEqual()(value, *data_)) {
+    if (StructuralEqual()(value, *data_)) {
       trigger_ = false;
     }
     return *this;
@@ -481,7 +481,7 @@ class AttrsNode : public BaseAttrsNode {
     self()->__VisitAttrs__(visitor);
   }
 
-  runtime::Array<AttrFieldInfo> ListFieldInfo() const final {
+  Array<AttrFieldInfo> ListFieldInfo() const final {
     ::matxscript::ir::detail::AttrDocVisitor visitor;
     self()->__VisitAttrs__(visitor);
     return visitor.fields_;
@@ -494,7 +494,7 @@ class AttrsNode : public BaseAttrsNode {
 };
 
 inline void BaseAttrsNode::PrintDocString(std::ostream& os) const {  // NOLINT(*)
-  runtime::Array<AttrFieldInfo> entry = this->ListFieldInfo();
+  Array<AttrFieldInfo> entry = this->ListFieldInfo();
   for (AttrFieldInfo info : entry) {
     os << info->name << " : " << info->type_info << '\n';
     if (info->description.length() != 0) {

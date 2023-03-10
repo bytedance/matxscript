@@ -34,9 +34,7 @@
 namespace matxscript {
 namespace ir {
 
-using ::matxscript::runtime::Array;
 using ::matxscript::runtime::GetRef;
-using ::matxscript::runtime::Map;
 
 /******************************************************************************
  * TypeVisitor
@@ -301,13 +299,13 @@ Type TypeMutator::VisitType_(const ClassTypeNode* op) {
   bool changed = false;
   GlobalTypeVar header = runtime::Downcast<GlobalTypeVar>(VisitType(op->header));
   changed &= header.same_as(op->header);
-  runtime::Array<Type> var_types;
+  Array<Type> var_types;
   for (auto& ty : op->var_types) {
     auto nty = this->VisitType(ty);
     var_types.push_back(nty);
     changed &= nty.same_as(ty);
   }
-  runtime::Array<FuncType> func_types;
+  Array<FuncType> func_types;
   for (auto& ty : op->func_types) {
     auto nty = runtime::Downcast<FuncType>(this->VisitType(ty));
     func_types.push_back(nty);

@@ -29,9 +29,9 @@
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
 
-void ReprPrinter::Print(const RTValue& value) {
+void ReprPrinter::Print(const runtime::RTValue& value) {
   if (value.type_code() < 0) {
     stream << value;
   } else {
@@ -69,13 +69,13 @@ void Dump(const ObjectRef& n) {
 }
 
 void Dump(const Object* n) {
-  Dump(GetRef<ObjectRef>(n));
+  Dump(runtime::GetRef<ObjectRef>(n));
 }
 
 MATXSCRIPT_REGISTER_GLOBAL("runtime.AsRepr").set_body_typed([](ObjectRef obj) {
   std::ostringstream os;
   os << obj;
-  return String(os.str());
+  return runtime::String(os.str());
 });
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

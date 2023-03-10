@@ -33,10 +33,10 @@
 
 namespace matxscript {
 namespace ir {
-ObjectPtr<Object> GetSourceNameNode(const runtime::StringRef& name) {
+ObjectPtr<Object> GetSourceNameNode(const StringRef& name) {
   // always return pointer as the reference can change as map re-allocate.
   // or use another level of indirection by creating a unique_ptr
-  static std::unordered_map<runtime::StringRef, ObjectPtr<SourceNameNode>> source_map;
+  static std::unordered_map<StringRef, ObjectPtr<SourceNameNode>> source_map;
 
   auto sn = source_map.find(name);
   if (sn == source_map.end()) {
@@ -53,7 +53,7 @@ ObjectPtr<Object> GetSourceNameNodeByStr(const runtime::String& name) {
   return GetSourceNameNode(name);
 }
 
-SourceName SourceName::Get(const runtime::StringRef& name) {
+SourceName SourceName::Get(const StringRef& name) {
   return SourceName(GetSourceNameNode(name));
 }
 
@@ -77,16 +77,6 @@ Span::Span(StringRef file_name, int64_t lineno, StringRef func_name, StringRef s
 //               std::max((*this)->end_column, other->end_column));
 // }
 
-}  // namespace ir
-
-namespace runtime {
-
-using ir::GetSourceNameNodeByStr;
-using ir::SourceName;
-using ir::SourceNameNode;
-using ir::Span;
-using ir::SpanNode;
-
 MATXSCRIPT_REGISTER_GLOBAL("ir.SourceName").set_body_typed(SourceName::Get);
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
@@ -97,7 +87,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 
 MATXSCRIPT_REGISTER_NODE_TYPE(SourceNameNode)
     .set_creator(GetSourceNameNodeByStr)
-    .set_repr_bytes([](const Object* n) -> String {
+    .set_repr_bytes([](const Object* n) -> runtime::String {
       return static_cast<const SourceNameNode*>(n)->name;
     });
 
@@ -115,5 +105,5 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
                 << ", func_name=" << node->func_name << ", source_code=" << node->source_code
                 << ")";
     });
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

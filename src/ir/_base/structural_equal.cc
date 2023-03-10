@@ -29,10 +29,13 @@
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/runtime/functor.h>
+#include <matxscript/runtime/logging.h>
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using namespace runtime;
 
 // Define the dispatch function here since primary user is in this file.
 bool ReflectionVTable::SEqualReduce(const Object* self,
@@ -41,10 +44,142 @@ bool ReflectionVTable::SEqualReduce(const Object* self,
   uint32_t tindex = self->type_index();
   if (tindex >= fsequal_reduce_.size() || fsequal_reduce_[tindex] == nullptr) {
     MXLOG(FATAL) << "TypeError: SEqualReduce of " << self->GetTypeKey()
-                 << " is not registered via MATXSCRIPT_REGISTER_NODE_TYPE."
+                 << " is not registered via TVM_REGISTER_NODE_TYPE."
                  << " Did you forget to set _type_has_method_sequal_reduce=true?";
   }
   return fsequal_reduce_[tindex](self, other, equal);
+}
+
+struct SEqualReducer::PathTracingData {
+  ObjectPathPair current_paths;
+  ObjectRef lhs_object;
+  ObjectRef rhs_object;
+  Optional<ObjectPathPair>* first_mismatch;
+
+  ObjectPathPair GetPathsForAttrs(const ObjectRef& lhs, const ObjectRef& rhs) const {
+    Optional<StringRef> lhs_attr_key = GetAttrKeyByAddress(lhs_object.get(), &lhs);
+    Optional<StringRef> rhs_attr_key = GetAttrKeyByAddress(rhs_object.get(), &rhs);
+    return ObjectPathPair(current_paths->lhs_path->Attr(lhs_attr_key),
+                          current_paths->rhs_path->Attr(rhs_attr_key));
+  }
+};
+
+bool SEqualReducer::operator()(const ObjectRef& lhs, const ObjectRef& rhs) const {
+  if (tracing_data_ == nullptr) {
+    // Fast path: no tracing
+    return handler_->SEqualReduce(lhs, rhs, map_free_vars_, NullOpt);
+  }
+  return ObjectAttrsEqual(lhs, rhs, map_free_vars_, nullptr);
+}
+
+bool SEqualReducer::DefEqual(const ObjectRef& lhs, const ObjectRef& rhs) {
+  if (tracing_data_ == nullptr) {
+    // Fast path: no tracing
+    return handler_->SEqualReduce(lhs, rhs, true, NullOpt);
+  }
+  return ObjectAttrsEqual(lhs, rhs, true, nullptr);
+}
+
+/* static */ void SEqualReducer::GetPathsFromAttrAddressesAndStoreMismatch(
+    const void* lhs_address, const void* rhs_address, const PathTracingData* tracing_data) {
+  if (tracing_data != nullptr && !tracing_data->first_mismatch->defined()) {
+    Optional<StringRef> lhs_attr_key =
+        GetAttrKeyByAddress(tracing_data->lhs_object.get(), lhs_address);
+    Optional<StringRef> rhs_attr_key =
+        GetAttrKeyByAddress(tracing_data->rhs_object.get(), rhs_address);
+    *tracing_data->first_mismatch =
+        ObjectPathPair(tracing_data->current_paths->lhs_path->Attr(lhs_attr_key),
+                       tracing_data->current_paths->rhs_path->Attr(rhs_attr_key));
+  }
+}
+
+template <typename T>
+/* static */ bool SEqualReducer::CompareAttributeValues(const T& lhs,
+                                                        const T& rhs,
+                                                        const PathTracingData* tracing_data) {
+  if (BaseValueEqual()(lhs, rhs)) {
+    return true;
+  } else {
+    GetPathsFromAttrAddressesAndStoreMismatch(&lhs, &rhs, tracing_data);
+    return false;
+  }
+}
+
+bool SEqualReducer::operator()(const double& lhs, const double& rhs) const {
+  return CompareAttributeValues(lhs, rhs, tracing_data_);
+}
+
+bool SEqualReducer::operator()(const int64_t& lhs, const int64_t& rhs) const {
+  return CompareAttributeValues(lhs, rhs, tracing_data_);
+}
+
+bool SEqualReducer::operator()(const uint64_t& lhs, const uint64_t& rhs) const {
+  return CompareAttributeValues(lhs, rhs, tracing_data_);
+}
+
+bool SEqualReducer::operator()(const int& lhs, const int& rhs) const {
+  return CompareAttributeValues(lhs, rhs, tracing_data_);
+}
+
+bool SEqualReducer::operator()(const bool& lhs, const bool& rhs) const {
+  return CompareAttributeValues(lhs, rhs, tracing_data_);
+}
+
+bool SEqualReducer::operator()(const runtime::String& lhs, const runtime::String& rhs) const {
+  return CompareAttributeValues(lhs, rhs, tracing_data_);
+}
+
+bool SEqualReducer::operator()(const DataType& lhs, const DataType& rhs) const {
+  return CompareAttributeValues(lhs, rhs, tracing_data_);
+}
+
+bool SEqualReducer::EnumAttrsEqual(int lhs,
+                                   int rhs,
+                                   const void* lhs_address,
+                                   const void* rhs_address) const {
+  if (lhs == rhs) {
+    return true;
+  } else {
+    GetPathsFromAttrAddressesAndStoreMismatch(lhs_address, rhs_address, tracing_data_);
+    return false;
+  }
+}
+
+const ObjectPathPair& SEqualReducer::GetCurrentObjectPaths() const {
+  MXCHECK(tracing_data_ != nullptr)
+      << "GetCurrentObjectPaths() can only be called when path tracing is enabled";
+  return tracing_data_->current_paths;
+}
+
+void SEqualReducer::RecordMismatchPaths(const ObjectPathPair& paths) const {
+  MXCHECK(tracing_data_ != nullptr)
+      << "RecordMismatchPaths() can only be called when path tracing is enabled";
+  if (!tracing_data_->first_mismatch->defined()) {
+    *tracing_data_->first_mismatch = paths;
+  }
+}
+
+bool SEqualReducer::ObjectAttrsEqual(const ObjectRef& lhs,
+                                     const ObjectRef& rhs,
+                                     bool map_free_vars,
+                                     const ObjectPathPair* paths) const {
+  if (tracing_data_ == nullptr) {
+    // Fast path: no tracing
+    return handler_->SEqualReduce(lhs, rhs, map_free_vars, NullOpt);
+  }
+
+  // Slow path: tracing object paths for better error reporting
+
+  ObjectPathPair new_paths = paths == nullptr ? tracing_data_->GetPathsForAttrs(lhs, rhs) : *paths;
+
+  if (handler_->SEqualReduce(lhs, rhs, map_free_vars, new_paths)) {
+    return true;
+  } else {
+    if (!tracing_data_->first_mismatch->defined()) {
+      *tracing_data_->first_mismatch = new_paths;
+    }
+    return false;
+  }
 }
 
 /*!
@@ -56,12 +191,22 @@ bool ReflectionVTable::SEqualReduce(const Object* self,
  *  The order of SEqual being called is the same as the order as if we
  *  eagerly do recursive calls in SEqualReduce.
  */
-class RemapVarSEqualHandler : public SEqualReducer::Handler {
+class SEqualHandlerDefault::Impl {
  public:
-  explicit RemapVarSEqualHandler(bool assert_mode) : assert_mode_(assert_mode) {
+  Impl(SEqualHandlerDefault* parent,
+       bool assert_mode,
+       Optional<ObjectPathPair>* first_mismatch,
+       bool defer_fails)
+      : parent_(parent),
+        assert_mode_(assert_mode),
+        first_mismatch_(first_mismatch),
+        defer_fails_(defer_fails) {
   }
 
-  bool SEqualReduce(const ObjectRef& lhs, const ObjectRef& rhs, bool map_free_vars) final {
+  bool SEqualReduce(const ObjectRef& lhs,
+                    const ObjectRef& rhs,
+                    bool map_free_vars,
+                    const Optional<ObjectPathPair>& current_paths) {
     // We cannot use check lhs.same_as(rhs) to check equality.
     // if we choose to enable var remapping.
     //
@@ -93,20 +238,29 @@ class RemapVarSEqualHandler : public SEqualReducer::Handler {
       }
       if (equal_map_rhs_.count(rhs))
         return false;
+
       // need to push to pending tasks in this case
-      pending_tasks_.emplace_back(Task(lhs, rhs, map_free_vars));
+      pending_tasks_.emplace_back(lhs, rhs, map_free_vars, current_paths);
       return true;
     };
-    return CheckResult(run(), lhs, rhs);
+    return CheckResult(run(), lhs, rhs, current_paths);
   }
 
-  void MarkGraphNode() final {
+  void DeferFail(const ObjectPathPair& mismatch_paths) {
+    pending_tasks_.emplace_back(Task::ForceFailTag{}, mismatch_paths);
+  }
+
+  bool IsFailDeferralEnabled() {
+    return defer_fails_;
+  }
+
+  void MarkGraphNode() {
     // need to push to pending tasks in this case
     MXCHECK(!allow_push_to_stack_ && !task_stack_.empty());
     task_stack_.back().graph_equal = true;
   }
 
-  ObjectRef MapLhsToRhs(const ObjectRef& lhs) final {
+  ObjectRef MapLhsToRhs(const ObjectRef& lhs) {
     auto it = equal_map_lhs_.find(lhs);
     if (it != equal_map_lhs_.end())
       return it->second;
@@ -121,8 +275,18 @@ class RemapVarSEqualHandler : public SEqualReducer::Handler {
     pending_tasks_.clear();
     equal_map_lhs_.clear();
     equal_map_rhs_.clear();
-    if (!SEqualReduce(lhs, rhs, map_free_vars))
+    root_lhs_ = lhs;
+    root_rhs_ = rhs;
+
+    Optional<ObjectPathPair> current_paths;
+    if (IsPathTracingEnabled()) {
+      auto root_path = ObjectPath::Root();
+      current_paths = ObjectPathPair(root_path, root_path);
+    }
+    if (!SEqualReduce(lhs, rhs, map_free_vars, current_paths)) {
       return false;
+    }
+
     MXCHECK_EQ(pending_tasks_.size(), 1U);
     MXCHECK(allow_push_to_stack_);
     task_stack_.emplace_back(std::move(pending_tasks_.back()));
@@ -130,12 +294,65 @@ class RemapVarSEqualHandler : public SEqualReducer::Handler {
     return RunTasks();
   }
 
+  // The default equal as registered in the structural equal vtable.
+  bool DispatchSEqualReduce(const ObjectRef& lhs,
+                            const ObjectRef& rhs,
+                            bool map_free_vars,
+                            const Optional<ObjectPathPair>& current_paths) {
+    auto compute = [=]() {
+      MXCHECK(lhs.defined() && rhs.defined() && lhs->type_index() == rhs->type_index());
+      // skip entries that already have equality maps.
+      auto it = equal_map_lhs_.find(lhs);
+      if (it != equal_map_lhs_.end()) {
+        return it->second.same_as(rhs);
+      }
+      if (equal_map_rhs_.count(rhs))
+        return false;
+
+      if (!IsPathTracingEnabled()) {
+        return vtable_->SEqualReduce(
+            lhs.get(), rhs.get(), SEqualReducer(parent_, nullptr, map_free_vars));
+      } else {
+        PathTracingData tracing_data = {current_paths.value(), lhs, rhs, first_mismatch_};
+        return vtable_->SEqualReduce(
+            lhs.get(), rhs.get(), SEqualReducer(parent_, &tracing_data, map_free_vars));
+      }
+    };
+    return CheckResult(compute(), lhs, rhs, current_paths);
+  }
+
  protected:
   // Check the result.
-  bool CheckResult(bool result, const ObjectRef& lhs, const ObjectRef& rhs) {
+  bool CheckResult(bool result,
+                   const ObjectRef& lhs,
+                   const ObjectRef& rhs,
+                   const Optional<ObjectPathPair>& current_paths) {
+    if (IsPathTracingEnabled() && !result && !first_mismatch_->defined()) {
+      *first_mismatch_ = current_paths;
+    }
     if (assert_mode_ && !result) {
-      MXLOG(FATAL) << "ValueError: StructuralEqual check failed, caused by\n"
-                   << "lhs = " << lhs << "\nrhs = " << rhs;
+      std::ostringstream oss;
+      oss << "ValueError: StructuralEqual check failed, caused by lhs";
+      if (first_mismatch_->defined()) {
+        oss << " at " << first_mismatch_->value()->lhs_path;
+        if (root_lhs_.defined()) {
+          // TODO(xiandi.ma): follow TVMScriptPrinter
+          oss << ":" << std::endl << root_lhs_.value();
+        }
+      } else {
+        oss << ":" << std::endl << lhs;
+      }
+      oss << std::endl << "and rhs";
+      if (first_mismatch_->defined()) {
+        oss << " at " << first_mismatch_->value()->rhs_path;
+        if (root_rhs_.defined()) {
+          // TODO(xiandi.ma): follow TVMScriptPrinter
+          oss << ":" << std::endl << root_rhs_.value();
+        }
+      } else {
+        oss << ":" << std::endl << rhs;
+      }
+      MXLOG(FATAL) << oss.str();
     }
     return result;
   }
@@ -148,6 +365,13 @@ class RemapVarSEqualHandler : public SEqualReducer::Handler {
     while (task_stack_.size() != 0) {
       // Caution: entry becomes invalid when the stack changes
       auto& entry = task_stack_.back();
+
+      if (entry.force_fail) {
+        if (IsPathTracingEnabled() && !first_mismatch_->defined()) {
+          *first_mismatch_ = entry.current_paths;
+        }
+        return false;
+      }
 
       if (entry.children_expanded) {
         // When all the children has expanded and visited.
@@ -173,7 +397,8 @@ class RemapVarSEqualHandler : public SEqualReducer::Handler {
         // which populates the pending tasks.
         MXCHECK_EQ(pending_tasks_.size(), 0U);
         allow_push_to_stack_ = false;
-        if (!DispatchSEqualReduce(entry.lhs, entry.rhs, entry.map_free_vars))
+        if (!parent_->DispatchSEqualReduce(
+                entry.lhs, entry.rhs, entry.map_free_vars, entry.current_paths))
           return false;
         allow_push_to_stack_ = true;
         // Push pending tasks in reverse order, so earlier tasks get to
@@ -187,23 +412,6 @@ class RemapVarSEqualHandler : public SEqualReducer::Handler {
     return true;
   }
 
-  // The default equal as registered in the structural equal vtable.
-  bool DispatchSEqualReduce(const ObjectRef& lhs, const ObjectRef& rhs, bool map_free_vars) {
-    auto compute = [=]() {
-      MXCHECK(lhs.defined() && rhs.defined() && lhs->type_index() == rhs->type_index());
-      // skip entries that already have equality maps.
-      auto it = equal_map_lhs_.find(lhs);
-      if (it != equal_map_lhs_.end()) {
-        return it->second.same_as(rhs);
-      }
-      if (equal_map_rhs_.count(rhs))
-        return false;
-      // Run reduce check for free nodes.
-      return vtable_->SEqualReduce(lhs.get(), rhs.get(), SEqualReducer(this, map_free_vars));
-    };
-    return CheckResult(compute(), lhs, rhs);
-  }
-
  private:
   /*! \brief Pending reduce tasks. */
   struct Task {
@@ -211,18 +419,38 @@ class RemapVarSEqualHandler : public SEqualReducer::Handler {
     ObjectRef lhs;
     /*! \brief The rhs operand to be compared. */
     ObjectRef rhs;
+    /*! \brief If path tracing is enabled, paths taken so far from the root to `lhs` and `rhs`
+     * objects. */
+    Optional<ObjectPathPair> current_paths;
     /*! \brief The map free var argument. */
     bool map_free_vars;
     /*! \brief Whether the children has been expanded via SEqualReduce */
     bool children_expanded{false};
     /*! \brief whether the task is about graph equality(need remap). */
     bool graph_equal{false};
+    /*! \brief whether the task should return "false" without actually comparing anything */
+    bool force_fail{false};
 
     Task() = default;
-    Task(ObjectRef lhs, ObjectRef rhs, bool map_free_vars)
-        : lhs(lhs), rhs(rhs), map_free_vars(map_free_vars) {
+    Task(ObjectRef lhs, ObjectRef rhs, bool map_free_vars, Optional<ObjectPathPair> current_paths)
+        : lhs(lhs),
+          rhs(rhs),
+          current_paths(std::move(current_paths)),
+          map_free_vars(map_free_vars) {
+    }
+
+    struct ForceFailTag {};  // dispatch tag for the constructor below
+    Task(ForceFailTag, const ObjectPathPair& current_paths)
+        : current_paths(current_paths), force_fail(true) {
     }
   };
+
+  bool IsPathTracingEnabled() const {
+    return first_mismatch_ != nullptr;
+  }
+
+  // The owner of this impl
+  SEqualHandlerDefault* parent_;
   // list of pending tasks to be pushed to the stack.
   std::vector<Task> pending_tasks_;
   // Internal task stack to executed the task.
@@ -231,91 +459,87 @@ class RemapVarSEqualHandler : public SEqualReducer::Handler {
   bool allow_push_to_stack_{true};
   //  If in assert mode, must return true, and will throw error otherwise.
   bool assert_mode_{false};
+  // Location to store the paths to the first detected mismatch, or nullptr to disable path
+  // tracing.
+  Optional<ObjectPathPair>* first_mismatch_;
   // reflection vtable
   ReflectionVTable* vtable_ = ReflectionVTable::Global();
   // map from lhs to rhs
   std::unordered_map<ObjectRef, ObjectRef, ObjectPtrHash, ObjectPtrEqual> equal_map_lhs_;
   // map from rhs to lhs
   std::unordered_map<ObjectRef, ObjectRef, ObjectPtrHash, ObjectPtrEqual> equal_map_rhs_;
+  // root lhs for result printing
+  Optional<ObjectRef> root_lhs_;
+  // root rhs for result printing
+  Optional<ObjectRef> root_rhs_;
+  // whether to defer fails
+  bool defer_fails_;
 };
 
-MATXSCRIPT_REGISTER_GLOBAL("runtime.StructuralEqual")
+SEqualHandlerDefault::SEqualHandlerDefault(bool assert_mode,
+                                           Optional<ObjectPathPair>* first_mismatch,
+                                           bool defer_fails) {
+  impl = new Impl(this, assert_mode, first_mismatch, defer_fails);
+}
+
+SEqualHandlerDefault::~SEqualHandlerDefault() {
+  delete impl;
+}
+
+bool SEqualHandlerDefault::SEqualReduce(const ObjectRef& lhs,
+                                        const ObjectRef& rhs,
+                                        bool map_free_vars,
+                                        const Optional<ObjectPathPair>& current_paths) {
+  return impl->SEqualReduce(lhs, rhs, map_free_vars, current_paths);
+}
+
+void SEqualHandlerDefault::DeferFail(const ObjectPathPair& mismatch_paths) {
+  impl->DeferFail(mismatch_paths);
+}
+
+bool SEqualHandlerDefault::IsFailDeferralEnabled() {
+  return impl->IsFailDeferralEnabled();
+}
+
+ObjectRef SEqualHandlerDefault::MapLhsToRhs(const ObjectRef& lhs) {
+  return impl->MapLhsToRhs(lhs);
+}
+
+void SEqualHandlerDefault::MarkGraphNode() {
+  impl->MarkGraphNode();
+}
+
+bool SEqualHandlerDefault::Equal(const ObjectRef& lhs, const ObjectRef& rhs, bool map_free_vars) {
+  return impl->Equal(lhs, rhs, map_free_vars);
+}
+
+bool SEqualHandlerDefault::DispatchSEqualReduce(const ObjectRef& lhs,
+                                                const ObjectRef& rhs,
+                                                bool map_free_vars,
+                                                const Optional<ObjectPathPair>& current_paths) {
+  return impl->DispatchSEqualReduce(lhs, rhs, map_free_vars, current_paths);
+}
+
+MATXSCRIPT_REGISTER_GLOBAL("node.StructuralEqual")
     .set_body_typed(
         [](const ObjectRef& lhs, const ObjectRef& rhs, bool assert_mode, bool map_free_vars) {
-          return RemapVarSEqualHandler(assert_mode).Equal(lhs, rhs, map_free_vars);
+          Optional<ObjectPathPair> first_mismatch;
+          return SEqualHandlerDefault(assert_mode, &first_mismatch, false)
+              .Equal(lhs, rhs, map_free_vars);
         });
 
+MATXSCRIPT_REGISTER_GLOBAL("node.GetFirstStructuralMismatch")
+    .set_body_typed([](const ObjectRef& lhs, const ObjectRef& rhs, bool map_free_vars) {
+      Optional<ObjectPathPair> first_mismatch;
+      bool equal =
+          SEqualHandlerDefault(false, &first_mismatch, true).Equal(lhs, rhs, map_free_vars);
+      MXCHECK(equal == !first_mismatch.defined());
+      return first_mismatch;
+    });
+
 bool StructuralEqual::operator()(const ObjectRef& lhs, const ObjectRef& rhs) const {
-  return RemapVarSEqualHandler(false).Equal(lhs, rhs, false);
+  return SEqualHandlerDefault(false, nullptr, false).Equal(lhs, rhs, false);
 }
 
-bool StructuralEqual::operator()(const RTValue& lhs, const RTValue& rhs) const {
-  // quick specialization for Array to reduce amount of recursion
-  // depth as array comparison is pretty common.
-  if (lhs.type_code() != rhs.type_code())
-    return false;
-  int32_t type_code = lhs.type_code();
-  switch (type_code) {
-    case TypeIndex::kRuntimeNullptr: {
-      return true;
-    } break;
-    case TypeIndex::kRuntimeOpaqueHandle: {
-      return lhs.As<void*>() == rhs.As<void*>();
-    } break;
-    case TypeIndex::kRuntimeInteger: {
-      return this->operator()(lhs.As<int64_t>(), rhs.As<int64_t>());
-    } break;
-    case TypeIndex::kRuntimeFloat: {
-      return this->operator()(lhs.As<double>(), rhs.As<double>());
-    } break;
-    case TypeIndex::kRuntimeString: {
-      return this->operator()(lhs.AsNoCheck<string_view>(), rhs.AsNoCheck<string_view>());
-    } break;
-    case TypeIndex::kRuntimeUnicode: {
-      return this->operator()(lhs.AsNoCheck<unicode_view>(), rhs.AsNoCheck<unicode_view>());
-    } break;
-    case TypeIndex::kRuntimeStringRef: {
-      return lhs.ptr<StringNode>()->data_container == rhs.ptr<StringNode>()->data_container;
-    } break;
-    default: {
-      return this->operator()(lhs.As<ObjectRef>(), rhs.As<ObjectRef>());
-    } break;
-  }
-  return false;
-}
-
-bool SEqualReducer::operator()(const RTValue& lhs, const RTValue& rhs) const {
-  if (lhs.type_code() != rhs.type_code())
-    return false;
-  int32_t type_code = lhs.type_code();
-  switch (type_code) {
-    case TypeIndex::kRuntimeNullptr: {
-      return true;
-    } break;
-    case TypeIndex::kRuntimeOpaqueHandle: {
-      return lhs.As<void*>() == rhs.As<void*>();
-    } break;
-    case TypeIndex::kRuntimeInteger: {
-      return this->operator()(lhs.As<int64_t>(), rhs.As<int64_t>());
-    } break;
-    case TypeIndex::kRuntimeFloat: {
-      return this->operator()(lhs.As<double>(), rhs.As<double>());
-    } break;
-    case TypeIndex::kRuntimeString: {
-      return this->operator()(lhs.AsNoCheck<string_view>(), rhs.AsNoCheck<string_view>());
-    } break;
-    case TypeIndex::kRuntimeUnicode: {
-      return this->operator()(lhs.AsNoCheck<unicode_view>(), rhs.AsNoCheck<unicode_view>());
-    } break;
-    case TypeIndex::kRuntimeStringRef: {
-      return lhs.ptr<StringNode>()->data_container == rhs.ptr<StringNode>()->data_container;
-    } break;
-    default: {
-      return this->operator()(lhs.As<ObjectRef>(), rhs.As<ObjectRef>());
-    } break;
-  }
-  return false;
-}
-
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

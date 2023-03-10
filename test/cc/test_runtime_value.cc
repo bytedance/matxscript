@@ -86,16 +86,16 @@ TEST(RTValue, Cast) {
   String string_nv = s_v.As<String>();
   string_nv = s_v.As<String>();
 
-  RTValue s_v2(StringRef("jk"));
-  StringRef string_nv2 = s_v2.As<StringRef>();
+  RTValue s_v2(ir::StringRef("jk"));
+  ir::StringRef string_nv2 = s_v2.As<ir::StringRef>();
   EXPECT_EQ(string_nv2.use_count(), 2);
-  string_nv2 = s_v2.MoveToObjectRef<StringRef>();
+  string_nv2 = s_v2.MoveToObjectRef<ir::StringRef>();
   // move self
   EXPECT_EQ(string_nv2.use_count(), 1);
 
-  RTValue s_v3(StringRef("jk"));
-  StringRef string_nv3;
-  string_nv3 = s_v3.MoveToObjectRef<StringRef>();
+  RTValue s_v3(ir::StringRef("jk"));
+  ir::StringRef string_nv3;
+  string_nv3 = s_v3.MoveToObjectRef<ir::StringRef>();
   EXPECT_EQ(string_nv3.use_count(), 1);
 }
 

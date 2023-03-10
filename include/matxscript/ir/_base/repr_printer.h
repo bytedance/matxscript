@@ -27,7 +27,11 @@
 #include <matxscript/runtime/runtime_value.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
+
+using runtime::Object;
+using runtime::ObjectPtr;
+using runtime::ObjectRef;
 
 /*! \brief A printer class to print the AST/IR nodes. */
 class ReprPrinter {
@@ -42,13 +46,13 @@ class ReprPrinter {
   }
 
   /*! \brief The value to be printed. */
-  MATX_DLL void Print(const RTValue& value);
+  MATX_DLL void Print(const runtime::RTValue& value);
   /*! \brief The node to be printed. */
   MATX_DLL void Print(const ObjectRef& node);
   /*! \brief Print indent to the stream */
   MATX_DLL void PrintIndent();
   // Allow registration to be printer.
-  using FType = NodeFunctor<void(const ObjectRef&, ReprPrinter*)>;
+  using FType = runtime::NodeFunctor<void(const ObjectRef&, ReprPrinter*)>;
   MATX_DLL static FType& vtable();
 };
 
@@ -71,5 +75,5 @@ inline std::ostream& operator<<(std::ostream& os, const ObjectRef& n) {  // NOLI
   return os;
 }
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript

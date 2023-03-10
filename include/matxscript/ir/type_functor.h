@@ -208,7 +208,7 @@ class MATX_DLL TypeMutator : public TypeFunctor<Type(const Type& n)> {
   Type VisitType_(const RefTypeNode* op) override;
 
  private:
-  runtime::Array<Type> MutateArray(runtime::Array<Type> arr);
+  Array<Type> MutateArray(Array<Type> arr);
 };
 
 /*!
@@ -216,7 +216,7 @@ class MATX_DLL TypeMutator : public TypeFunctor<Type(const Type& n)> {
  * \param type The type to be updated.
  * \param args_map The binding map.
  */
-Type Bind(const Type& type, const runtime::Map<TypeVar, Type>& args_map);
+Type Bind(const Type& type, const Map<TypeVar, Type>& args_map);
 
 }  // namespace ir
 }  // namespace matxscript

@@ -374,11 +374,10 @@ class StmtExprMutator : public StmtMutator, public ExprMutator {
  *          If it is not null, preorder/postorder will only be called
  *          when the IRNode's type key is in the list.
  */
-MATX_DLL Stmt
-IRTransform(Stmt stmt,
-            const runtime::NativeFunction& preorder,
-            const runtime::NativeFunction& postorder,
-            runtime::Optional<runtime::Array<StringRef>> only_enable = runtime::NullOpt);
+MATX_DLL Stmt IRTransform(Stmt stmt,
+                          const runtime::NativeFunction& preorder,
+                          const runtime::NativeFunction& postorder,
+                          Optional<Array<StringRef>> only_enable = NullOpt);
 
 /*!
  * \brief Recursively visit the ir in post DFS order node, apply fvisit
@@ -394,10 +393,8 @@ MATX_DLL void PostOrderVisit(const ObjectRef& node, std::function<void(const Obj
  * \param vmap returns a new value if re-mapping is needed, otherwise returns nullptr.
  * \return The converted form.
  */
-MATX_DLL Stmt Substitute(Stmt stmt,
-                         std::function<runtime::Optional<PrimExpr>(const PrimVar& var)> vmap);
-MATX_DLL Stmt Substitute(Stmt stmt,
-                         std::function<runtime::Optional<HLOExpr>(const HLOVar& var)> vmap);
+MATX_DLL Stmt Substitute(Stmt stmt, std::function<Optional<PrimExpr>(const PrimVar& var)> vmap);
+MATX_DLL Stmt Substitute(Stmt stmt, std::function<Optional<HLOExpr>(const HLOVar& var)> vmap);
 
 /*!
  * \brief Substitute the var specified by vmap.
@@ -406,13 +403,12 @@ MATX_DLL Stmt Substitute(Stmt stmt,
  * \return The result.
  */
 MATX_DLL PrimExpr Substitute(PrimExpr expr,
-                             std::function<runtime::Optional<PrimExpr>(const PrimVar& var)> vmap);
+                             std::function<Optional<PrimExpr>(const PrimVar& var)> vmap);
 
-MATX_DLL HLOExpr Substitute(HLOExpr expr,
-                            std::function<runtime::Optional<HLOExpr>(const HLOVar& var)> vmap);
+MATX_DLL HLOExpr Substitute(HLOExpr expr, std::function<Optional<HLOExpr>(const HLOVar& var)> vmap);
 
 MATX_DLL BaseExpr Substitute(BaseExpr expr,
-                             std::function<runtime::Optional<BaseExpr>(const BaseExpr& var)> vmap);
+                             std::function<Optional<BaseExpr>(const BaseExpr& var)> vmap);
 
 /*!
  * \brief Sugar for substitute via a given map.
@@ -422,23 +418,23 @@ MATX_DLL BaseExpr Substitute(BaseExpr expr,
  * \tparam T the input type, can be PrimExpr or Stmt.
  */
 template <typename T>
-inline auto Substitute(T input, const runtime::Map<PrimVar, PrimExpr>& value_map) {
-  auto vmap = [&](const PrimVar& var) -> runtime::Optional<PrimExpr> {
+inline auto Substitute(T input, const Map<PrimVar, PrimExpr>& value_map) {
+  auto vmap = [&](const PrimVar& var) -> Optional<PrimExpr> {
     auto it = value_map.find(var);
     if (it != value_map.end())
       return (*it).second;
-    return runtime::Optional<PrimExpr>(nullptr);
+    return Optional<PrimExpr>(nullptr);
   };
   return Substitute(std::move(input), vmap);
 }
 
 template <typename T>
-inline auto Substitute(T input, const runtime::Map<HLOVar, HLOExpr>& value_map) {
-  auto vmap = [&](const HLOVar& var) -> runtime::Optional<HLOExpr> {
+inline auto Substitute(T input, const Map<HLOVar, HLOExpr>& value_map) {
+  auto vmap = [&](const HLOVar& var) -> Optional<HLOExpr> {
     auto it = value_map.find(var);
     if (it != value_map.end())
       return (*it).second;
-    return runtime::Optional<HLOExpr>(nullptr);
+    return Optional<HLOExpr>(nullptr);
   };
   return Substitute(std::move(input), vmap);
 }
@@ -452,22 +448,22 @@ inline auto Substitute(T input, const runtime::Map<HLOVar, HLOExpr>& value_map) 
  */
 template <typename T>
 inline T Substitute(T input, const std::unordered_map<const PrimVarNode*, PrimExpr>& value_map) {
-  auto vmap = [&](const PrimVar& var) -> runtime::Optional<PrimExpr> {
+  auto vmap = [&](const PrimVar& var) -> Optional<PrimExpr> {
     auto it = value_map.find(var.get());
     if (it != value_map.end())
       return (*it).second;
-    return runtime::Optional<PrimExpr>(nullptr);
+    return Optional<PrimExpr>(nullptr);
   };
   return Substitute(std::move(input), vmap);
 }
 
 template <typename T>
 inline T Substitute(T input, const std::unordered_map<const HLOVarNode*, HLOExpr>& value_map) {
-  auto vmap = [&](const HLOVar& var) -> runtime::Optional<HLOExpr> {
+  auto vmap = [&](const HLOVar& var) -> Optional<HLOExpr> {
     auto it = value_map.find(var.get());
     if (it != value_map.end())
       return (*it).second;
-    return runtime::Optional<HLOExpr>(nullptr);
+    return Optional<HLOExpr>(nullptr);
   };
   return Substitute(std::move(input), vmap);
 }

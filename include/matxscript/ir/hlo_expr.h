@@ -42,17 +42,17 @@ class StringImmNode : public HLOExprNode {
  public:
   StringRef value;
 
-  void VisitAttrs(runtime::AttrVisitor* v) {
+  void VisitAttrs(AttrVisitor* v) {
     v->Visit("value", &value);
     v->Visit("span", &span);
     v->Visit("_checked_type_", &checked_type_);
   }
 
-  bool SEqualReduce(const StringImmNode* other, runtime::SEqualReducer equal) const {
+  bool SEqualReduce(const StringImmNode* other, SEqualReducer equal) const {
     return equal(value, other->value);
   }
 
-  void SHashReduce(runtime::SHashReducer hash_reduce) const {
+  void SHashReduce(SHashReducer hash_reduce) const {
     hash_reduce(value);
   }
 
@@ -69,19 +69,19 @@ class StringImm : public HLOExpr {
 
 class UnicodeImmNode : public HLOExprNode {
  public:
-  ::matxscript::runtime::StringRef value;
+  StringRef value;
 
-  void VisitAttrs(runtime::AttrVisitor* v) {
+  void VisitAttrs(AttrVisitor* v) {
     v->Visit("value", &value);
     v->Visit("span", &span);
     v->Visit("_checked_type_", &checked_type_);
   }
 
-  bool SEqualReduce(const UnicodeImmNode* other, runtime::SEqualReducer equal) const {
+  bool SEqualReduce(const UnicodeImmNode* other, SEqualReducer equal) const {
     return equal(value, other->value);
   }
 
-  void SHashReduce(runtime::SHashReducer hash_reduce) const {
+  void SHashReduce(SHashReducer hash_reduce) const {
     hash_reduce(value);
   }
 
@@ -91,11 +91,10 @@ class UnicodeImmNode : public HLOExprNode {
 
 class UnicodeImm : public HLOExpr {
  public:
-  MATX_DLL UnicodeImm(runtime::StringRef value, Span span = Span());
+  MATX_DLL UnicodeImm(StringRef value, Span span = Span());
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(UnicodeImm, HLOExpr, UnicodeImmNode);
 };
-
 /*!
  * \brief Base template to implement binary ops.
  * \tparam T The type of the child class.
@@ -461,7 +460,7 @@ class CallNode : public HLOExprNode {
   HLOExpr op;
 
   /*! \brief The arguments(inputs) of the call */
-  runtime::Array<BaseExpr> args;
+  Array<BaseExpr> args;
 
   /*!
    * \brief The type arguments passed to polymorphic(template) function.
@@ -481,7 +480,7 @@ class CallNode : public HLOExprNode {
    *
    * \endcode
    */
-  runtime::Array<ObjectRef> type_args;  // type or IntImm
+  Array<ObjectRef> type_args;  // type or IntImm
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("op", &op);
@@ -520,9 +519,9 @@ class Call : public HLOExpr {
    */
   MATX_DLL Call(Type ret_type,
                 HLOExpr op,
-                runtime::Array<BaseExpr> args,
+                Array<BaseExpr> args,
                 Span span = Span(),
-                runtime::Array<ObjectRef> type_args = runtime::Array<ObjectRef>());
+                Array<ObjectRef> type_args = Array<ObjectRef>());
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(Call, HLOExpr, CallNode);
 };
@@ -574,7 +573,7 @@ class HLOIterator : public HLOExpr {
 class InitializerListNode : public HLOExprNode {
  public:
   /*! \brief the fields of the InitializerList */
-  runtime::Array<BaseExpr> fields;
+  Array<BaseExpr> fields;
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("fields", &fields);
@@ -610,7 +609,7 @@ class InitializerList : public HLOExpr {
    * \param fields The fields of a InitializerList.
    * \param span The source span of the expression.
    */
-  MATX_DLL explicit InitializerList(runtime::Array<BaseExpr> fields, Span span = Span());
+  MATX_DLL explicit InitializerList(Array<BaseExpr> fields, Span span = Span());
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(InitializerList, HLOExpr, InitializerListNode);
 };
@@ -619,7 +618,7 @@ class InitializerList : public HLOExpr {
 class InitializerDictNode : public HLOExprNode {
  public:
   /*! \brief the fields of the InitializerDict */
-  runtime::Map<BaseExpr, BaseExpr> fields;
+  Map<BaseExpr, BaseExpr> fields;
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("fields", &fields);
@@ -655,7 +654,7 @@ class InitializerDict : public HLOExpr {
    * \param fields The fields of a InitializerDict.
    * \param span The source span of the expression.
    */
-  MATX_DLL explicit InitializerDict(runtime::Map<BaseExpr, BaseExpr> fields, Span span = Span());
+  MATX_DLL explicit InitializerDict(Map<BaseExpr, BaseExpr> fields, Span span = Span());
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(InitializerDict, HLOExpr, InitializerDictNode);
 };
@@ -705,7 +704,7 @@ class ClassGetItemNode : public HLOExprNode {
   /*! \brief which attr to get */
   StringImm attr;
 
-  void VisitAttrs(runtime::AttrVisitor* v) {
+  void VisitAttrs(AttrVisitor* v) {
     v->Visit("self", &self);
     v->Visit("attr", &attr);
     v->Visit("span", &span);
@@ -860,7 +859,7 @@ class HLOEnumerate : public HLOExpr {
 class HLOZipNode : public HLOExprNode {
  public:
   /*! \brief Original containers. */
-  runtime::Array<BaseExpr> values;
+  Array<BaseExpr> values;
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("values", &values);
@@ -887,7 +886,7 @@ class HLOZipNode : public HLOExprNode {
  */
 class HLOZip : public HLOExpr {
  public:
-  MATX_DLL HLOZip(runtime::Array<BaseExpr> values, Span span = Span());
+  MATX_DLL HLOZip(Array<BaseExpr> values, Span span = Span());
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(HLOZip, HLOExpr, HLOZipNode);
 };
 

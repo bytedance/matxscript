@@ -357,7 +357,7 @@ PrimExpr ExprMutator::VisitExpr_(const PrimLetNode* op) {
 
 PrimExpr ExprMutator::VisitExpr_(const PrimCallNode* op) {
   auto fmutate = [this](const PrimExpr& e) { return this->VisitExpr(e); };
-  runtime::Array<PrimExpr> args = op->args.Map(fmutate);
+  Array<PrimExpr> args = op->args.Map(fmutate);
 
   if (args.same_as(op->args)) {
     return GetRef<PrimExpr>(op);
@@ -404,7 +404,7 @@ HLOExpr ExprMutator::VisitExpr_(const CallNode* call_node) {
   auto new_op = this->VisitExpr(call_node->op);
   bool unchanged = call_node->op.same_as(new_op);
 
-  runtime::Array<ObjectRef> ty_args;
+  Array<ObjectRef> ty_args;
   for (auto ty_arg : call_node->type_args) {
     if (ty_arg->IsInstance<TypeNode>()) {
       auto new_ty_arg = this->VisitType(runtime::Downcast<Type>(ty_arg));
@@ -417,7 +417,7 @@ HLOExpr ExprMutator::VisitExpr_(const CallNode* call_node) {
     }
   }
 
-  runtime::Array<BaseExpr> call_args;
+  Array<BaseExpr> call_args;
   for (auto arg : call_node->args) {
     auto new_arg = this->VisitExpr(arg);
     call_args.push_back(new_arg);
@@ -437,7 +437,7 @@ HLOExpr ExprMutator::VisitExpr_(const ConstructorNode* c) {
 }
 
 HLOExpr ExprMutator::VisitExpr_(const InitializerListNode* op) {
-  runtime::Array<BaseExpr> fields;
+  Array<BaseExpr> fields;
   bool all_fields_unchanged = true;
   for (auto field : op->fields) {
     if (field->IsInstance<PrimExprNode>()) {
@@ -458,8 +458,8 @@ HLOExpr ExprMutator::VisitExpr_(const InitializerListNode* op) {
 }
 
 HLOExpr ExprMutator::VisitExpr_(const InitializerDictNode* op) {
-  runtime::Map<BaseExpr, BaseExpr> new_fields;
-  runtime::Array<BaseExpr> values;
+  Map<BaseExpr, BaseExpr> new_fields;
+  Array<BaseExpr> values;
   bool all_fields_unchanged = true;
   for (auto itr = op->fields.begin(); itr != op->fields.end(); ++itr) {
     auto new_key = VisitExpr((*itr).first);
@@ -538,7 +538,7 @@ HLOExpr ExprMutator::VisitExpr_(const HLOEnumerateNode* op) {
 }
 
 HLOExpr ExprMutator::VisitExpr_(const HLOZipNode* op) {
-  runtime::Array<BaseExpr> values;
+  Array<BaseExpr> values;
   bool all_fields_unchanged = true;
   for (auto value : op->values) {
     auto new_value = this->VisitExpr(value);
@@ -558,7 +558,7 @@ Type ExprMutator::VisitType(const Type& t) {
 
 // kernel or script
 HLOExpr ExprMutator::VisitExpr_(const TupleExprNode* op) {
-  runtime::Array<BaseExpr> fields;
+  Array<BaseExpr> fields;
   bool all_fields_unchanged = true;
   for (auto field : op->fields) {
     if (field->IsInstance<PrimExprNode>()) {

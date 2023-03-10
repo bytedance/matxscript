@@ -341,7 +341,7 @@ PrimExpr floordiv(PrimExpr a, PrimExpr b, Span span) {
   static auto op = Op::Get("ir.floordiv");
 
   if (is_both_int) {
-    runtime::Array<PrimExpr> args{a, b};
+    Array<PrimExpr> args{a, b};
     return PrimCall(DataType::Int(64), op, std::move(args), span);
   }
 
@@ -369,7 +369,7 @@ PrimExpr floormod(PrimExpr a, PrimExpr b, Span span) {
   static auto op = Op::Get("ir.floormod");
 
   if (is_both_int) {
-    runtime::Array<PrimExpr> args{a, b};
+    Array<PrimExpr> args{a, b};
     return PrimCall(DataType::Int(64), op, std::move(args), span);
   }
 

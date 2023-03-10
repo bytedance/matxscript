@@ -36,7 +36,10 @@ namespace ir {
 class DeepCmpSEqualHandler : public SEqualReducer::Handler {
  public:
   // use direct recursion.
-  bool SEqualReduce(const ObjectRef& lhs, const ObjectRef& rhs, bool map_free_vars) final {
+  bool SEqualReduce(const ObjectRef& lhs,
+                    const ObjectRef& rhs,
+                    bool map_free_vars,
+                    const Optional<ObjectPathPair>&) final {
     if (lhs.same_as(rhs))
       return true;
     if (!lhs.defined() && rhs.defined())
@@ -45,19 +48,27 @@ class DeepCmpSEqualHandler : public SEqualReducer::Handler {
       return false;
     if (lhs->type_index() != rhs->type_index())
       return false;
-    return vtable_->SEqualReduce(lhs.get(), rhs.get(), SEqualReducer(this, false));
+    return vtable_->SEqualReduce(lhs.get(), rhs.get(), SEqualReducer(this, nullptr, false)) &&
+           !fail_;
+  }
+
+  void DeferFail(const ObjectPathPair&) final {
+    fail_ = true;
+  }
+  bool IsFailDeferralEnabled() final {
+    return false;
   }
 
   ObjectRef MapLhsToRhs(const ObjectRef& lhs) final {
     return ObjectRef(nullptr);
   }
-
   void MarkGraphNode() final {
   }
 
  private:
   // reflection vtable
-  runtime::ReflectionVTable* vtable_ = runtime::ReflectionVTable::Global();
+  ReflectionVTable* vtable_ = ReflectionVTable::Global();
+  bool fail_ = false;
 };
 
 bool ExprDeepEqual::operator()(const PrimExpr& lhs, const PrimExpr& rhs) const {
@@ -74,7 +85,7 @@ bool ExprDeepEqual::operator()(const PrimExpr& lhs, const PrimExpr& rhs) const {
     auto* prhs = rhs.as<IntImmNode>();
     return plhs->dtype == prhs->dtype && plhs->value == prhs->value;
   }
-  return DeepCmpSEqualHandler().SEqualReduce(lhs, rhs, false);
+  return DeepCmpSEqualHandler().SEqualReduce(lhs, rhs, false, NullOpt);
 }
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.analysis.expr_deep_equal")

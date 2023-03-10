@@ -23,13 +23,13 @@
 #include <matxscript/ir/_base/string_ref.h>
 
 namespace matxscript {
-namespace runtime {
+namespace ir {
 
 bool ObjectEqual::operator()(const ObjectRef& a, const ObjectRef& b) const {
   if (a.same_as(b)) {
     return true;
   }
-  if (a->type_index_ != b->type_index_) {
+  if (a->type_index() != b->type_index()) {
     return false;
   }
   if (const auto* str_a = a.as<StringNode>()) {
@@ -40,5 +40,5 @@ bool ObjectEqual::operator()(const ObjectRef& a, const ObjectRef& b) const {
   return false;
 }
 
-}  // namespace runtime
+}  // namespace ir
 }  // namespace matxscript
