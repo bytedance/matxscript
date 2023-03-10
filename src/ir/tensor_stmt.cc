@@ -114,7 +114,7 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.Buffer").set_body([](PyArgs args) -> RTValue {
   auto buffer_type = args[8].As<StringRef>();
   BufferType type = (buffer_type == "auto_broadcast") ? kAutoBroadcast : kDefault;
   return Buffer(MATXSCRIPT_TYPE_AS(args[0], PrimVar),
-                MATXSCRIPT_TYPE_AS(args[1], runtime::DataType),
+                args[1].As<runtime::DataType>(),
                 MATXSCRIPT_TYPE_AS(args[2], Array<PrimExpr>),
                 MATXSCRIPT_TYPE_AS(args[3], Array<PrimExpr>),
                 MATXSCRIPT_TYPE_AS(args[4], PrimExpr),
