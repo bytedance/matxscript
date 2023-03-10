@@ -25,6 +25,7 @@
 
 #include <matxscript/ir/_base/cow_array_ref.h>
 #include <matxscript/ir/_base/cow_map_ref.h>
+#include <matxscript/ir/_base/object_path.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/data_type.h>
 #include <matxscript/runtime/functor.h>
@@ -64,19 +65,7 @@ class BaseValueEqual {
   bool operator()(const bool& lhs, const bool& rhs) const {
     return lhs == rhs;
   }
-  bool operator()(const std::string& lhs, const std::string& rhs) const {
-    return lhs == rhs;
-  }
-  bool operator()(runtime::string_view lhs, runtime::string_view rhs) const {
-    return lhs == rhs;
-  }
-  bool operator()(runtime::unicode_view lhs, runtime::unicode_view rhs) const {
-    return lhs == rhs;
-  }
   bool operator()(const runtime::String& lhs, const runtime::String& rhs) const {
-    return lhs == rhs;
-  }
-  bool operator()(const runtime::Unicode& lhs, const runtime::Unicode& rhs) const {
     return lhs == rhs;
   }
   bool operator()(const runtime::DataType& lhs, const runtime::DataType& rhs) const {
@@ -121,9 +110,6 @@ class StructuralEqual : public BaseValueEqual {
    * \return The comparison result.
    */
   MATX_DLL bool operator()(const ObjectRef& lhs, const ObjectRef& rhs) const;
-
-  // RTValue
-  MATX_DLL bool operator()(const runtime::RTValue& lhs, const runtime::RTValue& rhs) const;
 };
 
 /*!
@@ -134,7 +120,10 @@ class StructuralEqual : public BaseValueEqual {
  * equality checking. Instead, it can store the necessary equality conditions
  * and check later via an internally managed stack.
  */
-class SEqualReducer : public BaseValueEqual {
+class SEqualReducer {
+ private:
+  struct PathTracingData;
+
  public:
   /*! \brief Internal handler that defines custom behaviors.. */
   class Handler {
@@ -145,12 +134,33 @@ class SEqualReducer : public BaseValueEqual {
      * \param lhs The left operand.
      * \param rhs The right operand.
      * \param map_free_vars Whether do we allow remap variables if possible.
+     * \param current_paths Optional paths to `lhs` and `rhs` objects, for error traceability.
      *
      * \return false if there is an immediate failure, true otherwise.
      * \note This function may save the equality condition of (lhs == rhs) in an internal
      *       stack and try to resolve later.
      */
-    virtual bool SEqualReduce(const ObjectRef& lhs, const ObjectRef& rhs, bool map_free_vars) = 0;
+    virtual bool SEqualReduce(const ObjectRef& lhs,
+                              const ObjectRef& rhs,
+                              bool map_free_vars,
+                              const Optional<ObjectPathPair>& current_paths) = 0;
+
+    /*!
+     * \brief Mark the comparison as failed, but don't fail immediately.
+     *
+     * This is useful for producing better error messages when comparing containers.
+     * For example, if two array sizes mismatch, it's better to mark the comparison as failed
+     * but compare array elements anyway, so that we could find the true first mismatch.
+     */
+    virtual void DeferFail(const ObjectPathPair& mismatch_paths) = 0;
+
+    /*!
+     * \brief Check if fail defferal is enabled.
+     *
+     * \return false if the fail deferral is not enabled, true otherwise.
+     */
+    virtual bool IsFailDeferralEnabled() = 0;
+
     /*!
      * \brief Lookup the graph node equal map for vars that are already mapped.
      *
@@ -164,30 +174,73 @@ class SEqualReducer : public BaseValueEqual {
      * \brief Mark current comparison as graph node equal comparison.
      */
     virtual void MarkGraphNode() = 0;
-  };
 
-  using BaseValueEqual::operator();
+   protected:
+    using PathTracingData = SEqualReducer::PathTracingData;
+  };
 
   /*! \brief default constructor */
   SEqualReducer() = default;
   /*!
    * \brief Constructor with a specific handler.
    * \param handler The equal handler for objects.
+   * \param tracing_data Optional pointer to the path tracing data.
    * \param map_free_vars Whether or not to map free variables.
    */
-  explicit SEqualReducer(Handler* handler, bool map_free_vars)
-      : handler_(handler), map_free_vars_(map_free_vars) {
+  explicit SEqualReducer(Handler* handler, const PathTracingData* tracing_data, bool map_free_vars)
+      : handler_(handler), tracing_data_(tracing_data), map_free_vars_(map_free_vars) {
   }
+
+  /*!
+   * \brief Reduce condition to comparison of two attribute values.
+   * \param lhs The left operand.
+   * \param rhs The right operand.
+   * \return the immediate check result.
+   */
+  bool operator()(const double& lhs, const double& rhs) const;
+  bool operator()(const int64_t& lhs, const int64_t& rhs) const;
+  bool operator()(const uint64_t& lhs, const uint64_t& rhs) const;
+  bool operator()(const int& lhs, const int& rhs) const;
+  bool operator()(const bool& lhs, const bool& rhs) const;
+  bool operator()(const runtime::String& lhs, const runtime::String& rhs) const;
+  bool operator()(const runtime::DataType& lhs, const runtime::DataType& rhs) const;
+
+  template <typename ENum, typename = typename std::enable_if<std::is_enum<ENum>::value>::type>
+  bool operator()(const ENum& lhs, const ENum& rhs) const {
+    using Underlying = typename std::underlying_type<ENum>::type;
+    static_assert(std::is_same<Underlying, int>::value,
+                  "Enum must have `int` as the underlying type");
+    return EnumAttrsEqual(static_cast<int>(lhs), static_cast<int>(rhs), &lhs, &rhs);
+  }
+
   /*!
    * \brief Reduce condition to comparison of two objects.
    * \param lhs The left operand.
    * \param rhs The right operand.
    * \return the immediate check result.
    */
-  bool operator()(const ObjectRef& lhs, const ObjectRef& rhs) const {
-    return handler_->SEqualReduce(lhs, rhs, map_free_vars_);
+  bool operator()(const ObjectRef& lhs, const ObjectRef& rhs) const;
+
+  /*!
+   * \brief Reduce condition to comparison of two objects.
+   *
+   * Like `operator()`, but with an additional `paths` parameter that specifies explicit object
+   * paths for `lhs` and `rhs`. This is useful for implementing SEqualReduce() methods for container
+   * objects like Array and Map, or other custom objects that store nested objects that are not
+   * simply attributes.
+   *
+   * Can only be called when `IsPathTracingEnabled()` is `true`.
+   *
+   * \param lhs The left operand.
+   * \param rhs The right operand.
+   * \param paths Object paths for `lhs` and `rhs`.
+   * \return the immediate check result.
+   */
+  bool operator()(const ObjectRef& lhs, const ObjectRef& rhs, const ObjectPathPair& paths) const {
+    MXCHECK(IsPathTracingEnabled()) << "Path tracing must be enabled when calling this function";
+    return ObjectAttrsEqual(lhs, rhs, map_free_vars_, &paths);
   }
-  bool operator()(const runtime::RTValue& lhs, const runtime::RTValue& rhs) const;
+
   /*!
    * \brief Reduce condition to comparison of two definitions,
    *        where free vars can be mapped.
@@ -199,9 +252,8 @@ class SEqualReducer : public BaseValueEqual {
    * \param rhs The right operand.
    * \return the immediate check result.
    */
-  bool DefEqual(const ObjectRef& lhs, const ObjectRef& rhs) {
-    return handler_->SEqualReduce(lhs, rhs, true);
-  }
+  bool DefEqual(const ObjectRef& lhs, const ObjectRef& rhs);
+
   /*!
    * \brief Reduce condition to comparison of two arrays.
    * \param lhs The left operand.
@@ -210,15 +262,22 @@ class SEqualReducer : public BaseValueEqual {
    */
   template <typename T>
   bool operator()(const Array<T>& lhs, const Array<T>& rhs) const {
-    // quick specialization for Array to reduce amount of recursion
-    // depth as array comparison is pretty common.
-    if (lhs.size() != rhs.size())
-      return false;
-    for (size_t i = 0; i < lhs.size(); ++i) {
-      if (!(operator()(lhs[i], rhs[i])))
+    if (tracing_data_ == nullptr) {
+      // quick specialization for Array to reduce amount of recursion
+      // depth as array comparison is pretty common.
+      if (lhs.size() != rhs.size())
         return false;
+      for (size_t i = 0; i < lhs.size(); ++i) {
+        if (!(operator()(lhs[i], rhs[i])))
+          return false;
+      }
+      return true;
     }
-    return true;
+
+    // If tracing is enabled, fall back to the regular path
+    const ObjectRef& lhs_obj = lhs;
+    const ObjectRef& rhs_obj = rhs;
+    return (*this)(lhs_obj, rhs_obj);
   }
   /*!
    * \brief Implementation for equality rule of var type objects(e.g. TypeVar, tir::Var).
@@ -226,7 +285,7 @@ class SEqualReducer : public BaseValueEqual {
    * \param rhs The right operand.
    * \return the result.
    */
-  bool FreeVarEqualImpl(const Object* lhs, const Object* rhs) const {
+  bool FreeVarEqualImpl(const runtime::Object* lhs, const runtime::Object* rhs) const {
     // var need to be remapped, so it belongs to graph node.
     handler_->MarkGraphNode();
     // We only map free vars if they corresponds to the same address
@@ -239,11 +298,97 @@ class SEqualReducer : public BaseValueEqual {
     return handler_;
   }
 
+  /*! \brief Check if this reducer is tracing paths to the first mismatch. */
+  bool IsPathTracingEnabled() const {
+    return tracing_data_ != nullptr;
+  }
+
+  /*!
+   * \brief Get the paths of the currently compared objects.
+   *
+   * Can only be called when `IsPathTracingEnabled()` is true.
+   */
+  const ObjectPathPair& GetCurrentObjectPaths() const;
+
+  /*!
+   * \brief Specify the object paths of a detected mismatch.
+   *
+   * Can only be called when `IsPathTracingEnabled()` is true.
+   */
+  void RecordMismatchPaths(const ObjectPathPair& paths) const;
+
  private:
+  bool EnumAttrsEqual(int lhs, int rhs, const void* lhs_address, const void* rhs_address) const;
+
+  bool ObjectAttrsEqual(const ObjectRef& lhs,
+                        const ObjectRef& rhs,
+                        bool map_free_vars,
+                        const ObjectPathPair* paths) const;
+
+  static void GetPathsFromAttrAddressesAndStoreMismatch(const void* lhs_address,
+                                                        const void* rhs_address,
+                                                        const PathTracingData* tracing_data);
+
+  template <typename T>
+  static bool CompareAttributeValues(const T& lhs,
+                                     const T& rhs,
+                                     const PathTracingData* tracing_data);
+
   /*! \brief Internal class pointer. */
-  Handler* handler_;
+  Handler* handler_ = nullptr;
+  /*! \brief Pointer to the current path tracing context, or nullptr if path tracing is disabled. */
+  const PathTracingData* tracing_data_ = nullptr;
   /*! \brief Whether or not to map free vars. */
-  bool map_free_vars_;
+  bool map_free_vars_ = false;
+};
+
+/*! \brief The default handler for equality testing.
+ *
+ * Users can derive from this class and override the DispatchSEqualReduce method,
+ * to customize equality testing.
+ */
+class SEqualHandlerDefault : public SEqualReducer::Handler {
+ public:
+  SEqualHandlerDefault(bool assert_mode,
+                       Optional<ObjectPathPair>* first_mismatch,
+                       bool defer_fails);
+  virtual ~SEqualHandlerDefault();
+
+  bool SEqualReduce(const ObjectRef& lhs,
+                    const ObjectRef& rhs,
+                    bool map_free_vars,
+                    const Optional<ObjectPathPair>& current_paths) override;
+  void DeferFail(const ObjectPathPair& mismatch_paths) override;
+  bool IsFailDeferralEnabled() override;
+  ObjectRef MapLhsToRhs(const ObjectRef& lhs) override;
+  void MarkGraphNode() override;
+
+  /*!
+   * \brief The entry point for equality testing
+   * \param lhs The left operand.
+   * \param rhs The right operand.
+   * \param map_free_vars Whether or not to remap variables if possible.
+   * \return The equality result.
+   */
+  virtual bool Equal(const ObjectRef& lhs, const ObjectRef& rhs, bool map_free_vars);
+
+ protected:
+  /*!
+   * \brief The dispatcher for equality testing of intermediate objects
+   * \param lhs The left operand.
+   * \param rhs The right operand.
+   * \param map_free_vars Whether or not to remap variables if possible.
+   * \param current_paths Optional paths to `lhs` and `rhs` objects, for error traceability.
+   * \return The equality result.
+   */
+  virtual bool DispatchSEqualReduce(const ObjectRef& lhs,
+                                    const ObjectRef& rhs,
+                                    bool map_free_vars,
+                                    const Optional<ObjectPathPair>& current_paths);
+
+ private:
+  class Impl;
+  Impl* impl;
 };
 
 }  // namespace ir

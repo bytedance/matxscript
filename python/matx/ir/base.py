@@ -152,6 +152,36 @@ def structural_equal(lhs, rhs, map_free_vars=False):
     return bool(runtime.structrual_equal(lhs, rhs, False, map_free_vars))
 
 
+def get_first_structural_mismatch(lhs, rhs, map_free_vars=False):
+    """Like structural_equal(), but returns the ObjectPaths of the first detected mismatch.
+
+    Parameters
+    ----------
+    lhs : Object
+        The left operand.
+
+    rhs : Object
+        The left operand.
+
+    map_free_vars : bool
+        Whether free variables (i.e. variables without a definition site) should be mapped
+        as equal to each other.
+
+    Returns
+    -------
+    mismatch: Optional[Tuple[ObjectPath, ObjectPath]]
+        `None` if `lhs` and `rhs` are structurally equal.
+        Otherwise, a tuple of two ObjectPath objects that point to the first detected mismtach.
+    """
+    lhs = _to_ir(lhs)
+    rhs = _to_ir(rhs)
+    mismatch = _ffi_node_api.GetFirstStructuralMismatch(lhs, rhs, map_free_vars)  # type: ignore # pylint: disable=no-member
+    if mismatch is None:
+        return None
+    else:
+        return mismatch.lhs_path, mismatch.rhs_path
+
+
 def assert_structural_equal(lhs, rhs, map_free_vars=False):
     """Assert lhs and rhs are structurally equal to each other.
 

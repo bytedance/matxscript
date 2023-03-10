@@ -75,17 +75,8 @@ class AttrGetter : public AttrVisitor {
       *ret = value[0];
     }
   }
-  void Visit(const char* key, std::string* value) final {
-    if (skey == key)
-      *ret = String(value[0].data(), value[0].size());
-  }
 
   void Visit(const char* key, String* value) final {
-    if (skey == key)
-      *ret = value[0];
-  }
-
-  void Visit(const char* key, Unicode* value) final {
     if (skey == key)
       *ret = value[0];
   }
@@ -145,13 +136,7 @@ class AttrDir : public AttrVisitor {
   void Visit(const char* key, DataType* value) final {
     names->push_back(key);
   }
-  void Visit(const char* key, std::string* value) final {
-    names->push_back(key);
-  }
   void Visit(const char* key, String* value) final {
-    names->push_back(key);
-  }
-  void Visit(const char* key, Unicode* value) final {
     names->push_back(key);
   }
   void Visit(const char* key, NDArray* value) final {
@@ -205,14 +190,8 @@ class NodeAttrSetter : public AttrVisitor {
   void Visit(const char* key, bool* value) final {
     *value = GetAttr(key).As<bool>();
   }
-  void Visit(const char* key, std::string* value) final {
-    *value = GetAttr(key).As<String>();
-  }
   void Visit(const char* key, String* value) final {
     *value = GetAttr(key).As<String>();
-  }
-  void Visit(const char* key, Unicode* value) final {
-    *value = GetAttr(key).As<Unicode>();
   }
   void Visit(const char* key, void** value) final {
     *value = GetAttr(key).As<void*>();
@@ -310,5 +289,72 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.NodeGetAttr").set_body(NodeGetAttr);
 MATXSCRIPT_REGISTER_GLOBAL("runtime.NodeListAttrNames").set_body(NodeListAttrNames);
 
 MATXSCRIPT_REGISTER_GLOBAL("runtime.MakeNode").set_body(MakeNode);
+
+namespace {
+// Attribute visitor class for finding the attribute key by its address
+class GetAttrKeyByAddressVisitor : public AttrVisitor {
+ public:
+  explicit GetAttrKeyByAddressVisitor(const void* attr_address)
+      : attr_address_(attr_address), key_(nullptr) {
+  }
+
+  void Visit(const char* key, double* value) final {
+    DoVisit(key, value);
+  }
+  void Visit(const char* key, int64_t* value) final {
+    DoVisit(key, value);
+  }
+  void Visit(const char* key, uint64_t* value) final {
+    DoVisit(key, value);
+  }
+  void Visit(const char* key, int* value) final {
+    DoVisit(key, value);
+  }
+  void Visit(const char* key, bool* value) final {
+    DoVisit(key, value);
+  }
+  void Visit(const char* key, runtime::String* value) final {
+    DoVisit(key, value);
+  }
+  void Visit(const char* key, void** value) final {
+    DoVisit(key, value);
+  }
+  void Visit(const char* key, DataType* value) final {
+    DoVisit(key, value);
+  }
+  void Visit(const char* key, runtime::NDArray* value) final {
+    DoVisit(key, value);
+  }
+  void Visit(const char* key, runtime::ObjectRef* value) final {
+    DoVisit(key, value);
+  }
+
+  const char* GetKey() const {
+    return key_;
+  }
+
+ private:
+  const void* attr_address_;
+  const char* key_;
+
+  void DoVisit(const char* key, const void* candidate) {
+    if (attr_address_ == candidate) {
+      key_ = key;
+    }
+  }
+};
+}  // anonymous namespace
+
+Optional<StringRef> GetAttrKeyByAddress(const Object* object, const void* attr_address) {
+  GetAttrKeyByAddressVisitor visitor(attr_address);
+  ReflectionVTable::Global()->VisitAttrs(const_cast<Object*>(object), &visitor);
+  const char* key = visitor.GetKey();
+  if (key == nullptr) {
+    return NullOpt;
+  } else {
+    return StringRef(key);
+  }
+}
+
 }  // namespace ir
 }  // namespace matxscript
