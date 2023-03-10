@@ -26,6 +26,7 @@ from .. import runtime
 from ..runtime import Object
 from ._converter import to_ir_object as _to_ir
 from . import _ffi_api
+from . import _ffi_node_api
 
 
 class Node(Object):
@@ -175,7 +176,7 @@ def get_first_structural_mismatch(lhs, rhs, map_free_vars=False):
     """
     lhs = _to_ir(lhs)
     rhs = _to_ir(rhs)
-    mismatch = _ffi_node_api.GetFirstStructuralMismatch(lhs, rhs, map_free_vars)  # type: ignore # pylint: disable=no-member
+    mismatch = _ffi_node_api.GetFirstStructuralMismatch(lhs, rhs, map_free_vars)
     if mismatch is None:
         return None
     else:
