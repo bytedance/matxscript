@@ -150,7 +150,7 @@ def structural_equal(lhs, rhs, map_free_vars=False):
     """
     lhs = _to_ir(lhs)
     rhs = _to_ir(rhs)
-    return bool(runtime.structrual_equal(lhs, rhs, False, map_free_vars))
+    return bool(_ffi_node_api.structrual_equal(lhs, rhs, False, map_free_vars))
 
 
 def get_first_structural_mismatch(lhs, rhs, map_free_vars=False):
@@ -208,7 +208,7 @@ def assert_structural_equal(lhs, rhs, map_free_vars=False):
     """
     lhs = _to_ir(lhs)
     rhs = _to_ir(rhs)
-    runtime.structrual_equal(lhs, rhs, True, map_free_vars)
+    _ffi_node_api.structrual_equal(lhs, rhs, True, map_free_vars)
 
 
 def structural_hash(node, map_free_vars=False):
@@ -250,7 +250,7 @@ def structural_hash(node, map_free_vars=False):
     --------
     structrual_equal
     """
-    return runtime.structural_hash(node, map_free_vars)
+    return _ffi_node_api.structural_hash(node, map_free_vars)
 
 
 class BaseExpr(Node):
