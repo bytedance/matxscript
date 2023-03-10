@@ -42,4 +42,3 @@ from .container import RTValueGenerator
 from .trie import Trie
 from .module import load_module, system_lib
 from . import _ffi_api
-from ._ffi_funcs import structrual_equal, structural_hash

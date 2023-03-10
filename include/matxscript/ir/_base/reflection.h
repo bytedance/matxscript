@@ -54,9 +54,7 @@ class AttrVisitor {
   MATX_DLL virtual void Visit(const char* key, uint64_t* value) = 0;
   MATX_DLL virtual void Visit(const char* key, int* value) = 0;
   MATX_DLL virtual void Visit(const char* key, bool* value) = 0;
-  MATX_DLL virtual void Visit(const char* key, std::string* value) = 0;
   MATX_DLL virtual void Visit(const char* key, runtime::String* value) = 0;
-  MATX_DLL virtual void Visit(const char* key, runtime::Unicode* value) = 0;
   MATX_DLL virtual void Visit(const char* key, void** value) = 0;
   MATX_DLL virtual void Visit(const char* key, runtime::DataType* value) = 0;
   MATX_DLL virtual void Visit(const char* key, runtime::NDArray* value) = 0;
@@ -413,6 +411,12 @@ inline bool ReflectionVTable::GetReprBytes(const Object* self, runtime::String* 
     return false;
   }
 }
+
+/*!
+ * \brief Given an object and an address of its attribute, return the key of the attribute.
+ * \return nullptr if no attribute with the given address exists.
+ */
+Optional<StringRef> GetAttrKeyByAddress(const Object* object, const void* attr_address);
 
 }  // namespace ir
 }  // namespace matxscript

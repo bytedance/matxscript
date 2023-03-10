@@ -26,6 +26,7 @@ from .. import runtime
 from ..runtime import Object
 from ._converter import to_ir_object as _to_ir
 from . import _ffi_api
+from . import _ffi_node_api
 
 
 class Node(Object):
@@ -149,7 +150,37 @@ def structural_equal(lhs, rhs, map_free_vars=False):
     """
     lhs = _to_ir(lhs)
     rhs = _to_ir(rhs)
-    return bool(runtime.structrual_equal(lhs, rhs, False, map_free_vars))
+    return bool(_ffi_node_api.StructuralEqual(lhs, rhs, False, map_free_vars))
+
+
+def get_first_structural_mismatch(lhs, rhs, map_free_vars=False):
+    """Like structural_equal(), but returns the ObjectPaths of the first detected mismatch.
+
+    Parameters
+    ----------
+    lhs : Object
+        The left operand.
+
+    rhs : Object
+        The left operand.
+
+    map_free_vars : bool
+        Whether free variables (i.e. variables without a definition site) should be mapped
+        as equal to each other.
+
+    Returns
+    -------
+    mismatch: Optional[Tuple[ObjectPath, ObjectPath]]
+        `None` if `lhs` and `rhs` are structurally equal.
+        Otherwise, a tuple of two ObjectPath objects that point to the first detected mismtach.
+    """
+    lhs = _to_ir(lhs)
+    rhs = _to_ir(rhs)
+    mismatch = _ffi_node_api.GetFirstStructuralMismatch(lhs, rhs, map_free_vars)
+    if mismatch is None:
+        return None
+    else:
+        return mismatch.lhs_path, mismatch.rhs_path
 
 
 def assert_structural_equal(lhs, rhs, map_free_vars=False):
@@ -177,7 +208,7 @@ def assert_structural_equal(lhs, rhs, map_free_vars=False):
     """
     lhs = _to_ir(lhs)
     rhs = _to_ir(rhs)
-    runtime.structrual_equal(lhs, rhs, True, map_free_vars)
+    _ffi_node_api.StructuralEqual(lhs, rhs, True, map_free_vars)
 
 
 def structural_hash(node, map_free_vars=False):
@@ -219,7 +250,7 @@ def structural_hash(node, map_free_vars=False):
     --------
     structrual_equal
     """
-    return runtime.structural_hash(node, map_free_vars)
+    return _ffi_node_api.StructuralHash(node, map_free_vars)
 
 
 class BaseExpr(Node):

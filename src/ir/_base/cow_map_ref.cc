@@ -51,10 +51,10 @@ struct MapNodeTrait {
     // This resolves common use cases where we want to store
     // Map<Var, Value> where Var is defined in the function
     // parameters.
-    using KV = std::pair<size_t, ObjectRef>;
+    using KV = std::pair<uint64_t, ObjectRef>;
     std::vector<KV> temp;
     for (const auto& kv : *key) {
-      size_t hashed_value;
+      uint64_t hashed_value;
       if (hash_reduce->LookupHashedValue(kv.first, &hashed_value)) {
         temp.emplace_back(hashed_value, kv.second);
       }
@@ -70,7 +70,7 @@ struct MapNodeTrait {
       size_t k = i + 1;
       for (; k < temp.size() && temp[k].first == temp[i].first; ++k) {
       }
-      // ties are rare, but we need to skip them to make the hash determinsitic
+      // ties are rare, but we need to skip them to make the hash deterministic
       if (k == i + 1) {
         hash_reduce->SHashReduceHashedValue(temp[i].first);
         hash_reduce(temp[i].second);
@@ -143,17 +143,111 @@ struct MapNodeTrait {
     return true;
   }
 
+  static bool IsStringMap(const MapNode* map) {
+    return std::all_of(map->begin(), map->end(), [](const auto& v) {
+      return v.first->template IsInstance<StringNode>();
+    });
+  }
+
+  static bool SEqualReduceTracedForOMap(const MapNode* lhs,
+                                        const MapNode* rhs,
+                                        const SEqualReducer& equal) {
+    const ObjectPathPair& map_paths = equal.GetCurrentObjectPaths();
+
+    std::vector<const Object*> seen_rhs_keys;
+
+    // First, check that every key from `lhs` is also in `rhs`,
+    // and their values are mapped to each other.
+    for (const auto& kv : *lhs) {
+      ObjectPath lhs_path = map_paths->lhs_path->MapValue(kv.first);
+
+      ObjectRef rhs_key = equal->MapLhsToRhs(kv.first);
+      if (!rhs_key.defined()) {
+        equal.RecordMismatchPaths({lhs_path, map_paths->rhs_path->MissingMapEntry()});
+        return false;
+      }
+
+      auto it = rhs->find(rhs_key);
+      if (it == rhs->end()) {
+        equal.RecordMismatchPaths({lhs_path, map_paths->rhs_path->MissingMapEntry()});
+        return false;
+      }
+
+      if (!equal(kv.second, it->second, {lhs_path, map_paths->rhs_path->MapValue(it->first)})) {
+        return false;
+      }
+
+      seen_rhs_keys.push_back(it->first.get());
+    }
+
+    std::sort(seen_rhs_keys.begin(), seen_rhs_keys.end());
+
+    // Second, check that we have visited every `rhs` key when iterating over `lhs`.
+    for (const auto& kv : *rhs) {
+      if (!std::binary_search(seen_rhs_keys.begin(), seen_rhs_keys.end(), kv.first.get())) {
+        equal.RecordMismatchPaths(
+            {map_paths->lhs_path->MissingMapEntry(), map_paths->rhs_path->MapValue(kv.first)});
+        return false;
+      }
+    }
+
+    MXCHECK(lhs->size() == rhs->size());
+    return true;
+  }
+
+  static bool SEqualReduceTracedForSMap(const MapNode* lhs,
+                                        const MapNode* rhs,
+                                        const SEqualReducer& equal) {
+    const ObjectPathPair& map_paths = equal.GetCurrentObjectPaths();
+
+    // First, check that every key from `lhs` is also in `rhs`, and their values are equal.
+    for (const auto& kv : *lhs) {
+      ObjectPath lhs_path = map_paths->lhs_path->MapValue(kv.first);
+      auto it = rhs->find(kv.first);
+      if (it == rhs->end()) {
+        equal.RecordMismatchPaths({lhs_path, map_paths->rhs_path->MissingMapEntry()});
+        return false;
+      }
+
+      if (!equal(kv.second, it->second, {lhs_path, map_paths->rhs_path->MapValue(it->first)})) {
+        return false;
+      }
+    }
+
+    // Second, make sure every key from `rhs` is also in `lhs`.
+    for (const auto& kv : *rhs) {
+      ObjectPath rhs_path = map_paths->rhs_path->MapValue(kv.first);
+      if (!lhs->count(kv.first)) {
+        equal.RecordMismatchPaths({map_paths->lhs_path->MissingMapEntry(), rhs_path});
+        return false;
+      }
+    }
+
+    MXCHECK(lhs->size() == rhs->size());
+    return true;
+  }
+
+  static bool SEqualReduceTraced(const MapNode* lhs,
+                                 const MapNode* rhs,
+                                 const SEqualReducer& equal) {
+    if (IsStringMap(lhs)) {
+      return SEqualReduceTracedForSMap(lhs, rhs, equal);
+    } else {
+      return SEqualReduceTracedForOMap(lhs, rhs, equal);
+    }
+  }
+
   static bool SEqualReduce(const MapNode* lhs, const MapNode* rhs, SEqualReducer equal) {
+    if (equal.IsPathTracingEnabled()) {
+      return SEqualReduceTraced(lhs, rhs, equal);
+    }
+
     if (rhs->size() != lhs->size())
       return false;
     if (rhs->size() == 0)
       return true;
-    bool ls = std::all_of(lhs->begin(), lhs->end(), [](const auto& v) {
-      return v.first->template IsInstance<StringNode>();
-    });
-    bool rs = std::all_of(rhs->begin(), rhs->end(), [](const auto& v) {
-      return v.first->template IsInstance<StringNode>();
-    });
+    bool ls = IsStringMap(lhs);
+    bool rs = IsStringMap(rhs);
     if (ls != rs) {
       return false;
     }
