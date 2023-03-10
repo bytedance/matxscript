@@ -197,8 +197,8 @@ static runtime::RTValue TryFusedNDArrayGetItem(BaseExpr container, BaseExpr inde
       } else {
         MXTHROW << "[__getitem__] key must be int type";
       }
-      Array<BaseExpr> new_args = {
-          HLOCastPrim(runtime::DataType(kDLInt, 64, 1), call_node->args[1]), std::move(index)};
+      Array<BaseExpr> new_args = {HLOCastPrim(runtime::DataType(kDLInt, 64, 1), call_node->args[1]),
+                                  std::move(index)};
       InitializerList call_args(std::move(new_args));
       return Call(ObjectType(),
                   builtin::ndarray_fused_getitem(),
@@ -236,8 +236,8 @@ static runtime::RTValue TryFusedNDArraySetItem(BaseExpr container, BaseExpr inde
       } else {
         MXTHROW << "[__getitem__] key must be int type";
       }
-      Array<BaseExpr> new_args = {
-          HLOCastPrim(runtime::DataType(kDLInt, 64, 1), call_node->args[1]), std::move(index)};
+      Array<BaseExpr> new_args = {HLOCastPrim(runtime::DataType(kDLInt, 64, 1), call_node->args[1]),
+                                  std::move(index)};
       InitializerList call_args(std::move(new_args));
       return Call(ObjectType(),
                   builtin::ndarray_fused_setitem(),
