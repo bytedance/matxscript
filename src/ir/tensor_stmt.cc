@@ -118,7 +118,7 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.Buffer").set_body([](PyArgs args) -> RTValue {
                 MATXSCRIPT_TYPE_AS(args[2], Array<PrimExpr>),
                 MATXSCRIPT_TYPE_AS(args[3], Array<PrimExpr>),
                 MATXSCRIPT_TYPE_AS(args[4], PrimExpr),
-                args[5].AsObjectRef<StringRef>(),
+                args[5].As<runtime::String>(),
                 MATXSCRIPT_TYPE_AS(args[6], int),
                 MATXSCRIPT_TYPE_AS(args[7], int),
                 type,
