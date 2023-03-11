@@ -365,7 +365,7 @@ class PrimIterVar(Object, ExprOp):
                 var.dtype == dom.stop.dtype
             ), "PrimIterVar's Var dtype must match its domain's dtype"
         self.__init_handle_by_constructor__(
-            _ffi_api.IterVar, dom, var, span  # type: ignore
+            _ffi_api.PrimIterVar, dom, var, span  # type: ignore
         )
 
 
