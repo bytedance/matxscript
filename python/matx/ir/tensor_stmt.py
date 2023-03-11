@@ -147,7 +147,7 @@ def decl_buffer(
         _to_ir(shape),
         _to_ir(strides),
         elem_offset,
-        name,
+        _to_ir(name),
         data_alignment,
         offset_factor,
         buffer_type,
