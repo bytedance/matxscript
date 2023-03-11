@@ -31,6 +31,7 @@ from .type import PointerType, PrimType
 
 from ..runtime import Object
 from . import _ffi_api, const
+from ._converter import to_ir_object as _to_ir
 
 
 @_ffi.register_object("ir.Buffer")
@@ -139,18 +140,18 @@ def decl_buffer(
         # Bool is represented as uint1 in the IR, but stored as int8
         storage_type = PrimType(dtype)
         storage_type = PrimType("int8") if storage_type.dtype == "bool" else storage_type
-        data = PrimVar(name, PointerType(storage_type, scope), span)
+        data = PrimVar(name, PointerType(storage_type), span)
     return _ffi_api.Buffer(  # type: ignore
         data,
         dtype,
-        shape,
-        strides,
+        _to_ir(shape),
+        _to_ir(strides),
         elem_offset,
-        name,
+        _to_ir(name),
         data_alignment,
         offset_factor,
         buffer_type,
-        axis_separators,
+        _to_ir(axis_separators),
         span,
     )
 
