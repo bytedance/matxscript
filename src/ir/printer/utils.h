@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-#include "ir_docsifier.h"
+#include <matxscript/ir/printer/text_printer.h>
 
 #include <matxscript/ir/_base/string_ref.h>
 #include <matxscript/runtime/str_escape.h>

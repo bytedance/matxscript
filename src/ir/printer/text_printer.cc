@@ -19,7 +19,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <matxscript/ir/_base/text_printer.h>
+#include <matxscript/ir/printer/text_printer.h>
 
 #include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/prim_expr.h>

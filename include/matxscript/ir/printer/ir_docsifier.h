@@ -24,10 +24,9 @@
 #include <matxscript/runtime/object.h>
 
 #include <matxscript/ir/_base/string_ref.h>
-#include <matxscript/ir/_base/text_printer.h>
-
-#include "doc.h"
-#include "ir_docsifier_functor.h"
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier_functor.h>
+#include <matxscript/ir/printer/text_printer.h>
 
 #include <unordered_map>
 #include <unordered_set>
