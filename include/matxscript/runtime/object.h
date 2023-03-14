@@ -789,6 +789,30 @@ struct ObjectPtrEqual {
   }                                                                                             \
   using ContainerType = ObjectName;
 
+/*
+ * \brief Define object reference methods that is both not nullable and mutable.
+ *
+ * \param TypeName The object type name
+ * \param ParentType The parent type of the objectref
+ * \param ObjectName The type name of the object.
+ */
+#define MATXSCRIPT_DEFINE_MUTABLE_NOTNULLABLE_OBJECT_REF_METHODS(TypeName, ParentType, ObjectName) \
+  TypeName(const TypeName& other) noexcept = default;                                              \
+  TypeName(TypeName&& other) noexcept = default;                                                   \
+  TypeName& operator=(const TypeName& other) noexcept = default;                                   \
+  TypeName& operator=(TypeName&& other) noexcept = default;                                        \
+  explicit TypeName(::matxscript::runtime::ObjectPtr<::matxscript::runtime::Object> n) noexcept    \
+      : ParentType(std::move(n)) {                                                                 \
+  }                                                                                                \
+  ObjectName* operator->() const {                                                                 \
+    return static_cast<ObjectName*>(data_.get());                                                  \
+  }                                                                                                \
+  ObjectName* get() const {                                                                        \
+    return operator->();                                                                           \
+  }                                                                                                \
+  static constexpr bool _type_is_nullable = false;                                                 \
+  using ContainerType = ObjectName;
+
 /*!
  * \brief Define CopyOnWrite function in an ObjectRef.
  * \param ObjectName The Type of the Node.

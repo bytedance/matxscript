@@ -19,4 +19,4 @@
 #   */
 
 
-from .repository import OpReplacementRepo
+from .registry import OpRegistry

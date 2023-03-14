@@ -42,7 +42,7 @@ def _get_all_bases(class_or_name: Union[str, Type]) -> Set[str]:
     return classes  # todo keep orders
 
 
-class OpReplacementRepo:
+class OpRegistry:
     _bin_op_repo: Dict[Tuple[str, str, str], MethodType] = {}
     _unary_op_repo: Dict[Tuple[str, str], MethodType] = {}
     _universal_func_repo: Dict[str, MethodType] = {}
