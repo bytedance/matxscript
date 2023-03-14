@@ -46,6 +46,14 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(builtins, sorted)
     .add_argument("key", "any_view|Any", "")
     .add_argument("reverse", "bool", "");
 
+MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(builtins, iter)
+    .set_num_inputs(1)
+    .add_argument("iterable", "List", "");
+
+MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(builtins, reversed)
+    .set_num_inputs(1)
+    .add_argument("iterable", "List", "");
+
 MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(builtins, unpack)
     .set_num_inputs(1)
     .add_argument("container", "any_view", "");
