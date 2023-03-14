@@ -73,12 +73,15 @@ static std::unique_ptr<std::shared_ptr<void>[]> createDefaultCUDAStreams() {
   // Inits default streams (once, globally)
   std::call_once(init_flag, initGlobalStreamState);
 
+  int prev_device = current_device();
   // Inits current streams (thread local) to default streams
   auto streams = std::make_unique<std::shared_ptr<void>[]>(num_gpus);
   for (int i = 0; i < num_gpus; ++i) {
     streams[i] =
         std::shared_ptr<void>(create_stream(i), [i](void* stream) { free_stream(i, stream); });
   }
+
+  MATXSCRIPT_CUDA_CALL(cudaSetDevice(prev_device));
   return streams;
 }
 
