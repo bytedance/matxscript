@@ -19,7 +19,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "ir_docsifier.h"
+#include <matxscript/ir/printer/ir_docsifier.h>
 
 #include <matxscript/runtime/logging.h>
 #include <matxscript/runtime/registry.h>

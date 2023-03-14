@@ -21,9 +21,8 @@
  */
 #pragma once
 
-#include "../doc.h"
-
-#include <matxscript/ir/_base/text_printer.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/text_printer.h>
 
 #include <limits>
 #include <memory>

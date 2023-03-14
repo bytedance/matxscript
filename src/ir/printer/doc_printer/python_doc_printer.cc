@@ -23,7 +23,7 @@
 #include <matxscript/runtime/registry.h>
 #include <matxscript/runtime/str_escape.h>
 
-#include "../doc.h"
+#include <matxscript/ir/printer/doc.h>
 
 #include <algorithm>
 #include <cmath>
