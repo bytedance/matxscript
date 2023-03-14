@@ -1,29 +1,30 @@
-#  // Copyright 2023 ByteDance Ltd. and/or its affiliates.
-#  /*
-#   * Licensed to the Apache Software Foundation (ASF) under one
-#   * or more contributor license agreements.  See the NOTICE file
-#   * distributed with this work for additional information
-#   * regarding copyright ownership.  The ASF licenses this file
-#   * to you under the Apache License, Version 2.0 (the
-#   * "License"); you may not use this file except in compliance
-#   * with the License.  You may obtain a copy of the License at
-#   *
-#   *   http://www.apache.org/licenses/LICENSE-2.0
-#   *
-#   * Unless required by applicable law or agreed to in writing,
-#   * software distributed under the License is distributed on an
-#   * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-#   * KIND, either express or implied.  See the License for the
-#   * specific language governing permissions and limitations
-#   * under the License.
-#   */
+
+
+#  Copyright 2023 ByteDance Ltd. and/or its affiliates.
+#
+#  Licensed to the Apache Software Foundation (ASF) under one
+#  or more contributor license agreements.  See the NOTICE file
+#  distributed with this work for additional information
+#  regarding copyright ownership.  The ASF licenses this file
+#  to you under the Apache License, Version 2.0 (the
+#  "License"); you may not use this file except in compliance
+#  with the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing,
+#  software distributed under the License is distributed on an
+#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+#  KIND, either express or implied.  See the License for the
+#  specific language governing permissions and limitations
+#  under the License.
 
 import ast
 import inspect
 import numbers
 from typing import Any, List
 
-from .ops import OpReplacementRepo
+from .ops import OpRegistry
 from .symbol import is_symbol
 from .. import ir as _ir
 from ..ir import type_inference as _type_infer
@@ -59,9 +60,9 @@ class KernelParser:
     def __init__(self, func):
         self.func = func
         self.func_name = func.__name__
+        self.file_name = inspect.getfile(func)
         # get args
         self.signature = inspect.signature(func)
-        self.file_name = inspect.getfile(func)
         self.args = {k: v.annotation for k, v in self.signature.parameters.items()}
         # get return type
         self.return_types = self.signature.return_annotation
@@ -86,9 +87,12 @@ class KernelParser:
             mdo_anls.run(sc_ctx)
 
         fn_context = context.FunctionContext()
+        # todo support default args
         fn_context.arg_defaults = []
         fn_context.arg_names = list(self.args.keys())
+        # todo support args_reassigns
         fn_context.arg_reassigns = {k: False for k in self.args.keys()}
+        # todo support types other than ndarry
         fn_context.arg_types = {k: ndarrayType_to_ndarray(v) for k, v in self.args.items()}
         fn_context.fn_name = self.func_name
         # context.fn_type = None
@@ -97,7 +101,8 @@ class KernelParser:
         fn_context.unbound_name = self.func_name
         sc_ctx.main_node.context = fn_context
 
-        sc_ctx.main_node.ir_schema = _ir.FuncType(list(fn_context.arg_types.values()), fn_context.return_type)
+        sc_ctx.main_node.ir_schema = _ir.FuncType(
+            list(fn_context.arg_types.values()), fn_context.return_type)
 
         def parser_node(node: context.ASTNode):
             node.ir = KernelNodeVisitor(self, node, sc_ctx).visit(node.ast)
@@ -106,14 +111,29 @@ class KernelParser:
         parser_node(sc_ctx.main_node)
 
 
+class NDArrayContext:
+    def __init__(self, name, type_, span):
+        self.name = name
+        self.type = type_
+        self.ndarray_var = None
+        self.data_var = None
+        self.buffer = None
+
+
 class KernelNodeVisitor(ast.NodeVisitor):
-    def __init__(self, kernel_p: KernelParser, node: context.ASTNode, sc_ctx: context.ScriptContext):
+    def __init__(
+            self,
+            kernel_p: KernelParser,
+            node: context.ASTNode,
+            sc_ctx: context.ScriptContext):
         self.kernel_p = kernel_p
         self.custom_ast_node = node
         self.sc_ctx = sc_ctx
         self.fn_ctx = node.context
         self.context = None
         self.session_handle_var_ctx = []
+        self.buffer_table = {}
+        self.return_buffer = None
 
     def build_span(self, node):
         root_span = self.custom_ast_node.span
@@ -178,9 +198,13 @@ class KernelNodeVisitor(ast.NodeVisitor):
         span = self.build_span(node)
         # add parameters of function
         for arg, type_annotation in self.kernel_p.args.items():
-            arg_var = decl_buffer((1, 1))
-            self.context.update_symbol(arg.arg, arg_var)
+            arg_var = _ir.PrimVar(arg, self.kernel_p.args[arg].dtype_str(), span)
+            self.context.update_symbol(arg, arg_var)
             self.context.func_params.append(arg_var)
+            self.buffer_table[arg] = decl_buffer((10,))
+
+        return_type = decl_buffer((10,))
+        self.return_buffer = return_type
 
         # append session_pointer_var
         pointer_var_name = "handle_2_71828182846"
@@ -195,13 +219,13 @@ class KernelNodeVisitor(ast.NodeVisitor):
 
         body_stmts = self.parse_body(True)
 
-        return_type = decl_buffer((1, 1))
-
         func = _ir.Function(
             self.context.func_params,
-            [],
+            # [HLOVar(x, ty=ObjectTypeNode), HLOVar(y, ty=ObjectTypeNode), handle_2_71828182846]
+            [],  # [_ir.PrimCast("handle", _ir.const(0))],
             self.to_seq_stmt(body_stmts, span),
-            ret_type=return_type,
+            # [CallNode(Op(ir.nd_module_add), [HLOVar(x, ty=ObjectTypeNode), HLOVar(y, ty=ObjectTypeNode)], []) -> NDArrayType]
+            ret_type=ndarrayType_to_ndarray(return_type),  # NDArray[ndim=?, dtype=?]
             span=span
         )
         self.pop_handle_var()
@@ -221,9 +245,8 @@ class KernelNodeVisitor(ast.NodeVisitor):
         name = node.id
         if name in self.kernel_p.symbols:
             return name
-        if name in self.kernel_p.args.keys:
+        if name in self.kernel_p.args.keys():
             return name
-        print("visit_Name", node.id)
         return node.id
 
     # Expressions
@@ -238,14 +261,21 @@ class KernelNodeVisitor(ast.NodeVisitor):
         # todo finish
 
     def visit_BinOp(self, node: ast.BinOp) -> Any:
-        print("visit_BinOp", type(node.op))
         opname = type(node.op).__name__
         lhs = self.visit(node.left)
         rhs = self.visit(node.right)
         lhs_t = self._get_type(lhs)
         rhs_t = self._get_type(rhs)
 
-        op_func = OpReplacementRepo.get_bin_operator(lhs_t, rhs_t, opname)
+        op_func = OpRegistry.get_bin_operator(lhs_t, rhs_t, opname)
+        return op_func(
+            self.context.symbols[0][lhs],
+            self.context.symbols[0][rhs],
+            self.buffer_table[lhs],
+            self.buffer_table[rhs],
+            self.return_buffer,
+            lhs_t,
+            rhs_t)
         # todo insert to ir
 
     def visit_BoolOp(self, node: ast.BoolOp) -> Any:
@@ -301,17 +331,22 @@ class KernelNodeVisitor(ast.NodeVisitor):
         pass
 
     def visit_Return(self, node: ast.Return) -> Any:
+        # for now kernel does not return anything.
         if node.value is None:
             rt_expr = _type_rel.smart_adapt_to(_ir.NoneExpr(), self.context.func_ret_type)
             return _ir.ReturnStmt(rt_expr)
-        # todo check none return?
+        span = self.build_span(node)
         rt_expr = self.visit(node.value)
+        if isinstance(rt_expr, tuple):
+            raise SyntaxError("returning tuple is not support")
+        # todo return type conversion
+        return _ir.ReturnStmt(None, span)
 
     def _get_type(self, operand):
-        if isinstance(operand, str) and operand in self.sdfg.arrays:
-            result = type(self.sdfg.arrays[operand])
-        elif isinstance(operand, str) and operand in self.scope_arrays:
-            result = type(self.scope_arrays[operand])
+        if isinstance(operand, str) and operand in self.kernel_p.args.keys():
+            result = self.kernel_p.args[operand]
+        # elif isinstance(operand, str) and operand in self.scope_arrays:
+        #    result = type(self.scope_arrays[operand])
         # elif isinstance(operand, tuple(dtypes.DTYPE_TO_TYPECLASS.keys())):
         #    if isinstance(operand, (bool, numpy.bool_)):
         #        result.append((operand, 'BoolConstant'))
@@ -320,5 +355,6 @@ class KernelNodeVisitor(ast.NodeVisitor):
         # elif isinstance(operand, sympy.Basic):
         #    result.append((operand, 'symbol'))
         else:
-            result = type(operand)
+            raise SyntaxError("unable to find the type of", operand)
+            # result = type(operand)
         return result
