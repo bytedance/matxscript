@@ -21,6 +21,7 @@ from typing import List, Dict, Set, Tuple
 from typing import Any
 import unittest
 import matx
+import traceback
 
 
 class TestIterator(unittest.TestCase):
@@ -63,6 +64,58 @@ class TestIterator(unittest.TestCase):
 
         matx.script(tuple_iter)(("hello", "hello"))
         matx.script(generic_tuple_iter)(("hello", "hello"))
+
+    def test_list_builtin_iter(self):
+        def builtin_list_iter(li: List) -> List:
+            new_list = []
+            for l in iter(li):
+                new_list.append(l)
+            return new_list
+
+        original_list = [1, 2, 3, 4, 5]
+        python_iter_result = builtin_list_iter(original_list)
+        matx_iter_result = matx.script(builtin_list_iter)(original_list)
+        self.assertListEqual(python_iter_result, list(matx_iter_result))
+
+    def test_list_reversed_iter(self):
+        def builtin_list_reversed(li: List) -> List:
+            new_list = []
+            for l in reversed(li):
+                new_list.append(l)
+            return new_list
+
+        original_list = [1, 2, 3, 4, 5]
+        python_reversed_result = builtin_list_reversed(original_list)
+        matx_reversed_result = matx.script(builtin_list_reversed)(original_list)
+        self.assertListEqual(python_reversed_result, list(matx_reversed_result))
+
+    # tuple's iter is not implemented
+    def test_tuple_iter_exception(self):
+        def builtin_tuple_iter(li: Tuple[int, int]) -> List:
+            new_list = []
+            for l in iter(li):
+                new_list.append(l)
+            return new_list
+
+        original_tuple = (1, 2)
+        try:
+            matx_iter_result = matx.script(builtin_tuple_iter)(original_tuple)
+        except Exception as e:
+            traceback.print_exc()
+
+    # tuple's reversed is not implemented
+    def test_tuple_reversed_exception(self):
+        def builtin_tuple_reversed(li: Tuple[int, int]) -> List:
+            new_list = []
+            for l in reversed(li):
+                new_list.append(l)
+            return new_list
+
+        original_tuple = (1, 2)
+        try:
+            matx_reversed_result = matx.script(builtin_tuple_reversed)(original_tuple)
+        except Exception as e:
+            traceback.print_exc()
 
 
 if __name__ == "__main__":

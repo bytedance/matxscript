@@ -2415,6 +2415,14 @@ RTValue kernel_builtins_sorted(const Any& iterable, const Any& key, bool reverse
   }
 }
 
+Iterator kernel_builtins_iter(const List& iterable) {
+  return List::builtins_iter(iterable);
+}
+
+Iterator kernel_builtins_reversed(const List& iterable) {
+  return List::builtins_reversed(iterable);
+}
+
 /******************************************************************************
  * python builtin modules and functions
  *

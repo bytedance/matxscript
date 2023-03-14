@@ -2528,6 +2528,40 @@ def builtins_sorted(span, iterable, key=None, reverse=False):
         return HLOCast(_type.ListType(), ret, span)
 
 
+def builtins_iter(span, iterable):
+    func_name = 'ir.builtins_iter'
+    iterable_type = iterable.checked_type
+    if _type_rel.is_type_of(iterable, _type.ListType):
+        if iterable_type.is_full_typed():
+            ret = hlo_call_intrin(_type.IteratorType(_type.ObjectType()),
+                                  func_name, span, iterable)
+            return ret
+        else:
+            ret = hlo_call_intrin(_type.IteratorType(_type.ObjectType()), func_name, span, iterable)
+            return ret
+    else:
+        raise NotImplementedError(
+            "iter for {} is not implemented".format(
+                iterable_type.get_py_type_name()))
+
+
+def builtins_reversed(span, iterable):
+    func_name = 'ir.builtins_reversed'
+    iterable_type = iterable.checked_type
+    if _type_rel.is_type_of(iterable, _type.ListType):
+        if iterable_type.is_full_typed():
+            ret = hlo_call_intrin(_type.IteratorType(_type.ObjectType()),
+                                  func_name, span, iterable)
+            return ret
+        else:
+            ret = hlo_call_intrin(_type.IteratorType(_type.ObjectType()), func_name, span, iterable)
+            return ret
+    else:
+        raise NotImplementedError(
+            "reversed for {} is not implemented".format(
+                iterable_type.get_py_type_name()))
+
+
 # random
 def random_random(span):
     func_name = 'ir.random_random'

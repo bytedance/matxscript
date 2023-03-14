@@ -291,6 +291,9 @@ class List : public ObjectRef {
   static List repeat_one(value_type&& value, int64_t times);
   static List repeat_many(const std::initializer_list<value_type>& values, int64_t times);
 
+  static Iterator builtins_iter(const List& iterable);
+  static Iterator builtins_reversed(const List& iterable);
+
   void clear() const;
 
   value_type pop(int64_t index = -1) const;

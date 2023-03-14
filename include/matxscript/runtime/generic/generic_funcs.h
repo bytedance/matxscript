@@ -363,6 +363,10 @@ List kernel_builtins_sorted(const List& iterable, const Any& key_func, bool reve
 List kernel_builtins_sorted(const Tuple& iterable, const Any& key_func, bool reverse);
 RTValue kernel_builtins_sorted(const Any& iterable, const Any& key_func, bool reverse);
 
+// iterator
+Iterator kernel_builtins_iter(const List& iterable);
+Iterator kernel_builtins_reversed(const List& iteratble);
+
 /******************************************************************************
  * python builtin modules and functions
  *

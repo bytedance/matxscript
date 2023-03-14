@@ -144,6 +144,8 @@ _register_python_builtin("enumerate", "builtins_enumerate")
 _register_python_builtin("zip", "builtins_zip")
 _register_python_builtin("isinstance", "builtins_isinstance")
 _register_python_builtin("sorted", "builtins_sorted")
+_register_python_builtin("iter", "builtins_iter")
+_register_python_builtin("reversed", "builtins_reversed")
 
 ###############################################################################
 # Any object.method

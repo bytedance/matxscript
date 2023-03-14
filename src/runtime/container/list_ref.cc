@@ -41,9 +41,12 @@ namespace runtime {
  * Generic List Iterator
  *****************************************************************************/
 
+template <typename ListBiDirectionalIterator>
 class ListIteratorNode : public IteratorNode {
  public:
-  explicit ListIteratorNode(List container, List::iterator iter, List::iterator iter_end)
+  explicit ListIteratorNode(List container,
+                            ListBiDirectionalIterator iter,
+                            ListBiDirectionalIterator iter_end)
       : container_(std::move(container)), first_(iter), last_(iter_end) {
   }
   ~ListIteratorNode() = default;
@@ -74,8 +77,8 @@ class ListIteratorNode : public IteratorNode {
 
  public:
   List container_;
-  List::iterator first_;
-  List::iterator last_;
+  ListBiDirectionalIterator first_;
+  ListBiDirectionalIterator last_;
   friend class IteratorNodeTrait;
 };
 
@@ -552,7 +555,7 @@ void List::sort(const Any& key, bool reverse) const {
 
 // iterators
 Iterator List::iter() const {
-  auto data = make_object<ListIteratorNode>(*this, begin(), end());
+  auto data = make_object<ListIteratorNode<List::iterator>>(*this, begin(), end());
   return Iterator(std::move(data));
 }
 
@@ -654,6 +657,18 @@ List List::Concat<false>(std::initializer_list<List> data) {
     }
   }
   return List{result_node};
+}
+
+Iterator List::builtins_iter(const List& iterable) {
+  auto data =
+      make_object<ListIteratorNode<List::iterator>>(iterable, iterable.begin(), iterable.end());
+  return Iterator(std::move(data));
+}
+
+Iterator List::builtins_reversed(const List& iterable) {
+  auto data = make_object<ListIteratorNode<List::reverse_iterator>>(
+      iterable, iterable.rbegin(), iterable.rend());
+  return Iterator(std::move(data));
 }
 
 template <>
