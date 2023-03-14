@@ -38,6 +38,7 @@
 
 #include <matxscript/ir/_base/object_equal.h>
 #include <matxscript/ir/_base/object_hash.h>
+#include <matxscript/ir/_base/optional_ref.h>
 #include <matxscript/runtime/logging.h>
 #include <matxscript/runtime/memory.h>
 #include <matxscript/runtime/object.h>
@@ -1311,6 +1312,15 @@ class Map : public ObjectRef {
   /*! \return find the key and returns the associated iterator */
   iterator find(const K& key) const {
     return iterator(GetMapNode()->find(key));
+  }
+
+  /*! \return The value associated with the key, NullOpt if not found */
+  Optional<V> Get(const K& key) const {
+    MapNode::iterator iter = GetMapNode()->find(key);
+    if (iter == GetMapNode()->end()) {
+      return NullOptType{};
+    }
+    return DowncastNoCheck<V>(iter->second);
   }
 
   void erase(const K& key) {
