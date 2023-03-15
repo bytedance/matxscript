@@ -41,6 +41,7 @@ class ArithmeticBinaryOp(KernelBaseOp):
         self.result_dtype = self._result_dtype()
         result_shape, lhs_new_shape, rhs_new_shape = broadcast(self.lhs_shape, self.rhs_shape)
         self.result_shape = result_shape
+        self.result_type = NDArrayType(self.result_shape, self.result_dtype)
         self.lhs_broad_cast_shape = lhs_new_shape
         self.rhs_broad_cast_shape = rhs_new_shape
 
@@ -73,35 +74,42 @@ class DivOp(ArithmeticBinaryOp):
     ir_class = PrimDiv
 
 
-def array_array_binary_op(
-        lhs_context,
-        rhs_context,
-        dst_context,
-        op_class: ArithmeticBinaryOp.__class__):
-    op: ArithmeticBinaryOp = op_class(lhs_context.kernel_type, rhs_context.kernel_type)
-    lhs_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64")) for dim in op.lhs_shape]
-    rhs_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64")) for dim in op.rhs_shape]
-    dst_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64")) for dim in op.result_shape]
-    iter_vars = [PrimIterVar(dom, None) for dom in dst_ranges]
-    lhs_buffer_region = BufferRegion(lhs_context.buffer, lhs_ranges)
-    rhs_buffer_region = BufferRegion(rhs_context.buffer, rhs_ranges)
-    dst_buffer_region = BufferRegion(dst_context.buffer, dst_ranges)
-    reads = [lhs_buffer_region, rhs_buffer_region]
-    writes = [dst_buffer_region]
-    name_hint = f"{lhs_context.name} {op.opname} {rhs_context.name}"
-    element_op = op.ir_class(lhs_context.data_var, rhs_context.data_var)
-    body = AssignStmt(dst_context.data_var, element_op)
-    compute_block = ComputeBlock(iter_vars, reads, writes, name_hint, body)
+class ArrayArrayBinaryOp:
+    def __init__(self, lhs_context, rhs_context, op_class: ArithmeticBinaryOp.__class__):
+        self.op: ArithmeticBinaryOp = op_class(lhs_context.kernel_type, rhs_context.kernel_type)
+        self.lhs_context = lhs_context
+        self.rhs_context = rhs_context
 
-    return compute_block
+    def result_type(self):
+        return self.op.result_type
+
+    def __call__(self, dst_context):
+        lhs_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64"))
+                      for dim in self.op.lhs_broad_cast_shape]
+        rhs_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64"))
+                      for dim in self.op.rhs_broad_cast_shape]
+        dst_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64"))
+                      for dim in self.op.result_shape]
+        iter_vars = [PrimIterVar(dom, None) for dom in dst_ranges]
+        lhs_buffer_region = BufferRegion(self.lhs_context.buffer, lhs_ranges)
+        rhs_buffer_region = BufferRegion(self.rhs_context.buffer, rhs_ranges)
+        dst_buffer_region = BufferRegion(dst_context.buffer, dst_ranges)
+        reads = [lhs_buffer_region, rhs_buffer_region]
+        writes = [dst_buffer_region]
+        name_hint = f"{self.lhs_context.name} {self.op.opname} {self.rhs_context.name}"
+        element_op = self.op.ir_class(self.lhs_context.data_var, self.rhs_context.data_var)
+        body = AssignStmt(dst_context.data_var, element_op)
+        compute_block = ComputeBlock(iter_vars, reads, writes, name_hint, body)
+
+        return compute_block
 
 
 def make_bin_op(op_class):
     def op(func):
         return partial(func, op_class=op_class)
 
-    OpRegistry.add_bin_operator(
-        op(array_array_binary_op),
+    OpRegistry.add_bin_op(
+        op(ArrayArrayBinaryOp),
         'NDArrayType',
         'NDArrayType',
         op_class.opname)

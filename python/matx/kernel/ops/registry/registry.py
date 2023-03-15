@@ -18,9 +18,11 @@
 #  under the License.
 
 import itertools
-from typing import Any, Callable, Dict, Tuple, Type, Union, Set
+from typing import Callable, Dict, Tuple, Type, Union, Set
 
-MethodType = Callable[..., Tuple[str]]
+from ..base_op import KernelBaseOp
+
+MethodType = Callable[..., KernelBaseOp]
 
 
 def _get_all_bases(class_or_name: Union[str, Type]) -> Set[str]:
@@ -42,20 +44,21 @@ def _get_all_bases(class_or_name: Union[str, Type]) -> Set[str]:
 
 
 class OpRegistry:
+    # lhs_type rhs_type op_name
     _bin_op_repo: Dict[Tuple[str, str, str], MethodType] = {}
     _unary_op_repo: Dict[Tuple[str, str], MethodType] = {}
     _universal_func_repo: Dict[str, MethodType] = {}
 
     @classmethod
-    def add_bin_operator(cls,
-                         func: Callable[[Any, Any, str, str], Tuple[str]],
-                         left_type: str,
-                         right_type: str,
-                         op_name: str):
-        cls._bin_op_repo[(op_name, left_type, right_type)] = func
+    def add_bin_op(cls,
+                   op: MethodType,
+                   left_type: str,
+                   right_type: str,
+                   op_name: str):
+        cls._bin_op_repo[(op_name, left_type, right_type)] = op
 
     @classmethod
-    def get_bin_operator(cls, left_type, right_type, op_name: str):
+    def get_bin_op(cls, left_type, right_type, op_name: str):
         left_types = _get_all_bases(left_type.__class__)
         right_types = _get_all_bases(right_type.__class__)
         for left_t, right_t in itertools.product(left_types, right_types):

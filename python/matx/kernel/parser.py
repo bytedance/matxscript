@@ -25,6 +25,7 @@ from typing import Any, List
 from .ops import OpRegistry
 from .symbol import is_symbol
 from .typing import NDArrayType as kernelNDArrayT
+from .typing import is_ndarray
 from .. import ir as _ir
 from ..ir import type_inference as _type_infer
 from ..ir import type_relation as _type_rel
@@ -300,16 +301,20 @@ class KernelNodeVisitor(ast.NodeVisitor):
         opname = type(node.op).__name__
         lhs = self.visit(node.left)
         rhs = self.visit(node.right)
+        lhs_t = self._get_type(lhs)
+        rhs_t = self._get_type(rhs)
+        if is_ndarray(lhs_t) and is_ndarray(rhs_t):
+            lhs_context = self.ndarray_context_table[lhs]
+            rhs_context = self.ndarray_context_table[rhs]
+            # todo update this later need to check none
+            return_context = self.ndarray_context_table[self.return_var_name]
+            op_class = OpRegistry.get_bin_op(
+                lhs_context.kernel_type, rhs_context.kernel_type, opname)
+            op = op_class(lhs_context, rhs_context)
 
-        lhs_context = self.ndarray_context_table[lhs]
-        rhs_context = self.ndarray_context_table[rhs]
-        # todo update this later need to check none
-        return_context = self.ndarray_context_table[self.return_var_name]
-
-        op_func = OpRegistry.get_bin_operator(
-            lhs_context.kernel_type, rhs_context.kernel_type, opname)
-
-        return op_func(lhs_context, rhs_context, return_context)
+            return op(return_context)
+        else:
+            raise SyntaxError(f"bin op does not support {lhs_t} and {rhs_t}")
         # todo insert to ir
 
     def visit_BoolOp(self, node: ast.BoolOp) -> Any:
