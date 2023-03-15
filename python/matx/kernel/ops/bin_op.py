@@ -23,9 +23,9 @@ from .base_op import *
 from .registry.registry import OpRegistry
 from .utils import *
 from ... import ir as _ir
-from ...ir import Evaluate
+from ...ir import AssignStmt
 from ...ir.expr import *
-from ...ir.tensor_stmt import ComputeBlock, Buffer, BufferRegion
+from ...ir.tensor_stmt import ComputeBlock, BufferRegion
 
 
 class ArithmeticBinaryOp(KernelBaseOp):
@@ -74,31 +74,23 @@ class DivOp(ArithmeticBinaryOp):
 
 
 def array_array_binary_op(
-        l,
-        r,
-        lhs: Buffer,
-        rhs: Buffer,
-        dst: Buffer,
-        lhs_type: type,
-        rhs_type: type,
+        lhs_context,
+        rhs_context,
+        dst_context,
         op_class: ArithmeticBinaryOp.__class__):
-    op: ArithmeticBinaryOp = op_class(lhs_type, rhs_type)
-
-    # lhs_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64")) for dim in op.lhs_shape]
-    # rhs_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64")) for dim in op.rhs_shape]
-    # dst_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64")) for dim in op.result_shape]
-    lhs_ranges = [RangeExpr(_ir.const(0), _ir.const(1)) for dim in op.lhs_shape]
-    rhs_ranges = [RangeExpr(_ir.const(0), _ir.const(1)) for dim in op.rhs_shape]
-    dst_ranges = [RangeExpr(_ir.const(0), _ir.const(1)) for dim in op.result_shape]
+    op: ArithmeticBinaryOp = op_class(lhs_context.kernel_type, rhs_context.kernel_type)
+    lhs_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64")) for dim in op.lhs_shape]
+    rhs_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64")) for dim in op.rhs_shape]
+    dst_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64")) for dim in op.result_shape]
     iter_vars = [PrimIterVar(dom, None) for dom in dst_ranges]
-    lhs_buffer_region = BufferRegion(lhs, lhs_ranges)
-    rhs_buffer_region = BufferRegion(rhs, rhs_ranges)
-    dst_buffer_region = BufferRegion(dst, dst_ranges)
+    lhs_buffer_region = BufferRegion(lhs_context.buffer, lhs_ranges)
+    rhs_buffer_region = BufferRegion(rhs_context.buffer, rhs_ranges)
+    dst_buffer_region = BufferRegion(dst_context.buffer, dst_ranges)
     reads = [lhs_buffer_region, rhs_buffer_region]
     writes = [dst_buffer_region]
-    name_hint = f"{lhs} {op.opname} {rhs}"
-    element_op = op.ir_class(l, r)
-    body = Evaluate(element_op)
+    name_hint = f"{lhs_context.name} {op.opname} {rhs_context.name}"
+    element_op = op.ir_class(lhs_context.data_var, rhs_context.data_var)
+    body = AssignStmt(dst_context.data_var, element_op)
     compute_block = ComputeBlock(iter_vars, reads, writes, name_hint, body)
 
     return compute_block

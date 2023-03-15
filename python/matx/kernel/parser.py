@@ -24,6 +24,7 @@ from typing import Any, List
 
 from .ops import OpRegistry
 from .symbol import is_symbol
+from .typing import NDArrayType as kernelNDArrayT
 from .. import ir as _ir
 from ..ir import type_inference as _type_infer
 from ..ir import type_relation as _type_rel
@@ -48,7 +49,7 @@ def extract_symbol_from_type(t):
     return {str(s): s for s in symbols}
 
 
-def ndarrayType_to_ndarray(t):
+def ndarrayType_to_ndarray(n):
     from ..ir.type import NDArrayType
     return NDArrayType()
 
@@ -90,7 +91,8 @@ class KernelParser:
         fn_context.arg_names = list(self.args.keys())
         # todo support args_reassigns
         fn_context.arg_reassigns = {k: False for k in self.args.keys()}
-        # todo support types other than ndarry
+        # todo support types other than ndarray
+        # todo fix type of fn_context and ir_schema
         fn_context.arg_types = {k: ndarrayType_to_ndarray(v) for k, v in self.args.items()}
         fn_context.fn_name = self.func_name
         # context.fn_type = None
@@ -110,28 +112,39 @@ class KernelParser:
 
 
 class NDArrayContext:
-    def __init__(self, name, type_, span):
-        self.name = name
-        self.type = type_
-        self.ndarray_var = None
-        self.data_var = None
-        self.buffer = None
+    def __init__(self, name: str, type_: kernelNDArrayT, shape_symbol_table: dict, span) -> None:
+        assert isinstance(type_, kernelNDArrayT), 'syntax error'
+        self.name: str = name
+        self.kernel_type: kernelNDArrayT = type_  # NDARRAY TYPE
+        self.shape = type_.shape
+        self.script_type = ndarrayType_to_ndarray(None)  # NDARRAY
+        self.ndarray_var = _ir.HLOVar(name, self.script_type, span)  # HLO_VAR
+        self.data_var = _ir.PrimVar(name, type_.dtype_str(), span)  # PRIM_VAR
+        buffer_shape = [dim if not is_symbol(dim) else shape_symbol_table[dim]
+                        for dim in self.shape]
+        self.buffer = decl_buffer(buffer_shape)
 
 
 class KernelNodeVisitor(ast.NodeVisitor):
+    return_var_name = '_return_432785627345234852364'
+
     def __init__(
             self,
             kernel_p: KernelParser,
             node: context.ASTNode,
             sc_ctx: context.ScriptContext):
         self.kernel_p = kernel_p
+
+        # necessary for reuse script functionality
         self.custom_ast_node = node
         self.sc_ctx = sc_ctx
         self.fn_ctx = node.context
         self.context = None
         self.session_handle_var_ctx = []
-        self.buffer_table = {}
-        self.return_buffer = None
+
+        # for kernel use
+        self.ndarray_context_table = {}
+        self.shape_symbol_table = {}
 
     def build_span(self, node):
         root_span = self.custom_ast_node.span
@@ -187,8 +200,19 @@ class KernelNodeVisitor(ast.NodeVisitor):
     def pop_handle_var(self):
         self.session_handle_var_ctx.pop()
 
-    def declare_shape_var(self, type_annotation):
-        pass
+    def declare_shape_var(self, type_annotation, span):
+        if not isinstance(type_annotation, kernelNDArrayT):
+            return
+        shape_symbols = []
+        for dim in type_annotation.shape:
+            if not is_symbol(dim):
+                continue
+            if dim in self.shape_symbol_table:
+                continue
+            var = _ir.PrimVar(str(dim), "int64", span)
+            self.shape_symbol_table[dim] = var
+            shape_symbols.append(var)
+        return shape_symbols
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         self.context = context.ScopeContext()
@@ -196,13 +220,25 @@ class KernelNodeVisitor(ast.NodeVisitor):
         span = self.build_span(node)
         # add parameters of function
         for arg, type_annotation in self.kernel_p.args.items():
-            arg_var = _ir.PrimVar(arg, self.kernel_p.args[arg].dtype_str(), span)
+            self.declare_shape_var(type_annotation, span)
+            self.ndarray_context_table[arg] = NDArrayContext(
+                arg, type_annotation, self.shape_symbol_table, span)
+            arg_var = self.ndarray_context_table[arg].ndarray_var
             self.context.update_symbol(arg, arg_var)
             self.context.func_params.append(arg_var)
-            self.buffer_table[arg] = decl_buffer((10,))
 
-        return_type = decl_buffer((10,))
-        self.return_buffer = return_type
+        # make dim variables as args
+        for dim, dim_var in self.shape_symbol_table.items():
+            self.context.update_symbol(str(dim), dim_var)
+            self.context.func_params.append(dim_var)
+
+        # make return as an arg
+        if self.kernel_p.return_types is not None:
+            return_buffer = NDArrayContext(self.return_var_name, self.kernel_p.return_types,
+                                           self.shape_symbol_table, span)
+            self.context.update_symbol(return_buffer.name, return_buffer.ndarray_var)
+            self.context.func_params.append(return_buffer.ndarray_var)
+            self.ndarray_context_table[self.return_var_name] = return_buffer
 
         # append session_pointer_var
         pointer_var_name = "handle_2_71828182846"
@@ -223,7 +259,7 @@ class KernelNodeVisitor(ast.NodeVisitor):
             [],  # [_ir.PrimCast("handle", _ir.const(0))],
             self.to_seq_stmt(body_stmts, span),
             # [CallNode(Op(ir.nd_module_add), [HLOVar(x, ty=ObjectTypeNode), HLOVar(y, ty=ObjectTypeNode)], []) -> NDArrayType]
-            ret_type=ndarrayType_to_ndarray(return_type),  # NDArray[ndim=?, dtype=?]
+            ret_type=None,
             span=span
         )
         self.pop_handle_var()
@@ -259,21 +295,21 @@ class KernelNodeVisitor(ast.NodeVisitor):
         # todo finish
 
     def visit_BinOp(self, node: ast.BinOp) -> Any:
+        # todo deal with other type
+        # todo generate a intermediate dst to hold the data
         opname = type(node.op).__name__
         lhs = self.visit(node.left)
         rhs = self.visit(node.right)
-        lhs_t = self._get_type(lhs)
-        rhs_t = self._get_type(rhs)
 
-        op_func = OpRegistry.get_bin_operator(lhs_t, rhs_t, opname)
-        return op_func(
-            self.context.symbols[0][lhs],
-            self.context.symbols[0][rhs],
-            self.buffer_table[lhs],
-            self.buffer_table[rhs],
-            self.return_buffer,
-            lhs_t,
-            rhs_t)
+        lhs_context = self.ndarray_context_table[lhs]
+        rhs_context = self.ndarray_context_table[rhs]
+        # todo update this later need to check none
+        return_context = self.ndarray_context_table[self.return_var_name]
+
+        op_func = OpRegistry.get_bin_operator(
+            lhs_context.kernel_type, rhs_context.kernel_type, opname)
+
+        return op_func(lhs_context, rhs_context, return_context)
         # todo insert to ir
 
     def visit_BoolOp(self, node: ast.BoolOp) -> Any:
@@ -329,6 +365,7 @@ class KernelNodeVisitor(ast.NodeVisitor):
         pass
 
     def visit_Return(self, node: ast.Return) -> Any:
+        # treat return as assign and
         # for now kernel does not return anything.
         if node.value is None:
             rt_expr = _type_rel.smart_adapt_to(_ir.NoneExpr(), self.context.func_ret_type)
@@ -338,7 +375,7 @@ class KernelNodeVisitor(ast.NodeVisitor):
         if isinstance(rt_expr, tuple):
             raise SyntaxError("returning tuple is not support")
         # todo return type conversion
-        return _ir.ReturnStmt(None, span)
+        return rt_expr
 
     def _get_type(self, operand):
         if isinstance(operand, str) and operand in self.kernel_p.args.keys():
