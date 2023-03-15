@@ -168,7 +168,8 @@ class BufferRegion(Object):
     """
 
     def __init__(self, buffer: Buffer, region: List[RangeExpr]):
-        self.__init_handle_by_constructor__(_ffi_api.BufferRegion, buffer, region)  # type: ignore
+        self.__init_handle_by_constructor__(
+            _ffi_api.BufferRegion, buffer, _to_ir(region))  # type: ignore
 
 
 @_ffi.register_object("ir.MatchBufferRegion")
@@ -250,15 +251,15 @@ class ComputeBlock(Stmt):
             annotations = {}
         self.__init_handle_by_constructor__(
             _ffi_api.ComputeBlock,  # type: ignore
-            iter_vars,
-            reads,
-            writes,
+            _to_ir(iter_vars),
+            _to_ir(reads),
+            _to_ir(writes),
             name_hint,
             body,
             init,
-            alloc_buffers,
-            match_buffers,
-            annotations,
+            _to_ir(alloc_buffers),
+            _to_ir(match_buffers),
+            _to_ir(annotations),
             span,
         )  # type: ignore
 
