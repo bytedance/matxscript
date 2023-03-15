@@ -1,27 +1,26 @@
-#  // Copyright 2023 ByteDance Ltd. and/or its affiliates.
-#  /*
-#   * Licensed to the Apache Software Foundation (ASF) under one
-#   * or more contributor license agreements.  See the NOTICE file
-#   * distributed with this work for additional information
-#   * regarding copyright ownership.  The ASF licenses this file
-#   * to you under the Apache License, Version 2.0 (the
-#   * "License"); you may not use this file except in compliance
-#   * with the License.  You may obtain a copy of the License at
-#   *
-#   *   http://www.apache.org/licenses/LICENSE-2.0
-#   *
-#   * Unless required by applicable law or agreed to in writing,
-#   * software distributed under the License is distributed on an
-#   * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-#   * KIND, either express or implied.  See the License for the
-#   * specific language governing permissions and limitations
-#   * under the License.
-#   */
+#  Copyright 2023 ByteDance Ltd. and/or its affiliates.
+#
+#  Licensed to the Apache Software Foundation (ASF) under one
+#  or more contributor license agreements.  See the NOTICE file
+#  distributed with this work for additional information
+#  regarding copyright ownership.  The ASF licenses this file
+#  to you under the Apache License, Version 2.0 (the
+#  "License"); you may not use this file except in compliance
+#  with the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing,
+#  software distributed under the License is distributed on an
+#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+#  KIND, either express or implied.  See the License for the
+#  specific language governing permissions and limitations
+#  under the License.
 
 import itertools
 from typing import Any, Callable, Dict, Tuple, Type, Union, Set
 
-MethodType = Callable[..., Tuple[str]]  # todo why tuple string
+MethodType = Callable[..., Tuple[str]]
 
 
 def _get_all_bases(class_or_name: Union[str, Type]) -> Set[str]:
@@ -56,9 +55,9 @@ class OpRegistry:
         cls._bin_op_repo[(op_name, left_type, right_type)] = func
 
     @classmethod
-    def get_bin_operator(cls, left_type: str, right_type: str, op_name: str):
-        left_types = _get_all_bases(left_type)
-        right_types = _get_all_bases(right_type)
+    def get_bin_operator(cls, left_type, right_type, op_name: str):
+        left_types = _get_all_bases(left_type.__class__)
+        right_types = _get_all_bases(right_type.__class__)
         for left_t, right_t in itertools.product(left_types, right_types):
             key = (op_name, left_t, right_t)
             if key in cls._bin_op_repo:
