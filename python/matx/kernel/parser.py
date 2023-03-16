@@ -17,19 +17,28 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
+#
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing,
+#  software distributed under the License is distributed on an
+#  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+#  KIND, either express or implied.  See the License for the
+#  specific language governing permissions and limitations
+#  under the License.
+
 import ast
 import inspect
 import numbers
+import random
 from typing import Any, List
 
 from .ops import OpRegistry
-from .symbol import is_symbol
-from .typing import NDArrayType as kernelNDArrayT
-from .typing import is_ndarray
+from .parser_context import *
 from .. import ir as _ir
 from ..ir import type_inference as _type_infer
 from ..ir import type_relation as _type_rel
-from ..ir.tensor_stmt import decl_buffer
 from ..script import analysis
 from ..script import context
 
@@ -112,20 +121,6 @@ class KernelParser:
         parser_node(sc_ctx.main_node)
 
 
-class NDArrayContext:
-    def __init__(self, name: str, type_: kernelNDArrayT, shape_symbol_table: dict, span) -> None:
-        assert isinstance(type_, kernelNDArrayT), 'syntax error'
-        self.name: str = name
-        self.kernel_type: kernelNDArrayT = type_  # NDARRAY TYPE
-        self.shape = type_.shape
-        self.script_type = ndarrayType_to_ndarray(None)  # NDARRAY
-        self.ndarray_var = _ir.HLOVar(name, self.script_type, span)  # HLO_VAR
-        self.data_var = _ir.PrimVar(name, type_.dtype_str(), span)  # PRIM_VAR
-        buffer_shape = [dim if not is_symbol(dim) else shape_symbol_table[dim]
-                        for dim in self.shape]
-        self.buffer = decl_buffer(buffer_shape)
-
-
 class KernelNodeVisitor(ast.NodeVisitor):
     return_var_name = '_return_432785627345234852364'
 
@@ -146,6 +141,10 @@ class KernelNodeVisitor(ast.NodeVisitor):
         # for kernel use
         self.ndarray_context_table = {}
         self.shape_symbol_table = {}
+        self.var_stack = []
+
+    def tmp_var(self):
+        return f"__tmp_{random.randint(100000000, 999999999)}__"
 
     def build_span(self, node):
         root_span = self.custom_ast_node.span
@@ -279,8 +278,11 @@ class KernelNodeVisitor(ast.NodeVisitor):
     def visit_Name(self, node: ast.Name) -> Any:
         name = node.id
         if name in self.kernel_p.symbols:
+            self.var_stack.append((name, 'SymbolContext', 'Symbol'))
             return name
-        if name in self.kernel_p.args.keys():
+        if name in self.kernel_p.args:
+            t = self.ndarray_context_table[name]
+            self.var_stack.append((name, t, t.kernel_type))
             return name
         return node.id
 
@@ -299,20 +301,25 @@ class KernelNodeVisitor(ast.NodeVisitor):
         # todo deal with other type
         # todo generate a intermediate dst to hold the data
         opname = type(node.op).__name__
-        lhs = self.visit(node.left)
-        rhs = self.visit(node.right)
-        lhs_t = self._get_type(lhs)
-        rhs_t = self._get_type(rhs)
+        self.visit(node.left)
+        lhs, lhs_ctx, lhs_t = self.var_stack.pop()
+        self.visit(node.right)
+        rhs, rhs_ctx, rhs_t = self.var_stack.pop()
         if is_ndarray(lhs_t) and is_ndarray(rhs_t):
             lhs_context = self.ndarray_context_table[lhs]
             rhs_context = self.ndarray_context_table[rhs]
             # todo update this later need to check none
-            return_context = self.ndarray_context_table[self.return_var_name]
             op_class = OpRegistry.get_bin_op(
                 lhs_context.kernel_type, rhs_context.kernel_type, opname)
             op = op_class(lhs_context, rhs_context)
-
-            return op(return_context)
+            tmp_name = self.tmp_var()
+            result_context = NDArrayContext(tmp_name,
+                                            op.result_type(),
+                                            self.shape_symbol_table,
+                                            self.build_span(node))
+            self.ndarray_context_table[tmp_name] = result_context
+            self.var_stack.append((tmp_name, result_context, result_context.kernel_type))
+            return op(result_context)
         else:
             raise SyntaxError(f"bin op does not support {lhs_t} and {rhs_t}")
         # todo insert to ir
@@ -380,6 +387,8 @@ class KernelNodeVisitor(ast.NodeVisitor):
         if isinstance(rt_expr, tuple):
             raise SyntaxError("returning tuple is not support")
         # todo return type conversion
+        # todo assign tmp variable to return
+        return_context = self.ndarray_context_table[self.return_var_name]
         return rt_expr
 
     def _get_type(self, operand):
