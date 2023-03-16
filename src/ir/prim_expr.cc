@@ -23,6 +23,7 @@
 
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/_base/repr_printer.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
@@ -31,6 +32,7 @@ namespace matxscript {
 namespace ir {
 
 using namespace ::matxscript::runtime;
+using namespace ::matxscript::ir::printer;
 
 PrimExpr::PrimExpr(int32_t value) : PrimExpr(IntImm(runtime::DataType::Int(32), value)) {
 }
@@ -62,6 +64,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       } else {
         p->stream << "(" << op->dtype << ")" << op->value;
       }
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<IntImm>("", [](IntImm s, ObjectPath p, IRDocsifier d) -> Doc {
+      return LiteralDoc::Int(s->value, p->Attr("value"));
     });
 
 FloatImm::FloatImm(runtime::DataType dtype, double value, Span span) {
