@@ -24,6 +24,8 @@
 
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/_base/repr_printer.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
 
@@ -31,6 +33,7 @@ namespace matxscript {
 namespace ir {
 
 using namespace runtime;
+using namespace ::matxscript::ir::printer;
 
 TupleExpr::TupleExpr(Array<BaseExpr> fields, Span span) {
   ObjectPtr<TupleExprNode> n = make_object<TupleExprNode>();
@@ -49,6 +52,18 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<TupleExprNode>([](const ObjectRef& ref, ReprPrinter* p) {
       auto* node = static_cast<const TupleExprNode*>(ref.get());
       p->stream << "TupleExpr(" << node->fields << ")";
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
+    .set_dispatch<TupleExpr>("", [](TupleExpr t, ObjectPath p, IRDocsifier d) -> Doc {
+      int n = t->fields.size();
+      Array<ExprDoc> results;
+      results.reserve(n);
+      p = p->Attr("fields");
+      for (int i = 0; i < n; ++i) {
+        results.push_back(d->AsDoc<ExprDoc>(t->fields[i], p->ArrayIndex(i)));
+      }
+      return TupleDoc(std::move(results));
     });
 
 }  // namespace ir
