@@ -333,6 +333,12 @@ inline void FrameNode::AddDispatchToken(const IRDocsifier& d, const StringRef& t
   this->AddExitCallback([doc = d.get()]() { doc->dispatch_tokens.pop_back(); });
 }
 
+/*! \brief Creates the matx common prefix, which is by default `T` */
+inline ExprDoc Dialect(const IRDocsifier& d, const StringRef& attr) {
+  d->ir_usage.insert("matx");
+  return IdDoc(d->cfg->dialect_prefix)->Attr(attr);
+}
+
 }  // namespace printer
 }  // namespace ir
 }  // namespace matxscript
