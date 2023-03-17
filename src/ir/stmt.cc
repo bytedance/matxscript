@@ -32,6 +32,7 @@
 #include <matxscript/ir/hlo_var.h>
 #include <matxscript/ir/prim_expr.h>
 #include <matxscript/ir/prim_var.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
@@ -42,6 +43,7 @@ namespace ir {
 using ::matxscript::runtime::Downcast;
 using ::matxscript::runtime::make_object;
 using ::matxscript::runtime::String;
+using namespace ::matxscript::ir::printer;
 
 // ExprStmt
 ExprStmt::ExprStmt(BaseExpr expr, Span span) {
@@ -98,6 +100,20 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
         p->stream << " = ";
         p->Print(op->init_value);
       }
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<AllocaVarStmt>("", [](AllocaVarStmt s, ObjectPath p, IRDocsifier d) -> Doc {
+      ObjectPath var_attr = p->Attr("var");
+      auto lhs = d->AsDoc<ExprDoc>(s->var, var_attr);
+      Optional<ExprDoc> rhs;
+      Optional<ExprDoc> annotation;
+      if (s->init_value.defined()) {
+        rhs = d->AsDoc<ExprDoc>(s->init_value, p->Attr("init_value"));
+      }
+      auto py_ty = s->var->checked_type_->GetPythonTypeName().encode();
+      annotation = LiteralDoc::Str(std::move(py_ty), var_attr->Attr("checked_type_"));
+      return AssignDoc(lhs, rhs, annotation);
     });
 
 // AssignStmt

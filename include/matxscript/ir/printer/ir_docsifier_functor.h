@@ -135,6 +135,17 @@ class IRDocsifierFunctor {
     (*table)[type_index] = nullptr;
   }
 
+  /*!
+   * \brief Whether the functor can dispatch the corresponding Node
+   * \param token The dispatch token.
+   * \param type_index The object type index for the dispatch function.
+   * \return Whether dispatching function is registered for n's type.
+   */
+  bool can_dispatch(const StringRef& token, uint32_t type_index) const {
+    return LookupDispatchTable(token, type_index) != nullptr ||
+           LookupDispatchTable("", type_index) != nullptr;
+  }
+
  private:
   /*!
    * \brief Look up the dispatch table for the given token and type_index.

@@ -23,6 +23,7 @@
 
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/_base/repr_printer.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
 
@@ -30,6 +31,7 @@ namespace matxscript {
 namespace ir {
 
 using namespace ::matxscript::runtime;
+using namespace ::matxscript::ir::printer;
 
 // PrimVar
 PrimVar::PrimVar(StringRef name_hint, DataType dtype, Span span) {
@@ -68,6 +70,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       // omit the type
       // stream << op->name << "." << op->type;
       p->stream << op->name_hint;
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
+    .set_dispatch<PrimVar>("", [](PrimVar var, ObjectPath p, IRDocsifier d) -> Doc {
+      return IdDoc(var->name_hint);
     });
 
 // PrimIterVar
