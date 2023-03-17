@@ -38,5 +38,5 @@ def is_scalar_shape(shape):
     return False
 
 
-def is_ndarray(t):
+def is_ndarray_type(t):
     return t is NDArrayType or isinstance(t, NDArrayType)

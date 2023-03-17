@@ -295,7 +295,7 @@ class KernelNodeVisitor(ast.NodeVisitor):
         lhs, lhs_ctx, lhs_t = self.var_stack.pop()
         self.visit(node.right)
         rhs, rhs_ctx, rhs_t = self.var_stack.pop()
-        if is_ndarray(lhs_t) and is_ndarray(rhs_t):
+        if is_ndarray_type(lhs_t) and is_ndarray_type(rhs_t):
             lhs_context = self.ndarray_context_table[lhs]
             rhs_context = self.ndarray_context_table[rhs]
             # todo update this later need to check none

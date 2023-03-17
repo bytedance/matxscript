@@ -19,14 +19,14 @@
 
 from .symbol import is_symbol
 from .typing import NDArrayType as kernelNDArrayT
-from .typing import is_ndarray
+from .typing import is_ndarray_type
 from .. import ir as _ir
 from ..ir.tensor_stmt import decl_buffer
 
 
 class NDArrayContext:
     def __init__(self, name: str, type_: kernelNDArrayT, shape_symbol_table: dict, span) -> None:
-        assert is_ndarray(type_), 'syntax error'
+        assert is_ndarray_type(type_), 'syntax error'
         self.name: str = name
         self.shape = type_.shape
         self.kernel_type: kernelNDArrayT = type_  # NDARRAY TYPE

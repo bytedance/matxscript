@@ -32,3 +32,7 @@ def equals(x, y):
 
 def simplify(x):
     return sympy.simplify(x)
+
+
+def is_symbol_type(t):
+    return t is sympy.Basic
