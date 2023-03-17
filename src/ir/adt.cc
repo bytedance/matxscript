@@ -30,6 +30,8 @@
  */
 #include <matxscript/ir/adt.h>
 
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/ir/type.h>
 #include <matxscript/runtime/registry.h>
 
@@ -37,6 +39,7 @@ namespace matxscript {
 namespace ir {
 
 using namespace runtime;
+using namespace ::matxscript::ir::printer;
 
 Constructor::Constructor(Type ret_type,
                          StringRef name_hint,
@@ -64,6 +67,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       auto* node = static_cast<const ConstructorNode*>(ref.get());
       p->stream << "ConstructorNode(" << node->name_hint << ", " << node->inputs << ", "
                 << node->belong_to << ")";
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
+    .set_dispatch<Constructor>("", [](Constructor node, ObjectPath p, IRDocsifier d) -> Doc {
+      return IdDoc(node->name_hint);
     });
 
 // ClassType
