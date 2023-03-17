@@ -29,6 +29,8 @@
 #include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/_base/structural_equal.h>
 #include <matxscript/ir/_base/structural_hash.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
 
@@ -196,6 +198,20 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       }
       p->stream << ']';
     });
+
+using namespace ::matxscript::ir::printer;
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<Array<ObjectRef>>(  //
+        "",
+        [](Array<ObjectRef> array, ObjectPath p, IRDocsifier d) -> Doc {
+          int n = array.size();
+          Array<ExprDoc> results;
+          results.reserve(n);
+          for (int i = 0; i < n; ++i) {
+            results.push_back(d->AsDoc<ExprDoc>(array[i], p->ArrayIndex(i)));
+          }
+          return ListDoc(results);
+        });
 
 }  // namespace ir
 }  // namespace matxscript

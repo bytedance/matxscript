@@ -25,6 +25,7 @@
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/adt.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
@@ -33,6 +34,7 @@ namespace matxscript {
 namespace ir {
 
 using namespace ::matxscript::runtime;
+using namespace ::matxscript::ir::printer;
 
 StringImm::StringImm(StringRef value, Span span) {
   ObjectPtr<StringImmNode> node = runtime::make_object<StringImmNode>();
@@ -52,6 +54,12 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.StringImm").set_body_typed([](StringRef s, Span s
   return StringImm(std::move(s), std::move(span));
 });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<StringImm>("", [](StringImm s, ObjectPath p, IRDocsifier d) -> Doc {
+      // TODO: fix bytes print
+      return LiteralDoc::Str(s->value, p->Attr("value"));
+    });
+
 UnicodeImm::UnicodeImm(StringRef value, Span span) {
   ObjectPtr<UnicodeImmNode> node = runtime::make_object<UnicodeImmNode>();
   node->value = std::move(value);
@@ -69,6 +77,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 MATXSCRIPT_REGISTER_GLOBAL("ir.UnicodeImm").set_body_typed([](StringRef s, Span span) {
   return UnicodeImm(std::move(s), std::move(span));
 });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<UnicodeImm>("", [](UnicodeImm s, ObjectPath p, IRDocsifier d) -> Doc {
+      // TODO: fix unicode
+      return LiteralDoc::Str(s->value, p->Attr("value"));
+    });
 
 #define MATXSCRIPT_DEFINE_CMPOP_CONSTRUCTOR(Name)                       \
   Name::Name(BaseExpr a, BaseExpr b, Span span) {                       \
@@ -205,6 +219,14 @@ static Type InferAddOpType(const Type& lhs_raw, const Type& rhs_raw) {
   return ObjectType();
 }
 
+#define MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(NodeType, OpKind)                                \
+  MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)                                               \
+      .set_dispatch<ir::NodeType>("", [](ir::NodeType node, ObjectPath p, IRDocsifier d) -> Doc { \
+        ExprDoc a = d->AsDoc<ExprDoc>(node->a, p->Attr("a"));                                     \
+        ExprDoc b = d->AsDoc<ExprDoc>(node->b, p->Attr("b"));                                     \
+        return OperationDoc(OperationDocNode::Kind::OpKind, {a, b});                              \
+      });
+
 // HLOAdd
 HLOAdd::HLOAdd(BaseExpr a, BaseExpr b, Span span) {
   MXCHECK(a.defined()) << "ValueError: a is undefined\n";
@@ -235,6 +257,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->b);
       p->stream << ')';
     });
+
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOAdd, kAdd);
 
 // HLOSub
 static Type InferSubOpType(const Type& lhs_raw, const Type& rhs_raw) {
@@ -328,6 +352,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->b);
       p->stream << ')';
     });
+
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOSub, kSub);
 
 // HLOMul
 static Type InferMulOpType(const Type& lhs_raw, const Type& rhs_raw) {
@@ -451,6 +477,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOMul, kMult);
+
 // HLOFloorDiv
 static Type InferFloorDivOpType(const Type& lhs_raw, const Type& rhs_raw) {
   const auto& lhs_type = RemoveReference(lhs_raw);
@@ -519,6 +547,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       auto* op = static_cast<const HLOFloorDivNode*>(node.get());
       p->stream << "floordiv(" << op->a << ", " << op->b << ")";
     });
+
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOFloorDiv, kFloorDiv);
 
 // HLOFloorMod
 static Type InferFloorModOpType(const Type& lhs_raw, const Type& rhs_raw) {
@@ -589,6 +619,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "floormod(" << op->a << ", " << op->b << ")";
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOFloorMod, kMod);
+
 // HLOEqual
 HLOEqual::HLOEqual(BaseExpr a, BaseExpr b, Span span) {
   MXCHECK(a.defined()) << "ValueError: a is undefined\n";
@@ -616,6 +648,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->b);
       p->stream << ')';
     });
+
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOEqual, kEq);
 
 // HLONotEqual
 HLONotEqual::HLONotEqual(BaseExpr a, BaseExpr b, Span span) {
@@ -645,6 +679,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLONotEqual, kNotEq);
+
 // HLOLessThan
 HLOLessThan::HLOLessThan(BaseExpr a, BaseExpr b, Span span) {
   MXCHECK(a.defined()) << "ValueError: a is undefined\n";
@@ -673,6 +709,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOLessThan, kLt);
+
 // HLOLessEqual
 HLOLessEqual::HLOLessEqual(BaseExpr a, BaseExpr b, Span span) {
   MXCHECK(a.defined()) << "ValueError: a is undefined\n";
@@ -700,6 +738,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->b);
       p->stream << ')';
     });
+
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOLessEqual, kLtE);
 
 // HLOGreaterThan
 HLOGreaterThan::HLOGreaterThan(BaseExpr a, BaseExpr b, Span span) {
@@ -730,6 +770,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOGreaterThan, kGt);
+
 // HLOGreaterEqual
 HLOGreaterEqual::HLOGreaterEqual(BaseExpr a, BaseExpr b, Span span) {
   MXCHECK(a.defined()) << "ValueError: a is undefined\n";
@@ -758,6 +800,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->b);
       p->stream << ')';
     });
+
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOGreaterEqual, kGtE);
 
 // HLOAnd
 HLOAnd::HLOAnd(BaseExpr a, BaseExpr b, Span span) {
@@ -799,6 +843,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOAnd, kAnd);
+
 // HLOOr
 HLOOr::HLOOr(BaseExpr a, BaseExpr b, Span span) {
   MXCHECK(a.defined()) << "ValueError: a is undefined";
@@ -832,6 +878,10 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOOr, kOr);
+
+#undef MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY
+
 // HLONot
 HLONot::HLONot(BaseExpr a, Span span) {
   MXCHECK(a.defined()) << "ValueError: a is undefined";
@@ -855,6 +905,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "(not ";
       p->Print(op->a);
       p->stream << ")";
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::HLONot>("", [](ir::HLONot node, ObjectPath p, IRDocsifier d) -> Doc {
+      ExprDoc a = d->AsDoc<ExprDoc>(node->a, p->Attr("a"));
+      return OperationDoc(OperationDocNode::Kind::kNot, {a});
     });
 
 // Call
@@ -886,6 +942,27 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
                 << ") -> " << node->checked_type_;
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::Call>("", [](ir::Call call, ObjectPath call_p, IRDocsifier d) -> Doc {
+      ExprDoc prefix{nullptr};
+      if (const auto* op = call->op.as<OpNode>()) {
+        // TODO: fix prim op name
+        StringRef name = op->name;
+        prefix = Dialect(d, name);
+      } else if (const auto* gv = call->op.as<GlobalVarNode>()) {
+        prefix = LiteralDoc::Str(gv->name_hint, call_p->Attr("op"));
+      } else {
+        MXLOG(FATAL) << "call: " << call;
+      }
+      Array<ExprDoc> args;
+      int n_args = call->args.size();
+      args.reserve(n_args + 1);
+      for (int i = 0; i < n_args; ++i) {
+        args.push_back(d->AsDoc<ExprDoc>(call->args[i], call_p->Attr("args")->ArrayIndex(i)));
+      }
+      return prefix->Call(args);
+    });
+
 // HLOIterator
 HLOIterator::HLOIterator(BaseExpr container, IntImm method, Span span) {
   ObjectPtr<HLOIteratorNode> n = make_object<HLOIteratorNode>();
@@ -908,6 +985,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       auto* node = static_cast<const HLOIteratorNode*>(ref.get());
       p->stream << "HLOIterator(" << node->container << "." << node->method << ")";
     });
+
+// TODO: remove unused HLOIterator
 
 // InitializerList
 InitializerList::InitializerList(Array<BaseExpr> fields, Span span) {
@@ -947,6 +1026,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       auto* node = static_cast<const InitializerListNode*>(ref.get());
       p->stream << "InitializerList(" << node->fields << ")";
     });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::InitializerList>(
+        "", [](ir::InitializerList li, ObjectPath li_p, IRDocsifier d) -> Doc {
+          return d->AsDoc<ExprDoc>(li->fields, li_p->Attr("fields"));
+        });
 
 // InitializerDict
 InitializerDict::InitializerDict(Map<BaseExpr, BaseExpr> fields, Span span) {
@@ -1004,6 +1089,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "InitializerDict(" << node->fields << ")";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::InitializerDict>(
+        "", [](ir::InitializerDict di, ObjectPath di_p, IRDocsifier d) -> Doc {
+          return d->AsDoc<ExprDoc>(di->fields, di_p->Attr("fields"));
+        });
+
 // EnumAttr
 EnumAttr::EnumAttr(StringRef enum_str, Span span) {
   ObjectPtr<EnumAttrNode> n = make_object<EnumAttrNode>();
@@ -1023,6 +1114,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<EnumAttrNode>([](const ObjectRef& ref, ReprPrinter* p) {
       auto* node = static_cast<const EnumAttrNode*>(ref.get());
       p->stream << "EnumAttr(" << node->enum_str << ")";
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::EnumAttr>("", [](ir::EnumAttr en, ObjectPath en_p, IRDocsifier d) -> Doc {
+      // TODO: fixme
+      return d->AsDoc<ExprDoc>(en->enum_str, en_p->Attr("enum_str"));
     });
 
 // ClassGetItem
@@ -1053,6 +1150,13 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "ClassGetItemNode(" << node->self << "." << node->attr << ")";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::ClassGetItem>(
+        "", [](ir::ClassGetItem cls_getitem, ObjectPath cls_getitem_p, IRDocsifier d) -> Doc {
+          auto self = d->AsDoc<ExprDoc>(cls_getitem->self, cls_getitem_p->Attr("self"));
+          return self->Attr(cls_getitem->attr->value);
+        });
+
 // HLOCast
 HLOCast::HLOCast(Type t, BaseExpr value, Span span) {
   MXCHECK(value.defined());
@@ -1077,6 +1181,13 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::HLOCast>("", [](ir::HLOCast e, ObjectPath p, IRDocsifier d) -> Doc {
+      ExprDoc dtype = LiteralDoc::HLOType(e->checked_type_, p->Attr("checked_type_"));
+      ExprDoc value = d->AsDoc<ExprDoc>(e->value, p->Attr("value"));
+      return Dialect(d, "HLOCast")->Call({dtype, value});
+    });
+
 // HLOMove
 HLOMove::HLOMove(BaseExpr value, Span span) {
   MXCHECK(value.defined());
@@ -1099,6 +1210,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "move(";
       p->Print(op->value);
       p->stream << ")";
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::HLOCast>("", [](ir::HLOCast e, ObjectPath p, IRDocsifier d) -> Doc {
+      ExprDoc value = d->AsDoc<ExprDoc>(e->value, p->Attr("value"));
+      return Dialect(d, "move")->Call({value});
     });
 
 // HLOEnumerate
@@ -1134,6 +1251,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ")";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::HLOEnumerate>("", [](ir::HLOEnumerate e, ObjectPath p, IRDocsifier d) -> Doc {
+      ExprDoc value = d->AsDoc<ExprDoc>(e->value, p->Attr("value"));
+      return IdDoc("enumerate")->Call({value});
+    });
+
 // HLOZip
 HLOZip::HLOZip(Array<BaseExpr> values, Span span) {
   MXCHECK(values.defined());
@@ -1165,6 +1288,18 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "zip(";
       p->Print(op->values);
       p->stream << ")";
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::HLOZip>("", [](ir::HLOZip e, ObjectPath p, IRDocsifier d) -> Doc {
+      int n = e->values.size();
+      Array<ExprDoc> results;
+      results.reserve(n);
+      p = p->Attr("values");
+      for (int i = 0; i < n; ++i) {
+        results.push_back(d->AsDoc<ExprDoc>(e->values[i], p->ArrayIndex(i)));
+      }
+      return IdDoc("zip")->Call(results);
     });
 
 }  // namespace ir

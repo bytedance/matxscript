@@ -615,6 +615,9 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimOr, PrimOrNode, logic_or, "Or", kOr);
 
+#undef MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY
+#undef MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR
+
 // PrimNot
 PrimNot::PrimNot(PrimExpr a, Span span) {
   MXCHECK(a.defined()) << "ValueError: a is undefined";
@@ -639,6 +642,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       auto* op = static_cast<const PrimNotNode*>(node.get());
       p->stream << '!';
       p->Print(op->a);
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::PrimNot>("", [](ir::PrimNot node, ObjectPath p, IRDocsifier d) -> Doc {
+      ExprDoc a = d->AsDoc<ExprDoc>(node->a, p->Attr("a"));
+      return OperationDoc(OperationDocNode::Kind::kNot, {a});
     });
 
 // PrimSelect
