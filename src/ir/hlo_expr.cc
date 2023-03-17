@@ -1213,7 +1213,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
-    .set_dispatch<ir::HLOCast>("", [](ir::HLOCast e, ObjectPath p, IRDocsifier d) -> Doc {
+    .set_dispatch<ir::HLOMove>("", [](ir::HLOMove e, ObjectPath p, IRDocsifier d) -> Doc {
       ExprDoc value = d->AsDoc<ExprDoc>(e->value, p->Attr("value"));
       return Dialect(d, "move")->Call({value});
     });
