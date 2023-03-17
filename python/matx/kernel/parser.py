@@ -22,7 +22,7 @@ import ast
 import inspect
 import numbers
 import random
-from typing import Any, List
+from typing import Any, List, Dict
 
 from .ops import OpRegistry
 from .parser_context import *
@@ -49,11 +49,6 @@ def extract_symbol_from_type(t):
     return {str(s): s for s in symbols}
 
 
-def ndarrayType_to_ndarray(n):
-    from ..ir.type import NDArrayType
-    return NDArrayType()
-
-
 class KernelParser:
 
     def __init__(self, func):
@@ -71,10 +66,7 @@ class KernelParser:
             shape_symbol = extract_symbol_from_type(arg_type)
             self.symbols.update(shape_symbol)
 
-    def parse2(self):
-        sc_ctx = context.ScriptContext()
-        sc_ctx.main_node.raw = self.func
-
+    def passes(self, sc_ctx):
         dep_anls = analysis.DepsAnalysis()
         src_anls = analysis.SourceAnalysis()
         mdo_anls = analysis.ModuleAnalysis()
@@ -93,16 +85,22 @@ class KernelParser:
         fn_context.arg_reassigns = {k: False for k in self.args.keys()}
         # todo support types other than ndarray
         # todo fix type of fn_context and ir_schema
-        fn_context.arg_types = {k: ndarrayType_to_ndarray(v) for k, v in self.args.items()}
+        fn_context.arg_types = self.args.items()
         fn_context.fn_name = self.func_name
         # context.fn_type = None
         fn_context.is_abstract = False
-        fn_context.return_type = ndarrayType_to_ndarray(self.return_types)
+        fn_context.return_type = self.return_types
         fn_context.unbound_name = self.func_name
         sc_ctx.main_node.context = fn_context
 
-        sc_ctx.main_node.ir_schema = _ir.FuncType(
-            list(fn_context.arg_types.values()), fn_context.return_type)
+        # sc_ctx.main_node.ir_schema = _ir.FuncType(
+        #    list(fn_context.arg_types.values()), fn_context.return_type)
+
+    def parse(self):
+        sc_ctx = context.ScriptContext()
+        sc_ctx.main_node.raw = self.func
+
+        self.passes(sc_ctx)
 
         def parser_node(node: context.ASTNode):
             node.ir = KernelNodeVisitor(self, node, sc_ctx).visit(node.ast)
@@ -129,12 +127,18 @@ class KernelNodeVisitor(ast.NodeVisitor):
         self.session_handle_var_ctx = []
 
         # for kernel use
-        self.ndarray_context_table = {}
-        self.shape_symbol_table = {}
+        self.ndarray_context_table: Dict[str, NDArrayContext] = {}
+        self.shape_symbol_table: Dict[str, SymbolContext] = {}
+
         self.var_stack = []
+        self.tmp_vat_i = random.randint(10000000000000, 29999999999999)
 
     def tmp_var(self):
-        return f"__tmp_{random.randint(100000000, 999999999)}__"
+        if self.tmp_vat_i > 99999999999999:
+            raise SyntaxError("too many tmp variable has been generated")
+        var = f"__tmp_{self.tmp_vat_i}__"
+        self.tmp_vat_i += 1
+        return var
 
     def build_span(self, node):
         root_span = self.custom_ast_node.span
@@ -197,11 +201,11 @@ class KernelNodeVisitor(ast.NodeVisitor):
         for dim in type_annotation.shape:
             if not is_symbol(dim):
                 continue
-            if dim in self.shape_symbol_table:
+            if str(dim) in self.shape_symbol_table:
                 continue
-            var = _ir.PrimVar(str(dim), "int64", span)
-            self.shape_symbol_table[dim] = var
-            shape_symbols.append(var)
+            sym_ctx = SymbolContext(dim, span)
+            self.shape_symbol_table[str(dim)] = sym_ctx
+            shape_symbols.append(sym_ctx)
         return shape_symbols
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
@@ -213,21 +217,21 @@ class KernelNodeVisitor(ast.NodeVisitor):
             self.declare_shape_var(type_annotation, span)
             self.ndarray_context_table[arg] = NDArrayContext(
                 arg, type_annotation, self.shape_symbol_table, span)
-            arg_var = self.ndarray_context_table[arg].ndarray_ptr_var
+            arg_var = self.ndarray_context_table[arg].script_ptr_var
             self.context.update_symbol(arg, arg_var)
             self.context.func_params.append(arg_var)
 
         # make dim variables as args
         for dim, dim_var in self.shape_symbol_table.items():
-            self.context.update_symbol(str(dim), dim_var)
-            self.context.func_params.append(dim_var)
+            self.context.update_symbol(dim, dim_var.script_var)
+            self.context.func_params.append(dim_var.script_var)
 
         # make return as an arg
         if self.kernel_p.return_types is not None:
             return_buffer = NDArrayContext(self.return_var_name, self.kernel_p.return_types,
                                            self.shape_symbol_table, span)
-            self.context.update_symbol(return_buffer.name, return_buffer.ndarray_ptr_var)
-            self.context.func_params.append(return_buffer.ndarray_ptr_var)
+            self.context.update_symbol(return_buffer.name, return_buffer.script_ptr_var)
+            self.context.func_params.append(return_buffer.script_ptr_var)
             self.ndarray_context_table[self.return_var_name] = return_buffer
 
         # append session_pointer_var
@@ -267,14 +271,15 @@ class KernelNodeVisitor(ast.NodeVisitor):
     # variables
     def visit_Name(self, node: ast.Name) -> Any:
         name = node.id
-        if name in self.kernel_p.symbols:
+        if name in self.shape_symbol_table:
             self.var_stack.append((name, 'SymbolContext', 'Symbol'))
             return name
-        if name in self.kernel_p.args:
-            t = self.ndarray_context_table[name]
-            self.var_stack.append((name, t, t.kernel_type))
-            return name
-        return node.id
+        if name in self.ndarray_context_table:
+            ctx = self.ndarray_context_table[name]
+            self.var_stack.append((name, ctx, ctx.kernel_type))
+            return ctx.script_ptr_var
+        raise NotImplementedError(f'the type of {name} is not support')
+        # return node.id
 
     # Expressions
     def visit_UnaryOp(self, node: ast.UnaryOp) -> Any:

@@ -17,6 +17,8 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
+import sympy
+
 from .symbol import is_symbol
 from .typing import NDArrayType as kernelNDArrayT
 from .typing import is_ndarray_type
@@ -31,14 +33,18 @@ class NDArrayContext:
         self.shape = type_.shape
         self.kernel_type: kernelNDArrayT = type_  # NDARRAY TYPE
         self.script_type = _ir.PointerType(_ir.PrimType(type_.dtype_str()))
-        self.ndarray_ptr_var = _ir.PrimVar(name, self.script_type, span)  # HLO_VAR
-        self.data_var = _ir.PrimVar(name, type_.dtype_str(), span)  # PRIM_VAR
-        buffer_shape = [dim if not is_symbol(dim) else shape_symbol_table[dim]
+        self.script_ptr_var = _ir.PrimVar(name, self.script_type, span)  # HLO_VAR
+        self.script_data_var = _ir.PrimVar(name, type_.dtype_str(), span)  # PRIM_VAR
+        buffer_shape = [dim if not is_symbol(dim) else shape_symbol_table[str(dim)].script_var
                         for dim in self.shape]
         self.buffer = decl_buffer(buffer_shape)
 
 
 class SymbolContext:
 
-    def __init__(self, name: str):
-        pass
+    def __init__(self, symbol, span) -> None:
+        assert is_symbol(symbol), 'syntax error'
+        self.name: str = str(symbol)
+        self.kernel_type = sympy.Basic
+        self.script_type = _ir.PrimType("int64")
+        self.script_var = _ir.PrimVar(self.name, "int64", span)

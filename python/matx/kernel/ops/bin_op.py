@@ -97,8 +97,10 @@ class ArrayArrayBinaryOp:
         reads = [lhs_buffer_region, rhs_buffer_region]
         writes = [dst_buffer_region]
         name_hint = f"{self.lhs_context.name} {self.op.opname} {self.rhs_context.name}"
-        element_op = self.op.ir_class(self.lhs_context.data_var, self.rhs_context.data_var)
-        body = AssignStmt(dst_context.data_var, element_op)
+        element_op = self.op.ir_class(
+            self.lhs_context.script_data_var,
+            self.rhs_context.script_data_var)
+        body = AssignStmt(dst_context.script_data_var, element_op)
         compute_block = ComputeBlock(iter_vars, reads, writes, name_hint, body)
 
         return compute_block
