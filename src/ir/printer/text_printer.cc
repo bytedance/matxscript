@@ -99,11 +99,8 @@ PrinterConfig::PrinterConfig(Map<StringRef, ObjectRef> config_dict) {
   if (auto v = config_dict.Get("name")) {
     n->binding_names.push_back(Downcast<StringRef>(v));
   }
-  if (auto v = config_dict.Get("ir_prefix")) {
-    n->ir_prefix = Downcast<StringRef>(v);
-  }
-  if (auto v = config_dict.Get("tir_prefix")) {
-    n->tir_prefix = Downcast<StringRef>(v);
+  if (auto v = config_dict.Get("dialect_prefix")) {
+    n->dialect_prefix = Downcast<StringRef>(v);
   }
   if (auto v = config_dict.Get("indent_spaces")) {
     n->indent_spaces = Downcast<IntImm>(v)->value;

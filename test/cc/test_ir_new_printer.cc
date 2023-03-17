@@ -21,6 +21,7 @@
 
 #include <gtest/gtest.h>
 
+#include <matxscript/ir/prim_builtin.h>
 #include <matxscript/ir/prim_expr.h>
 #include <matxscript/ir/printer/text_printer.h>
 #include <matxscript/ir/stmt.h>
@@ -30,8 +31,20 @@ namespace matxscript {
 namespace ir {
 
 TEST(IRTextPrinter, PrintAllocaVar) {
+  PrimExpr a(3);
+  PrimExpr b(4);
+
+  PrimAdd c(a, b);
+  PrimMul d(c, a);
+
+  Bool cond(true);
+  PrimCall if_expr(d.dtype(), builtin::if_then_else(), {cond, d, c});
+
+  PrimCast cast_expr(runtime::DataType::Int(32), if_expr);
+
   runtime::DataType int_ty = runtime::DataType::Int(64);
-  AllocaVarStmt alloca_stmt("b", PrimType(int_ty), IntImm(int_ty, 0));
+  AllocaVarStmt alloca_stmt("b", PrimType(int_ty), cast_expr);
+
   auto ir_text = printer::IRTextPrinter::Print(alloca_stmt, printer::PrinterConfig());
   // b: "int" = 0
   std::cout << ir_text << std::endl;
