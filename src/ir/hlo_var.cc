@@ -25,6 +25,8 @@
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/prim_expr.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
 
@@ -32,6 +34,7 @@ namespace matxscript {
 namespace ir {
 
 using runtime::make_object;
+using namespace matxscript::ir::printer;
 
 MATXSCRIPT_REGISTER_NODE_TYPE(IdNode);
 
@@ -68,6 +71,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ")";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
+    .set_dispatch<HLOVar>("", [](HLOVar var, ObjectPath p, IRDocsifier d) -> Doc {
+      return IdDoc(var->name_hint());
+    });
+
 GlobalVar::GlobalVar(StringRef name_hint, Span span) {
   ObjectPtr<GlobalVarNode> n = make_object<GlobalVarNode>();
   n->name_hint = std::move(name_hint);
@@ -85,6 +93,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<GlobalVarNode>([](const ObjectRef& ref, ReprPrinter* p) {
       auto* node = static_cast<const GlobalVarNode*>(ref.get());
       p->stream << "GlobalVar(" << node->name_hint << ")";
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
+    .set_dispatch<GlobalVar>("", [](GlobalVar var, ObjectPath p, IRDocsifier d) -> Doc {
+      return IdDoc(var->name_hint);
     });
 
 }  // namespace ir

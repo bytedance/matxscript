@@ -23,6 +23,8 @@
 #include <initializer_list>
 
 #include <matxscript/ir/_base/reflection.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/container/string_helper.h>
 #include <matxscript/runtime/object.h>
 #include <matxscript/runtime/registry.h>
@@ -261,6 +263,13 @@ typename StringRef::reverse_iterator StringRef::rend() {
 typename StringRef::const_reverse_iterator StringRef::rend() const {
   return const_reverse_iterator(begin());
 }
+
+using namespace ::matxscript::ir::printer;
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<StringRef>("", [](StringRef s, ObjectPath p, IRDocsifier d) -> Doc {
+      // TODO: optimize MultipleLines
+      return LiteralDoc::Str(s, p);
+    });
 
 }  // namespace ir
 }  // namespace matxscript

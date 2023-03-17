@@ -24,6 +24,8 @@
 
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/_base/repr_printer.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
 
@@ -31,6 +33,7 @@ namespace matxscript {
 namespace ir {
 
 using namespace runtime;
+using namespace ::matxscript::ir::printer;
 
 NoneExpr::NoneExpr(Span span) {
   ObjectPtr<NoneExprNode> n = make_object<NoneExprNode>();
@@ -49,6 +52,11 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.NoneExpr").set_body_typed([]() {
 MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<NoneExprNode>([](const ObjectRef& ref, ReprPrinter* p) {
       p->stream << "NoneExpr";
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
+    .set_dispatch<NoneExpr>("", [](NoneExpr t, ObjectPath p, IRDocsifier d) -> Doc {
+      return LiteralDoc::None(p);
     });
 
 }  // namespace ir

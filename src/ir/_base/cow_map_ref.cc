@@ -29,6 +29,8 @@
 #include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/_base/structural_equal.h>
 #include <matxscript/ir/_base/structural_hash.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
 
@@ -363,6 +365,42 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     });
 
 MATX_DLL constexpr uint64_t DenseMapNode::kNextProbeLocation[];
+
+using namespace ::matxscript::ir::printer;
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<Map<ObjectRef, ObjectRef>>(  //
+        "",
+        [](Map<ObjectRef, ObjectRef> dict, ObjectPath p, IRDocsifier d) -> Doc {
+          using POO = std::pair<ObjectRef, ObjectRef>;
+          std::vector<POO> items{dict.begin(), dict.end()};
+          bool is_str_map = true;
+          for (const auto& kv : items) {
+            if (!kv.first.as<StringNode>()) {
+              is_str_map = false;
+              break;
+            }
+          }
+          if (is_str_map) {
+            std::sort(items.begin(), items.end(), [](const POO& lhs, const POO& rhs) {
+              return runtime::Downcast<StringRef>(lhs.first) <
+                     runtime::Downcast<StringRef>(rhs.first);
+            });
+          } else {
+            std::sort(items.begin(), items.end(), [](const POO& lhs, const POO& rhs) {
+              return lhs.first.get() < rhs.first.get();
+            });
+          }
+          int n = dict.size();
+          Array<ExprDoc> ks;
+          Array<ExprDoc> vs;
+          ks.reserve(n);
+          vs.reserve(n);
+          for (int i = 0; i < n; ++i) {
+            ks.push_back(d->AsDoc<ExprDoc>(items[i].first, p->MissingMapEntry()));
+            vs.push_back(d->AsDoc<ExprDoc>(items[i].second, p->MapValue(items[i].first)));
+          }
+          return DictDoc(ks, vs);
+        });
 
 }  // namespace ir
 }  // namespace matxscript

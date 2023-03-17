@@ -310,6 +310,19 @@ class LiteralDoc : public ExprDoc {
     return LiteralDoc::Str(dtype, p);
   }
 
+  /*!
+   * \brief Create a LiteralDoc to represent string.
+   * \param v The string value.
+   * \param p The object path
+   */
+  static LiteralDoc HLOType(const Type& v, const Optional<ObjectPath>& p) {
+    if (auto const* pt = v.as<PrimTypeNode>()) {
+      return LiteralDoc::DataType(pt->dtype, p);
+    }
+    StringRef dtype = v->GetPythonTypeName().encode();
+    return LiteralDoc::Str(dtype, p);
+  }
+
   MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(LiteralDoc, ExprDoc, LiteralDocNode);
 };
 

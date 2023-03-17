@@ -45,10 +45,8 @@ class PrinterConfigNode : public Object {
  public:
   /*! \brief A stack that tracks the names of the binding hierarchy */
   Array<StringRef> binding_names = {};
-  /*! \brief The prefix of IR nodes */
-  StringRef ir_prefix = "I";
-  /*! \brief The prefix of TIR nodes */
-  StringRef tir_prefix = "T";
+  /*! \brief The prefix of module */
+  StringRef dialect_prefix = "matx";
   /*! \brief Number of spaces used for indentation*/
   int indent_spaces = 4;
   /*! \brief Whether to print line numbers */
@@ -66,7 +64,7 @@ class PrinterConfigNode : public Object {
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("binding_names", &binding_names);
-    v->Visit("ir_prefix", &ir_prefix);
+    v->Visit("dialect_prefix", &dialect_prefix);
     v->Visit("indent_spaces", &indent_spaces);
     v->Visit("print_line_numbers", &print_line_numbers);
     v->Visit("num_context_lines", &num_context_lines);

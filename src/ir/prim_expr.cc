@@ -23,6 +23,7 @@
 
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/_base/repr_printer.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
@@ -31,6 +32,7 @@ namespace matxscript {
 namespace ir {
 
 using namespace ::matxscript::runtime;
+using namespace ::matxscript::ir::printer;
 
 PrimExpr::PrimExpr(int32_t value) : PrimExpr(IntImm(runtime::DataType::Int(32), value)) {
 }
@@ -64,6 +66,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       }
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<IntImm>("", [](IntImm s, ObjectPath p, IRDocsifier d) -> Doc {
+      return LiteralDoc::Int(s->value, p->Attr("value"));
+    });
+
 FloatImm::FloatImm(runtime::DataType dtype, double value, Span span) {
   MXCHECK_EQ(dtype.lanes(), 1) << "ValueError: FloatImm can only take scalar.";
   ObjectPtr<FloatImmNode> node = runtime::make_object<FloatImmNode>();
@@ -94,6 +101,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       }
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<FloatImm>("", [](FloatImm s, ObjectPath p, IRDocsifier d) -> Doc {
+      return LiteralDoc::Float(s->value, p->Attr("value"));
+    });
+
 // PrimCast
 PrimCast::PrimCast(DataType t, PrimExpr value, Span span) {
   MXCHECK(value.defined());
@@ -121,6 +133,13 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<PrimCast>("", [](PrimCast s, ObjectPath p, IRDocsifier d) -> Doc {
+      ExprDoc dtype = LiteralDoc::DataType(s->dtype, p->Attr("dtype"));
+      ExprDoc value = d->AsDoc<ExprDoc>(s->value, p->Attr("value"));
+      return Dialect(d, "PrimCast")->Call({dtype, value});
+    });
+
 // HLOCastPrim
 HLOCastPrim::HLOCastPrim(DataType t, BaseExpr value, Span span) {
   MXCHECK(value.defined());
@@ -145,6 +164,13 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << op->dtype << '(';
       p->Print(op->value);
       p->stream << ')';
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<HLOCastPrim>("", [](HLOCastPrim s, ObjectPath p, IRDocsifier d) -> Doc {
+      ExprDoc dtype = LiteralDoc::DataType(s->dtype, p->Attr("dtype"));
+      ExprDoc value = d->AsDoc<ExprDoc>(s->value, p->Attr("value"));
+      return Dialect(d, "HLOCastPrim")->Call({dtype, value});
     });
 
 #define MATXSCRIPT_DEFINE_BINOP_CONSTRUCTOR(Name)                       \
@@ -177,6 +203,28 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     data_ = std::move(node);                                            \
   }
 
+#define MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(                                          \
+    NodeType, NodeObj, NodeFunc, OpString, OpKind)                                                \
+  MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)                                               \
+      .set_dispatch<ir::NodeType>("", [](ir::NodeType node, ObjectPath p, IRDocsifier d) -> Doc { \
+        ExprDoc a = d->AsDoc<ExprDoc>(node->a, p->Attr("a"));                                     \
+        ExprDoc b = d->AsDoc<ExprDoc>(node->b, p->Attr("b"));                                     \
+        PrimExpr ret = matxscript::ir::NodeFunc(node->a, node->b);                                \
+        if (!ret->IsInstance<ir::NodeObj>() && ret->IsInstance<ir::IntImmNode>() &&               \
+            ret->IsInstance<ir::FloatImmNode>()) {                                                \
+          return Dialect(d, OpString)->Call({a, b});                                              \
+        }                                                                                         \
+        return OperationDoc(OperationDocNode::Kind::OpKind, {a, b});                              \
+      });
+
+#define MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY(NodeType, OpString)                                  \
+  MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)                                               \
+      .set_dispatch<ir::NodeType>("", [](ir::NodeType node, ObjectPath p, IRDocsifier d) -> Doc { \
+        ExprDoc a = d->AsDoc<ExprDoc>(node->a, p->Attr("a"));                                     \
+        ExprDoc b = d->AsDoc<ExprDoc>(node->b, p->Attr("b"));                                     \
+        return Dialect(d, OpString)->Call({a, b});                                                \
+      });
+
 // PrimAdd
 MATXSCRIPT_DEFINE_BINOP_CONSTRUCTOR(PrimAdd);
 
@@ -195,6 +243,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->b);
       p->stream << ')';
     });
+
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimAdd, PrimAddNode, add, "Add", kAdd);
 
 // PrimSub
 MATXSCRIPT_DEFINE_BINOP_CONSTRUCTOR(PrimSub);
@@ -215,6 +265,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimSub, PrimSubNode, sub, "Sub", kSub);
+
 // PrimMul
 MATXSCRIPT_DEFINE_BINOP_CONSTRUCTOR(PrimMul);
 
@@ -234,6 +286,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimMul, PrimMulNode, mul, "Mul", kMult);
+
 // PrimDiv
 MATXSCRIPT_DEFINE_BINOP_CONSTRUCTOR(PrimDiv);
 
@@ -251,6 +305,21 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "/";
       p->Print(op->b);
       p->stream << ')';
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<PrimDiv>("", [](PrimDiv node, ObjectPath p, IRDocsifier d) -> Doc {
+      ExprDoc a = d->AsDoc<ExprDoc>(node->a, p->Attr("a"));
+      ExprDoc b = d->AsDoc<ExprDoc>(node->b, p->Attr("b"));
+      PrimExpr ret = matxscript::ir::div(node->a, node->b);
+      if (!ret->IsInstance<PrimDivNode>()) {
+        return Dialect(d, "PrimDiv")->Call({a, b});
+      }
+      if ((node->a->dtype.is_int() || node->a->dtype.is_uint()) &&
+          (node->b->dtype.is_int() || node->b->dtype.is_uint())) {
+        return Dialect(d, "PrimDiv")->Call({a, b});
+      }
+      return OperationDoc(OperationDocNode::Kind::kDiv, {a, b});
     });
 
 // PrimMod
@@ -272,6 +341,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY(PrimMod, "truncmod");
+
 // PrimFloorDiv
 MATXSCRIPT_DEFINE_BINOP_CONSTRUCTOR(PrimFloorDiv);
 
@@ -287,6 +358,9 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "floordiv(" << op->a << ", " << op->b << ")";
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(
+    PrimFloorDiv, PrimFloorDivNode, floordiv, "FloorDiv", kFloorDiv);
+
 // PrimFloorMod
 MATXSCRIPT_DEFINE_BINOP_CONSTRUCTOR(PrimFloorMod);
 
@@ -301,6 +375,9 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       auto* op = static_cast<const PrimFloorModNode*>(node.get());
       p->stream << "floormod(" << op->a << ", " << op->b << ")";
     });
+
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(
+    PrimFloorMod, PrimFloorModNode, floormod, "FloorMod", kMod);
 
 // PrimMin
 MATXSCRIPT_DEFINE_BINOP_CONSTRUCTOR(PrimMin);
@@ -321,6 +398,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ")";
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY(PrimMin, "min");
+
 // PrimMax
 MATXSCRIPT_DEFINE_BINOP_CONSTRUCTOR(PrimMax);
 
@@ -339,6 +418,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->b);
       p->stream << ")";
     });
+
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY(PrimMax, "max");
 
 // PrimEQ
 MATXSCRIPT_DEFINE_CMPOP_CONSTRUCTOR(PrimEQ);
@@ -359,6 +440,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimEQ, PrimEQNode, equal, "EQ", kEq);
+
 // PrimNE
 MATXSCRIPT_DEFINE_CMPOP_CONSTRUCTOR(PrimNE);
 
@@ -377,6 +460,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->b);
       p->stream << ')';
     });
+
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimNE, PrimNENode, not_equal, "NE", kNotEq);
 
 // PrimLT
 MATXSCRIPT_DEFINE_CMPOP_CONSTRUCTOR(PrimLT);
@@ -397,6 +482,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimLT, PrimLTNode, less_than, "LT", kLt);
+
 // PrimLE
 MATXSCRIPT_DEFINE_CMPOP_CONSTRUCTOR(PrimLE);
 
@@ -415,6 +502,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->b);
       p->stream << ')';
     });
+
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimLE, PrimLENode, less_or_equal, "LE", kLtE);
 
 // PrimGT
 MATXSCRIPT_DEFINE_CMPOP_CONSTRUCTOR(PrimGT);
@@ -435,6 +524,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimGT, PrimGTNode, greater_than, "GT", kGt);
+
 // PrimGE
 MATXSCRIPT_DEFINE_CMPOP_CONSTRUCTOR(PrimGE);
 
@@ -453,6 +544,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->b);
       p->stream << ')';
     });
+
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimGE, PrimGENode, greater_or_equal, "GE", kGtE);
 
 // PrimAnd
 PrimAnd::PrimAnd(PrimExpr a, PrimExpr b, Span span) {
@@ -486,6 +579,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimAnd, PrimAndNode, logic_and, "And", kAnd);
+
 // PrimOr
 PrimOr::PrimOr(PrimExpr a, PrimExpr b, Span span) {
   MXCHECK(a.defined()) << "ValueError: a is undefined";
@@ -518,6 +613,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ')';
     });
 
+MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimOr, PrimOrNode, logic_or, "Or", kOr);
+
+#undef MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY
+#undef MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR
+
 // PrimNot
 PrimNot::PrimNot(PrimExpr a, Span span) {
   MXCHECK(a.defined()) << "ValueError: a is undefined";
@@ -542,6 +642,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       auto* op = static_cast<const PrimNotNode*>(node.get());
       p->stream << '!';
       p->Print(op->a);
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::PrimNot>("", [](ir::PrimNot node, ObjectPath p, IRDocsifier d) -> Doc {
+      ExprDoc a = d->AsDoc<ExprDoc>(node->a, p->Attr("a"));
+      return OperationDoc(OperationDocNode::Kind::kNot, {a});
     });
 
 // PrimSelect
@@ -583,6 +689,17 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << ")";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::PrimSelect>(
+        "", [](ir::PrimSelect select, ObjectPath p, IRDocsifier d) -> Doc {
+          return Dialect(d, "PrimSelect")
+              ->Call({
+                  d->AsDoc<ExprDoc>(select->condition, p->Attr("condition")),
+                  d->AsDoc<ExprDoc>(select->true_value, p->Attr("true_value")),
+                  d->AsDoc<ExprDoc>(select->false_value, p->Attr("false_value")),
+              });
+        });
+
 // Let
 PrimLet::PrimLet(PrimVar var, PrimExpr value, PrimExpr body, Span span) {
   MXCHECK(value.defined());
@@ -600,8 +717,8 @@ PrimLet::PrimLet(PrimVar var, PrimExpr value, PrimExpr body, Span span) {
   data_ = std::move(node);
 }
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.Let").set_body_typed(
-    [](PrimVar var, PrimExpr value, PrimExpr body, Span span) {
+MATXSCRIPT_REGISTER_GLOBAL("ir.PrimLet")
+    .set_body_typed([](PrimVar var, PrimExpr value, PrimExpr body, Span span) {
       return PrimLet(var, value, body, span);
     });
 
@@ -615,6 +732,16 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << " in ";
       p->Print(op->body);
       p->stream << ")";
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::PrimLet>("", [](ir::PrimLet let, ObjectPath p, IRDocsifier d) -> Doc {
+      DictDoc where({d->AsDoc<ExprDoc>(let->var, p->Attr("var"))},
+                    {d->AsDoc<ExprDoc>(let->value, p->Attr("value"))});
+      return Dialect(d, "PrimLet")
+          ->Call({d->AsDoc<ExprDoc>(let->body, p->Attr("body"))},  //
+                 {"where"},
+                 {where});
     });
 
 // Call
@@ -662,6 +789,27 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       //        }
       //      }
       //      p->stream << ")";
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::PrimCall>("", [](ir::PrimCall call, ObjectPath call_p, IRDocsifier d) -> Doc {
+      ExprDoc prefix{nullptr};
+      if (const auto* op = call->op.as<OpNode>()) {
+        // TODO: fix prim op name
+        StringRef name = op->name;
+        prefix = Dialect(d, name);
+      } else if (const auto* gv = call->op.as<GlobalVarNode>()) {
+        prefix = LiteralDoc::Str(gv->name_hint, call_p->Attr("op"));
+      } else {
+        MXLOG(FATAL) << "call: " << call;
+      }
+      Array<ExprDoc> args;
+      int n_args = call->args.size();
+      args.reserve(n_args + 1);
+      for (int i = 0; i < n_args; ++i) {
+        args.push_back(d->AsDoc<ExprDoc>(call->args[i], call_p->Attr("args")->ArrayIndex(i)));
+      }
+      return prefix->Call(args);
     });
 
 MATXSCRIPT_REGISTER_GLOBAL("runtime.GetIntImm").set_body_typed([](IntImm i) { return i->value; });
