@@ -133,12 +133,19 @@ class KernelNodeVisitor(ast.NodeVisitor):
         self.var_stack = []
         self.tmp_vat_i = random.randint(10000000000000, 29999999999999)
 
-    def tmp_var(self):
+    def make_tmp_var_name(self):
         if self.tmp_vat_i > 99999999999999:
             raise SyntaxError("too many tmp variable has been generated")
         var = f"__tmp_{self.tmp_vat_i}__"
         self.tmp_vat_i += 1
         return var
+
+    def tmp_ndarray(self, type_: kernelNDArrayT, span):
+        name = self.make_tmp_var_name()
+        ctx = NDArrayContext(name, type_, self.shape_symbol_table, span)
+        self.ndarray_context_table[name] = ctx
+        self.var_stack.append((name, ctx, ctx.kernel_type))
+        return _ir.AllocaVarStmt(name, ctx.script_type)
 
     def build_span(self, node):
         root_span = self.custom_ast_node.span
@@ -272,8 +279,9 @@ class KernelNodeVisitor(ast.NodeVisitor):
     def visit_Name(self, node: ast.Name) -> Any:
         name = node.id
         if name in self.shape_symbol_table:
-            self.var_stack.append((name, 'SymbolContext', 'Symbol'))
-            return name
+            ctx = self.shape_symbol_table[name]
+            self.var_stack.append((name, ctx, ctx.kernel_type))
+            return ctx.script_var
         if name in self.ndarray_context_table:
             ctx = self.ndarray_context_table[name]
             self.var_stack.append((name, ctx, ctx.kernel_type))
@@ -296,10 +304,15 @@ class KernelNodeVisitor(ast.NodeVisitor):
         # todo deal with other type
         # todo generate a intermediate dst to hold the data
         opname = type(node.op).__name__
-        self.visit(node.left)
+        lhs_ir = self.visit(node.left)
         lhs, lhs_ctx, lhs_t = self.var_stack.pop()
-        self.visit(node.right)
+        rhs_ir = self.visit(node.right)
         rhs, rhs_ctx, rhs_t = self.var_stack.pop()
+        result_stmts = []
+        if isinstance(lhs_ir, _ir.Stmt):
+            result_stmts.append(lhs_ir)
+        if isinstance(rhs_ir, _ir.Stmt):
+            result_stmts.append(rhs_ir)
         if is_ndarray_type(lhs_t) and is_ndarray_type(rhs_t):
             lhs_context = self.ndarray_context_table[lhs]
             rhs_context = self.ndarray_context_table[rhs]
@@ -307,14 +320,12 @@ class KernelNodeVisitor(ast.NodeVisitor):
             op_class = OpRegistry.get_bin_op(
                 lhs_context.kernel_type, rhs_context.kernel_type, opname)
             op = op_class(lhs_context, rhs_context)
-            tmp_name = self.tmp_var()
-            result_context = NDArrayContext(tmp_name,
-                                            op.result_type(),
-                                            self.shape_symbol_table,
-                                            self.build_span(node))
-            self.ndarray_context_table[tmp_name] = result_context
-            self.var_stack.append((tmp_name, result_context, result_context.kernel_type))
-            return op(result_context)
+            tmp_allocation_ir = self.tmp_ndarray(op.result_type(), self.build_span(node))
+            result_stmts.append(tmp_allocation_ir)
+            dst_name, dst_context, dst_t = self.var_stack.pop()
+            self.var_stack.append((dst_name, dst_context, dst_t))
+            result_stmts.append(op(dst_context))
+            return _ir.SeqStmt(result_stmts)
         else:
             raise SyntaxError(f"bin op does not support {lhs_t} and {rhs_t}")
         # todo insert to ir
