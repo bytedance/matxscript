@@ -43,10 +43,10 @@ from .expr import GlobalVar, Call, InitializerList, InitializerDict
 from .expr import HLOVar, NoneExpr, EnumAttr, HLOCast
 from .expr import RangeExpr
 
-from .stmt import Stmt, LetStmt, AssertStmt, For, While, Break, Continue
+from .stmt import Stmt, AssertStmt, For, While, Break, Continue
 # from .stmt import BufferStore, BufferRealize, Store, ProducerStore, Allocate, AttrStmt
 from .stmt import SeqStmt
-from .stmt import IfThenElse, Evaluate, stmt_seq, stmt_list
+from .stmt import IfThenElse, stmt_seq, stmt_list
 from .stmt import ReturnStmt, AssignStmt, AllocaVarStmt
 from .stmt import ExprStmt, HLOYield, AutoFor
 from .stmt import ExceptionHandler, TryExcept, Raise
