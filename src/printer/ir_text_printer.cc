@@ -543,24 +543,6 @@ Doc IRTextPrinter::VisitStmt_(const ReturnStmtNode* op) {
   return doc;
 }
 
-Doc IRTextPrinter::VisitStmt_(const LetStmtNode* op) {
-  Doc doc;
-  doc << "let " << Print(op->var) << " = " << Print(op->value) << Doc::NewLine() << Print(op->body);
-  return doc;
-}
-
-Doc IRTextPrinter::VisitStmt_(const AttrStmtNode* op) {
-  Doc doc;
-  doc << "attr [" << Print(op->node) << "] " << Doc::StrLiteral(op->attr_key) << " = "
-      << Print(op->value);
-  if (op->body->IsInstance<SeqStmtNode>()) {
-    doc << PrintBody(op->body);
-  } else {
-    doc << ";" << Doc::NewLine() << Print(op->body);
-  }
-  return doc;
-}
-
 Doc IRTextPrinter::VisitStmt_(const AssertStmtNode* op) {
   Doc doc;
   doc << "assert(" << Print(op->condition) << ", " << Print(op->message) << ")" << Doc::NewLine()
@@ -614,12 +596,6 @@ Doc IRTextPrinter::VisitStmt_(const SeqStmtNode* op) {
     seq_doc << Doc::NewLine() << Print(stmt);
   }
   doc << " {" << Doc::Indent(2, seq_doc) << Doc::NewLine() << "}";
-  return doc;
-}
-
-Doc IRTextPrinter::VisitStmt_(const EvaluateNode* op) {
-  Doc doc;
-  doc << Print(op->value);
   return doc;
 }
 

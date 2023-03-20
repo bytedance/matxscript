@@ -748,8 +748,10 @@ inline bool is_const_int(const PrimExpr& x, int64_t value) {
 inline bool is_no_op(const Stmt& stmt) {
   if (!stmt.defined())
     return true;
-  if (const auto* op = stmt.as<EvaluateNode>()) {
-    return is_const_int(op->value);
+  if (const auto* op = stmt.as<ExprStmtNode>()) {
+    if (op->expr.as<PrimExprNode>()) {
+      return is_const_int(runtime::Downcast<PrimExpr>(op->expr));
+    }
   }
   if (const auto* op = stmt.as<SeqStmtNode>()) {
     return op->seq.size() == 0;

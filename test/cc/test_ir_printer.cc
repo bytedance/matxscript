@@ -49,7 +49,7 @@ TEST(IR, Printer) {
   PrimCall custom(d.dtype(), builtin::if_then_else(), {cond, d, c});
 
   Array<Stmt> seq_stmt;
-  seq_stmt.push_back(Evaluate(custom));
+  seq_stmt.push_back(ExprStmt(custom));
   SeqStmt body(seq_stmt);
   Array<PrimVar> params{PrimVar("n", DataType::Bool())};
   PrimFunc func(params, {}, body, PrimType(DataType::Int(32)));

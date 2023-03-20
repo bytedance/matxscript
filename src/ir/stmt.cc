@@ -165,69 +165,6 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->value);
     });
 
-// LetStmt
-LetStmt::LetStmt(PrimVar var, PrimExpr value, Stmt body, Span span) {
-  MXCHECK(value.defined());
-  MXCHECK(body.defined());
-  // TODO(maxiandi) : review
-  MXCHECK_EQ(value.dtype(), var.dtype());
-
-  ObjectPtr<LetStmtNode> node = make_object<LetStmtNode>();
-  node->var = std::move(var);
-  node->value = std::move(value);
-  node->body = std::move(body);
-  node->span = std::move(span);
-  data_ = std::move(node);
-}
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.LetStmt")
-    .set_body_typed([](PrimVar var, PrimExpr value, Stmt body, Span span = Span()) {
-      return LetStmt(var, value, body, span);
-    });
-
-MATXSCRIPT_REGISTER_NODE_TYPE(LetStmtNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<LetStmtNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const LetStmtNode*>(node.get());
-      p->PrintIndent();
-      p->stream << "let " << op->var << " = ";
-      p->Print(op->value);
-      p->stream << '\n';
-      p->Print(op->body);
-    });
-
-// AttrStmt
-AttrStmt::AttrStmt(ObjectRef node, StringRef attr_key, BaseExpr value, Stmt body, Span span) {
-  auto n = make_object<AttrStmtNode>();
-  n->node = node;
-  n->attr_key = std::move(attr_key);
-  n->value = std::move(value);
-  n->body = std::move(body);
-  n->span = std::move(span);
-  data_ = std::move(n);
-}
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.AttrStmt")
-    .set_body_typed(
-        [](ObjectRef node, StringRef attr_key, BaseExpr value, Stmt body, Span span = Span()) {
-          return AttrStmt(node, attr_key, value, body, span);
-        });
-
-MATXSCRIPT_REGISTER_NODE_TYPE(AttrStmtNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<AttrStmtNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const AttrStmtNode*>(node.get());
-      p->PrintIndent();
-      p->stream << "// attr [";
-      p->Print(op->node);
-      p->stream << "] " << op->attr_key << " = ";
-      p->Print(op->value);
-      p->stream << '\n';
-      p->Print(op->body);
-    });
-
 // AssertStmt
 AssertStmt::AssertStmt(BaseExpr condition, BaseExpr message, Stmt body, Span span) {
   MXCHECK(condition.defined());
@@ -738,30 +675,6 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
         p->stream << " ";
         p->Print(op->exc);
       }
-      p->stream << "\n";
-    });
-
-// Evaluate
-Evaluate::Evaluate(PrimExpr value, Span span) {
-  MXCHECK(value.defined());
-
-  ObjectPtr<EvaluateNode> node = make_object<EvaluateNode>();
-  node->value = std::move(value);
-  node->span = std::move(span);
-  data_ = std::move(node);
-}
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.Evaluate").set_body_typed([](PrimExpr value, Span span = Span()) {
-  return Evaluate(value, span);
-});
-
-MATXSCRIPT_REGISTER_NODE_TYPE(EvaluateNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<EvaluateNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const EvaluateNode*>(node.get());
-      p->PrintIndent();
-      p->Print(op->value);
       p->stream << "\n";
     });
 
