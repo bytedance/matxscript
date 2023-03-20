@@ -31,22 +31,33 @@ using runtime::Object;
 using runtime::ObjectPtr;
 using runtime::ObjectRef;
 
+/*! \brief A printer frame for IR fragment */
 class IRFrameNode : public FrameNode {
  public:
+  /*! \brief The TIR fragment the frame corresponds to */
+  ObjectRef tir;
+  /*! \brief Whether or not the frame allows concise scoping */
+  bool allow_concise_scoping{false};
+
   void VisitAttrs(AttrVisitor* v) {
     FrameNode::VisitAttrs(v);
+    v->Visit("tir", &tir);
+    v->Visit("allow_concise_scoping", &allow_concise_scoping);
   }
 
-  static constexpr const char* _type_key = "ir.printer.IRFrame";
+  static constexpr const char* _type_key = "ir.printer.TIRFrame";
   MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(IRFrameNode, FrameNode);
 };
 
+/*! \brief Managed reference to IRFrameNode */
 class IRFrame : public Frame {
  public:
-  explicit IRFrame(const IRDocsifier& d) {
+  /*! \brief Constructor */
+  explicit IRFrame(const IRDocsifier& d, const ObjectRef& tir) {
     ObjectPtr<IRFrameNode> n = runtime::make_object<IRFrameNode>();
     n->stmts.clear();
     n->d = d.get();
+    n->tir = tir;
     data_ = std::move(n);
   }
 

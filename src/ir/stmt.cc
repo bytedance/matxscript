@@ -28,17 +28,32 @@
 
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/_base/repr_printer.h>
+#include <matxscript/ir/_base/with.h>
 #include <matxscript/ir/hlo_expr.h>
 #include <matxscript/ir/hlo_var.h>
 #include <matxscript/ir/prim_expr.h>
 #include <matxscript/ir/prim_var.h>
+#include <matxscript/ir/printer/doc.h>
 #include <matxscript/ir/printer/ir_docsifier.h>
+#include <matxscript/ir/printer/ir_frame.h>
+#include <matxscript/ir/printer/utils.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
 namespace ir {
+
+namespace printer {
+bool AllowConciseScoping(const IRDocsifier& d) {
+  MXCHECK(!d->frames.empty());
+  if (const auto* f = d->frames.back().as<IRFrameNode>()) {
+    return f->allow_concise_scoping;
+  }
+  MXLOG(FATAL) << "NotImplementedError: fragment printing";
+  return false;
+}
+}  // namespace printer
 
 using ::matxscript::runtime::Downcast;
 using ::matxscript::runtime::make_object;
@@ -64,6 +79,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       auto* op = static_cast<const ExprStmtNode*>(node.get());
       p->PrintIndent();
       p->Print(op->expr);
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ExprStmt>("", [](ExprStmt stmt, ObjectPath p, IRDocsifier d) -> Doc {
+      auto expr = d->AsDoc<ExprDoc>(stmt->expr, p->Attr("expr"));
+      return ExprStmtDoc(expr);
     });
 
 // AllocaVarStmt
@@ -111,8 +132,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
       if (s->init_value.defined()) {
         rhs = d->AsDoc<ExprDoc>(s->init_value, p->Attr("init_value"));
       }
-      auto py_ty = s->var->checked_type_->GetPythonTypeName().encode();
-      annotation = LiteralDoc::Str(std::move(py_ty), var_attr->Attr("checked_type_"));
+      annotation = LiteralDoc::HLOType(s->var->checked_type_, var_attr->Attr("checked_type_"));
       return AssignDoc(lhs, rhs, annotation);
     });
 
@@ -144,6 +164,13 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->rhs);
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<AssignStmt>("", [](AssignStmt stmt, ObjectPath p, IRDocsifier d) -> Doc {
+      auto lhs = d->AsDoc<ExprDoc>(stmt->lhs, p->Attr("lhs"));
+      Optional<ExprDoc> rhs = d->AsDoc<ExprDoc>(stmt->rhs, p->Attr("rhs"));
+      return AssignDoc(lhs, rhs, NullOpt);
+    });
+
 // // Return
 ReturnStmt::ReturnStmt(BaseExpr value, Span span) {
   ObjectPtr<ReturnStmtNode> node = make_object<ReturnStmtNode>();
@@ -163,6 +190,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       auto* op = static_cast<const ReturnStmtNode*>(node.get());
       p->PrintIndent();
       p->Print(op->value);
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ReturnStmt>("", [](ReturnStmt stmt, ObjectPath p, IRDocsifier d) -> Doc {
+      auto value = d->AsDoc<ExprDoc>(stmt->value, p->Attr("value"));
+      return ReturnDoc(value);
     });
 
 // AssertStmt
@@ -197,6 +230,21 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->Print(op->message);
       p->stream << ")\n";
       p->Print(op->body);
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::AssertStmt>("", [](ir::AssertStmt stmt, ObjectPath p, IRDocsifier d) -> Doc {
+      bool concise = AllowConciseScoping(d);
+      ExprDoc cond = d->AsDoc<ExprDoc>(stmt->condition, p->Attr("condition"));
+      ExprDoc msg = d->AsDoc<ExprDoc>(stmt->message, p->Attr("message"));
+      With<IRFrame> f(d, stmt);
+      AsDocBody(stmt->body, p->Attr("body"), f->get(), d);
+      if (concise) {
+        Array<StmtDoc>* stmts = &(*f)->stmts;
+        stmts->insert(stmts->begin(), AssertDoc(cond, msg));
+        return StmtBlockDoc(*stmts);
+      }
+      return ScopeDoc(NullOpt, Dialect(d, "Assert")->Call({cond, msg}), (*f)->stmts);
     });
 
 // For
@@ -300,6 +348,33 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 
       p->PrintIndent();
       p->stream << "}\n";
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::For>("", [](ir::For loop, ObjectPath loop_p, IRDocsifier d) -> Doc {
+      With<IRFrame> f(d, loop);
+      ExprDoc lhs = DefineVar(loop->loop_var, *f, d);
+      Optional<ExprDoc> min = NullOpt;
+      Optional<ExprDoc> max = NullOpt;
+      Optional<ExprDoc> step = NullOpt;
+      min = d->AsDoc<ExprDoc>(loop->min, loop_p->Attr("min"));
+      max = d->AsDoc<ExprDoc>(loop->max, loop_p->Attr("max"));
+      step = d->AsDoc<ExprDoc>(loop->step, loop_p->Attr("step"));
+      Array<ExprDoc> args;
+      Array<StringRef> kwargs_keys;
+      Array<ExprDoc> kwargs_values;
+      if (min.defined()) {
+        args.push_back(min.value());
+      }
+      if (max.defined()) {
+        args.push_back(max.value());
+      }
+      if (step.defined()) {
+        args.push_back(step.value());
+      }
+      ExprDoc rhs = IdDoc("range")->Call(args, kwargs_keys, kwargs_values);
+      AsDocBody(loop->body, loop_p->Attr("body"), (*f).get(), d);
+      return ForDoc(lhs, rhs, (*f)->stmts);
     });
 
 // AutoFor
@@ -449,6 +524,27 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "}\n";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::AutoFor>("", [](ir::AutoFor loop, ObjectPath loop_p, IRDocsifier d) -> Doc {
+      With<IRFrame> f(d, loop);
+      ExprDoc lhs{nullptr};
+      if (loop->loop_vars.size() > 1) {
+        int n = loop->loop_vars.size();
+        Array<ExprDoc> loop_vars;
+        loop_vars.reserve(n);
+        for (int i = 0; i < n; ++i) {
+          loop_vars.push_back(DefineVar(loop->loop_vars[i], *f, d));
+        }
+        lhs = TupleDoc(loop_vars);
+      } else {
+        lhs = DefineVar(loop->loop_vars[0], *f, d);
+      }
+
+      ExprDoc rhs = d->AsDoc<ExprDoc>(loop->raw_container, loop_p->Attr("raw_container"));
+      AsDocBody(loop->body, loop_p->Attr("body"), (*f).get(), d);
+      return ForDoc(lhs, rhs, (*f)->stmts);
+    });
+
 // While
 While::While(BaseExpr cond, Stmt body, Span span) {
   MXCHECK(cond.defined());
@@ -491,6 +587,15 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "}\n";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::While>("", [](ir::While loop, ObjectPath loop_p, IRDocsifier d) -> Doc {
+      With<IRFrame> f(d, loop);
+      ExprDoc cond = d->AsDoc<ExprDoc>(loop->cond, loop_p->Attr("cond"));
+      AsDocBody(loop->body, loop_p->Attr("body"), (*f).get(), d);
+      return WhileDoc(cond, (*f)->stmts);
+    });
+
+// Break
 Break::Break() {
   data_ = make_object<BreakNode>();
 }
@@ -504,6 +609,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "break\n";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::Break>("", [](ir::Break n, ObjectPath p, IRDocsifier d) -> Doc {
+      return IdDoc("break");
+    });
+
+// Continue
 Continue::Continue() {
   data_ = make_object<ContinueNode>();
 }
@@ -517,6 +628,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "continue\n";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::Continue>("", [](ir::Continue n, ObjectPath p, IRDocsifier d) -> Doc {
+      return IdDoc("continue");
+    });
+
+// SeqStmt
 SeqStmt::SeqStmt(Array<Stmt> seq, Span span) {
   auto node = make_object<SeqStmtNode>();
   node->seq = std::move(seq);
@@ -524,7 +641,6 @@ SeqStmt::SeqStmt(Array<Stmt> seq, Span span) {
   data_ = std::move(node);
 }
 
-// SeqStmt
 MATXSCRIPT_REGISTER_GLOBAL("ir.SeqStmt").set_body_typed([](Array<Stmt> seq, Span span = Span()) {
   return SeqStmt(std::move(seq), std::move(span));
 });
@@ -537,6 +653,13 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       for (Stmt stmt : op->seq) {
         p->Print(stmt);
       }
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::SeqStmt>("", [](ir::SeqStmt stmt, ObjectPath p, IRDocsifier d) -> Doc {
+      With<IRFrame> f(d, stmt);
+      AsDocBody(stmt, p, f->get(), d);
+      return StmtBlockDoc((*f)->stmts);
     });
 
 // IfThenElse
@@ -590,6 +713,26 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "}\n";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::IfThenElse>(  //
+        "",
+        [](ir::IfThenElse stmt, ObjectPath p, IRDocsifier d) -> Doc {
+          ExprDoc cond = d->AsDoc<ExprDoc>(stmt->condition, p->Attr("condition"));
+          Array<StmtDoc> then_branch;
+          Array<StmtDoc> else_branch;
+          if (stmt->then_case.defined()) {
+            With<IRFrame> f(d, stmt->then_case);
+            AsDocBody(stmt->then_case, p->Attr("then_case"), f->get(), d);
+            then_branch = (*f)->stmts;
+          }
+          if (stmt->else_case.defined()) {
+            With<IRFrame> f(d, stmt->else_case);
+            AsDocBody(stmt->else_case, p->Attr("else_case"), f->get(), d);
+            else_branch = (*f)->stmts;
+          }
+          return IfDoc(cond, then_branch, else_branch);
+        });
+
 // ExceptionHandler
 ExceptionHandler::ExceptionHandler(BaseExpr e, Stmt body, Span span) {
   MXCHECK(body.defined()) << "body is not defined!!!";
@@ -618,6 +761,22 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->PrintIndent();
       p->stream << "}\n";
     });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::ExceptionHandler>(  //
+        "",
+        [](ir::ExceptionHandler stmt, ObjectPath p, IRDocsifier d) -> Doc {
+          ExprDoc e = d->AsDoc<ExprDoc>(stmt->e, p->Attr("e"));
+          Array<StmtDoc> body_branch;
+          if (stmt->body.defined()) {
+            With<IRFrame> f(d, stmt->body);
+            AsDocBody(stmt->body, p->Attr("body"), f->get(), d);
+            body_branch = (*f)->stmts;
+          }
+          // return ExceptionHandlerDoc(e, body_branch);
+          MXTHROW << "TODO: support ExceptionHandlerDoc";
+          return ExprDoc{nullptr};
+        });
 
 // TryExcept
 TryExcept::TryExcept(Stmt body, Array<ExceptionHandler> handlers, Span span) {
@@ -653,6 +812,14 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       }
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::TryExcept>(  //
+        "",
+        [](ir::TryExcept stmt, ObjectPath p, IRDocsifier d) -> Doc {
+          MXTHROW << "TODO: support TryExceptDoc";
+          return ExprDoc{nullptr};
+        });
+
 // Raise
 Raise::Raise(BaseExpr exc, Span span) {
   ObjectPtr<RaiseNode> node = make_object<RaiseNode>();
@@ -678,6 +845,14 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "\n";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::Raise>(  //
+        "",
+        [](ir::Raise stmt, ObjectPath p, IRDocsifier d) -> Doc {
+          MXTHROW << "TODO: support RaiseDoc";
+          return ExprDoc{nullptr};
+        });
+
 // HLOYield
 HLOYield::HLOYield(BaseExpr symbol, BaseExpr label, Span span) {
   ObjectPtr<HLOYieldNode> n = make_object<HLOYieldNode>();
@@ -701,6 +876,14 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       auto* node = static_cast<const HLOYieldNode*>(ref.get());
       p->stream << "yield " << node->symbol;
     });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::HLOYield>(  //
+        "",
+        [](ir::HLOYield stmt, ObjectPath p, IRDocsifier d) -> Doc {
+          MXTHROW << "TODO: support HLOYieldDoc";
+          return ExprDoc{nullptr};
+        });
 
 }  // namespace ir
 }  // namespace matxscript

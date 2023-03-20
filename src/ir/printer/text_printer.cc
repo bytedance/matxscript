@@ -23,8 +23,11 @@
 
 #include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/_base/with.h>
+#include <matxscript/ir/hlo_var.h>
 #include <matxscript/ir/prim_expr.h>
+#include <matxscript/ir/prim_var.h>
 #include <matxscript/ir/printer/ir_frame.h>
+#include <matxscript/ir/tensor_stmt.h>
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
@@ -72,7 +75,11 @@ static std::string Docsify(const ObjectRef& obj,
 
 std::string ReprPrintIR(const ObjectRef& obj, const PrinterConfig& cfg) {
   IRDocsifier d(cfg);
-  With<IRFrame> f(d);
+  d->SetCommonPrefix(obj, [](const ObjectRef& obj) {
+    return obj->IsInstance<ir::PrimVarNode>() || obj->IsInstance<ir::BufferNode>() ||
+           obj->IsInstance<ir::HLOVarNode>();
+  });
+  With<IRFrame> f(d, ObjectRef{nullptr});
   (*f)->AddDispatchToken(d, "ir");
   return Docsify(obj, d, *f, cfg);
 }
