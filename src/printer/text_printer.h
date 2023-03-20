@@ -145,15 +145,12 @@ class IRTextPrinter : public StmtFunctor<Doc(const Stmt&)>,
   Doc VisitStmt_(const AllocaVarStmtNode* op) override;
   Doc VisitStmt_(const AssignStmtNode* op) override;
   Doc VisitStmt_(const ReturnStmtNode* op) override;
-  Doc VisitStmt_(const LetStmtNode* op) override;
-  Doc VisitStmt_(const AttrStmtNode* op) override;
   Doc VisitStmt_(const AssertStmtNode* op) override;
   Doc VisitStmt_(const IfThenElseNode* op) override;
   Doc VisitStmt_(const ExceptionHandlerNode* op) override;
   Doc VisitStmt_(const TryExceptNode* op) override;
   Doc VisitStmt_(const RaiseNode* op) override;
   Doc VisitStmt_(const SeqStmtNode* op) override;
-  Doc VisitStmt_(const EvaluateNode* op) override;
   Doc VisitStmt_(const ForNode* op) override;
   Doc VisitStmt_(const AutoForNode* op) override;
   Doc VisitStmt_(const WhileNode* op) override;

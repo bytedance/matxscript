@@ -39,8 +39,10 @@
 namespace matxscript {
 namespace ir {
 /*!
- * \brief just an expression.
+ * \brief Evaluates an expression.
+ *  This is mostly used for putting a Call node into Stmt.
  *
+ *  If value do not have side-effect, this node can be safely removed.
  */
 class ExprStmtNode : public StmtNode {
  public:
@@ -197,106 +199,6 @@ class ReturnStmt : public Stmt {
   }
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(ReturnStmt, Stmt, ReturnStmtNode);
-};
-
-/*!
- * \brief Let binding, bind var to value, then run body.
- */
-class LetStmtNode : public StmtNode {
- public:
-  /*! \brief The variable. */
-  PrimVar var;
-  /*! \brief The value to be binded. */
-  PrimExpr value;
-  /*! \brief The body block. */
-  Stmt body;
-
-  void VisitAttrs(AttrVisitor* v) {
-    v->Visit("var", &var);
-    v->Visit("value", &value);
-    v->Visit("body", &body);
-  }
-
-  bool SEqualReduce(const LetStmtNode* other, SEqualReducer equal) const {
-    return equal.DefEqual(var, other->var) && equal(value, other->value) &&
-           equal(body, other->body);
-  }
-
-  void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce.DefHash(var);
-    hash_reduce(value);
-    hash_reduce(body);
-  }
-
-  static constexpr const char* _type_key = "ir.LetStmt";
-  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(LetStmtNode, StmtNode);
-};
-
-/*!
- * \brief Managed reference to LetStmtNode.
- * \sa LetStmtNode
- */
-class LetStmt : public Stmt {
- public:
-  MATX_DLL LetStmt(PrimVar var, PrimExpr value, Stmt body, Span span = Span());
-
-  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(LetStmt, Stmt, LetStmtNode);
-};
-
-/*!
- * \brief Define certain auxiliary attribute for the body to be a symbolic value.
- *  This provide auxiliary information for IR passes that transforms body.
- *
- *  In terms of effect, this is equivalent to Block(Evaluate(value), body).
- *
- *  Examples of possible usage:
- *    - Bound of function, variables.
- *    - Hint which block corresponds to a parallel region.
- */
-class AttrStmtNode : public StmtNode {
- public:
-  /*! \brief this is attribute about certain node */
-  ObjectRef node;
-  /*! \brief the type key of the attribute */
-  StringRef attr_key;
-  /*! \brief The attribute value, value is well defined at current scope. */
-  BaseExpr value;
-  /*! \brief The body statement to be executed */
-  Stmt body;
-
-  void VisitAttrs(AttrVisitor* v) {
-    v->Visit("node", &node);
-    v->Visit("attr_key", &attr_key);
-    v->Visit("value", &value);
-    v->Visit("body", &body);
-  }
-
-  bool SEqualReduce(const AttrStmtNode* other, SEqualReducer equal) const {
-    return equal(node, other->node) && equal(attr_key, other->attr_key) &&
-           equal(value, other->value) && equal(body, other->body);
-  }
-
-  void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(node);
-    hash_reduce(attr_key);
-    hash_reduce(value);
-    hash_reduce(body);
-  }
-
-  static constexpr const char* _type_key = "ir.AttrStmt";
-  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(AttrStmtNode, StmtNode);
-};
-
-/*!
- * \brief Managed reference to AttrStmtNode.
- * \sa AttrStmtNode
- */
-class AttrStmt : public Stmt {
- public:
-  MATX_DLL AttrStmt(
-      ObjectRef node, StringRef attr_key, BaseExpr value, Stmt body, Span span = Span());
-
-  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(AttrStmt, Stmt, AttrStmtNode);
 };
 
 /*!
@@ -608,47 +510,6 @@ class Raise : public Stmt {
   MATX_DLL Raise(BaseExpr exc, Span span = Span());
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(Raise, Stmt, RaiseNode);
-};
-
-/*!
- * \brief Evaluates an expression.
- *  This is mostly used for putting a Call node into Stmt.
- *
- *  If value do not have side-effect, this node can be safely removed.
- */
-class EvaluateNode : public StmtNode {
- public:
-  /*! \brief The expression to be evaluated. */
-  PrimExpr value;
-
-  void VisitAttrs(AttrVisitor* v) {
-    v->Visit("value", &value);
-  }
-
-  bool SEqualReduce(const EvaluateNode* other, SEqualReducer equal) const {
-    return equal(value, other->value);
-  }
-
-  void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(value);
-  }
-
-  static constexpr const char* _type_key = "ir.Evaluate";
-  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(EvaluateNode, StmtNode);
-};
-
-/*!
- * \brief Managed reference to EvaluateNode.
- * \sa EvaluateNode
- */
-class Evaluate : public Stmt {
- public:
-  MATX_DLL explicit Evaluate(PrimExpr value, Span span = Span());
-
-  explicit Evaluate(int value, Span span = Span()) : Evaluate(PrimExpr(value), std::move(span)) {
-  }
-
-  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(Evaluate, Stmt, EvaluateNode);
 };
 
 /*! \brief Additional annotation of for loop. */

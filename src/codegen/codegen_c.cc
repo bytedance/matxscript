@@ -1884,16 +1884,6 @@ void CodeGenC::VisitStmt_(const SeqStmtNode* op, std::ostream& os) {
   }
 }
 
-void CodeGenC::VisitStmt_(const EvaluateNode* op, std::ostream& os) {
-  if (is_const_int(op->value))
-    return;
-  String vid = this->PrintExpr(op->value);
-  if (!vid.empty()) {
-    this->PrintIndent(os);
-    os << "(void)" << vid << ";\n";
-  }
-}
-
 void CodeGenC::VisitStmt_(const ExprStmtNode* op, std::ostream& os) {
   this->PrintIndent(os);
   os << "(void)";

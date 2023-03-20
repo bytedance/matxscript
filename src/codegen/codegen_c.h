@@ -225,7 +225,6 @@ class CodeGenC : public PrimExprFunctor<void(const PrimExpr&, std::ostream&)>,
   void VisitStmt_(const WhileNode* op, std::ostream& os) override;
   void VisitStmt_(const IfThenElseNode* op, std::ostream& os) override;
   void VisitStmt_(const AssertStmtNode* op, std::ostream& os) override;
-  void VisitStmt_(const EvaluateNode* op, std::ostream& os) override;
   void VisitStmt_(const SeqStmtNode* op, std::ostream& os) override;
   void VisitStmt_(const BreakNode* op, std::ostream& os) override;
   void VisitStmt_(const ContinueNode* op, std::ostream& os) override;

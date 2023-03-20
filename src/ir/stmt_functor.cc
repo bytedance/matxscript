@@ -56,16 +56,6 @@ void StmtVisitor::VisitStmt_(const ReturnStmtNode* op) {
   this->VisitExpr(op->value);
 }
 
-void StmtVisitor::VisitStmt_(const LetStmtNode* op) {
-  this->VisitExpr(op->value);
-  this->VisitStmt(op->body);
-}
-
-void StmtVisitor::VisitStmt_(const AttrStmtNode* op) {
-  this->VisitExpr(op->value);
-  this->VisitStmt(op->body);
-}
-
 void StmtVisitor::VisitStmt_(const ForNode* op) {
   this->VisitExpr(op->loop_var);
   this->VisitExpr(op->tmp_loop_var);
@@ -150,10 +140,6 @@ void StmtVisitor::VisitStmt_(const AssertStmtNode* op) {
 
 void StmtVisitor::VisitStmt_(const SeqStmtNode* op) {
   VisitArray(op->seq, [this](const Stmt& s) { this->VisitStmt(s); });
-}
-
-void StmtVisitor::VisitStmt_(const EvaluateNode* op) {
-  this->VisitExpr(op->value);
 }
 
 void StmtVisitor::VisitStmt_(const ExprStmtNode* op) {
@@ -316,34 +302,6 @@ Stmt StmtMutator::VisitStmt_(const ReturnStmtNode* op) {
   } else {
     auto n = CopyOnWrite(op);
     n->value = std::move(value);
-    n->span = op->span;
-    return Stmt(n);
-  }
-}
-
-Stmt StmtMutator::VisitStmt_(const AttrStmtNode* op) {
-  BaseExpr value = this->VisitExpr(op->value);
-  Stmt body = this->VisitStmt(op->body);
-  if (value.same_as(op->value) && body.same_as(op->body)) {
-    return GetRef<Stmt>(op);
-  } else {
-    auto n = CopyOnWrite(op);
-    n->value = std::move(value);
-    n->body = std::move(body);
-    n->span = op->span;
-    return Stmt(n);
-  }
-}
-
-Stmt StmtMutator::VisitStmt_(const LetStmtNode* op) {
-  PrimExpr value = this->VisitExpr(op->value);
-  Stmt body = this->VisitStmt(op->body);
-  if (value.same_as(op->value) && body.same_as(op->body)) {
-    return GetRef<Stmt>(op);
-  } else {
-    auto n = CopyOnWrite(op);
-    n->value = std::move(value);
-    n->body = std::move(body);
     n->span = op->span;
     return Stmt(n);
   }
@@ -610,18 +568,6 @@ Stmt StmtMutator::VisitStmt_(const AssertStmtNode* op) {
     n->condition = std::move(condition);
     n->message = std::move(message);
     n->body = std::move(body);
-    n->span = op->span;
-    return Stmt(n);
-  }
-}
-
-Stmt StmtMutator::VisitStmt_(const EvaluateNode* op) {
-  PrimExpr value = this->VisitExpr(op->value);
-  if (value.same_as(op->value)) {
-    return GetRef<Stmt>(op);
-  } else {
-    auto n = CopyOnWrite(op);
-    n->value = std::move(value);
     n->span = op->span;
     return Stmt(n);
   }

@@ -148,26 +148,6 @@ class ReturnStmt(Stmt):
         self.__init_handle_by_constructor__(_ffi_api.ReturnStmt, _to_ir(value), span)
 
 
-@_ffi.register_object("ir.LetStmt")
-class LetStmt(Stmt):
-    """LetStmt node.
-
-    Parameters
-    ----------
-    var : Var
-        The variable in the binding.
-
-    value : PrimExpr
-        The value in to be binded.
-
-    body : Stmt
-        The body statement.
-    """
-
-    def __init__(self, var, value, body, span=Span()):
-        self.__init_handle_by_constructor__(_ffi_api.LetStmt, var, value, body, span)
-
-
 @_ffi.register_object("ir.AssertStmt")
 class AssertStmt(Stmt):
     """AssertStmt node.
@@ -287,30 +267,6 @@ class Continue(Stmt):
         self.__init_handle_by_constructor__(_ffi_api.Continue)
 
 
-@_ffi.register_object("ir.AttrStmt")
-class AttrStmt(Stmt):
-    """AttrStmt node.
-
-    Parameters
-    ----------
-    node : Node
-        The node to annotate the attribute
-
-    attr_key : str
-        Attribute type key.
-
-    value : PrimExpr
-        The value of the attribute
-
-    body : Stmt
-        The body statement.
-    """
-
-    def __init__(self, node, attr_key, value, body, span=Span()):
-        self.__init_handle_by_constructor__(
-            _ffi_api.AttrStmt, node, _to_ir(attr_key), value, body, span)
-
-
 @_ffi.register_object("ir.SeqStmt")
 class SeqStmt(Stmt):
     """Sequence of statements.
@@ -412,20 +368,6 @@ class Raise(Stmt):
         )
 
 
-@_ffi.register_object("ir.Evaluate")
-class Evaluate(Stmt):
-    """Evaluate node.
-
-    Parameters
-    ----------
-    value : PrimExpr
-        The expression to be evalued.
-    """
-
-    def __init__(self, value, span=Span()):
-        self.__init_handle_by_constructor__(_ffi_api.Evaluate, value, span)
-
-
 # @_ffi.register_object("ir.Prefetch")
 # class Prefetch(Stmt):
 #     """Prefetch node.
@@ -459,7 +401,7 @@ def stmt_seq(*args):
     ret = []
     for value in args:
         if not isinstance(value, Stmt):
-            value = Evaluate(value)
+            value = ExprStmt(value)
         ret.append(value)
     if len(ret) == 1:
         return ret[0]
