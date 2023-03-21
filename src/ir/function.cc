@@ -26,7 +26,12 @@
  */
 #include <matxscript/ir/function.h>
 
+#include <matxscript/ir/_base/with.h>
 #include <matxscript/ir/prim_ops.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
+#include <matxscript/ir/printer/ir_frame.h>
+#include <matxscript/ir/printer/utils.h>
 #include <matxscript/ir/type.h>
 #include <matxscript/runtime/registry.h>
 
@@ -34,6 +39,7 @@ namespace matxscript {
 namespace ir {
 
 using namespace ::matxscript::runtime;
+using namespace ::matxscript::ir::printer;
 
 bool BaseFuncNode::HasGlobalName() const {
   auto global_symbol = GetAttr<StringRef>(attr::kGlobalSymbol);
@@ -171,6 +177,48 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimFunc")
                       std::move(attrs));
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::PrimFunc>("", [](ir::PrimFunc func, ObjectPath p, IRDocsifier d) -> Doc {
+      With<IRFrame> f(d, func);
+      (*f)->AddDispatchToken(d, "ir");
+      d->SetCommonPrefix(func, [](const ObjectRef& obj) {
+        return obj->IsInstance<ir::PrimVarNode>() || obj->IsInstance<ir::BufferNode>();
+      });
+      int n_args = func->params.size();
+      // Step 1. Handle `func->params`
+      int default_begin_pos = func->params.size() - func->default_params.size();
+      Array<AssignDoc> args;
+      args.reserve(n_args);
+      for (int i = 0; i < n_args; ++i) {
+        ir::PrimVar var = func->params[i];
+        ObjectPath var_p = p->Attr("params")->ArrayIndex(i);
+        ExprDoc a = d->AsDoc<ExprDoc>(var->type_annotation, var_p->Attr("type_annotation"));
+        Optional<ExprDoc> rhs = NullOpt;
+        if (i >= default_begin_pos) {
+          int def_pos = i - default_begin_pos;
+          rhs = d->AsDoc<ExprDoc>(func->default_params[def_pos],
+                                  p->Attr("default_params")->ArrayIndex(def_pos));
+        }
+        args.push_back(AssignDoc(DefineVar(var, *f, d), rhs, a));
+      }
+      // Step 2. Handle `func->attrs`
+      if (func->attrs.defined() && !func->attrs->dict.empty()) {
+        (*f)->stmts.push_back(
+            ExprStmtDoc(Dialect(d, "func_attr")  //
+                            ->Call({d->AsDoc<ExprDoc>(func->attrs, p->Attr("attrs"))})));
+      }
+      // Step 3. Handle `func->body`
+      AsDocBody(func->body, p->Attr("body"), f->get(), d);
+      Optional<ExprDoc> ret_type = NullOpt;
+      ret_type = d->AsDoc<ExprDoc>(func->ret_type, p->Attr("ret_type"));
+      return FunctionDoc(
+          /*name=*/IdDoc(func->GetGlobalName()),
+          /*args=*/args,
+          /*decorators=*/{Dialect(d, "kernel")},
+          /*return_type=*/ret_type,
+          /*body=*/(*f)->stmts);
+    });
+
 /******************************************************************************
  * Function
  *****************************************************************************/
@@ -261,6 +309,49 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
                 << ", " << node->type_params << ", " << node->attrs << ")";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::Function>("", [](ir::Function func, ObjectPath p, IRDocsifier d) -> Doc {
+      With<IRFrame> f(d, func);
+      (*f)->AddDispatchToken(d, "ir");
+      d->SetCommonPrefix(func, [](const ObjectRef& obj) {
+        return obj->IsInstance<ir::PrimVarNode>() || obj->IsInstance<ir::HLOVarNode>() ||
+               obj->IsInstance<ir::BufferNode>();
+      });
+      int n_args = func->params.size();
+      // Step 1. Handle `func->params`
+      int default_begin_pos = func->params.size() - func->default_params.size();
+      Array<AssignDoc> args;
+      args.reserve(n_args);
+      for (int i = 0; i < n_args; ++i) {
+        ir::BaseExpr var = func->params[i];
+        ObjectPath var_p = p->Attr("params")->ArrayIndex(i);
+        ExprDoc a = d->AsDoc<ExprDoc>(var->checked_type_, var_p->Attr("checked_type_"));
+        Optional<ExprDoc> rhs = NullOpt;
+        if (i >= default_begin_pos) {
+          int def_pos = i - default_begin_pos;
+          rhs = d->AsDoc<ExprDoc>(func->default_params[def_pos],
+                                  p->Attr("default_params")->ArrayIndex(def_pos));
+        }
+        args.push_back(AssignDoc(DefineVar(var, *f, d), rhs, a));
+      }
+      // Step 2. Handle `func->attrs`
+      if (func->attrs.defined() && !func->attrs->dict.empty()) {
+        (*f)->stmts.push_back(
+            ExprStmtDoc(Dialect(d, "func_attr")  //
+                            ->Call({d->AsDoc<ExprDoc>(func->attrs, p->Attr("attrs"))})));
+      }
+      // Step 3. Handle `func->body`
+      AsDocBody(func->body, p->Attr("body"), f->get(), d);
+      Optional<ExprDoc> ret_type = NullOpt;
+      ret_type = d->AsDoc<ExprDoc>(func->ret_type, p->Attr("ret_type"));
+      return FunctionDoc(
+          /*name=*/IdDoc(func->GetGlobalName()),
+          /*args=*/args,
+          /*decorators=*/{Dialect(d, "script")},
+          /*return_type=*/ret_type,
+          /*body=*/(*f)->stmts);
+    });
+
 /******************************************************************************
  * LambdaFunction
  *****************************************************************************/
@@ -345,6 +436,33 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "LambdaFunctionNode(" << node->params << ", " << node->ret_type << ", "
                 << node->body << ", " << node->captures << ", " << node->attrs << ")";
     });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::LambdaFunction>(
+        "", [](ir::LambdaFunction func, ObjectPath p, IRDocsifier d) -> Doc {
+          With<IRFrame> f(d, func);
+          (*f)->AddDispatchToken(d, "ir");
+          d->SetCommonPrefix(func, [](const ObjectRef& obj) {
+            return obj->IsInstance<ir::PrimVarNode>() || obj->IsInstance<ir::HLOVarNode>() ||
+                   obj->IsInstance<ir::BufferNode>();
+          });
+          int n_args = func->params.size();
+          // Step 1. Handle `func->params`
+          Array<IdDoc> args;
+          args.reserve(n_args);
+          for (int i = 0; i < n_args; ++i) {
+            ir::BaseExpr var = func->params[i];
+            ObjectPath var_p = p->Attr("params")->ArrayIndex(i);
+            IdDoc a = d->AsDoc<IdDoc>(var, var_p);
+            args.push_back(a);
+          }
+          // TODO: fix lambda doc
+          // Step 2. Handle `func->body`
+          auto body = d->AsDoc<ExprDoc>(func->body, p->Attr("body"));
+          return LambdaDoc(
+              /*args=*/args,
+              /*body=*/body);
+        });
 
 /******************************************************************************
  * BaseFunc
