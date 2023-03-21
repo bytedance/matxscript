@@ -961,6 +961,189 @@ class ForDoc : public StmtDoc {
 };
 
 /*!
+ * \brief Doc that represents break statement.
+ *
+ * \sa BreakDoc
+ */
+class BreakDocNode : public StmtDocNode {
+ public:
+  void VisitAttrs(AttrVisitor* v) {
+    StmtDocNode::VisitAttrs(v);
+  }
+
+  static constexpr const char* _type_key = "ir.printer.BreakDoc";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(BreakDocNode, StmtDocNode);
+};
+
+/*!
+ * \brief Reference type of BreakDocNode.
+ *
+ * \sa BreakDocNode
+ */
+class BreakDoc : public StmtDoc {
+ public:
+  /*!
+   * \brief Constructor of BreakDoc.
+   */
+  explicit BreakDoc();
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(BreakDoc, StmtDoc, BreakDocNode);
+};
+
+/*!
+ * \brief Doc that represents continue statement.
+ *
+ * \sa ContinueDoc
+ */
+class ContinueDocNode : public StmtDocNode {
+ public:
+  void VisitAttrs(AttrVisitor* v) {
+    StmtDocNode::VisitAttrs(v);
+  }
+
+  static constexpr const char* _type_key = "ir.printer.ContinueDoc";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(ContinueDocNode, StmtDocNode);
+};
+
+/*!
+ * \brief Reference type of ContinueDocNode.
+ *
+ * \sa ContinueDocNode
+ */
+class ContinueDoc : public StmtDoc {
+ public:
+  /*!
+   * \brief Constructor of ContinueDoc.
+   */
+  explicit ContinueDoc();
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(ContinueDoc, StmtDoc, ContinueDocNode);
+};
+
+/*!
+ * \brief Doc that represents ExceptionHandler statement.
+ *
+ * \sa ExceptionHandlerDoc
+ */
+class ExceptionHandlerDocNode : public StmtDocNode {
+ public:
+  /*! \brief The except type of the except statement. */
+  Optional<ExprDoc> type{nullptr};
+  /*! \brief The var name of the except statement. */
+  Optional<ExprDoc> name{nullptr};
+  /*! \brief The body of the except statement. */
+  Array<StmtDoc> body;
+
+ public:
+  void VisitAttrs(AttrVisitor* v) {
+    StmtDocNode::VisitAttrs(v);
+    v->Visit("type", &type);
+    v->Visit("name", &name);
+    v->Visit("body", &body);
+  }
+
+  static constexpr const char* _type_key = "ir.printer.ExceptionHandlerDoc";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(ExceptionHandlerDocNode, StmtDocNode);
+};
+
+/*!
+ * \brief Reference type of ExceptionHandlerDocNode.
+ *
+ * \sa ExceptionHandlerDocNode
+ */
+class ExceptionHandlerDoc : public StmtDoc {
+ public:
+  /*!
+   * \brief Constructor of ExceptionHandlerDoc.
+   */
+  explicit ExceptionHandlerDoc(Optional<ExprDoc> type, Optional<ExprDoc> name, Array<StmtDoc> body);
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(ExceptionHandlerDoc,
+                                                   StmtDoc,
+                                                   ExceptionHandlerDocNode);
+};
+
+/*!
+ * \brief Doc that represents TryExcept statement.
+ *
+ * \sa TryExceptDoc
+ */
+class TryExceptDocNode : public StmtDocNode {
+ public:
+  /*! \brief The body of the try statement. */
+  Array<StmtDoc> body;
+  /*! \brief The handlers of the try statement. */
+  Optional<Array<ExceptionHandlerDoc>> handlers{nullptr};
+  /*! \brief The orelse of the try statement. */
+  Optional<Array<StmtDoc>> orelse{nullptr};
+  /*! \brief The finalbody of the try statement. */
+  Optional<Array<StmtDoc>> finalbody{nullptr};
+
+ public:
+  void VisitAttrs(AttrVisitor* v) {
+    StmtDocNode::VisitAttrs(v);
+    v->Visit("body", &body);
+    v->Visit("handlers", &handlers);
+    v->Visit("orelse", &orelse);
+    v->Visit("finalbody", &finalbody);
+  }
+
+  static constexpr const char* _type_key = "ir.printer.TryExceptDoc";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(TryExceptDocNode, StmtDocNode);
+};
+
+/*!
+ * \brief Reference type of TryExceptDocNode.
+ *
+ * \sa TryExceptDocNode
+ */
+class TryExceptDoc : public StmtDoc {
+ public:
+  /*!
+   * \brief Constructor of TryExceptDoc.
+   */
+  explicit TryExceptDoc(Array<StmtDoc> body,
+                        Optional<Array<ExceptionHandlerDoc>> handlers,
+                        Optional<Array<StmtDoc>> orelse,
+                        Optional<Array<StmtDoc>> finalbody);
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(TryExceptDoc, StmtDoc, TryExceptDocNode);
+};
+
+/*!
+ * \brief Doc that represents raise statement.
+ *
+ * \sa RaiseDoc
+ */
+class RaiseDocNode : public StmtDocNode {
+ public:
+  /*! \brief The exc of the raise statement. */
+  Optional<ExprDoc> exc{nullptr};
+  /*! \brief The cause of the raise statement. */
+  Optional<ExprDoc> cause{nullptr};
+
+ public:
+  void VisitAttrs(AttrVisitor* v) {
+    StmtDocNode::VisitAttrs(v);
+    v->Visit("exc", &exc);
+    v->Visit("cause", &cause);
+  }
+
+  static constexpr const char* _type_key = "ir.printer.RaiseDoc";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(RaiseDocNode, StmtDocNode);
+};
+
+/*!
+ * \brief Reference type of RaiseDocNode.
+ *
+ * \sa RaiseDocNode
+ */
+class RaiseDoc : public StmtDoc {
+ public:
+  /*!
+   * \brief Constructor of RaiseDoc.
+   */
+  explicit RaiseDoc(Optional<ExprDoc> exc, Optional<ExprDoc> cause);
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(RaiseDoc, StmtDoc, RaiseDocNode);
+};
+
+/*!
  * \brief Doc that represents special scopes.
  *
  * Specifically, this means the with statement in Python:

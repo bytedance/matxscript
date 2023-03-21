@@ -140,7 +140,7 @@ MATXSCRIPT_REGISTER_GLOBAL("node.PrinterConfig")
     .set_body_typed([](Map<StringRef, ObjectRef> config_dict) {
       return PrinterConfig(config_dict);
     });
-MATXSCRIPT_REGISTER_GLOBAL("node.IRTextPrinterScript").set_body_typed(IRTextPrinter::Print);
+MATXSCRIPT_REGISTER_GLOBAL("node.IRTextPrinter_Print").set_body_typed(IRTextPrinter::Print);
 
 }  // namespace printer
 }  // namespace ir

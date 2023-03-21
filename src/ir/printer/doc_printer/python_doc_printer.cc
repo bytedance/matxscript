@@ -166,6 +166,11 @@ class PythonDocPrinter : public DocPrinter {
   void PrintTypedDoc(const IfDoc& doc) final;
   void PrintTypedDoc(const WhileDoc& doc) final;
   void PrintTypedDoc(const ForDoc& doc) final;
+  void PrintTypedDoc(const ContinueDoc& doc) final;
+  void PrintTypedDoc(const BreakDoc& doc) final;
+  void PrintTypedDoc(const ExceptionHandlerDoc& doc) final;
+  void PrintTypedDoc(const TryExceptDoc& doc) final;
+  void PrintTypedDoc(const RaiseDoc& doc) final;
   void PrintTypedDoc(const ExprStmtDoc& doc) final;
   void PrintTypedDoc(const AssertDoc& doc) final;
   void PrintTypedDoc(const ReturnDoc& doc) final;
@@ -607,6 +612,72 @@ void PythonDocPrinter::PrintTypedDoc(const ForDoc& doc) {
   output_ << ":";
 
   PrintIndentedBlock(doc->body);
+}
+
+void PythonDocPrinter::PrintTypedDoc(const ContinueDoc& doc) {
+  MaybePrintCommenMultiLines(doc, true);
+  output_ << "continue";
+}
+
+void PythonDocPrinter::PrintTypedDoc(const BreakDoc& doc) {
+  MaybePrintCommenMultiLines(doc, true);
+  output_ << "break";
+}
+
+void PythonDocPrinter::PrintTypedDoc(const ExceptionHandlerDoc& doc) {
+  MaybePrintCommenMultiLines(doc, true);
+  output_ << "except";
+  if (doc->type.defined()) {
+    output_ << " ";
+    PrintDoc(doc->type.value());
+    if (doc->name.defined()) {
+      output_ << " as ";
+      PrintDoc(doc->name.value());
+    }
+  }
+  output_ << ":";
+  PrintIndentedBlock(doc->body);
+}
+
+void PythonDocPrinter::PrintTypedDoc(const TryExceptDoc& doc) {
+  MaybePrintCommenMultiLines(doc, true);
+  output_ << "try:";
+  PrintIndentedBlock(doc->body);
+
+  if (doc->handlers.defined()) {
+    auto handlers = doc->handlers.value();
+    for (auto handler : handlers) {
+      NewLine();
+      PrintTypedDoc(handler);
+    }
+  }
+
+  if (doc->orelse.defined()) {
+    NewLine();
+    auto orelse = doc->orelse.value();
+    output_ << "orelse:";
+    PrintIndentedBlock(orelse);
+  }
+
+  if (doc->finalbody.defined()) {
+    NewLine();
+    auto finalbody = doc->finalbody.value();
+    output_ << "finally:";
+    PrintIndentedBlock(finalbody);
+  }
+}
+
+void PythonDocPrinter::PrintTypedDoc(const RaiseDoc& doc) {
+  MaybePrintCommenMultiLines(doc, true);
+  output_ << "raise";
+  if (doc->exc.defined()) {
+    output_ << " ";
+    PrintDoc(doc->exc.value());
+  }
+  if (doc->cause.defined()) {
+    output_ << " from ";
+    PrintDoc(doc->cause.value());
+  }
 }
 
 void PythonDocPrinter::PrintTypedDoc(const ScopeDoc& doc) {
