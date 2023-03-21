@@ -181,6 +181,45 @@ ForDoc::ForDoc(ExprDoc lhs, ExprDoc rhs, Array<StmtDoc> body) {
   this->data_ = std::move(n);
 }
 
+BreakDoc::BreakDoc() {
+  ObjectPtr<BreakDocNode> n = make_object<BreakDocNode>();
+  this->data_ = std::move(n);
+}
+
+ContinueDoc::ContinueDoc() {
+  ObjectPtr<ContinueDocNode> n = make_object<ContinueDocNode>();
+  this->data_ = std::move(n);
+}
+
+ExceptionHandlerDoc::ExceptionHandlerDoc(Optional<ExprDoc> type,
+                                         Optional<ExprDoc> name,
+                                         Array<StmtDoc> body) {
+  ObjectPtr<ExceptionHandlerDocNode> n = make_object<ExceptionHandlerDocNode>();
+  n->type = std::move(type);
+  n->name = std::move(name);
+  n->body = std::move(body);
+  this->data_ = std::move(n);
+}
+
+TryExceptDoc::TryExceptDoc(Array<StmtDoc> body,
+                           Optional<Array<ExceptionHandlerDoc>> handlers,
+                           Optional<Array<StmtDoc>> orelse,
+                           Optional<Array<StmtDoc>> finalbody) {
+  ObjectPtr<TryExceptDocNode> n = make_object<TryExceptDocNode>();
+  n->body = std::move(body);
+  n->handlers = std::move(handlers);
+  n->orelse = std::move(orelse);
+  n->finalbody = std::move(finalbody);
+  this->data_ = std::move(n);
+}
+
+RaiseDoc::RaiseDoc(Optional<ExprDoc> exc, Optional<ExprDoc> cause) {
+  ObjectPtr<RaiseDocNode> n = make_object<RaiseDocNode>();
+  n->exc = std::move(exc);
+  n->cause = std::move(cause);
+  this->data_ = std::move(n);
+}
+
 ScopeDoc::ScopeDoc(Optional<ExprDoc> lhs, ExprDoc rhs, Array<StmtDoc> body) {
   ObjectPtr<ScopeDocNode> n = make_object<ScopeDocNode>();
   n->lhs = std::move(lhs);

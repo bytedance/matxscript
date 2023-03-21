@@ -178,6 +178,31 @@ class DocPrinter {
   virtual void PrintTypedDoc(const ForDoc& doc) = 0;
 
   /*!
+   * \brief Virtual method to print a ContinueDoc
+   */
+  virtual void PrintTypedDoc(const ContinueDoc& doc) = 0;
+
+  /*!
+   * \brief Virtual method to print a BreakDoc
+   */
+  virtual void PrintTypedDoc(const BreakDoc& doc) = 0;
+
+  /*!
+   * \brief Virtual method to print a ExceptionHandlerDoc
+   */
+  virtual void PrintTypedDoc(const ExceptionHandlerDoc& doc) = 0;
+
+  /*!
+   * \brief Virtual method to print a TryExceptDoc
+   */
+  virtual void PrintTypedDoc(const TryExceptDoc& doc) = 0;
+
+  /*!
+   * \brief Virtual method to print a RaiseDoc
+   */
+  virtual void PrintTypedDoc(const RaiseDoc& doc) = 0;
+
+  /*!
    * \brief Virtual method to print a ScopeDoc
    */
   virtual void PrintTypedDoc(const ScopeDoc& doc) = 0;

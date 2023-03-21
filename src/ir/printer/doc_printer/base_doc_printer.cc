@@ -357,6 +357,16 @@ void DocPrinter::PrintDoc(const Doc& doc) {
     PrintTypedDoc(GetRef<WhileDoc>(doc_node));
   } else if (const auto* doc_node = doc.as<ForDocNode>()) {
     PrintTypedDoc(GetRef<ForDoc>(doc_node));
+  } else if (const auto* doc_node = doc.as<ContinueDocNode>()) {
+    PrintTypedDoc(GetRef<ContinueDoc>(doc_node));
+  } else if (const auto* doc_node = doc.as<BreakDocNode>()) {
+    PrintTypedDoc(GetRef<BreakDoc>(doc_node));
+  } else if (const auto* doc_node = doc.as<ExceptionHandlerDocNode>()) {
+    PrintTypedDoc(GetRef<ExceptionHandlerDoc>(doc_node));
+  } else if (const auto* doc_node = doc.as<TryExceptDocNode>()) {
+    PrintTypedDoc(GetRef<TryExceptDoc>(doc_node));
+  } else if (const auto* doc_node = doc.as<RaiseDocNode>()) {
+    PrintTypedDoc(GetRef<RaiseDoc>(doc_node));
   } else if (const auto* doc_node = doc.as<ScopeDocNode>()) {
     PrintTypedDoc(GetRef<ScopeDoc>(doc_node));
   } else if (const auto* doc_node = doc.as<ExprStmtDocNode>()) {

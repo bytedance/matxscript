@@ -611,7 +611,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::Break>("", [](ir::Break n, ObjectPath p, IRDocsifier d) -> Doc {
-      return IdDoc("break");
+      return BreakDoc();
     });
 
 // Continue
@@ -630,7 +630,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::Continue>("", [](ir::Continue n, ObjectPath p, IRDocsifier d) -> Doc {
-      return IdDoc("continue");
+      return ContinueDoc();
     });
 
 // SeqStmt
@@ -766,16 +766,14 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::ExceptionHandler>(  //
         "",
         [](ir::ExceptionHandler stmt, ObjectPath p, IRDocsifier d) -> Doc {
-          ExprDoc e = d->AsDoc<ExprDoc>(stmt->e, p->Attr("e"));
+          MXCHECK(!stmt->e.defined()) << "specific exception is not supported now!!!";
           Array<StmtDoc> body_branch;
           if (stmt->body.defined()) {
             With<IRFrame> f(d, stmt->body);
             AsDocBody(stmt->body, p->Attr("body"), f->get(), d);
             body_branch = (*f)->stmts;
           }
-          // return ExceptionHandlerDoc(e, body_branch);
-          MXTHROW << "TODO: support ExceptionHandlerDoc";
-          return ExprDoc{nullptr};
+          return ExceptionHandlerDoc(NullOpt, NullOpt, body_branch);
         });
 
 // TryExcept
@@ -816,8 +814,21 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::TryExcept>(  //
         "",
         [](ir::TryExcept stmt, ObjectPath p, IRDocsifier d) -> Doc {
-          MXTHROW << "TODO: support TryExceptDoc";
-          return ExprDoc{nullptr};
+          Array<StmtDoc> body;
+          if (stmt->body.defined()) {
+            With<IRFrame> f(d, stmt->body);
+            AsDocBody(stmt->body, p->Attr("body"), f->get(), d);
+            body = (*f)->stmts;
+          }
+          Array<ExceptionHandlerDoc> handlers;
+          auto p_handlers = p->Attr("handlers");
+          int n = stmt->handlers.size();
+          handlers.reserve(n);
+          for (int i = 0; i < n; ++i) {
+            auto doc = d->AsDoc<ExceptionHandlerDoc>(stmt->handlers[i], p_handlers->ArrayIndex(i));
+            handlers.push_back(std::move(doc));
+          }
+          return TryExceptDoc(body, handlers, NullOpt, NullOpt);
         });
 
 // Raise
@@ -849,8 +860,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::Raise>(  //
         "",
         [](ir::Raise stmt, ObjectPath p, IRDocsifier d) -> Doc {
-          MXTHROW << "TODO: support RaiseDoc";
-          return ExprDoc{nullptr};
+          if (stmt->exc.defined()) {
+            ExprDoc exc = d->AsDoc<ExprDoc>(stmt->exc, p->Attr("exc"));
+            return RaiseDoc(exc, NullOpt);
+          } else {
+            return RaiseDoc(NullOpt, NullOpt);
+          }
         });
 
 // HLOYield
