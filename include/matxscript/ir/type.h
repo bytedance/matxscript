@@ -238,7 +238,7 @@ class PointerTypeNode : public TypeNode {
   }
 
   runtime::Unicode GetPythonTypeName() const override {
-    return U"pointer";
+    return U"matx.handle(" + element_type->GetPythonTypeName() + U")";
   }
 
   static constexpr const char* _type_key = "PointerType";
@@ -1005,7 +1005,7 @@ class IteratorTypeNode : public TypeNode {
   }
 
   runtime::Unicode GetPythonTypeName() const override {
-    return U"iterator";
+    return U"Iterable[" + container_type->GetPythonTypeName() + U"]";
   }
 
   static constexpr const char* _type_key = "IteratorType";

@@ -30,6 +30,10 @@
 
 #include <matxscript/ir/_base/attr_registry.h>
 #include <matxscript/ir/op_expr.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
+#include <matxscript/ir/printer/ir_frame.h>
+#include <matxscript/ir/printer/utils.h>
 #include <matxscript/ir/type.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/object_internal.h>
@@ -38,6 +42,7 @@ namespace matxscript {
 namespace ir {
 
 using namespace ::matxscript::runtime;
+using namespace ::matxscript::ir::printer;
 
 using OpRegistry = AttrRegistry<OpRegEntry, Op>;
 
@@ -123,6 +128,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<OpNode>([](const ObjectRef& ref, ReprPrinter* p) {
       auto* node = static_cast<const OpNode*>(ref.get());
       p->stream << "Op(" << node->name << ")";
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<Op>("", [](Op op, ObjectPath p, IRDocsifier d) -> Doc {
+      return Dialect(d, "Op")->Call({LiteralDoc::Str(op->name, p->Attr("name"))});
     });
 
 MATXSCRIPT_REGISTER_GLOBAL("ir._call_builtin_op").set_body([](PyArgs args) -> RTValue {

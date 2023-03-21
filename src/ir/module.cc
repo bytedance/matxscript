@@ -33,6 +33,7 @@
 #include <unordered_set>
 
 #include <matxscript/ir/_base/structural_equal.h>
+#include <matxscript/ir/_base/with.h>
 #include <matxscript/runtime/registry.h>
 // NOTE: reverse dependency on relay.
 // These dependencies do not happen at the interface-level,
@@ -43,11 +44,16 @@
 #include <matxscript/ir/analysis.h>
 #include <matxscript/ir/expr_functor.h>
 // clang-format on
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
+#include <matxscript/ir/printer/ir_frame.h>
+#include <matxscript/ir/printer/utils.h>
 
 namespace matxscript {
 namespace ir {
 
-using namespace runtime;
+using namespace ::matxscript::runtime;
+using namespace ::matxscript::ir::printer;
 
 IRModule::IRModule(Map<GlobalVar, BaseFunc> functions,
                    Map<GlobalTypeVar, ClassType> type_definitions,
@@ -408,6 +414,63 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<IRModuleNode>([](const ObjectRef& ref, ReprPrinter* p) {
       auto* node = static_cast<const IRModuleNode*>(ref.get());
       p->stream << "IRModule(" << node->functions << ")";
+    });
+
+struct SortableFunction {
+  int priority;
+  GlobalVar gv;
+  BaseFunc func;
+
+  explicit SortableFunction(const std::pair<GlobalVar, BaseFunc>& obj)
+      : priority(0), gv(obj.first), func(obj.second) {
+    if (gv->name_hint == "main") {
+      priority = 1000;
+    } else if (obj.second->GetTypeKey() == "ir.PrimFunc") {
+      priority = 1;
+    } else if (obj.second->GetTypeKey() == "ir.LambdaFunction") {
+      priority = 2;
+    } else if (obj.second->GetTypeKey() == "ir.Function") {
+      priority = 3;
+    } else {
+      MXLOG(FATAL) << "TypeError: MATX cannot print functions of type: "
+                   << obj.second->GetTypeKey();
+    }
+  }
+
+  bool operator<(const SortableFunction& other) const {
+    if (this->priority != other.priority) {
+      return this->priority < other.priority;
+    }
+    return this->gv->name_hint < other.gv->name_hint;
+  }
+};
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<IRModule>("", [](IRModule mod, ObjectPath p, IRDocsifier d) -> Doc {
+      std::vector<SortableFunction> functions;
+      for (const auto& kv : mod->functions) {
+        functions.push_back(SortableFunction(kv));
+      }
+      std::sort(functions.begin(), functions.end());
+      With<IRFrame> f(d, ObjectRef{nullptr});
+      (*f)->AddDispatchToken(d, "ir");
+      for (const auto& entry : functions) {
+        const GlobalVar& gv = entry.gv;
+        const BaseFunc& func = entry.func;
+        d->cfg->binding_names.push_back(gv->name_hint);
+        Doc doc = d->AsDoc(func, p->Attr("functions")->MapValue(gv));
+        d->cfg->binding_names.pop_back();
+        if (const auto* stmt_block = doc.as<StmtBlockDocNode>()) {
+          (*f)->stmts.push_back(stmt_block->stmts.back());
+          (*f)->stmts.back()->source_paths = std::move(doc->source_paths);
+        } else if (const auto* stmt = doc.as<StmtDocNode>()) {
+          (*f)->stmts.push_back(GetRef<StmtDoc>(stmt));
+        } else {
+          (*f)->stmts.push_back(Downcast<FunctionDoc>(doc));
+        }
+      }
+      // TODO: use ModuleDoc instead
+      return ClassDoc(IdDoc("Module"), {Dialect(d, "ir_module")}, (*f)->stmts);
     });
 
 }  // namespace ir

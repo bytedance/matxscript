@@ -125,14 +125,14 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<AllocaVarStmt>("", [](AllocaVarStmt s, ObjectPath p, IRDocsifier d) -> Doc {
-      ObjectPath var_attr = p->Attr("var");
-      auto lhs = d->AsDoc<ExprDoc>(s->var, var_attr);
+      ObjectPath var_p = p->Attr("var");
+      auto lhs = d->AsDoc<ExprDoc>(s->var, var_p);
       Optional<ExprDoc> rhs;
       Optional<ExprDoc> annotation;
       if (s->init_value.defined()) {
         rhs = d->AsDoc<ExprDoc>(s->init_value, p->Attr("init_value"));
       }
-      annotation = LiteralDoc::HLOType(s->var->checked_type_, var_attr->Attr("checked_type_"));
+      annotation = d->AsDoc<ExprDoc>(s->var->checked_type_, var_p->Attr("checked_type_"));
       return AssignDoc(lhs, rhs, annotation);
     });
 

@@ -26,12 +26,17 @@
 #include <matxscript/ir/attrs.h>
 
 #include <matxscript/ir/attr_functor.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
+#include <matxscript/ir/printer/ir_frame.h>
+#include <matxscript/ir/printer/utils.h>
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
 namespace ir {
 
 using namespace ::matxscript::runtime;
+using namespace ::matxscript::ir::printer;
 
 void DictAttrsNode::VisitAttrs(AttrVisitor* v) {
   v->Visit("__dict__", &dict);
@@ -55,6 +60,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<DictAttrsNode>([](const ObjectRef& node, ReprPrinter* p) {
       auto* op = static_cast<const DictAttrsNode*>(node.get());
       p->stream << op->dict;
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<DictAttrs>("", [](DictAttrs attrs, ObjectPath p, IRDocsifier d) -> Doc {
+      return d->AsDoc(attrs->dict, p->Attr("dict"));
     });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(DictAttrsNode);
