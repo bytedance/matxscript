@@ -29,6 +29,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -56,6 +57,18 @@ inline ExprDoc DefineVar(const ir::BaseExpr& var, const Frame& frame, const IRDo
   }
   MXTHROW << "[printer][DefineVar] the input expr is not a var!!!";
   return ExprDoc{nullptr};
+}
+
+/*!
+ * \brief Defines a buffer in the IRDocsifier at the given frame,
+ * and returns the corresponding IdDoc
+ * \param buffer The buffer to define
+ * \param frame The frame to define the buffer in
+ * \param d The IRDocsifier
+ * \return The IdDoc corresponding to the buffer
+ */
+inline IdDoc DefineBuffer(const ir::Buffer& buffer, const Frame& frame, const IRDocsifier& d) {
+  return d->Define(buffer, frame, buffer->name.empty() ? "buffer" : buffer->name);
 }
 
 /*!
@@ -88,6 +101,59 @@ inline void AsDocBody(const ir::Stmt& stmt, ObjectPath p, IRFrameNode* f, const 
     }
   }
 }
+
+/*!
+ * \brief Find the top frame in the stack that could place a var definition
+ * \param var The var to be defined
+ * \param d The IRDocsifier
+ * \return The frame that could place the var definition
+ */
+inline Optional<Frame> FindLowestVarDef(const ObjectRef& var, const IRDocsifier& d) {
+  if (!d->common_prefix.count(var.get())) {
+    return NullOpt;
+  }
+  int n_frames = d->frames.size();
+  std::unordered_map<const Object*, const FrameNode*> tir_to_frame;
+  const FrameNode* fallback_frame = nullptr;
+  tir_to_frame.reserve(n_frames);
+  for (int i = n_frames - 1; i >= 0; --i) {
+    if (const auto* f = d->frames[i].as<IRFrameNode>()) {
+      if (f->tir.defined()) {
+        tir_to_frame[f->tir.get()] = f;
+      } else if (fallback_frame == nullptr) {
+        fallback_frame = f;
+      }
+    }
+  }
+  const std::vector<const Object*>& path = d->common_prefix.at(var.get());
+  for (auto it = path.rbegin(); it != path.rend(); ++it) {
+    if (tir_to_frame.count(*it)) {
+      return runtime::GetRef<Frame>(tir_to_frame.at(*it));
+    }
+  }
+  if (fallback_frame != nullptr) {
+    return runtime::GetRef<Frame>(fallback_frame);
+  }
+  return NullOpt;
+}
+
+/*!
+ * \brief Print the creation of a Var
+ * \param var The Var to be printed
+ * \param var_p The object path of the Var
+ * \param d The IRDocsifier
+ * \return The ExprDoc corresponding to the Var creation
+ */
+ExprDoc PrintVarCreation(const ir::PrimVar& var, const ObjectPath& var_p, const IRDocsifier& d);
+
+/*!
+ * \brief Generate a name which not in defined_names
+ * \param name_hint The init name
+ * \param defined_names The collection of existing names
+ * \return The unique name
+ */
+StringRef GenerateUniqueName(StringRef name_hint,
+                             const std::unordered_set<StringRef>& defined_names);
 
 }  // namespace printer
 }  // namespace ir

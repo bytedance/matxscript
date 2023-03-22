@@ -24,7 +24,7 @@
 #include <matxscript/runtime/logging.h>
 #include <matxscript/runtime/registry.h>
 
-#include "./utils.h"
+#include <matxscript/ir/printer/utils.h>
 
 namespace matxscript {
 namespace ir {

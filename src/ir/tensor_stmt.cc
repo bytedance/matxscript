@@ -26,13 +26,20 @@
  */
 #include <matxscript/ir/tensor_stmt.h>
 
+#include <matxscript/ir/_base/cow_array_ref.h>
+#include <matxscript/ir/_base/cow_map_ref.h>
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/_base/repr_printer.h>
+#include <matxscript/ir/_base/string_ref.h>
+#include <matxscript/ir/_base/with.h>
 #include <matxscript/ir/prim_ops.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
+#include <matxscript/ir/printer/ir_frame.h>
+#include <matxscript/ir/printer/utils.h>
+#include <matxscript/runtime/device_api.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
-
-#include <matxscript/runtime/device_api.h>
 #include <matxscript/runtime/type_helper_macros.h>
 
 #include <utility>
@@ -40,9 +47,13 @@
 namespace matxscript {
 namespace ir {
 
+using ::matxscript::runtime::Downcast;
+using ::matxscript::runtime::GetRef;
 using ::matxscript::runtime::PyArgs;
 using ::matxscript::runtime::RTValue;
 using ::matxscript::runtime::RTView;
+
+using namespace ::matxscript::ir::printer;
 
 // Buffer
 Buffer::Buffer(PrimVar data,
@@ -247,6 +258,424 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.ComputeBlockRealize")
         });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(ComputeBlockRealizeNode);
+
+Map<StringRef, ExprDoc> BufferAttrs(ir::Buffer buffer,
+                                    const ObjectPath& buffer_p,
+                                    const Frame& frame,
+                                    const IRDocsifier& d) {
+  Map<StringRef, ExprDoc> kwargs;
+  Array<ExprDoc> var_def_lhs;
+  Array<ExprDoc> var_def_rhs;
+
+  // Step 0. Set up statistics
+  std::unordered_map<const Object*, int> use_count;
+  auto update_use_count = [&](const PrimExpr& e) {
+    ir::PostOrderVisit(e, [&](const ObjectRef& n) {
+      if (const PrimVarNode* var = n.as<PrimVarNode>()) {
+        ++use_count[var];
+      }
+    });
+  };
+  update_use_count(buffer->elem_offset);
+  update_use_count(buffer->data);
+  for (const PrimExpr& e : buffer->strides) {
+    update_use_count(e);
+  }
+  for (const PrimExpr& e : buffer->shape) {
+    update_use_count(e);
+  }
+  auto is_new_var = [&](const PrimExpr& e) {
+    return e->IsInstance<PrimVarNode>() && !d->IsVarDefined(e);
+  };
+  auto add_out_of_line_var_def = [&](const PrimVar& var, const ObjectPath& var_p) {
+    MXCHECK(!d->IsVarDefined(var));
+    ExprDoc lhs = DefineVar(var, frame, d);
+    lhs->source_paths.push_back(var_p);
+    var_def_lhs.push_back(lhs);
+    var_def_rhs.push_back(PrintVarCreation(var, var_p, d));
+  };
+  auto try_inline_def =
+      [&](const PrimExpr& e, const ObjectPath& e_p, std::function<ExprDoc()> inline_f) {
+        MXCHECK(is_new_var(e));
+        PrimVar var = Downcast<PrimVar>(e);
+        if (use_count[var.get()] == 1) {
+          d->Define(e, frame, inline_f);
+          return true;
+        } else {
+          add_out_of_line_var_def(var, e_p);
+          return false;
+        }
+      };
+  // Step 1. Handle `buffer.shape`
+  {
+    const Array<PrimExpr>& shape = buffer->shape;
+    ObjectPath shape_p = buffer_p->Attr("shape");
+    int n = shape.size();
+    Array<ExprDoc> results;
+    results.reserve(n);
+    for (int i = 0; i < n; ++i) {
+      PrimExpr e = shape[i];
+      ObjectPath e_p = shape_p->ArrayIndex(i);
+      if (is_new_var(e)) {
+        add_out_of_line_var_def(Downcast<PrimVar>(e), e_p);
+      }
+      results.push_back(d->AsDoc<ExprDoc>(e, e_p));
+    }
+    kwargs.Set("shape", TupleDoc(results));
+  }
+  // Step 2. Handle `buffer.dtype`
+  kwargs.Set("dtype", LiteralDoc::DataType(buffer->dtype, buffer_p->Attr("dtype")));
+  // Step 3. Handle `buffer.data`
+  if (!is_new_var(buffer->data)) {
+    kwargs.Set("data", d->AsDoc<ExprDoc>(buffer->data, buffer_p->Attr("data")));
+  } else {
+    try_inline_def(buffer->data, buffer_p->Attr("data"), [=]() {
+      return d->AsDoc<ExprDoc>(buffer, buffer_p)->Attr("data");
+    });
+  }
+  // Step 4. Handle `buffer.strides`
+  if (!buffer->strides.empty()) {
+    const Array<PrimExpr>& strides = buffer->strides;
+    ObjectPath strides_p = buffer_p->Attr("strides");
+    int n = strides.size();
+    Array<ExprDoc> results;
+    results.reserve(n);
+    for (int i = 0; i < n; ++i) {
+      PrimExpr e = strides[i];
+      ObjectPath e_p = strides_p->ArrayIndex(i);
+      if (is_new_var(e)) {
+        if (try_inline_def(e, e_p, [=]() {
+              return d->AsDoc<ExprDoc>(buffer, buffer_p)
+                  ->Attr("strides")[{LiteralDoc::Int(i, NullOpt)}];
+            })) {
+          results.push_back(LiteralDoc::Str(Downcast<PrimVar>(e)->name_hint, e_p));
+          continue;
+        }
+      }
+      results.push_back(d->AsDoc<ExprDoc>(e, e_p));
+    }
+    kwargs.Set("strides", TupleDoc(results));
+  }
+  // Step 5. Handle `buffer.elem_offset`
+  bool needs_print_factor = false;
+  if (const auto* int_imm = buffer->elem_offset.as<IntImmNode>()) {
+    if (int_imm->value != 0) {
+      kwargs.Set("elem_offset",
+                 d->AsDoc<ExprDoc>(buffer->elem_offset,  //
+                                   buffer_p->Attr("elem_offset")));
+    }
+  } else if (is_new_var(buffer->elem_offset)) {
+    try_inline_def(buffer->elem_offset, buffer_p->Attr("elem_offset"), [=]() {
+      return d->AsDoc<ExprDoc>(buffer, buffer_p)->Attr("elem_offset");
+    });
+    needs_print_factor = true;
+  } else {
+    kwargs.Set("elem_offset",
+               d->AsDoc<ExprDoc>(buffer->elem_offset,  //
+                                 buffer_p->Attr("elem_offset")));
+  }
+  // Step 6. Handle `buffer.scope`
+  // Step 7. Handle `buffer.data_alignment`
+  if (buffer->data_alignment != runtime::kAllocAlignment) {
+    kwargs.Set("align", LiteralDoc::Int(buffer->data_alignment, buffer_p->Attr("data_alignment")));
+  }
+  // Step 8. Handle `buffer.offset_factor`
+  if (needs_print_factor || buffer->offset_factor != 1) {
+    kwargs.Set("offset_factor",
+               LiteralDoc::Int(buffer->offset_factor, buffer_p->Attr("offset_factor")));
+  }
+  // Step 9. Handle `buffer.buffer_type`
+  if (buffer->buffer_type != ir::BufferType::kDefault) {
+    kwargs.Set("buffer_type", LiteralDoc::Str("auto", buffer_p->Attr("buffer_type")));
+  }
+  // Step 10. Handle `buffer.axis_separator`
+  if (!buffer->axis_separators.empty()) {
+    kwargs.Set("axis_separators",
+               d->AsDoc<ExprDoc>(buffer->axis_separators, buffer_p->Attr("axis_separators")));
+  }
+  if (var_def_lhs.size() == 1) {
+    frame->stmts.push_back(AssignDoc(var_def_lhs[0], var_def_rhs[0], NullOpt));
+  } else if (var_def_lhs.size() > 1) {
+    frame->stmts.push_back(AssignDoc(TupleDoc(var_def_lhs), TupleDoc(var_def_rhs), NullOpt));
+  }
+  return kwargs;
+}
+
+ExprDoc BufferCall(const ExprDoc& prefix,
+                   const Map<StringRef, ExprDoc>& attrs,
+                   Array<ExprDoc> args) {
+  Array<StringRef> kwargs_keys;
+  Array<ExprDoc> kwargs_values;
+  for (StringRef s : {"shape", "dtype"}) {
+    if (Optional<ExprDoc> doc = attrs.Get(s)) {
+      args.push_back(doc.value());
+    }
+  }
+  for (StringRef s : {"data",
+                      "strides",
+                      "elem_offset",
+                      "scope",
+                      "align",
+                      "offset_factor",
+                      "buffer_type",
+                      "axis_separators"}) {
+    if (Optional<ExprDoc> doc = attrs.Get(s)) {
+      kwargs_keys.push_back(s);
+      kwargs_values.push_back(doc.value());
+    }
+  }
+  return prefix->Call(args, kwargs_keys, kwargs_values);
+}
+
+ExprDoc BufferDecl(const ir::Buffer& buffer,
+                   const StringRef& method,
+                   const Array<ExprDoc>& args,
+                   const ObjectPath& p,
+                   const Frame& frame,
+                   const IRDocsifier& d) {
+  return BufferCall(/*prefix=*/Dialect(d, method),
+                    /*attrs=*/BufferAttrs(buffer, p, frame, d),
+                    /*args=*/args);
+}
+
+ExprDoc BufferAttn(const ir::Buffer& buffer,
+                   const ObjectPath& p,
+                   const Frame& frame,
+                   const IRDocsifier& d) {
+  Map<StringRef, ExprDoc> attrs = BufferAttrs(buffer, p, frame, d);
+  ExprDoc shape = attrs.Get("shape").value();
+  ExprDoc dtype =
+      attrs.Get("dtype").value_or(LiteralDoc::DataType(buffer->dtype, p->Attr("dtype")));
+  return Dialect(d, "Buffer")->Call({shape, dtype}, {}, {});
+}
+
+Array<Doc> BufferIndices(const Array<PrimExpr>& indices,
+                         const ObjectPath& p,
+                         const IRDocsifier& d) {
+  int n = indices.size();
+  Array<Doc> indices_doc;
+  indices_doc.reserve(n);
+  for (int i = 0; i < n; ++i) {
+    indices_doc.push_back(d->AsDoc<ExprDoc>(indices[i], p->Attr("indices")->ArrayIndex(i)));
+  }
+  return indices_doc;
+}
+
+Array<Doc> BufferSlices(const Array<RangeExpr>& region, const ObjectPath& p, const IRDocsifier& d) {
+  int n = region.size();
+  Array<Doc> indices;
+  indices.reserve(n);
+  for (int i = 0; i < n; ++i) {
+    RangeExpr range = region[i];
+    ObjectPath range_p = p->ArrayIndex(i);
+    ExprDoc start = d->AsDoc<ExprDoc>(range->start, range_p->Attr("start"));
+    ExprDoc stop = d->AsDoc<ExprDoc>(range->stop, range_p->Attr("stop"));
+    ExprDoc step = d->AsDoc<ExprDoc>(range->step, range_p->Attr("step"));
+    indices.push_back(start);
+    indices.push_back(stop);
+    indices.push_back(step);
+  }
+  return indices;
+}
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::BufferRegion>(
+        "", [](ir::BufferRegion buffer_region, ObjectPath p, IRDocsifier d) -> Doc {
+          ExprDoc prefix = d->AsDoc<ExprDoc>(buffer_region->buffer, p->Attr("buffer"));
+          return prefix[BufferSlices(buffer_region->region, p->Attr("region"), d)];
+        });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
+    .set_dispatch<ir::Buffer>("", [](ir::Buffer buffer, ObjectPath p, IRDocsifier d) -> Doc {
+      if (!d->IsVarDefined(buffer)) {
+        if (Optional<Frame> opt_f = FindLowestVarDef(buffer, d)) {
+          ExprDoc lhs = DefineBuffer(buffer, opt_f.value(), d);
+          ExprDoc rhs = BufferDecl(buffer, "Buffer", {}, p, opt_f.value(), d);
+          opt_f.value()->stmts.push_back(AssignDoc(lhs, rhs, NullOpt));
+        }
+      }
+      if (Optional<ExprDoc> doc = d->GetVarDoc(buffer)) {
+        return doc.value();
+      }
+      MXLOG(FATAL) << "IndexError: Buffer is not defined in the environment: " << buffer;
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::MatchBufferRegion>(
+        "", [](ir::MatchBufferRegion stmt, ObjectPath p, IRDocsifier d) -> Doc {
+          Frame frame = d->frames.back();
+          ExprDoc lhs = DefineBuffer(stmt->buffer, frame, d);
+          ExprDoc src_buffer = d->AsDoc<ExprDoc>(stmt->source, p->Attr("source"));
+          ExprDoc rhs = BufferDecl(
+              stmt->buffer, "match_buffer", {src_buffer}, p->Attr("buffer"), d->frames.back(), d);
+          return AssignDoc(lhs, rhs, NullOpt);
+        });
+
+Doc PrintBlock(IRDocsifier d,
+               ir::ComputeBlock block,
+               ObjectPath block_p,  //
+               Optional<ir::ComputeBlockRealize> opt_realize,
+               Optional<ObjectPath> opt_realize_p) {
+  With<IRFrame> frame(d, block);
+  MXCHECK_EQ(opt_realize.defined(), opt_realize_p.defined());
+  const ir::ComputeBlockRealizeNode* realize =
+      opt_realize.defined() ? opt_realize.value().get() : nullptr;
+  const ObjectPathNode* realize_p = opt_realize_p.defined() ? opt_realize_p.get() : nullptr;
+  // Step 1. Handle block var and block bindings
+  // Step 1.1. Obtain all loop var defined along path
+  std::unordered_map<const ir::PrimVarNode*, ir::For> loop_vars;
+  for (Frame f : d->frames) {
+    if (const auto* tir_f = f.as<IRFrameNode>()) {
+      if (const auto* for_loop = tir_f->tir.as<ir::ForNode>()) {
+        for (const ir::ForNode* l = for_loop; l != nullptr; l = l->body.as<ir::ForNode>()) {
+          loop_vars.insert(std::make_pair(l->loop_var.get(), GetRef<ir::For>(l)));
+        }
+      }
+    }
+  }
+
+  std::vector<int> remap_vars_indices;
+  auto add_remapped_iter_var = [&](int i) -> bool { return false; };
+
+  auto print_single_iter_var = [&](int i) {
+    ir::PrimIterVar iter_var = block->iter_vars[i];
+    ObjectPath iter_var_p = block_p->Attr("iter_var")->ArrayIndex(i);
+    ExprDoc rhs = Dialect(d, "axis");
+    ExprDoc start = d->AsDoc<ExprDoc>(iter_var->dom->start, iter_var_p->Attr("dom")->Attr("start"));
+    ExprDoc stop = d->AsDoc<ExprDoc>(iter_var->dom->stop, iter_var_p->Attr("dom")->Attr("stop"));
+    ExprDoc step = d->AsDoc<ExprDoc>(iter_var->dom->step, iter_var_p->Attr("dom")->Attr("step"));
+    ExprDoc dom = TupleDoc({start, stop, step});
+    if (realize) {
+      ExprDoc binding = d->AsDoc<ExprDoc>(realize->iter_values[i],  //
+                                          realize_p->Attr("iter_values")->ArrayIndex(i));
+      rhs = rhs->Call({dom, binding});
+    } else {
+      rhs = rhs->Call({dom});
+    }
+    (*frame)->stmts.push_back(AssignDoc(DefineVar(iter_var->var, *frame, d), rhs, NullOpt));
+  };
+
+  auto print_remapped_iter_var = [&]() {
+    if (remap_vars_indices.size()) {
+      int m = remap_vars_indices.size();
+      if (!m) {
+        return;
+      }
+      if (m == 1) {
+        print_single_iter_var(remap_vars_indices[0]);
+        remap_vars_indices.clear();
+        return;
+      }
+      Array<ExprDoc> lhs;
+      Array<ExprDoc> loop_var_doc;
+      lhs.reserve(m);
+      loop_var_doc.reserve(m);
+      for (int i : remap_vars_indices) {
+        ir::PrimIterVar iter_var = block->iter_vars[i];
+        ObjectPath iter_var_p = block_p->Attr("iter_vars")->ArrayIndex(i);
+        lhs.push_back(DefineVar(iter_var->var, *frame, d));
+        loop_var_doc.push_back(d->AsDoc<ExprDoc>(realize->iter_values[i],
+                                                 realize_p->Attr("iter_values")->ArrayIndex(i)));
+      }
+      ExprDoc rhs = Dialect(d, "axis")->Attr("remap");
+      rhs = rhs->Call({ListDoc(loop_var_doc)});
+      (*frame)->stmts.push_back(AssignDoc(TupleDoc(lhs), rhs, NullOpt));
+      remap_vars_indices.clear();
+    }
+  };
+
+  // Step 1.2. Construct all block var bindings
+  int n_vars = block->iter_vars.size();
+  for (int i = 0; i < n_vars; ++i) {
+    if (!add_remapped_iter_var(i)) {
+      print_remapped_iter_var();
+      print_single_iter_var(i);
+    }
+  }
+  print_remapped_iter_var();
+
+  // Step 2. Handle block predicate
+  if (realize) {
+    MXCHECK(realize->predicate.defined() && realize->predicate->dtype.is_bool());
+    if (!ir::is_one(realize->predicate)) {
+      (*frame)->stmts.push_back(ExprStmtDoc(
+          Dialect(d, "where")
+              ->Call({d->AsDoc<ExprDoc>(realize->predicate, realize_p->Attr("predicate"))})));
+    }
+  }
+  // Step 3. Handle block read/write regions
+  {
+    Array<ExprDoc> reads;
+    for (int i = 0, n = block->reads.size(); i < n; ++i) {
+      reads.push_back(d->AsDoc<ExprDoc>(block->reads[i], block_p->Attr("reads")->ArrayIndex(i)));
+    }
+    (*frame)->stmts.push_back(ExprStmtDoc(Dialect(d, "reads")->Call(reads)));
+    Array<ExprDoc> writes;
+    for (int i = 0, n = block->writes.size(); i < n; ++i) {
+      writes.push_back(d->AsDoc<ExprDoc>(block->writes[i], block_p->Attr("writes")->ArrayIndex(i)));
+    }
+    (*frame)->stmts.push_back(ExprStmtDoc(Dialect(d, "writes")->Call(writes)));
+  }
+  // Step 4. Handle block attributes
+  if (!block->annotations.empty()) {
+    (*frame)->stmts.push_back(ExprStmtDoc(
+        Dialect(d, "block_attr")
+            ->Call({d->AsDoc<ExprDoc>(block->annotations, block_p->Attr("annotations"))})));
+  }
+  // Step 5. Handle `alloc_buffer`
+  for (int i = 0, n = block->alloc_buffers.size(); i < n; ++i) {
+    ir::Buffer buffer = block->alloc_buffers[i];
+    ObjectPath buffer_p = block_p->Attr("alloc_buffers")->ArrayIndex(i);
+    IdDoc lhs = DefineBuffer(buffer, *frame, d);
+    ExprDoc rhs = BufferDecl(buffer, "alloc_buffer", {}, buffer_p, *frame, d);
+    (*frame)->stmts.push_back(AssignDoc(lhs, rhs, NullOpt));
+  }
+  // Step 6. Handle `match_buffer`
+  for (int i = 0, n = block->match_buffers.size(); i < n; ++i) {
+    ir::MatchBufferRegion buffer_region = block->match_buffers[i];
+    ObjectPath buffer_region_p = block_p->Attr("match_buffers")->ArrayIndex(i);
+    StmtDoc doc = d->AsDoc<StmtDoc>(buffer_region, buffer_region_p);
+    (*frame)->stmts.push_back(doc);
+  }
+  // Step 7. Handle init block
+  if (block->init.defined()) {
+    ir::Stmt init = block->init.value();
+    With<IRFrame> init_frame(d, init);
+    AsDocBody(init, block_p->Attr("init"), init_frame->get(), d);
+    (*frame)->stmts.push_back(
+        ScopeDoc(NullOpt, Dialect(d, "init")->Call({}), (*init_frame)->stmts));
+  }
+  // Step 8. Handle block body
+  AsDocBody(block->body, block_p->Attr("body"), frame->get(), d);
+  Array<StringRef> kwargs_keys;
+  Array<ExprDoc> kwargs_values;
+  if (!realize) {
+    kwargs_keys.push_back("no_realize");
+    kwargs_values.push_back(LiteralDoc::Boolean(true, NullOpt));
+  }
+  return ScopeDoc(NullOpt,
+                  Dialect(d, "block")  //
+                      ->Call({LiteralDoc::Str(block->name_hint, block_p->Attr("name_hint"))},
+                             kwargs_keys,
+                             kwargs_values),
+                  (*frame)->stmts);
+}
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::ComputeBlockRealize>(
+        "", [](ir::ComputeBlockRealize realize, ObjectPath p, IRDocsifier d) -> Doc {
+          Doc doc = PrintBlock(d, realize->block, p->Attr("block"), realize, p);
+          // since we do not have d->AsDoc for realize->block,
+          // we should add possible doc decoration manually.
+          AddDocDecoration<ScopeDoc>(doc, realize->block, p->Attr("block"), d->cfg);
+          return doc;
+        });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::ComputeBlock>("",
+                                    [](ir::ComputeBlock block, ObjectPath p, IRDocsifier d) -> Doc {
+                                      return PrintBlock(d, block, p, NullOpt, NullOpt);
+                                    });
 
 }  // namespace ir
 }  // namespace matxscript
