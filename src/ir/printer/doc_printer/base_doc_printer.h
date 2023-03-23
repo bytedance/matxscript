@@ -243,6 +243,11 @@ class DocPrinter {
   virtual void PrintTypedDoc(const DocStringDoc& doc) = 0;
 
   /*!
+   * \brief Virtual method to print a ModuleDoc
+   */
+  virtual void PrintTypedDoc(const ModuleDoc& doc) = 0;
+
+  /*!
    * \brief Increase the indent level of any content to be
    *        printed after this call
    */

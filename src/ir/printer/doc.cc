@@ -289,6 +289,12 @@ DocStringDoc::DocStringDoc(StringRef docs) {
   this->data_ = std::move(n);
 }
 
+ModuleDoc::ModuleDoc(Array<StmtDoc> body) {
+  ObjectPtr<ModuleDocNode> n = make_object<ModuleDocNode>();
+  n->body = std::move(body);
+  this->data_ = std::move(n);
+}
+
 MATXSCRIPT_REGISTER_NODE_TYPE(DocNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.printer.DocSetSourcePaths")
     .set_body_typed([](Doc doc, Array<ObjectPath> source_paths) {
@@ -415,6 +421,40 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.printer.ForDoc")
       return ForDoc(std::move(lhs), std::move(rhs), std::move(body));
     });
 
+MATXSCRIPT_REGISTER_NODE_TYPE(ContinueDocNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.printer.ContinueDoc").set_body_typed([]() {
+  static ContinueDoc c;
+  return c;
+});
+
+MATXSCRIPT_REGISTER_NODE_TYPE(BreakDocNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.printer.BreakDoc").set_body_typed([]() {
+  static BreakDoc c;
+  return c;
+});
+
+MATXSCRIPT_REGISTER_NODE_TYPE(ExceptionHandlerDocNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.printer.ExceptionHandlerDoc")
+    .set_body_typed([](Optional<ExprDoc> type, Optional<ExprDoc> name, Array<StmtDoc> body) {
+      return ExceptionHandlerDoc(std::move(type), std::move(name), std::move(body));
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(TryExceptDocNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.printer.TryExceptDoc")
+    .set_body_typed([](Array<StmtDoc> body,
+                       Optional<Array<ExceptionHandlerDoc>> handlers,
+                       Optional<Array<StmtDoc>> orelse,
+                       Optional<Array<StmtDoc>> finalbody) {
+      return TryExceptDoc(
+          std::move(body), std::move(handlers), std::move(orelse), std::move(finalbody));
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(RaiseDocNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.printer.RaiseDoc")
+    .set_body_typed([](Optional<ExprDoc> exc, Optional<ExprDoc> cause) {
+      return RaiseDoc(std::move(exc), std::move(cause));
+    });
+
 MATXSCRIPT_REGISTER_NODE_TYPE(ScopeDocNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.printer.ScopeDoc")
     .set_body_typed([](Optional<ExprDoc> lhs, ExprDoc rhs, Array<StmtDoc> body) {
@@ -465,6 +505,11 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.printer.CommentDoc").set_body_typed([](StringRef 
 MATXSCRIPT_REGISTER_NODE_TYPE(DocStringDocNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.printer.DocStringDoc").set_body_typed([](StringRef docs) {
   return DocStringDoc(std::move(docs));
+});
+
+MATXSCRIPT_REGISTER_NODE_TYPE(ModuleDocNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.printer.ModuleDoc").set_body_typed([](Array<StmtDoc> body) {
+  return ModuleDoc(std::move(body));
 });
 
 }  // namespace printer

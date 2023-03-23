@@ -179,6 +179,7 @@ class PythonDocPrinter : public DocPrinter {
   void PrintTypedDoc(const ClassDoc& doc) final;
   void PrintTypedDoc(const CommentDoc& doc) final;
   void PrintTypedDoc(const DocStringDoc& doc) final;
+  void PrintTypedDoc(const ModuleDoc& doc) final;
 
  private:
   void NewLineWithoutIndent() {
@@ -765,6 +766,20 @@ void PythonDocPrinter::PrintTypedDoc(const DocStringDoc& doc) {
   if (doc->comment.defined() && !doc->comment.value().empty()) {
     PrintDocString(doc->comment.value());
   }
+}
+
+void PythonDocPrinter::PrintTypedDoc(const ModuleDoc& doc) {
+  // TODO: introduce ImportStmtDoc and ImportFromStmtDoc
+  output_ << "import matx";
+  if (doc->comment.defined()) {
+    PrintBlockComment(doc->comment.value());
+  }
+  for (const StmtDoc& d : doc->body) {
+    NewLine();
+    NewLine();
+    PrintDoc(d);
+  }
+  NewLine();
 }
 
 StringRef DocToPythonScript(Doc doc, const PrinterConfig& cfg) {

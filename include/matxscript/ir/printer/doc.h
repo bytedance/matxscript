@@ -1450,6 +1450,40 @@ class DocStringDoc : public StmtDoc {
   MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(DocStringDoc, StmtDoc, DocStringDocNode);
 };
 
+/*!
+ * \brief Doc that represents module file.
+ *
+ * \sa ModuleDoc
+ */
+class ModuleDocNode : public StmtDocNode {
+ public:
+  /*! \brief The body of class. */
+  Array<StmtDoc> body;
+
+  void VisitAttrs(AttrVisitor* v) {
+    StmtDocNode::VisitAttrs(v);
+    v->Visit("body", &body);
+  }
+
+  static constexpr const char* _type_key = "ir.printer.ModuleDoc";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(ModuleDocNode, StmtDocNode);
+};
+
+/*!
+ * \brief Reference type of ModuleDocNode.
+ *
+ * \sa ModuleDocNode
+ */
+class ModuleDoc : public StmtDoc {
+ public:
+  /*!
+   * \brief Constructor of ModuleDoc.
+   * \param body The body of class.
+   */
+  explicit ModuleDoc(Array<StmtDoc> body);
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(ModuleDoc, StmtDoc, ModuleDocNode);
+};
+
 }  // namespace printer
 }  // namespace ir
 }  // namespace matxscript

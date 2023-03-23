@@ -379,6 +379,8 @@ void DocPrinter::PrintDoc(const Doc& doc) {
     PrintTypedDoc(GetRef<FunctionDoc>(doc_node));
   } else if (const auto* doc_node = doc.as<ClassDocNode>()) {
     PrintTypedDoc(GetRef<ClassDoc>(doc_node));
+  } else if (const auto* doc_node = doc.as<ModuleDocNode>()) {
+    PrintTypedDoc(GetRef<ModuleDoc>(doc_node));
   } else if (const auto* doc_node = doc.as<CommentDocNode>()) {
     PrintTypedDoc(GetRef<CommentDoc>(doc_node));
   } else if (const auto* doc_node = doc.as<DocStringDocNode>()) {
