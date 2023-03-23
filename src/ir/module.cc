@@ -469,8 +469,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
           (*f)->stmts.push_back(Downcast<FunctionDoc>(doc));
         }
       }
-      // TODO: use ModuleDoc instead
-      return ClassDoc(IdDoc("Module"), {Dialect(d, "ir_module")}, (*f)->stmts);
+      return ModuleDoc((*f)->stmts);
     });
 
 }  // namespace ir
