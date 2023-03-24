@@ -110,6 +110,10 @@ void IRDocsifierNode::SetCommonPrefix(const ObjectRef& root,
     }
     void Visit(const char* key, ObjectRef* value) final {
       const Object* obj = value->get();
+      if (visited.count(obj)) {
+        return;
+      }
+      visited.emplace(obj);
       if (obj == nullptr) {
         return;
       }
@@ -156,6 +160,7 @@ void IRDocsifierNode::SetCommonPrefix(const ObjectRef& root,
    public:
     runtime::TypedNativeFunction<bool(ObjectRef)> is_var;
     std::unordered_map<const Object*, std::vector<const Object*>> common_prefix;
+    std::unordered_set<const Object*> visited;
   };
   Visitor visitor;
   visitor.is_var = is_var;
