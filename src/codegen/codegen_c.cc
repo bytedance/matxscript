@@ -2121,10 +2121,9 @@ void CodeGenC::VisitExpr_(const CallNode* op, std::ostream& os) {  // NOLINT(*)
 }
 
 void CodeGenC::PrintCallMethod(const CallNode* op, std::ostream& os) {
-  static OpAttrMap<TMethodSymbol> kernel_method = Op::GetAttrMap<TMethodSymbol>("TMethodSymbol");
   MXCHECK_GE(op->args.size(), 1);
   Op builtin_op = Downcast<Op>(op->op);
-  String method = kernel_method.get(builtin_op, "").operator String();
+  String method = op_attr_method_symbol_.get(builtin_op, "").operator String();
 
   if (!op->type_args.empty()) {
     method.append("<");
@@ -2177,7 +2176,6 @@ void CodeGenC::PrintCallMethod(const CallNode* op, std::ostream& os) {
 }
 
 void CodeGenC::PrintCallFunction(const CallNode* op, std::ostream& os) {
-  MXCHECK_GE(op->args.size(), 1);
   Op builtin_op = Downcast<Op>(op->op);
   String func_name = op_attr_global_symbol_.get(builtin_op, "").operator String();
   MXCHECK(!func_name.empty());
