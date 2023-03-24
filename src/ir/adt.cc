@@ -221,6 +221,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
       p->stream << "ClassType(name: " << node->header->name_hint << ")";
     });
 
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
+    .set_dispatch<ClassType>("", [](ClassType node, ObjectPath p, IRDocsifier d) -> Doc {
+      return IdDoc(node->header->name_hint);
+    });
+
 MATXSCRIPT_REGISTER_GLOBAL("ir.ClassType_GetItem").set_body([](PyArgs args) -> RTValue {
   MXCHECK_EQ(args.size(), 2) << "[ir.ClassType_GetItem] Expect 2 arguments but get " << args.size();
   ClassType cls_ty = args[0].As<ClassType>();

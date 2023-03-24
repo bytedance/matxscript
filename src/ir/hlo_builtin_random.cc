@@ -27,82 +27,82 @@ namespace ir {
 namespace builtin {
 
 // random
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, random).set_num_inputs(0);
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, random).set_num_inputs(0);
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, seed)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, seed)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, uniform)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, uniform)
     .set_num_inputs(2)
     .add_argument("a", "float", "")
     .add_argument("b", "float", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, triangular)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, triangular)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, randint)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, randint)
     .set_num_inputs(2)
     .add_argument("a", "int", "")
     .add_argument("b", "int", "");
 
-// MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, choice).set_num_inputs(1);
-// MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, randrange).set_num_inputs(0);
-// MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, sample).set_num_inputs(-1);
-// MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, shuffle).set_num_inputs(-1);
-// MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, choices).set_num_inputs(-1);
+// MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, choice).set_num_inputs(1);
+// MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, randrange).set_num_inputs(0);
+// MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, sample).set_num_inputs(-1);
+// MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, shuffle).set_num_inputs(-1);
+// MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, choices).set_num_inputs(-1);
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, normalvariate)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, normalvariate)
     .set_num_inputs(2)
     .add_argument("mu", "float", "")
     .add_argument("sigma", "float", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, lognormvariate)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, lognormvariate)
     .set_num_inputs(2)
     .add_argument("mu", "float", "")
     .add_argument("sigma", "float", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, expovariate)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, expovariate)
     .set_num_inputs(1)
     .add_argument("lambda", "float", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, vonmisesvariate)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, vonmisesvariate)
     .set_num_inputs(2)
     .add_argument("mu", "float", "")
     .add_argument("kappa", "float", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, gammavariate)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, gammavariate)
     .set_num_inputs(2)
     .add_argument("alpha", "float", "")
     .add_argument("beta", "float", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, gauss)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, gauss)
     .set_num_inputs(2)
     .add_argument("mu", "float", "")
     .add_argument("sigma", "float", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, betavariate)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, betavariate)
     .set_num_inputs(2)
     .add_argument("alpha", "float", "")
     .add_argument("beta", "float", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, paretovariate)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, paretovariate)
     .set_num_inputs(1)
     .add_argument("alpha", "float", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, weibullvariate)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, weibullvariate)
     .set_num_inputs(2)
     .add_argument("alpha", "float", "")
     .add_argument("beta", "float", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, getstate).set_num_inputs(0);
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, getstate).set_num_inputs(0);
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, setstate)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, setstate)
     .set_num_inputs(1)
     .add_argument("state", "Tuple", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(random, getrandbits)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(random, getrandbits)
     .set_num_inputs(1)
     .add_argument("k", "int", "");
 

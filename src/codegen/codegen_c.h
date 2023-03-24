@@ -231,8 +231,8 @@ class CodeGenC : public PrimExprFunctor<void(const PrimExpr&, std::ostream&)>,
   void VisitStmt_(const ExprStmtNode* op, std::ostream& os) override;
 
   // hlo expression
-  void PrintExplicitContainerBuiltinOp(const CallNode* op, std::ostream& os);  // NOLINT(*)
-  void PrintGenericBuiltinOp(const CallNode* op, std::ostream& os);            // NOLINT(*)
+  void PrintCallMethod(const CallNode* op, std::ostream& os);    // NOLINT(*)
+  void PrintCallFunction(const CallNode* op, std::ostream& os);  // NOLINT(*)
   void PrintAsConstructor(const CallNode* op, std::ostream& os);
   void PrintConstructorValueType(const ConstructorNode* op, std::ostream& os);
   void PrintAsInitializeList(const InitializerListNode* op, std::ostream& os);
@@ -337,12 +337,6 @@ class CodeGenC : public PrimExprFunctor<void(const PrimExpr&, std::ostream&)>,
                                const Array<BaseExpr>& args,
                                bool skip_first_arg,
                                std::ostream& os);  // NOLINT(*)
-
-  virtual void PrintCallExtern(Type ret_type,
-                               StringRef global_symbol,
-                               const Array<PrimExpr>& args,
-                               bool skip_first_arg,
-                               std::ostream& os);  // NOLINT(*)
   /*!
    * \brief If buffer is allocated as type t.
    * \param buf_var The buffer variable.
@@ -373,10 +367,7 @@ class CodeGenC : public PrimExprFunctor<void(const PrimExpr&, std::ostream&)>,
   std::unordered_map<const PrimVarNode*, DataType> handle_data_type_;
   /*! \brief Record of ops that have pre-defined global symbol. */
   OpAttrMap<TGlobalSymbol> op_attr_global_symbol_ = Op::GetAttrMap<TGlobalSymbol>("TGlobalSymbol");
-  OpAttrMap<TGlobalIsGenericBuiltinOp> op_attr_is_generic_builtin_op_ =
-      Op::GetAttrMap<TGlobalIsGenericBuiltinOp>("TGlobalIsGenericBuiltinOp");
-  OpAttrMap<TGlobalIsExplicitContainerOp> op_attr_is_explicit_container_op_ =
-      Op::GetAttrMap<TGlobalIsExplicitContainerOp>("TGlobalIsExplicitContainerOp");
+  OpAttrMap<TMethodSymbol> op_attr_method_symbol_ = Op::GetAttrMap<TMethodSymbol>("TMethodSymbol");
   // cache commonly used ops
   const Op& builtin_call_extern_ = builtin::call_extern();
   const Op& builtin_call_pure_extern_ = builtin::call_pure_extern();

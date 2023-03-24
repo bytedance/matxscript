@@ -26,23 +26,23 @@ namespace matxscript {
 namespace ir {
 namespace builtin {
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(user_data___getattr__, __getattr__)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(user_data, __getattr__, __getattr__)
     .set_num_inputs(2)
     .add_argument("self", "matx.NativeObject", "")
     .add_argument("attr", "str_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(user_data___setattr__, set_attr)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(user_data, __setattr__, set_attr)
     .set_num_inputs(3)
     .add_argument("self", "matx.NativeObject", "")
     .add_argument("attr", "str_view", "")
     .add_argument("val", "Any|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(user_data_call, generic_call)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(user_data, call, generic_call)
     .set_num_inputs(2)
     .add_argument("self", "matx.NativeObject", "")
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(user_data_call_attr, generic_call_attr)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(user_data, call_attr, generic_call_attr)
     .set_num_inputs(3)
     .add_argument("self", "matx.NativeObject", "")
     .add_argument("func_name", "bytes_view", "")

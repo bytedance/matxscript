@@ -41,10 +41,9 @@ namespace ir {
  * \brief Global symbol of the op after lowering.
  */
 using TGlobalSymbol = StringRef;
-using TGlobalIsGenericBuiltinOp = bool;
-using TGlobalIsGenericBuiltinSliceOp = bool;
-using TGlobalIsExplicitContainerOp = bool;
-using TKernelMethodName = StringRef;
+using TMethodSymbol = StringRef;
+using TPrinterGlobalSymbol = StringRef;
+using TPrinterMethodSymbol = StringRef;
 
 /*!
  * \brief Whether the op is overloaded for vector form.

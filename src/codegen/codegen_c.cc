@@ -1035,21 +1035,6 @@ void CodeGenC::VisitExpr_(const PrimNotNode* op, std::ostream& os) {  // NOLINT(
 
 void CodeGenC::PrintCallExtern(Type ret_type,
                                StringRef global_symbol,
-                               const Array<PrimExpr>& args,
-                               bool skip_first_arg,
-                               std::ostream& os) {  // NOLINT(*)
-  os << global_symbol << "(";
-  for (size_t i = static_cast<size_t>(skip_first_arg); i < args.size(); ++i) {
-    this->PrintExpr(args[i], os);
-    if (i < args.size() - 1) {
-      os << ", ";
-    }
-  }
-  os << ")";
-}
-
-void CodeGenC::PrintCallExtern(Type ret_type,
-                               StringRef global_symbol,
                                const Array<BaseExpr>& args,
                                bool skip_first_arg,
                                std::ostream& os) {  // NOLINT(*)
@@ -1070,11 +1055,18 @@ void CodeGenC::VisitExpr_(const PrimCallNode* op, std::ostream& os) {  // NOLINT
     if (op->op.same_as(builtin_call_extern_) || op->op.same_as(builtin_call_pure_extern_)) {
       MXCHECK_GE(op->args.size(), 1U);
       auto func = Downcast<StringImm>(op->args[0]);
-      this->PrintCallExtern(GetType(GetRef<PrimExpr>(op)), func->value, op->args, true, os);
+      this->PrintCallExtern(GetType(GetRef<PrimExpr>(op)),
+                            func->value,
+                            Downcast<Array<BaseExpr>>(op->args),
+                            true,
+                            os);
     } else if (op_attr_global_symbol_.count(call_op)) {
       // call extern if the op itself have a global symbol.
-      this->PrintCallExtern(
-          GetType(GetRef<PrimExpr>(op)), op_attr_global_symbol_[call_op], op->args, false, os);
+      this->PrintCallExtern(GetType(GetRef<PrimExpr>(op)),
+                            op_attr_global_symbol_[call_op],
+                            Downcast<Array<BaseExpr>>(op->args),
+                            false,
+                            os);
     } else if (op->op.same_as(builtin::bitwise_and())) {
       PrintBinaryIntrinsic(op, " & ", os, this);
     } else if (op->op.same_as(builtin::large_uint_imm())) {
@@ -2046,17 +2038,15 @@ void CodeGenC::VisitExpr_(const CallNode* op, std::ostream& os) {  // NOLINT(*)
     auto call_op = GetRef<Op>(ptr_op);
     if (op->op.same_as(builtin_call_extern_) || op->op.same_as(builtin_call_pure_extern_)) {
       MXCHECK_GE(op->args.size(), 1U);
+      MXCHECK(op->type_args.empty()) << "[call extern] type_args is not supported!!!";
       auto func = Downcast<StringImm>(op->args[0]);
       this->PrintCallExtern(op->checked_type(), func->value, op->args, true, os);
     } else if (op_attr_global_symbol_.count(call_op)) {
       // call extern if the op itself have a global symbol.
-      this->PrintCallExtern(
-          op->checked_type(), op_attr_global_symbol_[call_op], op->args, false, os);
-    } else if (op_attr_is_explicit_container_op_.count(Downcast<Op>(op->op))) {
-      // explict container
-      PrintExplicitContainerBuiltinOp(op, os);
-    } else if (op_attr_is_generic_builtin_op_.count(Downcast<Op>(op->op))) {  // generic
-      PrintGenericBuiltinOp(op, os);
+      this->PrintCallFunction(op, os);
+    } else if (op_attr_method_symbol_.count(Downcast<Op>(op->op))) {
+      // call method if the op itself have a method symbol.
+      this->PrintCallMethod(op, os);
     } else if (op->op.same_as(builtin::call_lambda())) {  // hlo arith
       MXCHECK_GE(op->args.size(), 1U);
       // function
@@ -2130,12 +2120,10 @@ void CodeGenC::VisitExpr_(const CallNode* op, std::ostream& os) {  // NOLINT(*)
   }
 }
 
-void CodeGenC::PrintExplicitContainerBuiltinOp(const CallNode* op, std::ostream& os) {
-  static OpAttrMap<TKernelMethodName> kernel_method =
-      Op::GetAttrMap<TKernelMethodName>("TKernelMethodName");
+void CodeGenC::PrintCallMethod(const CallNode* op, std::ostream& os) {
   MXCHECK_GE(op->args.size(), 1);
   Op builtin_op = Downcast<Op>(op->op);
-  String method = kernel_method.get(builtin_op, "").operator String();
+  String method = op_attr_method_symbol_.get(builtin_op, "").operator String();
 
   if (!op->type_args.empty()) {
     method.append("<");
@@ -2187,39 +2175,39 @@ void CodeGenC::PrintExplicitContainerBuiltinOp(const CallNode* op, std::ostream&
   os << ")";
 }
 
-void CodeGenC::PrintGenericBuiltinOp(const CallNode* op, std::ostream& os) {
+void CodeGenC::PrintCallFunction(const CallNode* op, std::ostream& os) {
+  Op builtin_op = Downcast<Op>(op->op);
+  String func_name = op_attr_global_symbol_.get(builtin_op, "").operator String();
+  MXCHECK(!func_name.empty());
+
   auto* ptr_op = op->op.as<OpNode>();
-  String ir_op_name = ptr_op->name.operator String();
+  // step1: check arguments number
   if (ptr_op->num_inputs >= 0) {
     if (ptr_op->num_inputs_max == ptr_op->num_inputs) {
       MXCHECK_GE(ptr_op->num_inputs, op->args.size())
-          << "[CodeGenC::PrintGenericBuiltinOp] arg num is mismatched, expect "
-          << ptr_op->num_inputs << ", but get " << op->args.size() << ", op:" << ir_op_name;
+          << "[CodeGenC::PrintCallFunction] arg num is mismatched, expect " << ptr_op->num_inputs
+          << ", but get " << op->args.size() << ", op:" << func_name;
     } else if (ptr_op->num_inputs_max > 0) {
       MXCHECK(op->args.size() >= ptr_op->num_inputs && op->args.size() <= ptr_op->num_inputs_max)
-          << "[CodeGenC::PrintGenericBuiltinOp] arg num is mismatched, expect ("
-          << ptr_op->num_inputs << "-" << ptr_op->num_inputs_max << ")"
-          << ", but get " << op->args.size() << ", op:" << ir_op_name;
+          << "[CodeGenC::PrintCallFunction] arg num is mismatched, expect (" << ptr_op->num_inputs
+          << "-" << ptr_op->num_inputs_max << ")"
+          << ", but get " << op->args.size() << ", op:" << func_name;
     } else {
       // -1 means it is variable length
       MXCHECK_GE(op->args.size(), ptr_op->num_inputs)
-          << "[CodeGenC::PrintGenericBuiltinOp] arg num is mismatched, expect "
-          << ptr_op->num_inputs << " or more, but get " << op->args.size() << ", op:" << ir_op_name;
+          << "[CodeGenC::PrintCallFunction] arg num is mismatched, expect " << ptr_op->num_inputs
+          << " or more, but get " << op->args.size() << ", op:" << func_name;
     }
   } else {
     // -1 means it is variable length
     if (op->op.same_as(builtin::object___dispatch__())) {
       MXCHECK_GE(op->args.size(), 2)
           << "[CodeGenC::PrintGenericBuiltinOp] arg num is mismatched, expect ge 2"
-          << ", but get " << op->args.size() << ", op:" << ir_op_name;
+          << ", but get " << op->args.size() << ", op:" << func_name;
     }
   }
-  // ir.generic_object_method -> kernel_generic_object_method
-  MXCHECK_GE(ir_op_name.size(), 3);
-  auto func_suffix_name = ir_op_name.substr(3);
-  bool is_object = func_suffix_name.substr(0, strlen("object_")) == "object_";
-  String func_name = "kernel_" + func_suffix_name;
 
+  // step2: add typed arguments
   if (!op->type_args.empty()) {
     func_name.append("<");
   }
@@ -2239,7 +2227,11 @@ void CodeGenC::PrintGenericBuiltinOp(const CallNode* op, std::ostream& os) {
     func_name.append(">");
   }
 
+  // step3: print function name
   os << func_name << "(";
+
+  // step4: print arguments
+  bool is_object = func_name.substr(0, strlen("kernel_object_")) == "kernel_object_";
   int32_t arg_index = 0;
   if (is_object) {
     MXCHECK(op->args.size() >= 1) << "object.func(...) first arg must be self";

@@ -27,7 +27,8 @@ namespace ir {
 namespace builtin {
 
 // time
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(time, time).set_num_inputs(0);
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(time, time)  //
+    .set_num_inputs(0);
 
 }  // namespace builtin
 }  // namespace ir

@@ -29,16 +29,16 @@ namespace builtin {
 /******************************************************************************
  * Regex builtin methods
  *****************************************************************************/
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(regex_split, split)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(regex, split, split)
     .set_num_inputs(2)
     .add_argument("self", "matx.Regex", "")
     .add_argument("input", "bytes_view|unicode_view|any_view", "");
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(regex_match, match)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(regex, match, match)
     .set_num_inputs(2)
     .add_argument("self", "matx.Regex", "")
     .add_argument("input", "bytes_view|unicode_view|any_view", "")
     .add_argument("offset", "int", "");
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(regex_replace, replace)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(regex, replace, replace)
     .set_num_inputs(3)
     .add_argument("self", "matx.Regex", "")
     .add_argument("input", "bytes_view|unicode_view|any_view", "")

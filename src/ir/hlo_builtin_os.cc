@@ -27,7 +27,7 @@ namespace ir {
 namespace builtin {
 
 // os
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(os, getenv)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(os, getenv)  //
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 

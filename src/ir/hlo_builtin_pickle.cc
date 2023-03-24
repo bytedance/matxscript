@@ -26,11 +26,11 @@ namespace matxscript {
 namespace ir {
 namespace builtin {
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(pickle, serialize)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(pickle, serialize)
     .set_num_inputs(1)
     .add_argument("value", "any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(pickle, deserialize)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(pickle, deserialize)
     .set_num_inputs(1)
     .add_argument("str", "unicode_view", "");
 

@@ -27,34 +27,30 @@ namespace matxscript {
 namespace ir {
 namespace builtin {
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(builtins, print)
-    .set_num_inputs(3)
-    .set_num_inputs_max(-1);
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(builtins, print).set_num_inputs(3).set_num_inputs_max(-1);
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(builtins, ord)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(builtins, ord)
     .set_num_inputs(1)
     .add_argument("c", "bytes_view|unicode_view|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(builtins, chr)
-    .set_num_inputs(1)
-    .add_argument("i", "int", "");
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(builtins, chr).set_num_inputs(1).add_argument("i", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(builtins, sorted)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(builtins, sorted)
     .set_num_inputs(1)
     .set_num_inputs_max(3)
     .add_argument("iterable", "List|Tuple|Any|any_view", "")
     .add_argument("key", "any_view|Any", "")
     .add_argument("reverse", "bool", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(builtins, iter)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(builtins, iter)
     .set_num_inputs(1)
     .add_argument("iterable", "List", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(builtins, reversed)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(builtins, reversed)
     .set_num_inputs(1)
     .add_argument("iterable", "List", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(builtins, unpack)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(builtins, unpack)
     .set_num_inputs(1)
     .add_argument("container", "any_view", "");
 
@@ -88,7 +84,7 @@ MATXSCRIPT_REGISTER_GLOBAL("ir._HLOOpIfThenElse")
               std::move(cond), std::move(true_value), std::move(false_value), std::move(span));
         });
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(builtins, isinstance).set_num_inputs(1);
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(builtins, isinstance).set_num_inputs(1);
 
 }  // namespace builtin
 }  // namespace ir

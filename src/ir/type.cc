@@ -98,7 +98,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<PrimType>("", [](PrimType ty, ObjectPath p, IRDocsifier d) -> Doc {
-      if (ty->dtype == DataType::Int(64) || ty->dtype == DataType::Float(64)) {
+      if (ty->dtype == DataType::Int(64) || ty->dtype == DataType::Bool() ||
+          ty->dtype == DataType::Float(64)) {
         return IdDoc(GetLiteralRepr(ty));
       }
       return Dialect(d, GetLiteralRepr(ty));
@@ -737,6 +738,8 @@ Type InferIteratorValueType(const Type& cons_ty) {
     return UnicodeType();
   } else if (auto* ptr = cons_ty.as<IteratorTypeNode>()) {
     return ptr->value_type;
+  } else if (auto* ptr = cons_ty.as<RangeTypeNode>()) {
+    return PrimType(runtime::DataType::Int(64));
   } else if (auto* ptr = cons_ty.as<TupleTypeNode>()) {
     Type item_type = ObjectType();
     if (!ptr->fields.empty()) {

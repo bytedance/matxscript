@@ -33,22 +33,24 @@ namespace builtin {
   MATXSCRIPT_IR_REGISTER_OP("ir." #OpName)
 
 /******************************************************************************
- * Explicit Container builtin functions
+ * Method
  *****************************************************************************/
 
-#define MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(OpName, KernelMethod)          \
-  MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC(OpName)                                       \
+#define MATXSCRIPT_IR_DEFINE_HLO_METHOD(T, OpName, KernelMethod)                      \
+  MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC(T##_##OpName)                                 \
       .set_attr<TCallEffectKind>("TCallEffectKind", Integer(CallEffectKind::kOpaque)) \
-      .set_attr<TGlobalIsExplicitContainerOp>("TGlobalIsExplicitContainerOp", true)   \
-      .set_attr<TKernelMethodName>("TKernelMethodName", #KernelMethod)
+      .set_attr<TMethodSymbol>("TMethodSymbol", #KernelMethod)                        \
+      .set_attr<TPrinterMethodSymbol>("TPrinterMethodSymbol", #OpName)
 
 /******************************************************************************
- * Generic Container builtin functions
+ * Global Function
  *****************************************************************************/
-#define MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(Prefix, OpName)                 \
-  MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC(Prefix##_##OpName)                            \
-      .set_attr<TCallEffectKind>("TCallEffectKind", Integer(CallEffectKind::kOpaque)) \
-      .set_attr<TGlobalIsGenericBuiltinOp>("TGlobalIsGenericBuiltinOp", true)
+
+#define MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(Prefix, OpName)                                   \
+  MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC(Prefix##_##OpName)                                     \
+      .set_attr<TCallEffectKind>("TCallEffectKind", Integer(CallEffectKind::kOpaque))          \
+      .set_attr<TGlobalSymbol>("TGlobalSymbol", MATXSCRIPT_AS_STR(kernel_##Prefix##_##OpName)) \
+      .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", #Prefix "." #OpName)
 
 }  // namespace builtin
 }  // namespace ir

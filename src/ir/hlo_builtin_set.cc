@@ -29,106 +29,106 @@ namespace builtin {
 /******************************************************************************
  * Set builtin methods
  *****************************************************************************/
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(set___len__, size)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(set, __len__, size)
     .set_num_inputs(1)
     .add_argument("self", "set", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_set___len__, size)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_set, __len__, size)
     .set_num_inputs(1)
     .add_argument("self", "FTSet", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(set___contains__, contains)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(set, __contains__, contains)
     .set_num_inputs(2)
     .add_argument("self", "set", "")
     .add_argument("key", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_set___contains__, contains)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_set, __contains__, contains)
     .set_num_inputs(2)
     .add_argument("self", "FTSet", "")
     .add_argument("key", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(set_add, add)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(set, add, add)
     .set_num_inputs(2)
     .add_argument("self", "set", "")
     .add_argument("item", "Any", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_set_add, add)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_set, add, add)
     .set_num_inputs(2)
     .add_argument("self", "FTSet", "")
     .add_argument("item", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(set_clear, clear)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(set, clear, clear)
     .set_num_inputs(1)
     .add_argument("self", "set", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_set_clear, clear)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_set, clear, clear)
     .set_num_inputs(1)
     .add_argument("self", "FTSet", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(set_reserve, reserve)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(set, reserve, reserve)
     .set_num_inputs(2)
     .add_argument("self", "set", "")
     .add_argument("new_size", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_set_reserve, reserve)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_set, reserve, reserve)
     .set_num_inputs(2)
     .add_argument("self", "FTSet", "")
     .add_argument("new_size", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(set_bucket_count, bucket_count)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(set, bucket_count, bucket_count)
     .set_num_inputs(1)
     .add_argument("self", "set", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_set_bucket_count, bucket_count)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_set, bucket_count, bucket_count)
     .set_num_inputs(1)
     .add_argument("self", "FTSet", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(set_difference, difference)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(set, difference, difference)
     .set_num_inputs(2)
     .add_argument("self", "set", "")
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_set_difference, difference)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_set, difference, difference)
     .set_num_inputs(2)
     .add_argument("self", "FTSet", "")
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(set_difference_update, difference_update)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(set, difference_update, difference_update)
     .set_num_inputs(2)
     .add_argument("self", "set", "")
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_set_difference_update, difference_update)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_set, difference_update, difference_update)
     .set_num_inputs(2)
     .add_argument("self", "FTSet", "")
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(set_update, update)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(set, update, update)
     .set_num_inputs(2)
     .add_argument("self", "set", "")
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_set_update, update)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_set, update, update)
     .set_num_inputs(2)
     .add_argument("self", "FTSet", "")
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(set_union, set_union)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(set, union, set_union)
     .set_num_inputs(2)
     .add_argument("self", "set", "")
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_set_union, set_union)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_set, union, set_union)
     .set_num_inputs(2)
     .add_argument("self", "FTSet", "")
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(set_discard, discard)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(set, discard, discard)
     .set_num_inputs(2)
     .add_argument("self", "set", "")
     .add_argument("rt_value", "Any|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_set_discard, discard)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_set, discard, discard)
     .set_num_inputs(2)
     .add_argument("self", "FTSet", "")
     .add_argument("rt_value", "<template>", "");

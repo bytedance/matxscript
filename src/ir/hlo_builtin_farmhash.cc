@@ -27,66 +27,66 @@ namespace ir {
 namespace builtin {
 
 // farmhash
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, hash32)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, hash32)
     .set_num_inputs(1)
     .add_argument("s", "bytes_view|unicode_view|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, hash64)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, hash64)
     .set_num_inputs(1)
     .add_argument("s", "bytes_view|unicode_view|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, hash128)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, hash128)
     .set_num_inputs(1)
     .add_argument("s", "bytes_view|unicode_view|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, hash32withseed)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, hash32withseed)
     .set_num_inputs(2)
     .add_argument("s", "bytes_view|unicode_view|any_view", "")
     .add_argument("seed", "uint32", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, hash64withseed)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, hash64withseed)
     .set_num_inputs(2)
     .add_argument("s", "bytes_view|unicode_view|any_view", "")
     .add_argument("seed", "uint64", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, hash128withseed)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, hash128withseed)
     .set_num_inputs(3)
     .add_argument("s", "bytes_view|unicode_view|any_view", "")
     .add_argument("seed", "uint64", "")
     .add_argument("seed", "uint64", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, fingerprint32)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, fingerprint32)
     .set_num_inputs(1)
     .add_argument("s", "bytes_view|unicode_view|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, fingerprint64)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, fingerprint64)
     .set_num_inputs(1)
     .add_argument("s", "bytes_view|unicode_view|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, fingerprint128)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, fingerprint128)
     .set_num_inputs(1)
     .add_argument("s", "bytes_view|unicode_view|any_view", "");
 
 /******************************************************************************
  * for fix overflow, some sugar
  *****************************************************************************/
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, hash64_mod)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, hash64_mod)
     .set_num_inputs(2)
     .add_argument("s", "bytes_view|unicode_view|any_view", "")
     .add_argument("y", "int64", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, hash64withseed_mod)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, hash64withseed_mod)
     .set_num_inputs(3)
     .add_argument("s", "bytes_view|unicode_view|any_view", "")
     .add_argument("seed", "uint64", "")
     .add_argument("y", "int64", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, fingerprint64_mod)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, fingerprint64_mod)
     .set_num_inputs(2)
     .add_argument("s", "bytes_view|unicode_view|any_view", "")
     .add_argument("y", "int64", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(farmhash, fingerprint128_mod)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(farmhash, fingerprint128_mod)
     .set_num_inputs(2)
     .add_argument("s", "bytes_view|unicode_view|any_view", "")
     .add_argument("y", "int64", "");
