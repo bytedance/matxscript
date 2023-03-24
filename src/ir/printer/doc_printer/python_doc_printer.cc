@@ -124,6 +124,7 @@ ExprPrecedence GetExprPrecedence(const ExprDoc& doc) {
       {TupleDocNode::RuntimeTypeIndex(), ExprPrecedence::kIdentity},
       {ListDocNode::RuntimeTypeIndex(), ExprPrecedence::kIdentity},
       {DictDocNode::RuntimeTypeIndex(), ExprPrecedence::kIdentity},
+      {SetDocNode::RuntimeTypeIndex(), ExprPrecedence::kIdentity},
   };
 
   if (const auto* op_doc = doc.as<OperationDocNode>()) {
@@ -159,7 +160,12 @@ class PythonDocPrinter : public DocPrinter {
   void PrintTypedDoc(const LambdaDoc& doc) final;
   void PrintTypedDoc(const ListDoc& doc) final;
   void PrintTypedDoc(const DictDoc& doc) final;
+  void PrintTypedDoc(const SetDoc& doc) final;
   void PrintTypedDoc(const TupleDoc& doc) final;
+  void PrintTypedDoc(const ComprehensionDoc& doc) final;
+  void PrintTypedDoc(const ListCompDoc& doc) final;
+  void PrintTypedDoc(const SetCompDoc& doc) final;
+  void PrintTypedDoc(const DictCompDoc& doc) final;
   void PrintTypedDoc(const SliceDoc& doc) final;
   void PrintTypedDoc(const StmtBlockDoc& doc) final;
   void PrintTypedDoc(const AssignDoc& doc) final;
@@ -498,6 +504,12 @@ void PythonDocPrinter::PrintTypedDoc(const ListDoc& doc) {
   output_ << "]";
 }
 
+void PythonDocPrinter::PrintTypedDoc(const SetDoc& doc) {
+  output_ << "{";
+  PrintJoinedDocs(doc->elements, ", ");
+  output_ << "}";
+}
+
 void PythonDocPrinter::PrintTypedDoc(const TupleDoc& doc) {
   output_ << "(";
   if (doc->elements.size() == 1) {
@@ -523,6 +535,46 @@ void PythonDocPrinter::PrintTypedDoc(const DictDoc& doc) {
     PrintDoc(doc->values[idx]);
     idx++;
   }
+  output_ << "}";
+}
+
+void PythonDocPrinter::PrintTypedDoc(const ComprehensionDoc& doc) {
+  output_ << "for ";
+  PrintDoc(doc->target);
+  output_ << " in ";
+  PrintDoc(doc->iter);
+  if (doc->ifs.defined()) {
+    auto ifs = doc->ifs.value();
+    if (ifs.size()) {
+      output_ << " ";
+      PrintJoinedDocs(doc->ifs.value(), " ");
+    }
+  }
+}
+
+void PythonDocPrinter::PrintTypedDoc(const ListCompDoc& doc) {
+  output_ << "[";
+  PrintDoc(doc->elt);
+  output_ << " ";
+  PrintJoinedDocs(doc->generators, " ");
+  output_ << "]";
+}
+
+void PythonDocPrinter::PrintTypedDoc(const SetCompDoc& doc) {
+  output_ << "{";
+  PrintDoc(doc->elt);
+  output_ << " ";
+  PrintJoinedDocs(doc->generators, " ");
+  output_ << "}";
+}
+
+void PythonDocPrinter::PrintTypedDoc(const DictCompDoc& doc) {
+  output_ << "{";
+  PrintDoc(doc->key);
+  output_ << ": ";
+  PrintDoc(doc->value);
+  output_ << " ";
+  PrintJoinedDocs(doc->generators, " ");
   output_ << "}";
 }
 

@@ -345,6 +345,16 @@ void DocPrinter::PrintDoc(const Doc& doc) {
     PrintTypedDoc(GetRef<TupleDoc>(doc_node));
   } else if (const auto* doc_node = doc.as<DictDocNode>()) {
     PrintTypedDoc(GetRef<DictDoc>(doc_node));
+  } else if (const auto* doc_node = doc.as<SetDocNode>()) {
+    PrintTypedDoc(GetRef<SetDoc>(doc_node));
+  } else if (const auto* doc_node = doc.as<ComprehensionDocNode>()) {
+    PrintTypedDoc(GetRef<ComprehensionDoc>(doc_node));
+  } else if (const auto* doc_node = doc.as<ListCompDocNode>()) {
+    PrintTypedDoc(GetRef<ListCompDoc>(doc_node));
+  } else if (const auto* doc_node = doc.as<SetCompDocNode>()) {
+    PrintTypedDoc(GetRef<SetCompDoc>(doc_node));
+  } else if (const auto* doc_node = doc.as<DictCompDocNode>()) {
+    PrintTypedDoc(GetRef<DictCompDoc>(doc_node));
   } else if (const auto* doc_node = doc.as<SliceDocNode>()) {
     PrintTypedDoc(GetRef<SliceDoc>(doc_node));
   } else if (const auto* doc_node = doc.as<StmtBlockDocNode>()) {

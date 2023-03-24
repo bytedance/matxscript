@@ -745,6 +745,161 @@ class DictDoc : public ExprDoc {
 };
 
 /*!
+ * \brief Doc that represents set literal.
+ *
+ * \sa SetDoc
+ */
+class SetDocNode : public ExprDocNode {
+ public:
+  /*! \brief Elements of list */
+  Array<ExprDoc> elements;
+
+  void VisitAttrs(AttrVisitor* v) {
+    ExprDocNode::VisitAttrs(v);
+    v->Visit("elements", &elements);
+  }
+
+  static constexpr const char* _type_key = "ir.printer.SetDoc";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(SetDocNode, ExprDocNode);
+};
+
+/*!
+ * \brief Reference type of SetDocNode.
+ *
+ * \sa SetDocNode
+ */
+class SetDoc : public ExprDoc {
+ public:
+  /*!
+   * \brief Create an empty SetDoc
+   */
+  SetDoc() : SetDoc(runtime::make_object<SetDocNode>()) {
+  }
+  /*!
+   * \brief Constructor of SetDoc
+   * \param elements Elements of list.
+   */
+  explicit SetDoc(Array<ExprDoc> elements);
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(SetDoc, ExprDoc, SetDocNode);
+};
+
+/*!
+ * \brief Representing the comprehension.
+ */
+class ComprehensionDocNode : public ExprDocNode {
+ public:
+  ExprDoc target{nullptr};
+  ExprDoc iter{nullptr};
+  Optional<Array<ExprDoc>> ifs{nullptr};
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("target", &target);
+    v->Visit("iter", &iter);
+    v->Visit("ifs", &ifs);
+  }
+
+  static constexpr const char* _type_key = "ir.printer.ComprehensionDoc";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(ComprehensionDocNode, ExprDocNode);
+};
+
+/*!
+ * \brief Managed reference to ComprehensionNode.
+ * \sa ComprehensionNode
+ */
+class ComprehensionDoc : public ExprDoc {
+ public:
+  MATX_DLL ComprehensionDoc(ExprDoc target, ExprDoc iter, Optional<Array<ExprDoc>> ifs);
+
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(ComprehensionDoc, ExprDoc, ComprehensionDocNode);
+};
+
+/*!
+ * \brief Representing the ListComp.
+ */
+class ListCompDocNode : public Object {
+ public:
+  ExprDoc elt{nullptr};
+  Array<ComprehensionDoc> generators;
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("elt", &elt);
+    v->Visit("generators", &generators);
+  }
+
+  static constexpr const char* _type_key = "ir.printer.ListCompDoc";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(ListCompDocNode, ExprDocNode);
+};
+
+/*!
+ * \brief Managed reference to ListCompDocNode.
+ * \sa ListCompDocNode
+ */
+class ListCompDoc : public ExprDoc {
+ public:
+  MATX_DLL ListCompDoc(ExprDoc elt, Array<ComprehensionDoc> generators);
+
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(ListCompDoc, ExprDoc, ListCompDocNode);
+};
+
+/*!
+ * \brief Representing the SetComp.
+ */
+class SetCompDocNode : public Object {
+ public:
+  ExprDoc elt{nullptr};
+  Array<ComprehensionDoc> generators;
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("elt", &elt);
+    v->Visit("generators", &generators);
+  }
+
+  static constexpr const char* _type_key = "ir.printer.SetCompDoc";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(SetCompDocNode, ExprDocNode);
+};
+
+/*!
+ * \brief Managed reference to SetCompDocNode.
+ * \sa SetCompDocNode
+ */
+class SetCompDoc : public ExprDoc {
+ public:
+  MATX_DLL SetCompDoc(ExprDoc elt, Array<ComprehensionDoc> generators);
+
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(SetCompDoc, ExprDoc, SetCompDocNode);
+};
+
+/*!
+ * \brief Representing the DictComp.
+ */
+class DictCompDocNode : public Object {
+ public:
+  ExprDoc key{nullptr};
+  ExprDoc value{nullptr};
+  Array<ComprehensionDoc> generators;
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("key", &key);
+    v->Visit("value", &value);
+    v->Visit("generators", &generators);
+  }
+
+  static constexpr const char* _type_key = "ir.printer.DictCompDoc";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(DictCompDocNode, ExprDocNode);
+};
+
+/*!
+ * \brief Managed reference to DictCompDocNode.
+ * \sa DictCompDocNode
+ */
+class DictCompDoc : public ExprDoc {
+ public:
+  MATX_DLL DictCompDoc(ExprDoc key, ExprDoc value, Array<ComprehensionDoc> generators);
+
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(DictCompDoc, ExprDoc, DictCompDocNode);
+};
+
+/*!
  * \brief Doc that represents slice in Index expression.
  *
  * This doc can only appear in IndexDoc::indices.
