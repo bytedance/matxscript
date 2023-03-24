@@ -134,6 +134,42 @@ DictDoc::DictDoc(Array<ExprDoc> keys, Array<ExprDoc> values) {
   this->data_ = std::move(n);
 }
 
+SetDoc::SetDoc(Array<ExprDoc> elements) {
+  ObjectPtr<SetDocNode> n = make_object<SetDocNode>();
+  n->elements = std::move(elements);
+  this->data_ = std::move(n);
+}
+
+ComprehensionDoc::ComprehensionDoc(ExprDoc target, ExprDoc iter, Optional<Array<ExprDoc>> ifs) {
+  ObjectPtr<ComprehensionDocNode> n = make_object<ComprehensionDocNode>();
+  n->target = std::move(target);
+  n->iter = std::move(iter);
+  n->ifs = std::move(ifs);
+  this->data_ = std::move(n);
+}
+
+ListCompDoc::ListCompDoc(ExprDoc elt, Array<ComprehensionDoc> generators) {
+  ObjectPtr<ListCompDocNode> n = make_object<ListCompDocNode>();
+  n->elt = std::move(elt);
+  n->generators = std::move(generators);
+  this->data_ = std::move(n);
+}
+
+SetCompDoc::SetCompDoc(ExprDoc elt, Array<ComprehensionDoc> generators) {
+  ObjectPtr<SetCompDocNode> n = make_object<SetCompDocNode>();
+  n->elt = std::move(elt);
+  n->generators = std::move(generators);
+  this->data_ = std::move(n);
+}
+
+DictCompDoc::DictCompDoc(ExprDoc key, ExprDoc value, Array<ComprehensionDoc> generators) {
+  ObjectPtr<DictCompDocNode> n = make_object<DictCompDocNode>();
+  n->key = std::move(key);
+  n->value = std::move(value);
+  n->generators = std::move(generators);
+  this->data_ = std::move(n);
+}
+
 SliceDoc::SliceDoc(Optional<ExprDoc> start, Optional<ExprDoc> stop, Optional<ExprDoc> step) {
   ObjectPtr<SliceDocNode> n = make_object<SliceDocNode>();
   n->start = std::move(start);
@@ -389,6 +425,35 @@ MATXSCRIPT_REGISTER_NODE_TYPE(DictDocNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.printer.DictDoc")
     .set_body_typed([](Array<ExprDoc> keys, Array<ExprDoc> values) {
       return DictDoc(std::move(keys), std::move(values));
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(SetDocNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.printer.SetDoc").set_body_typed([](Array<ExprDoc> elements) {
+  return SetDoc(std::move(elements));
+});
+
+MATXSCRIPT_REGISTER_NODE_TYPE(ComprehensionDocNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.printer.ComprehensionDoc")
+    .set_body_typed([](ExprDoc target, ExprDoc iter, Optional<Array<ExprDoc>> ifs) {
+      return ComprehensionDoc(std::move(target), std::move(iter), std::move(ifs));
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(ListCompDocNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.printer.ListCompDoc")
+    .set_body_typed([](ExprDoc elt, Array<ComprehensionDoc> generators) {
+      return ListCompDoc(std::move(elt), std::move(generators));
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(SetCompDocNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.printer.SetCompDoc")
+    .set_body_typed([](ExprDoc elt, Array<ComprehensionDoc> generators) {
+      return SetCompDoc(std::move(elt), std::move(generators));
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(DictCompDocNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.printer.DictCompDoc")
+    .set_body_typed([](ExprDoc key, ExprDoc value, Array<ComprehensionDoc> generators) {
+      return DictCompDoc(std::move(key), std::move(value), std::move(generators));
     });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(SliceDocNode);

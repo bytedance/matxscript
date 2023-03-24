@@ -148,6 +148,31 @@ class DocPrinter {
   virtual void PrintTypedDoc(const DictDoc& doc) = 0;
 
   /*!
+   * \brief Virtual method to print a SetDoc
+   */
+  virtual void PrintTypedDoc(const SetDoc& doc) = 0;
+
+  /*!
+   * \brief Virtual method to print a ComprehensionDoc
+   */
+  virtual void PrintTypedDoc(const ComprehensionDoc& doc) = 0;
+
+  /*!
+   * \brief Virtual method to print a ListCompDoc
+   */
+  virtual void PrintTypedDoc(const ListCompDoc& doc) = 0;
+
+  /*!
+   * \brief Virtual method to print a SetCompDoc
+   */
+  virtual void PrintTypedDoc(const SetCompDoc& doc) = 0;
+
+  /*!
+   * \brief Virtual method to print a DictCompDoc
+   */
+  virtual void PrintTypedDoc(const DictCompDoc& doc) = 0;
+
+  /*!
    * \brief Virtual method to print a SliceDoc
    */
   virtual void PrintTypedDoc(const SliceDoc& doc) = 0;
