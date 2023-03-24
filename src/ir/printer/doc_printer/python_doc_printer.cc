@@ -53,26 +53,28 @@ enum class ExprPrecedence : int32_t {
   kBooleanAnd = 4,
   /*! \brief Boolean NOT */
   kBooleanNot = 5,
+  /*! \brief in and not in */
+  kIn = 6,
   /*! \brief Comparisons */
-  kComparison = 6,
+  kComparison = 7,
   /*! \brief Bitwise OR */
-  kBitwiseOr = 7,
+  kBitwiseOr = 8,
   /*! \brief Bitwise XOR */
-  kBitwiseXor = 8,
+  kBitwiseXor = 9,
   /*! \brief Bitwise AND */
-  kBitwiseAnd = 9,
+  kBitwiseAnd = 10,
   /*! \brief Shift Operators */
-  kShift = 10,
+  kShift = 11,
   /*! \brief Addition and subtraction */
-  kAdd = 11,
+  kAdd = 12,
   /*! \brief Multiplication, division, floor division, remainder */
-  kMult = 12,
+  kMult = 13,
   /*! \brief Positive negative and bitwise NOT */
-  kUnary = 13,
+  kUnary = 14,
   /*! \brief Exponentiation */
-  kExp = 14,
+  kExp = 15,
   /*! \brief Index access, attribute access, call and atom expression */
-  kIdentity = 15,
+  kIdentity = 16,
 };
 
 ExprPrecedence GetExprPrecedence(const ExprDoc& doc) {
@@ -83,6 +85,8 @@ ExprPrecedence GetExprPrecedence(const ExprDoc& doc) {
         {OpKind::kUSub, ExprPrecedence::kUnary},
         {OpKind::kInvert, ExprPrecedence::kUnary},
         {OpKind::kNot, ExprPrecedence::kBooleanNot},
+        {OpKind::kIn, ExprPrecedence::kIn},
+        {OpKind::kNotIn, ExprPrecedence::kIn},
         {OpKind::kAdd, ExprPrecedence::kAdd},
         {OpKind::kSub, ExprPrecedence::kAdd},
         {OpKind::kMult, ExprPrecedence::kMult},
@@ -378,29 +382,31 @@ const std::string OperatorToString(OperationDocNode::Kind operation_kind) {
   static const std::vector<std::string> op_kind2str = []() {
     using OpKind = OperationDocNode::Kind;
     std::map<OpKind, std::string> raw_table = {
-        {OpKind::kUSub, "-"},       //
-        {OpKind::kInvert, "~"},     //
-        {OpKind::kNot, "not "},     //
-        {OpKind::kAdd, "+"},        //
-        {OpKind::kSub, "-"},        //
-        {OpKind::kMult, "*"},       //
-        {OpKind::kDiv, "/"},        //
-        {OpKind::kFloorDiv, "//"},  //
-        {OpKind::kMod, "%"},        //
-        {OpKind::kPow, "**"},       //
-        {OpKind::kLShift, "<<"},    //
-        {OpKind::kRShift, ">>"},    //
-        {OpKind::kBitAnd, "&"},     //
-        {OpKind::kBitOr, "|"},      //
-        {OpKind::kBitXor, "^"},     //
-        {OpKind::kLt, "<"},         //
-        {OpKind::kLtE, "<="},       //
-        {OpKind::kEq, "=="},        //
-        {OpKind::kNotEq, "!="},     //
-        {OpKind::kGt, ">"},         //
-        {OpKind::kGtE, ">="},       //
-        {OpKind::kAnd, "and"},      //
-        {OpKind::kOr, "or"},        //
+        {OpKind::kUSub, "-"},        //
+        {OpKind::kInvert, "~"},      //
+        {OpKind::kNot, "not "},      //
+        {OpKind::kAdd, "+"},         //
+        {OpKind::kSub, "-"},         //
+        {OpKind::kMult, "*"},        //
+        {OpKind::kDiv, "/"},         //
+        {OpKind::kFloorDiv, "//"},   //
+        {OpKind::kMod, "%"},         //
+        {OpKind::kPow, "**"},        //
+        {OpKind::kLShift, "<<"},     //
+        {OpKind::kRShift, ">>"},     //
+        {OpKind::kBitAnd, "&"},      //
+        {OpKind::kBitOr, "|"},       //
+        {OpKind::kBitXor, "^"},      //
+        {OpKind::kLt, "<"},          //
+        {OpKind::kLtE, "<="},        //
+        {OpKind::kEq, "=="},         //
+        {OpKind::kNotEq, "!="},      //
+        {OpKind::kGt, ">"},          //
+        {OpKind::kGtE, ">="},        //
+        {OpKind::kAnd, "and"},       //
+        {OpKind::kOr, "or"},         //
+        {OpKind::kIn, "in"},         //
+        {OpKind::kNotIn, "not in"},  //
     };
 
     std::vector<std::string> table;

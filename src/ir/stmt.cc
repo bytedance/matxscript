@@ -83,8 +83,12 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ExprStmt>("", [](ExprStmt stmt, ObjectPath p, IRDocsifier d) -> Doc {
-      auto expr = d->AsDoc<ExprDoc>(stmt->expr, p->Attr("expr"));
-      return ExprStmtDoc(expr);
+      auto expr = d->AsDoc<Doc>(stmt->expr, p->Attr("expr"));
+      if (expr->IsInstance<StmtDocNode>()) {
+        // a[x] = kk
+        return expr;
+      }
+      return ExprStmtDoc(Downcast<ExprDoc>(expr));
     });
 
 // AllocaVarStmt

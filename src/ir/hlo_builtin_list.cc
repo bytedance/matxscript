@@ -30,47 +30,47 @@ namespace builtin {
  * List builtin methods
  *****************************************************************************/
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list___len__, size)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, __len__, size)
     .set_num_inputs(1)
     .add_argument("self", "List", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list___len__, size)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, __len__, size)
     .set_num_inputs(1)
     .add_argument("self", "FTList", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list___contains__, contains)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, __contains__, contains)
     .set_num_inputs(2)
     .add_argument("self", "List", "")
     .add_argument("item", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list___contains__, contains)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, __contains__, contains)
     .set_num_inputs(2)
     .add_argument("self", "FTList", "")
     .add_argument("item", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list___getitem__, get_item)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, __getitem__, get_item)
     .set_num_inputs(2)
     .add_argument("self", "List", "")
     .add_argument("i", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list___getitem__, get_item)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, __getitem__, get_item)
     .set_num_inputs(2)
     .add_argument("self", "FTList", "")
     .add_argument("i", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list___setitem__, set_item)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, __setitem__, set_item)
     .set_num_inputs(3)
     .add_argument("self", "List", "")
     .add_argument("i", "int", "")
     .add_argument("item", "Any", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list___setitem__, set_item)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, __setitem__, set_item)
     .set_num_inputs(3)
     .add_argument("self", "FTList", "")
     .add_argument("i", "int", "")
     .add_argument("item", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list___getslice__, get_slice)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, __getslice__, get_slice)
     .set_num_inputs(3)
     .set_num_inputs_max(4)
     .add_argument("self", "List", "")
@@ -78,7 +78,7 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list___getslice__, get_slice)
     .add_argument("e", "int", "")
     .add_argument("step", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list___getslice__, get_slice)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, __getslice__, get_slice)
     .set_num_inputs(3)
     .set_num_inputs_max(4)
     .add_argument("self", "FTList", "")
@@ -86,67 +86,67 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list___getslice__, get_slice)
     .add_argument("e", "int", "")
     .add_argument("step", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_append, append)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, append, append)
     .set_num_inputs(2)
     .add_argument("self", "List", "")
     .add_argument("item", "Any", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_append, append)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, append, append)
     .set_num_inputs(2)
     .add_argument("self", "FTList", "")
     .add_argument("item", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_extend, extend)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, extend, extend)
     .set_num_inputs(2)
     .add_argument("self", "List", "")
     .add_argument("items", "list|iter|Any|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_extend, extend)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, extend, extend)
     .set_num_inputs(2)
     .add_argument("self", "FTList", "")
     .add_argument("items", "FTList|Any|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_repeat, repeat)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, repeat, repeat)
     .set_num_inputs(2)
     .add_argument("self", "List", "")
     .add_argument("times", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_repeat, repeat)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, repeat, repeat)
     .set_num_inputs(2)
     .add_argument("self", "FTList", "")
     .add_argument("times", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(list, fused_repeat_one)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(list, fused_repeat_one)
     .set_num_inputs(2)
     .add_argument("value", "any_view|Any", "")
     .add_argument("times", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(ft_list, fused_repeat_one)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(ft_list, fused_repeat_one)
     .set_num_inputs(2)
     .add_argument("value", "<template>", "")
     .add_argument("times", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(list, fused_repeat_many)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(list, fused_repeat_many)
     .set_num_inputs(2)
     .add_argument("value", "List", "")
     .add_argument("times", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(ft_list, fused_repeat_many)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(ft_list, fused_repeat_many)
     .set_num_inputs(2)
     .add_argument("value", "<template>", "")
     .add_argument("times", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_reserve, reserve)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, reserve, reserve)
     .set_num_inputs(2)
     .add_argument("self", "List", "")
     .add_argument("new_size", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_reserve, reserve)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, reserve, reserve)
     .set_num_inputs(2)
     .add_argument("self", "FTList", "")
     .add_argument("new_size", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_index, index)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, index, index)
     .set_num_inputs(2)
     .set_num_inputs_max(4)
     .add_argument("self", "List", "")
@@ -154,7 +154,7 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_index, index)
     .add_argument("start", "int", "")
     .add_argument("end", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_index, index)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, index, index)
     .set_num_inputs(2)
     .set_num_inputs_max(4)
     .add_argument("self", "FTList", "")
@@ -162,96 +162,96 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_index, index)
     .add_argument("start", "int", "")
     .add_argument("end", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_capacity, capacity)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, capacity, capacity)
     .set_num_inputs(1)
     .add_argument("self", "List", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_capacity, capacity)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, capacity, capacity)
     .set_num_inputs(1)
     .add_argument("self", "FTList", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_pop, pop)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, pop, pop)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "List", "")
     .add_argument("index", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_pop, pop)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, pop, pop)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "FTList", "")
     .add_argument("index", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_insert, insert)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, insert, insert)
     .set_num_inputs(3)
     .set_num_inputs_max(3)
     .add_argument("self", "List", "")
     .add_argument("index", "int", "")
     .add_argument("item", "Any|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_insert, insert)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, insert, insert)
     .set_num_inputs(3)
     .set_num_inputs_max(3)
     .add_argument("self", "List|FTList", "")
     .add_argument("index", "int", "")
     .add_argument("item", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_remove, remove)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, remove, remove)
     .set_num_inputs(2)
     .add_argument("self", "List", "")
     .add_argument("item", "Any|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_remove, remove)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, remove, remove)
     .set_num_inputs(2)
     .add_argument("self", "List|FTList", "")
     .add_argument("item", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_clear, clear)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, clear, clear)
     .set_num_inputs(1)
     .add_argument("self", "List", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_clear, clear)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, clear, clear)
     .set_num_inputs(1)
     .add_argument("self", "FTList", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_reverse, reverse)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, reverse, reverse)
     .set_num_inputs(1)
     .add_argument("self", "List", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_reverse, reverse)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, reverse, reverse)
     .set_num_inputs(1)
     .add_argument("self", "FTList", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_count, count)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, count, count)
     .set_num_inputs(2)
     .add_argument("self", "List", "")
     .add_argument("item", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_count, count)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, count, count)
     .set_num_inputs(2)
     .add_argument("self", "FTList", "")
     .add_argument("item", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_sort_no_key, sort)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, sort_no_key, sort)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "List", "")
     .add_argument("reverse", "bool", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(list_sort, sort)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(list, sort, sort)
     .set_num_inputs(1)
     .set_num_inputs_max(3)
     .add_argument("self", "List", "")
     .add_argument("key", "any_view|Any", "")
     .add_argument("reverse", "bool", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_sort_no_key, sort)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, sort_no_key, sort)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "FTList", "")
     .add_argument("reverse", "bool", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_sort, sort)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_list, sort, sort)
     .set_num_inputs(1)
     .set_num_inputs_max(3)
     .add_argument("self", "FTList", "")
@@ -262,23 +262,23 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_list_sort, sort)
  * List custom functions
  *****************************************************************************/
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(list, module_sort)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(list, module_sort)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(list, module_nth_element)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(list, module_nth_element)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(list, module_heapify)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(list, module_heapify)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(list, module_heap_replace)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(list, module_heap_replace)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(list, module_heap_pushpop)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(list, module_heap_pushpop)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 

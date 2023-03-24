@@ -30,32 +30,32 @@ namespace builtin {
  * Trie builtin methods
  *****************************************************************************/
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(trie_update, update)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(trie, update, update)
     .set_num_inputs(2)
     .set_num_inputs_max(3)
     .add_argument("self", "matx.Trie", "")
     .add_argument("w", "bytes_view|unicode_view|any_view", "")
     .add_argument("val", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(trie_prefix_search, prefix_search)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(trie, prefix_search, prefix_search)
     .set_num_inputs(2)
     .set_num_inputs_max(3)
     .add_argument("self", "matx.Trie", "")
     .add_argument("w", "bytes_view|unicode_view|any_view", "")
     .add_argument("pos", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(trie_prefix_search_all, prefix_search_all)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(trie, prefix_search_all, prefix_search_all)
     .set_num_inputs(2)
     .add_argument("self", "matx.Trie", "")
     .add_argument("w", "bytes_view|unicode_view|any_view", "")
     .add_argument("pos", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(trie_save, save)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(trie, save, save)
     .set_num_inputs(2)
     .add_argument("self", "matx.Trie", "")
     .add_argument("file_path", "unicode_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(trie_load, load)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(trie, load, load)
     .set_num_inputs(2)
     .add_argument("self", "matx.Trie", "")
     .add_argument("file_path", "unicode_view", "");

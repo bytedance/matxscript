@@ -26,15 +26,15 @@ namespace matxscript {
 namespace ir {
 namespace builtin {
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(cuda, module_default_stream)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(cuda, module_default_stream)
     .set_num_inputs(1)
     .add_argument("device_id", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(cuda, module_create_stream)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(cuda, module_create_stream)
     .set_num_inputs(1)
     .add_argument("device_id", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(cuda, module_stream_sync)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(cuda, module_stream_sync)
     .set_num_inputs(2)
     .add_argument("stream", "matx.OpaqueObject|any_view", "")
     .add_argument("device_id", "int", "");

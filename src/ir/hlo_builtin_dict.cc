@@ -29,117 +29,117 @@ namespace builtin {
 /******************************************************************************
  * Dict builtin methods
  *****************************************************************************/
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(dict___len__, size)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(dict, __len__, size)
     .set_num_inputs(1)
     .add_argument("self", "dict", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_dict___len__, size)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_dict, __len__, size)
     .set_num_inputs(1)
     .add_argument("self", "FTDict", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(dict___contains__, contains)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(dict, __contains__, contains)
     .set_num_inputs(2)
     .add_argument("self", "dict", "")
     .add_argument("key", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_dict___contains__, contains)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_dict, __contains__, contains)
     .set_num_inputs(2)
     .add_argument("self", "FTDict", "")
     .add_argument("key", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(dict___getitem__, get_item)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(dict, __getitem__, get_item)
     .set_num_inputs(2)
     .add_argument("self", "dict", "")
     .add_argument("key", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_dict___getitem__, get_item)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_dict, __getitem__, get_item)
     .set_num_inputs(2)
     .add_argument("self", "FTDict", "")
     .add_argument("key", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(dict___setitem__, set_item)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(dict, __setitem__, set_item)
     .set_num_inputs(3)
     .add_argument("self", "dict", "")
     .add_argument("key", "Any", "")
     .add_argument("item", "Any", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_dict___setitem__, set_item)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_dict, __setitem__, set_item)
     .set_num_inputs(3)
     .add_argument("self", "FTDict", "")
     .add_argument("key", "<template>", "")
     .add_argument("item", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(dict_clear, clear)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(dict, clear, clear)
     .set_num_inputs(1)
     .add_argument("self", "dict", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_dict_clear, clear)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_dict, clear, clear)
     .set_num_inputs(1)
     .add_argument("self", "FTDict", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(dict_reserve, reserve)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(dict, reserve, reserve)
     .set_num_inputs(2)
     .add_argument("self", "dict", "")
     .add_argument("new_size", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_dict_reserve, reserve)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_dict, reserve, reserve)
     .set_num_inputs(2)
     .add_argument("self", "FTDict", "")
     .add_argument("new_size", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(dict_bucket_count, bucket_count)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(dict, bucket_count, bucket_count)
     .set_num_inputs(1)
     .add_argument("self", "dict", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_dict_bucket_count, bucket_count)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_dict, bucket_count, bucket_count)
     .set_num_inputs(1)
     .add_argument("self", "FTDict", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(dict_keys, key_iter)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(dict, keys, key_iter)
     .set_num_inputs(1)
     .add_argument("self", "dict", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_dict_keys, key_iter)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_dict, keys, key_iter)
     .set_num_inputs(1)
     .add_argument("self", "FTDict", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(dict_values, value_iter)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(dict, values, value_iter)
     .set_num_inputs(1)
     .add_argument("self", "dict", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_dict_values, value_iter)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_dict, values, value_iter)
     .set_num_inputs(1)
     .add_argument("self", "FTDict", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(dict_items, item_iter)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(dict, items, item_iter)
     .set_num_inputs(1)
     .add_argument("self", "dict", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_dict_items, item_iter)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_dict, items, item_iter)
     .set_num_inputs(1)
     .add_argument("self", "FTDict", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(dict_get, get_default)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(dict, get, get_default)
     .set_num_inputs(2)
     .set_num_inputs_max(3)
     .add_argument("self", "dict", "")
     .add_argument("key", "<template>", "")
     .add_argument("default_val", "Any", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_dict_get, get_default)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_dict, get, get_default)
     .set_num_inputs(2)
     .set_num_inputs_max(3)
     .add_argument("self", "FTDict", "")
     .add_argument("key", "<template>", "")
     .add_argument("default_val", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(dict_pop, pop)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(dict, pop, pop)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "dict", "")
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ft_dict_pop, pop)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ft_dict, pop, pop)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "FTDict", "")

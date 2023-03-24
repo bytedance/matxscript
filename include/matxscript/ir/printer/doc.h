@@ -538,7 +538,9 @@ class OperationDocNode : public ExprDocNode {
     kGtE = 23,       // >=
     kAnd = 24,       // and
     kOr = 25,        // or
-    kBinaryEnd = 26,
+    kIn = 26,        // in
+    kNotIn = 27,     // not in
+    kBinaryEnd = 28,
 
     // Special
     kSpecialStart = 27,

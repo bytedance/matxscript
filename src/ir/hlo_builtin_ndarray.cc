@@ -31,123 +31,121 @@ namespace builtin {
 /******************************************************************************
  * NDArray builtin methods
  *****************************************************************************/
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_to_list, ToList)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, to_list, ToList)
     .set_num_inputs(1)
     .add_argument("self", "matx.NDArray", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_tolist, ToList)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, tolist, ToList)
     .set_num_inputs(1)
     .add_argument("self", "matx.NDArray", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_is_contiguous, IsContiguous)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, is_contiguous, IsContiguous)
     .set_num_inputs(1)
     .add_argument("self", "matx.NDArray", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_contiguous, Contiguous)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, contiguous, Contiguous)
     .set_num_inputs(1)
     .add_argument("self", "matx.NDArray", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_reshape, Reshape)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, reshape, Reshape)
     .set_num_inputs(2)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("shape", "List|Tuple|Any|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_squeeze, Squeeze)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, squeeze, Squeeze)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("axis", "Tuple|Any|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_unsqueeze, Unsqueeze)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, unsqueeze, Unsqueeze)
     .set_num_inputs(2)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("dim", "int|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_shape, ShapeList)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, shape, ShapeList)
     .set_num_inputs(1)
     .add_argument("self", "matx.NDArray", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_dtype, DTypeUnicode)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, dtype, DTypeUnicode)
     .set_num_inputs(1)
     .add_argument("self", "matx.NDArray", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_dim, GetDim)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, dim, GetDim)
     .set_num_inputs(1)
     .add_argument("self", "matx.NDArray", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_device, Device)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, device, Device)
     .set_num_inputs(1)
     .add_argument("self", "matx.NDArray", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray___getitem__, get_item)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, __getitem__, get_item)
     .set_num_inputs(2)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("index", "int|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_getitem_as_double, get_item_as_double)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, getitem_as_double, get_item_as_double)
     .set_num_inputs(2)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("index", "int|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_getitem_as_int64, get_item_as_int64)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, getitem_as_int64, get_item_as_int64)
     .set_num_inputs(2)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("index", "int|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_fused_getitem, fused_get_item)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, fused_getitem, fused_get_item)
     .set_num_inputs(2)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("index", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_fused_getitem_as_double,
-                                               fused_get_item_as_double)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, fused_getitem_as_double, fused_get_item_as_double)
     .set_num_inputs(2)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("index", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_fused_getitem_as_int64,
-                                               fused_get_item_as_int64)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, fused_getitem_as_int64, fused_get_item_as_int64)
     .set_num_inputs(2)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("index", "<template>", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray___setitem__, set_item)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, __setitem__, set_item)
     .set_num_inputs(3)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("index", "int|any_view", "")
     .add_argument("item", "int|float|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_fused_setitem, fused_set_item)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, fused_setitem, fused_set_item)
     .set_num_inputs(3)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("index", "<template>", "")
     .add_argument("item", "int|float|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray___getslice__, get_slice)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, __getslice__, get_slice)
     .set_num_inputs(4)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("begin", "int", "")
     .add_argument("end", "int", "")
     .add_argument("step", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray___setslice__, set_slice)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, __setslice__, set_slice)
     .set_num_inputs(4)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("begin", "int", "")
     .add_argument("end", "int", "")
     .add_argument("item", "any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray___len__, size)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, __len__, size)
     .set_num_inputs(1)
     .add_argument("self", "matx.NDArray", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_transpose, transpose)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, transpose, transpose)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("axes", "any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_as_type, as_type)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(ndarray, as_type, as_type)
     .set_num_inputs(2)
     .add_argument("self", "matx.NDArray", "")
     .add_argument("dtype_str", "unicode_view", "");
@@ -156,36 +154,36 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(ndarray_as_type, as_type)
  * NDArray global functions
  *****************************************************************************/
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(nd, module_add)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(nd, module_add)
     .set_num_inputs(2)
     .add_argument("lhs", "any_view", "")
     .add_argument("rhs", "any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(nd, module_sub)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(nd, module_sub)
     .set_num_inputs(2)
     .add_argument("lhs", "any_view", "")
     .add_argument("rhs", "any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(nd, module_div)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(nd, module_div)
     .set_num_inputs(2)
     .add_argument("lhs", "any_view", "")
     .add_argument("rhs", "any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(nd, module_mul)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(nd, module_mul)
     .set_num_inputs(2)
     .add_argument("lhs", "any_view", "")
     .add_argument("rhs", "any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(nd, module_rand)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(nd, module_rand)
     .set_num_inputs(1)
     .add_argument("lhs", "any_view", "")
     .add_argument("rhs", "any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(nd, module_concatenate)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(nd, module_concatenate)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(nd, module_stack)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(nd, module_stack)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 

@@ -324,6 +324,8 @@
 /*! \brief helper macro to generate string concat */
 #define MATXSCRIPT_STR_CONCAT_(__x, __y) __x##__y
 #define MATXSCRIPT_STR_CONCAT(__x, __y) MATXSCRIPT_STR_CONCAT_(__x, __y)
+#define MATXSCRIPT_AS_STR_(x) #x
+#define MATXSCRIPT_AS_STR(x) MATXSCRIPT_AS_STR_(x)
 
 /*!
  * \brief Disable copy constructor and assignment operator.

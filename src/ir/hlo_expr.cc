@@ -25,6 +25,8 @@
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/adt.h>
+#include <matxscript/ir/hlo_builtin.h>
+#include <matxscript/ir/op_attr_types.h>
 #include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/functor.h>
@@ -942,25 +944,122 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
                 << ") -> " << node->checked_type_;
     });
 
+// reformat some ops
+
+template <typename DocType, typename AST>
+static inline Array<DocType> build_arrays(const Array<AST>& ast_list,
+                                          ObjectPath p,
+                                          IRDocsifier d,
+                                          int start_pos) {
+  Array<DocType> results;
+  int n_args = ast_list.size();
+  results.reserve(n_args);
+  for (int i = start_pos; i < n_args; ++i) {
+    results.push_back(d->AsDoc<DocType>(ast_list[i], p->ArrayIndex(i)));
+  }
+  return results;
+};
+
+static Doc BuiltinsPrintToDoc(ir::Call call, ObjectPath p, IRDocsifier d) {
+  MXCHECK(call->args.size() >= 3) << "internal error";
+  Array<StringRef> kw_keys;
+  Array<ExprDoc> kw_values;
+  bool fill_sep = true;
+  if (const auto* sep_node = call->args[0].as<StringImmNode>()) {
+    fill_sep = sep_node->value.view() != " ";
+  }
+  if (fill_sep) {
+    auto sep = d->AsDoc<ExprDoc>(call->args[0], p->Attr("args")->ArrayIndex(0));
+    kw_keys.push_back("sep");
+    kw_values.push_back(sep);
+  }
+  bool fill_end = true;
+  if (const auto* end_node = call->args[1].as<StringImmNode>()) {
+    fill_end = end_node->value.view() != "\n";
+  }
+  if (fill_end) {
+    auto end = d->AsDoc<ExprDoc>(call->args[1], p->Attr("args")->ArrayIndex(0));
+    kw_keys.push_back("end");
+    kw_values.push_back(end);
+  }
+  // ignore file
+  int arg_pos = 3;
+  Array<ExprDoc> args = build_arrays<ExprDoc>(call->args, p, d, arg_pos);
+  return IdDoc("print")->Call(args, kw_keys, kw_values);
+}
+
+static Doc CallFunctionToDoc(StringRef fn_name, ir::Call call, ObjectPath p, IRDocsifier d) {
+  Array<StringRef> kw_keys;
+  Array<ExprDoc> kw_values;
+  runtime::string_view builtins("builtins.");
+  if (runtime::StringHelper::StartsWith(fn_name, builtins)) {
+    fn_name = fn_name.view().substr(builtins.size());
+  }
+  Array<ExprDoc> args = build_arrays<ExprDoc>(call->args, p, d, 0);
+  return IdDoc(fn_name)->Call(args, kw_keys, kw_values);
+}
+
+static Doc CallMethodToDoc(StringRef method_name, ir::Call call, ObjectPath p, IRDocsifier d) {
+  Array<StringRef> kw_keys;
+  Array<ExprDoc> kw_values;
+  MXCHECK(call->args.size() >= 1) << "internal error";
+  auto self = d->AsDoc<ExprDoc>(call->args[0], p->Attr("args")->ArrayIndex(0));
+  int arg_pos = 1;
+  if (method_name.view() == "__getitem__") {
+    Array<ExprDoc> args = build_arrays<ExprDoc>(call->args, p, d, arg_pos);
+    return self[Downcast<Array<Doc>>(args)];
+  } else if (method_name.view() == "__getslice__") {
+    MXCHECK(call->args.size() == 4) << "internal error";
+    Array<ExprDoc> args = build_arrays<ExprDoc>(call->args, p, d, arg_pos);
+    return self[{SliceDoc(args[0], args[1], args[2])}];
+  } else if (method_name.view() == "__setitem__") {
+    MXCHECK(call->args.size() == 3) << "internal error";
+    auto lhs = d->AsDoc<Doc>(call->args[1], p->Attr("args")->ArrayIndex(1));
+    auto rhs = d->AsDoc<ExprDoc>(call->args[2], p->Attr("args")->ArrayIndex(2));
+    return AssignDoc(self[{lhs}], rhs, NullOpt);
+  } else if (method_name.view() == "__len__") {
+    MXCHECK(call->args.size() == 1) << "internal error";
+    return IdDoc("len")->Call({self});
+  } else if (method_name.view() == "__contains__") {
+    MXCHECK(call->args.size() == 2) << "internal error";
+    auto lhs = d->AsDoc<ExprDoc>(call->args[1], p->Attr("args")->ArrayIndex(1));
+    return OperationDoc(OperationDocNode::Kind::kIn, {lhs, self});
+  }
+  Array<ExprDoc> args = build_arrays<ExprDoc>(call->args, p, d, arg_pos);
+  return self->Attr(method_name)->Call(args, kw_keys, kw_values);
+}
+
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::Call>("", [](ir::Call call, ObjectPath call_p, IRDocsifier d) -> Doc {
       ExprDoc prefix{nullptr};
+      Array<StringRef> kw_keys;
+      Array<ExprDoc> kw_values;
       if (const auto* op = call->op.as<OpNode>()) {
-        // TODO: fix prim op name
-        StringRef name = op->name;
-        prefix = Dialect(d, name);
+        static OpAttrMap<TPrinterGlobalSymbol> op_global_symbol =
+            Op::GetAttrMap<TPrinterGlobalSymbol>("TPrinterGlobalSymbol");
+        static OpAttrMap<TPrinterMethodSymbol> op_method_symbol =
+            Op::GetAttrMap<TPrinterMethodSymbol>("TPrinterMethodSymbol");
+
+        auto op_ref = GetRef<Op>(op);
+        if (op_ref.same_as(builtin::builtins_print())) {
+          return BuiltinsPrintToDoc(call, call_p, d);
+        } else if (op_global_symbol.count(op_ref)) {
+          StringRef name = op_global_symbol[op_ref];
+          return CallFunctionToDoc(name, call, call_p, d);
+        } else if (op_method_symbol.count(op_ref)) {
+          StringRef name = op_method_symbol[op_ref];
+          return CallMethodToDoc(name, call, call_p, d);
+        } else {
+          StringRef name = op->name;
+          prefix = Dialect(d, name);
+        }
       } else if (const auto* gv = call->op.as<GlobalVarNode>()) {
         prefix = LiteralDoc::Str(gv->name_hint, call_p->Attr("op"));
       } else {
         MXLOG(FATAL) << "call: " << call;
       }
-      Array<ExprDoc> args;
-      int n_args = call->args.size();
-      args.reserve(n_args + 1);
-      for (int i = 0; i < n_args; ++i) {
-        args.push_back(d->AsDoc<ExprDoc>(call->args[i], call_p->Attr("args")->ArrayIndex(i)));
-      }
-      return prefix->Call(args);
+      Array<ExprDoc> args = build_arrays<ExprDoc>(call->args, call_p, d, 0);
+      return prefix->Call(args, kw_keys, kw_values);
     });
 
 // HLOIterator

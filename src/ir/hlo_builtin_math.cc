@@ -26,27 +26,33 @@ namespace matxscript {
 namespace ir {
 namespace builtin {
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(math, min).set_num_inputs(1).add_argument(
-    "args", "*args", "python min(...)");
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(math, min)  //
+    .set_num_inputs(1)
+    .add_argument("args", "*args", "python min(...)");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(math, int_min).set_num_inputs(-1);
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(math, int_min)  //
+    .set_num_inputs(-1);
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(math, double_min).set_num_inputs(-1);
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(math, double_min)  //
+    .set_num_inputs(-1);
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(math, iterable_min)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(math, iterable_min)  //
     .set_num_inputs(1)
     .add_argument("args", "any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(math, int_max).set_num_inputs(-1);
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(math, int_max)  //
+    .set_num_inputs(-1);
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(math, double_max).set_num_inputs(-1);
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(math, double_max)  //
+    .set_num_inputs(-1);
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(math, iterable_max)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(math, iterable_max)  //
     .set_num_inputs(1)
     .add_argument("args", "any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(math, max).set_num_inputs(1).add_argument(
-    "args", "*args", "python max(...)");
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(math, max)  //
+    .set_num_inputs(1)
+    .add_argument("args", "*args", "python max(...)");
 
 }  // namespace builtin
 }  // namespace ir

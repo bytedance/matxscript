@@ -26,24 +26,30 @@ namespace matxscript {
 namespace ir {
 namespace builtin {
 
+#define MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(Prefix, OpName)                                \
+  MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC(Prefix##_##OpName)                                     \
+      .set_attr<TCallEffectKind>("TCallEffectKind", Integer(CallEffectKind::kOpaque))          \
+      .set_attr<TGlobalSymbol>("TGlobalSymbol", MATXSCRIPT_AS_STR(kernel_##Prefix##_##OpName)) \
+      .set_attr<TPrinterMethodSymbol>("TPrinterMethodSymbol", #OpName)
+
 /******************************************************************************
  * String(bytes) unbound methods
  *****************************************************************************/
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, __len__)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, __len__)
     .set_num_inputs(1)
     .add_argument("self", "bytes_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, __contains__)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, __contains__)
     .set_num_inputs(2)
     .add_argument("self", "bytes_view", "")
     .add_argument("key", "int|bytes_view|Any|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, __getitem__)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, __getitem__)
     .set_num_inputs(2)
     .add_argument("self", "bytes_view", "")
     .add_argument("pos", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, __getslice__)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, __getslice__)
     .set_num_inputs(3)
     .set_num_inputs_max(4)
     .add_argument("self", "bytes_view", "")
@@ -51,46 +57,46 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, __getslice__)
     .add_argument("e", "int", "")
     .add_argument("step", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, lower)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, lower)
     .set_num_inputs(1)
     .add_argument("self", "bytes_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, upper)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, upper)
     .set_num_inputs(1)
     .add_argument("self", "bytes_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, isdigit)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, isdigit)
     .set_num_inputs(1)
     .add_argument("self", "bytes_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, isalpha)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, isalpha)
     .set_num_inputs(1)
     .add_argument("self", "bytes_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, decode)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, decode)
     .set_num_inputs(1)
     .add_argument("self", "bytes_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, split)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, split)
     .set_num_inputs(1)
     .set_num_inputs_max(3)
     .add_argument("self", "bytes_view", "")
     .add_argument("sep", "bytes_view|Any|any_view", "")
     .add_argument("maxsplit", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, split_ft)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, split_ft)
     .set_num_inputs(1)
     .set_num_inputs_max(3)
     .add_argument("self", "bytes_view", "")
     .add_argument("sep", "bytes_view|Any|any_view", "")
     .add_argument("maxsplit", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, join)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, join)
     .set_num_inputs(2)
     .add_argument("self", "bytes_view", "")
     .add_argument("iterable", "list|FTList[bytes]|Any|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, replace)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, replace)
     .set_num_inputs(3)
     .set_num_inputs_max(4)
     .add_argument("self", "bytes_view", "")
@@ -98,7 +104,7 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, replace)
     .add_argument("new_s", "bytes_view", "")
     .add_argument("count", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, startswith)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, startswith)
     .set_num_inputs(2)
     .set_num_inputs_max(4)
     .add_argument("self", "bytes_view", "")
@@ -106,7 +112,7 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, startswith)
     .add_argument("start", "int", "")
     .add_argument("end", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, endswith)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, endswith)
     .set_num_inputs(2)
     .set_num_inputs_max(4)
     .add_argument("self", "bytes_view", "")
@@ -114,25 +120,25 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, endswith)
     .add_argument("start", "int", "")
     .add_argument("end", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, lstrip)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, lstrip)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "bytes_view", "")
     .add_argument("chars", "bytes_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, rstrip)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, rstrip)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "bytes_view", "")
     .add_argument("chars", "bytes_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, strip)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, strip)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "bytes_view", "")
     .add_argument("chars", "bytes_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, count)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, count)
     .set_num_inputs(2)
     .set_num_inputs_max(4)
     .add_argument("self", "bytes_view", "")
@@ -140,7 +146,7 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, count)
     .add_argument("start", "int", "")
     .add_argument("end", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, repeat)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, repeat)
     .set_num_inputs(2)
     .add_argument("self", "bytes_view", "")
     .add_argument("times", "int", "");
@@ -148,7 +154,7 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, repeat)
 /******************************************************************************
  * String(bytes) fused ops
  *****************************************************************************/
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(str, fused_concat)
+MATXSCRIPT_IR_DEFINE_HLO_BYTES_FUNCTION(str, fused_concat)
     .set_num_inputs(2)
     .set_num_inputs_max(-1)
     .add_argument("s1", "bytes_view", "")

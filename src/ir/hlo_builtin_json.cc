@@ -27,15 +27,15 @@ namespace ir {
 namespace builtin {
 
 // json
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(json, load)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(json, load)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(json, loads)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(json, loads)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(json, dumps)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(json, dumps)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 

@@ -26,24 +26,30 @@ namespace matxscript {
 namespace ir {
 namespace builtin {
 
+#define MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(Prefix, OpName)                              \
+  MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC(Prefix##_##OpName)                                     \
+      .set_attr<TCallEffectKind>("TCallEffectKind", Integer(CallEffectKind::kOpaque))          \
+      .set_attr<TGlobalSymbol>("TGlobalSymbol", MATXSCRIPT_AS_STR(kernel_##Prefix##_##OpName)) \
+      .set_attr<TPrinterMethodSymbol>("TPrinterMethodSymbol", #OpName)
+
 /******************************************************************************
  * Unicode(Python3 str) unbound methods
  *****************************************************************************/
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, __len__)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, __len__)
     .set_num_inputs(1)
     .add_argument("self", "unicode_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, __contains__)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, __contains__)
     .set_num_inputs(2)
     .add_argument("self", "unicode_view", "")
     .add_argument("key", "unicode_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, __getitem__)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, __getitem__)
     .set_num_inputs(2)
     .add_argument("self", "unicode_view", "")
     .add_argument("pos", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, __getslice__)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, __getslice__)
     .set_num_inputs(3)
     .set_num_inputs_max(4)
     .add_argument("self", "unicode_view", "")
@@ -51,7 +57,7 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, __getslice__)
     .add_argument("e", "int", "")
     .add_argument("step", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, find)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, find)
     .set_num_inputs(2)
     .set_num_inputs_max(4)
     .add_argument("self", "unicode_view", "")
@@ -59,46 +65,46 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, find)
     .add_argument("start", "int", "")
     .add_argument("end", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, encode)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, encode)
     .set_num_inputs(1)
     .add_argument("self", "unicode_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, lower)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, lower)
     .set_num_inputs(1)
     .add_argument("self", "unicode_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, upper)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, upper)
     .set_num_inputs(1)
     .add_argument("self", "unicode_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, isdigit)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, isdigit)
     .set_num_inputs(1)
     .add_argument("self", "unicode_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, isalpha)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, isalpha)
     .set_num_inputs(1)
     .add_argument("self", "unicode_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, split)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, split)
     .set_num_inputs(1)
     .set_num_inputs_max(3)
     .add_argument("self", "unicode_view", "")
     .add_argument("sep", "unicode_view|Any|any_view", "")
     .add_argument("maxsplit", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, split_ft)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, split_ft)
     .set_num_inputs(1)
     .set_num_inputs_max(3)
     .add_argument("self", "unicode_view", "")
     .add_argument("sep", "unicode_view|Any|any_view", "")
     .add_argument("maxsplit", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, join)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, join)
     .set_num_inputs(2)
     .add_argument("self", "unicode_view", "")
     .add_argument("iterable", "list|FTList[str]|Any|any_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, replace)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, replace)
     .set_num_inputs(3)
     .set_num_inputs_max(4)
     .add_argument("self", "unicode_view", "")
@@ -106,7 +112,7 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, replace)
     .add_argument("new_s", "unicode_view", "")
     .add_argument("count", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, startswith)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, startswith)
     .set_num_inputs(2)
     .set_num_inputs_max(4)
     .add_argument("self", "unicode_view", "")
@@ -114,7 +120,7 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, startswith)
     .add_argument("start", "int", "")
     .add_argument("end", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, endswith)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, endswith)
     .set_num_inputs(2)
     .set_num_inputs_max(4)
     .add_argument("self", "unicode_view", "")
@@ -122,25 +128,25 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, endswith)
     .add_argument("start", "int", "")
     .add_argument("end", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, lstrip)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, lstrip)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "unicode_view", "")
     .add_argument("chars", "unicode_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, rstrip)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, rstrip)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "unicode_view", "")
     .add_argument("chars", "unicode_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, strip)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, strip)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "unicode_view", "")
     .add_argument("chars", "unicode_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, count)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, count)
     .set_num_inputs(2)
     .set_num_inputs_max(4)
     .add_argument("self", "unicode_view", "")
@@ -148,12 +154,12 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, count)
     .add_argument("start", "int", "")
     .add_argument("end", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, format)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, format)
     .set_num_inputs(2)
     .add_argument("self", "unicode_view", "")
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, repeat)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, repeat)
     .set_num_inputs(2)
     .add_argument("self", "unicode_view", "")
     .add_argument("times", "int", "");
@@ -161,7 +167,7 @@ MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, repeat)
 /******************************************************************************
  * Unicode(Python3 str) fused ops
  *****************************************************************************/
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicode, fused_concat)
+MATXSCRIPT_IR_DEFINE_HLO_UNICODE_FUNCTION(unicode, fused_concat)
     .set_num_inputs(2)
     .set_num_inputs_max(-1)
     .add_argument("s1", "unicode_view", "")

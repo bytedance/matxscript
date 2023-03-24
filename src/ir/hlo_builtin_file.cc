@@ -29,49 +29,49 @@ namespace builtin {
 /******************************************************************************
  * File builtin methods
  *****************************************************************************/
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(file, open)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(file, open)
     .set_num_inputs(1)
     .add_argument("args", "*args", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(file_HasNext, HasNext)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(file, HasNext, HasNext)
     .set_num_inputs(1)
     .add_argument("self", "matx.File", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(file_readline_string, ReadLineString)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(file, readline_string, ReadLineString)
     .set_num_inputs(1)
     .add_argument("self", "matx.File", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(file_readline_unicode, ReadLineUnicode)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(file, readline_unicode, ReadLineUnicode)
     .set_num_inputs(1)
     .add_argument("self", "matx.File", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(file_readline, Next)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(file, readline, Next)
     .set_num_inputs(1)
     .add_argument("self", "matx.File", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(file_readlines, ReadLines)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(file, readlines, ReadLines)
     .set_num_inputs(1)
     .add_argument("self", "matx.File", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(file_read, Read)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(file, read, Read)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "matx.File", "")
     .add_argument("size", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(file_read_bytes, ReadString)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(file, read_bytes, ReadString)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "matx.File", "")
     .add_argument("size", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(file_read_unicode, ReadUnicode)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(file, read_unicode, ReadUnicode)
     .set_num_inputs(1)
     .set_num_inputs_max(2)
     .add_argument("self", "matx.File", "")
     .add_argument("size", "int", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_EXPLICIT(file_close, close)
+MATXSCRIPT_IR_DEFINE_HLO_METHOD(file, close, close)
     .set_num_inputs(1)
     .add_argument("self", "matx.File", "");
 

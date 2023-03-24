@@ -27,12 +27,12 @@ namespace ir {
 namespace builtin {
 
 // unicodedata
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicodedata, normalize)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(unicodedata, normalize)
     .set_num_inputs(2)
     .add_argument("form", "int|unicode_view", "")
     .add_argument("input", "unicode_view", "");
 
-MATXSCRIPT_IR_DEFINE_HLO_BUILTIN_FUNC_GENERIC(unicodedata, category)
+MATXSCRIPT_IR_DEFINE_HLO_MODULE_FUNC(unicodedata, category)
     .set_num_inputs(1)
     .add_argument("chr", "unicode_view", "");
 
