@@ -2050,7 +2050,8 @@ void CodeGenC::VisitExpr_(const CallNode* op, std::ostream& os) {  // NOLINT(*)
     } else if (op->op.same_as(builtin::call_lambda())) {  // hlo arith
       MXCHECK_GE(op->args.size(), 1U);
       // function
-      this->VisitExpr(op->args[0], os);
+      // TODO(xiandi.ma): fixme
+      this->VisitStmt(Downcast<Stmt>(op->args[0]), os);
       os << "(";
       for (size_t i = 1; i < op->args.size(); ++i) {
         if (i > 1) {
