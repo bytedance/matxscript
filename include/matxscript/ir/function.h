@@ -79,7 +79,7 @@ enum class CallingConv : int {
  *
  * \sa BaseFunc
  */
-class BaseFuncNode : public HLOExprNode {
+class BaseFuncNode : public StmtNode {
  public:
   /*! \brief Additional attributes storing the meta-data */
   DictAttrs attrs;
@@ -168,16 +168,16 @@ class BaseFuncNode : public HLOExprNode {
 
   static constexpr const char* _type_key = "BaseFunc";
   static constexpr const uint32_t _type_child_slots = 2;
-  MATXSCRIPT_DECLARE_BASE_OBJECT_INFO(BaseFuncNode, HLOExprNode);
+  MATXSCRIPT_DECLARE_BASE_OBJECT_INFO(BaseFuncNode, StmtNode);
 };
 
 /*!
  * \brief Managed reference to BaseFuncNode.
  * \sa BaseFuncNode
  */
-class BaseFunc : public HLOExpr {
+class BaseFunc : public Stmt {
  public:
-  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(BaseFunc, HLOExpr, BaseFuncNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(BaseFunc, Stmt, BaseFuncNode);
 };
 
 /*!
@@ -247,7 +247,6 @@ class PrimFuncNode : public BaseFuncNode {
     v->Visit("ret_type", &ret_type);
     v->Visit("attrs", &attrs);
     v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const PrimFuncNode* other, SEqualReducer equal) const {
@@ -345,7 +344,6 @@ class FunctionNode : public BaseFuncNode {
     v->Visit("type_params", &type_params);
     v->Visit("attrs", &attrs);
     v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const FunctionNode* other, SEqualReducer equal) const {
@@ -438,7 +436,6 @@ class LambdaFunctionNode : public BaseFuncNode {
     v->Visit("ret_type", &ret_type);
     v->Visit("attrs", &attrs);
     v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const LambdaFunctionNode* other, SEqualReducer equal) const {

@@ -32,7 +32,7 @@ namespace ir {
 class FuseContCasterOptimizer : public StmtExprMutator {
  public:
   BaseFunc run(const BaseFunc& func) {
-    return this->VisitExpr(func);
+    return this->VisitStmt(func);
   }
 
   HLOExpr VisitExpr_(const HLOCastNode* op) override {

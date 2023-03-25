@@ -27,7 +27,7 @@ from .. import runtime
 from ..runtime import Object
 from .expr import PrimVar, Call
 from . import _ffi_api
-from .base import HLOExpr, Span
+from .base import Stmt, Span
 from ._converter import to_ir_object as _to_ir
 
 
@@ -51,7 +51,7 @@ class FuncAttr(object):
     kCaptureSessionHandle = "capture_session_handle"
 
 
-class BaseFunc(HLOExpr):
+class BaseFunc(Stmt):
     """Base class of all functions."""
 
     @property

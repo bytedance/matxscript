@@ -22,7 +22,7 @@
 from .._ffi.base import string_types
 from .. import _ffi
 
-from .base import Node
+from .base import Node, Stmt, BaseExpr
 from . import expr as _expr
 from . import type as _ty
 from . import _ffi_api
@@ -86,7 +86,7 @@ class IRModule(Node):
         return self._add(var, _to_ir(val), True)
 
     def _add(self, var, val, update=True):
-        if isinstance(val, _expr.HLOExpr):
+        if isinstance(val, Stmt):
             if isinstance(var, string_types):
                 var = var.encode("utf-8")
                 if _ffi_api.Module_ContainGlobalVar(self, var):

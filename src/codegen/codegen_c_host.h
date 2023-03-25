@@ -85,7 +85,7 @@ class CodeGenCHost final : public CodeGenC {
 
   void VisitExpr_(const ClassGetItemNode* op, std::ostream& os) final;    // NOLINT(*)
   void VisitExpr_(const NoneExprNode* op, std::ostream& os) final;        // NOLINT(*)
-  void VisitExpr_(const LambdaFunctionNode* op, std::ostream& os) final;  // NOLINT(*)
+  void VisitStmt_(const LambdaFunctionNode* op, std::ostream& os) final;  // NOLINT(*)
 
   void VisitStmt_(const ExceptionHandlerNode* op, std::ostream& os) final;  // NOLINT(*)
   void VisitStmt_(const TryExceptNode* op, std::ostream& os) final;         // NOLINT(*)

@@ -110,7 +110,6 @@ PrimFunc::PrimFunc(Array<PrimVar> params,
   n->body = std::move(body);
   n->ret_type = std::move(ret_type);
   n->attrs = std::move(attrs);
-  n->checked_type_ = n->func_type_annotation();
   n->span = std::move(span);
   data_ = std::move(n);
 }
@@ -238,7 +237,6 @@ Function::Function(Array<BaseExpr> params,
   n->default_params = std::move(default_params);
   n->body = std::move(body);
   n->ret_type = std::move(ret_type);
-  n->checked_type_ = n->ret_type;
   n->type_params = std::move(type_params);
   n->attrs = std::move(attrs);
   n->span = std::move(span);
@@ -369,7 +367,6 @@ LambdaFunction::LambdaFunction(Array<BaseExpr> captures,
   n->params = std::move(params);
   n->body = std::move(body);
   n->ret_type = std::move(ret_type);
-  n->checked_type_ = n->ret_type;
   n->attrs = std::move(attrs);
   n->span = std::move(span);
   data_ = std::move(n);

@@ -332,7 +332,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.Module_Add").set_body([](PyArgs args) -> RTValue 
   GlobalVar var = args[1].As<GlobalVar>();
   ObjectRef val = args[2].As<ObjectRef>();
   bool update = args[3].As<bool>();
-  MXCHECK(val->IsInstance<HLOExprNode>());
 
   if (val->IsInstance<BaseFuncNode>()) {
     mod->Add(var, Downcast<BaseFunc>(val), update);

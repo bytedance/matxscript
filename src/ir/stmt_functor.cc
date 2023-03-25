@@ -625,51 +625,52 @@ Stmt StmtMutator::VisitStmt_(const ComputeBlockNode* op) {
   }
 }
 
-void StmtExprVisitor::VisitExpr_(const PrimFuncNode* op) {
-  this->VisitSpan(op->span);
-  this->VisitType(op->ret_type);
+void StmtVisitor::VisitStmt_(const PrimFuncNode* op) {
+  // TODO: fix visitor
+  // this->VisitSpan(op->span);
+  // this->VisitType(op->ret_type);
   for (auto param : op->params) {
     this->VisitExpr(param);
   }
   this->VisitStmt(op->body);
 }
 
-void StmtExprVisitor::VisitExpr_(const FunctionNode* op) {
-  this->VisitSpan(op->span);
-  this->VisitType(op->ret_type);
+void StmtVisitor::VisitStmt_(const FunctionNode* op) {
+  // this->VisitSpan(op->span);
+  // this->VisitType(op->ret_type);
   for (auto param : op->params) {
-    ExprVisitor::VisitExpr(param);
+    this->VisitExpr(param);
   }
   this->VisitStmt(op->body);
   if (op->type_params.defined()) {
     for (auto param_t : op->type_params) {
       if (param_t.defined()) {
-        this->VisitType(param_t);
+        // this->VisitType(param_t);
       }
     }
   }
 }
 
-void StmtExprVisitor::VisitExpr_(const LambdaFunctionNode* op) {
-  this->VisitSpan(op->span);
-  this->VisitType(op->ret_type);
+void StmtVisitor::VisitStmt_(const LambdaFunctionNode* op) {
+  // this->VisitSpan(op->span);
+  // this->VisitType(op->ret_type);
   for (auto param : op->params) {
-    ExprVisitor::VisitExpr(param);
+    this->VisitExpr(param);
   }
   this->VisitStmt(op->body);
   if (op->captures.defined()) {
     for (auto cap : op->captures) {
       if (cap.defined()) {
-        ExprVisitor::VisitExpr(cap);
+        this->VisitExpr(cap);
       }
     }
   }
 }
 
-HLOExpr StmtExprMutator::VisitExpr_(const PrimFuncNode* op) {
+Stmt StmtMutator::VisitStmt_(const PrimFuncNode* op) {
   bool all_fields_unchanged = true;
   // ret_type
-  Type ret_type = this->VisitType(op->ret_type);
+  Type ret_type = op->ret_type;  // TODO: this->VisitType(op->ret_type);
   all_fields_unchanged &= ret_type.same_as(op->ret_type);
 
   // params
@@ -699,10 +700,10 @@ HLOExpr StmtExprMutator::VisitExpr_(const PrimFuncNode* op) {
   }
 }
 
-HLOExpr StmtExprMutator::VisitExpr_(const FunctionNode* op) {
+Stmt StmtMutator::VisitStmt_(const FunctionNode* op) {
   bool all_fields_unchanged = true;
   // ret_type
-  Type ret_type = this->VisitType(op->ret_type);
+  Type ret_type = op->ret_type;  // TODO: this->VisitType(op->ret_type);
   all_fields_unchanged &= ret_type.same_as(op->ret_type);
 
   // params
@@ -728,7 +729,7 @@ HLOExpr StmtExprMutator::VisitExpr_(const FunctionNode* op) {
   Array<TypeVar> type_params;
   for (auto param_t : op->type_params) {
     if (param_t.defined()) {
-      auto new_param_t = this->VisitType(param_t);
+      auto new_param_t = param_t;  // TODO: this->VisitType(param_t);
       type_params.push_back(Downcast<TypeVar>(new_param_t));
       all_fields_unchanged &= new_param_t.same_as(param_t);
     } else {
@@ -744,10 +745,10 @@ HLOExpr StmtExprMutator::VisitExpr_(const FunctionNode* op) {
   }
 }
 
-HLOExpr StmtExprMutator::VisitExpr_(const LambdaFunctionNode* op) {
+Stmt StmtMutator::VisitStmt_(const LambdaFunctionNode* op) {
   bool all_fields_unchanged = true;
   // ret_type
-  Type ret_type = this->VisitType(op->ret_type);
+  Type ret_type = op->ret_type;  // TODO: this->VisitType(op->ret_type);
   all_fields_unchanged &= ret_type.same_as(op->ret_type);
 
   // params
@@ -935,6 +936,10 @@ Stmt Substitute(Stmt stmt, std::function<Optional<PrimExpr>(const PrimVar&)> vma
 }
 
 Stmt Substitute(Stmt stmt, std::function<Optional<HLOExpr>(const HLOVar&)> vmap) {
+  return IRSubstitue(vmap)(std::move(stmt));
+}
+
+Stmt Substitute(Stmt stmt, std::function<Optional<BaseExpr>(const BaseExpr&)> vmap) {
   return IRSubstitue(vmap)(std::move(stmt));
 }
 

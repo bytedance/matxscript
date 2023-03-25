@@ -286,3 +286,7 @@ class PrimExpr(BaseExpr):
 
 class HLOExpr(BaseExpr):
     """Base class of all non-primitive expressions."""
+
+
+class Stmt(Object):
+    """Base class of all the statements."""

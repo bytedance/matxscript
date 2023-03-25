@@ -718,7 +718,7 @@ void CodeGenCHost::VisitStmt_(const RaiseNode* op, std::ostream& os) {
   }
 }
 
-void CodeGenCHost::VisitExpr_(const LambdaFunctionNode* op, std::ostream& os) {
+void CodeGenCHost::VisitStmt_(const LambdaFunctionNode* op, std::ostream& os) {
   // clear previous generated state.
   auto func = GetRef<LambdaFunction>(op);
   bool no_alias = op->HasNonzeroAttr(attr::kNoAlias);

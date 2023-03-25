@@ -266,9 +266,6 @@ class HLOExprFunctor<R(const HLOExpr& n, Args...)> {
   virtual R VisitExpr_(const HLOIteratorNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const InitializerListNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const InitializerDictNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
-  virtual R VisitExpr_(const FunctionNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
-  virtual R VisitExpr_(const PrimFuncNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
-  virtual R VisitExpr_(const LambdaFunctionNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const OpNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const EnumAttrNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const ClassGetItemNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
@@ -318,9 +315,6 @@ class HLOExprFunctor<R(const HLOExpr& n, Args...)> {
     IR_EXPR_FUNCTOR_DISPATCH(InitializerListNode);
     IR_EXPR_FUNCTOR_DISPATCH(InitializerDictNode);
     IR_EXPR_FUNCTOR_DISPATCH(HLOIteratorNode);
-    IR_EXPR_FUNCTOR_DISPATCH(FunctionNode);
-    IR_EXPR_FUNCTOR_DISPATCH(PrimFuncNode);
-    IR_EXPR_FUNCTOR_DISPATCH(LambdaFunctionNode);
     IR_EXPR_FUNCTOR_DISPATCH(OpNode);
     IR_EXPR_FUNCTOR_DISPATCH(EnumAttrNode);
     IR_EXPR_FUNCTOR_DISPATCH(ClassGetItemNode);

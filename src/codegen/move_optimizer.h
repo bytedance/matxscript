@@ -47,7 +47,7 @@ class MoveOptimizerAnalysis : public StmtExprVisitor {
     if (!f->IsInstance<FunctionNode>()) {
       return this->result;
     }
-    this->VisitExpr_(f.as<FunctionNode>());
+    this->VisitStmt_(f.as<FunctionNode>());
     if (yield_mode) {
       this->result = {};
     }
@@ -83,7 +83,7 @@ class MoveOptimizerAnalysis : public StmtExprVisitor {
     return true;
   }
 
-  void VisitExpr_(const FunctionNode* op) override {
+  void VisitStmt_(const FunctionNode* op) override {
     scope_types_.emplace_back(ScopeType::kFunction);
     symbols_.emplace_back();
     auto& current_symbols = symbols_.back();
@@ -314,7 +314,7 @@ class MoveOptimizerMutator : public StmtExprMutator {
   Stmt VisitStmt(const Stmt& op) override {
     auto stmt_iter = usage_and_define_.find(op.get());
     if (stmt_iter == usage_and_define_.end()) {
-      return StmtExprMutator::VisitStmt(op);
+      return StmtMutator::VisitStmt(op);
     } else {
       // count use_count
       MoveOptimizerCountVarUseCountAnalysis counter;
