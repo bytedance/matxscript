@@ -60,8 +60,9 @@ TEST(IR, Yield) {
   std::string code = cg.Finish();
   std::cout << code << std::endl;
 
-  IRModule module = IRModule::FromExpr(func);
-  ::matxscript::runtime::Module m = (*build_module)({module}).As<Module>();
+  IRModule mod;
+  mod->Add(GlobalVar("test_generator"), func);
+  ::matxscript::runtime::Module m = (*build_module)({mod}).As<Module>();
   std::cout << m->GetSource() << std::endl;
 }
 

@@ -110,7 +110,6 @@ PrimFunc::PrimFunc(Array<PrimVar> params,
   n->body = std::move(body);
   n->ret_type = std::move(ret_type);
   n->attrs = std::move(attrs);
-  n->checked_type_ = n->func_type_annotation();
   n->span = std::move(span);
   data_ = std::move(n);
 }
@@ -238,7 +237,6 @@ Function::Function(Array<BaseExpr> params,
   n->default_params = std::move(default_params);
   n->body = std::move(body);
   n->ret_type = std::move(ret_type);
-  n->checked_type_ = n->ret_type;
   n->type_params = std::move(type_params);
   n->attrs = std::move(attrs);
   n->span = std::move(span);
@@ -356,12 +354,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
  * LambdaFunction
  *****************************************************************************/
 
-LambdaFunction::LambdaFunction(Array<BaseExpr> captures,
-                               Array<BaseExpr> params,
-                               Stmt body,
-                               Type ret_type,
-                               DictAttrs attrs,
-                               Span span) {
+LambdaFunction::LambdaFunction(
+    Array<BaseExpr> captures, Array<BaseExpr> params, Stmt body, Type ret_type, Span span) {
   ObjectPtr<LambdaFunctionNode> n = make_object<LambdaFunctionNode>();
   MXCHECK(params.defined());
   // TODO(mxiandi) : check params is Var or PrimVar
@@ -369,72 +363,27 @@ LambdaFunction::LambdaFunction(Array<BaseExpr> captures,
   n->params = std::move(params);
   n->body = std::move(body);
   n->ret_type = std::move(ret_type);
-  n->checked_type_ = n->ret_type;
-  n->attrs = std::move(attrs);
   n->span = std::move(span);
   data_ = std::move(n);
-}
-
-FuncType LambdaFunctionNode::func_type_annotation() const {
-  Array<Type> param_types;
-  for (auto& param : this->params) {
-    Type param_type;
-    if (auto* prim_var = param.as<PrimVarNode>()) {
-      param_type = PrimType(prim_var->dtype);
-    } else if (auto* hlo_var = param.as<HLOVarNode>()) {
-      param_type = hlo_var->type_annotation;
-    } else {
-      MXCHECK(false) << "LambdaFunction's param is not a PrimVar or HLOVar";
-    }
-    param_types.push_back(param_type);
-  }
-
-  Type ret_type = this->ret_type;
-  return FuncType(param_types, ret_type, {}, {});
-}
-
-Array<BaseExpr> LambdaFunctionNode::GetParams() const {
-  return params;
-}
-
-Array<BaseExpr> LambdaFunctionNode::GetDefaultParams() const {
-  return {};
-}
-
-Type LambdaFunctionNode::GetReturnType() const {
-  return ret_type;
-}
-
-Stmt LambdaFunctionNode::GetBody() const {
-  return body;
-}
-
-StringRef LambdaFunctionNode::GetReprName() const {
-  return "lambda";
 }
 
 MATXSCRIPT_REGISTER_NODE_TYPE(LambdaFunctionNode);
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.LambdaFunction")
-    .set_body_typed([](Array<BaseExpr> captures,
-                       Array<BaseExpr> params,
-                       Stmt body,
-                       Type ret_type,
-                       DictAttrs attrs,
-                       Span span) {
-      return LambdaFunction(std::move(captures),
-                            std::move(params),
-                            std::move(body),
-                            std::move(ret_type),
-                            std::move(attrs),
-                            std::move(span));
-    });
+    .set_body_typed(
+        [](Array<BaseExpr> captures, Array<BaseExpr> params, Stmt body, Type ret_type, Span span) {
+          return LambdaFunction(std::move(captures),
+                                std::move(params),
+                                std::move(body),
+                                std::move(ret_type),
+                                std::move(span));
+        });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<LambdaFunctionNode>([](const ObjectRef& ref, ReprPrinter* p) {
       auto* node = static_cast<const LambdaFunctionNode*>(ref.get());
       p->stream << "LambdaFunctionNode(" << node->params << ", " << node->ret_type << ", "
-                << node->body << ", " << node->captures << ", " << node->attrs << ")";
+                << node->body << ", " << node->captures << ")";
     });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
@@ -482,8 +431,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.BaseFuncWithAttr")
         return WithAttr(runtime::Downcast<PrimFunc>(std::move(func)), std::move(key), value);
       } else if (func->IsInstance<FunctionNode>()) {
         return WithAttr(runtime::Downcast<Function>(std::move(func)), std::move(key), value);
-      } else if (func->IsInstance<LambdaFunctionNode>()) {
-        return WithAttr(runtime::Downcast<LambdaFunction>(std::move(func)), std::move(key), value);
       } else {
         MXTHROW << "Do not support function type " << func->GetTypeKey();
         return func;

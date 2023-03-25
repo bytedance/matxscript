@@ -75,7 +75,6 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   void VisitExpr_(const PrimLetNode* op, std::ostream& os) override;
   void VisitExpr_(const PrimCallNode* op, std::ostream& os) override;
   void VisitExpr_(const PrimCastNode* op, std::ostream& os) override;
-  void VisitExpr_(const PrimFuncNode* op, std::ostream& os) override;
   void VisitExprDefault_(const Object* op, std::ostream& os) override;
 
   // Begin Stmt
@@ -87,6 +86,7 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   void VisitStmt_(const SeqStmtNode* op, std::ostream& os) override;
   void VisitStmt_(const ForNode* op, std::ostream& os) override;
   void VisitStmt_(const ExprStmtNode* op, std::ostream& os) override;
+  void VisitStmt_(const PrimFuncNode* op, std::ostream& os) override;
   void VisitStmtDefault_(const Object* op, std::ostream& os) override;
 
   // Begin Type
@@ -192,9 +192,6 @@ void LinalgTextPrinter::VisitExpr_(const PrimCallNode* op, std::ostream& os) {
 void LinalgTextPrinter::VisitExpr_(const PrimCastNode* op, std::ostream& os) {
 }
 
-void LinalgTextPrinter::VisitExpr_(const PrimFuncNode* op, std::ostream& os) {
-}
-
 // Begin Stmt
 
 void LinalgTextPrinter::VisitStmt_(const AllocaVarStmtNode* op, std::ostream& os) {
@@ -221,6 +218,9 @@ void LinalgTextPrinter::VisitStmt_(const ForNode* op, std::ostream& os) {
 void LinalgTextPrinter::VisitStmt_(const ExprStmtNode* op, std::ostream& os) {
 }
 
+void LinalgTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
+}
+
 // Begin Type
 void LinalgTextPrinter::VisitType_(const PrimTypeNode* node, std::ostream& os) {
 }
@@ -233,7 +233,7 @@ void LinalgTextPrinter::VisitType_(const NDArrayTypeNode* node, std::ostream& os
 
 // Global Linalg TextPrint
 void LinalgTextPrinter::AddFunction(const PrimFunc& fn) {
-  this->VisitExpr_(fn.get(), stream_);
+  this->VisitStmt_(fn.get(), stream_);
 }
 
 StringRef LinalgTextPrinter::Finish() {

@@ -721,7 +721,6 @@ void CodeGenCHost::VisitStmt_(const RaiseNode* op, std::ostream& os) {
 void CodeGenCHost::VisitExpr_(const LambdaFunctionNode* op, std::ostream& os) {
   // clear previous generated state.
   auto func = GetRef<LambdaFunction>(op);
-  bool no_alias = op->HasNonzeroAttr(attr::kNoAlias);
 
   // print captures
   os << "[";
@@ -734,7 +733,7 @@ void CodeGenCHost::VisitExpr_(const LambdaFunctionNode* op, std::ostream& os) {
   os << "]";
   // print args and return types
   os << "(";
-  PrintLineVars(os, op->params, {}, true, true, true, false, no_alias);
+  PrintLineVars(os, op->params, {}, true, true, true, false, false);
   os << ") -> ";
   this->PrintType(op->ret_type, os);
   // print body

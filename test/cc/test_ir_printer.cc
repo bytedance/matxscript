@@ -64,8 +64,9 @@ TEST(IR, Printer) {
   std::string code = cg.Finish();
   std::cout << code << std::endl;
 
-  IRModule module = IRModule::FromExpr(func);
-  ::matxscript::runtime::Module m = (*build_module)({module}).As<Module>();
+  IRModule mod;
+  mod->Add(GlobalVar("test_arith"), func);
+  ::matxscript::runtime::Module m = (*build_module)({mod}).As<Module>();
   std::cout << m->GetSource() << std::endl;
 }
 

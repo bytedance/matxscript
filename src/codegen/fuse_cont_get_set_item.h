@@ -32,7 +32,7 @@ namespace ir {
 class FuseContAnyGetSetItemOptimizer : public StmtExprMutator {
  public:
   BaseFunc run(const BaseFunc& func) {
-    return this->VisitExpr(func);
+    return runtime::Downcast<BaseFunc>(this->VisitStmt(func));
   }
 
   HLOExpr VisitExpr_(const CallNode* op) override {

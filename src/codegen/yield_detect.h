@@ -30,7 +30,7 @@ class YieldDetector : public StmtExprVisitor {
  public:
   const std::vector<HLOYield>& GetYields(const BaseFunc& f) {
     yields_.clear();
-    VisitExpr(f);
+    VisitStmt(f);
     return yields_;
   }
 
@@ -45,7 +45,7 @@ class YieldDetector : public StmtExprVisitor {
 class YieldLabelMutator : public StmtExprMutator {
  public:
   BaseFunc MutateFunc(const BaseFunc& f) {
-    return runtime::Downcast<BaseFunc>(StmtExprMutator::VisitExpr(f));
+    return runtime::Downcast<BaseFunc>(StmtExprMutator::VisitStmt(f));
   }
 
   Stmt VisitStmt_(const HLOYieldNode* op) override {

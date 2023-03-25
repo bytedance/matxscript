@@ -37,7 +37,7 @@ class FullTypedOptimizerAnalysis : public StmtExprVisitor {
     if (!f->IsInstance<FunctionNode>()) {
       return std::unordered_map<const HLOVarNode*, Type>{};
     }
-    StmtExprVisitor::VisitExpr_(f.as<FunctionNode>());
+    StmtExprVisitor::VisitStmt_(f.as<FunctionNode>());
     std::unordered_map<const HLOVarNode*, Type> ret;
     for (auto& r : this->result) {
       ret.emplace(r.first, r.second.first);

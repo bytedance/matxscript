@@ -27,7 +27,7 @@ from .. import runtime
 from ..runtime import Object
 from .expr import PrimVar, Call
 from . import _ffi_api
-from .base import HLOExpr, Span
+from .base import Stmt, Span
 from ._converter import to_ir_object as _to_ir
 
 
@@ -51,7 +51,7 @@ class FuncAttr(object):
     kCaptureSessionHandle = "capture_session_handle"
 
 
-class BaseFunc(HLOExpr):
+class BaseFunc(Stmt):
     """Base class of all functions."""
 
     @property
@@ -218,7 +218,6 @@ class LambdaFunction(BaseFunc):
                  params,
                  body,
                  ret_type=None,
-                 attrs=None,
                  span=Span()):
         self.__init_handle_by_constructor__(
             _ffi_api.LambdaFunction,
@@ -226,7 +225,6 @@ class LambdaFunction(BaseFunc):
             _to_ir(params),
             _to_ir(body),
             _to_ir(ret_type),
-            _to_ir(attrs),
             _to_ir(span)
         )
 

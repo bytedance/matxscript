@@ -31,7 +31,7 @@ namespace ir {
 class VarDetector : public StmtExprVisitor {
  public:
   void GetVars(const BaseFunc& f, std::vector<BaseExpr>& base_vars) {
-    VisitExpr(f);
+    VisitStmt(f);
     base_vars = std::vector<BaseExpr>(vars_.begin(), vars_.end());
   }
 
@@ -50,7 +50,7 @@ class VarDetector : public StmtExprVisitor {
 class RemoveVarDefine : public StmtExprMutator {
  public:
   BaseFunc MutateFunc(BaseFunc& f) {
-    return runtime::Downcast<BaseFunc>(StmtExprMutator::VisitExpr(f));
+    return runtime::Downcast<BaseFunc>(StmtExprMutator::VisitStmt(f));
   }
 
  private:

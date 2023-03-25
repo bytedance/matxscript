@@ -109,6 +109,9 @@ class StmtFunctor<R(const Stmt& n, Args... args)> {
   virtual R VisitStmt_(const ExprStmtNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
   virtual R VisitStmt_(const HLOYieldNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
 
+  virtual R VisitStmt_(const PrimFuncNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
+  virtual R VisitStmt_(const FunctionNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
+
   virtual R VisitStmt_(const ComputeBlockNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
 
   virtual R VisitStmtDefault_(const Object* op, Args...) {
@@ -136,6 +139,9 @@ class StmtFunctor<R(const Stmt& n, Args... args)> {
     IR_STMT_FUNCTOR_DISPATCH(ContinueNode);
     IR_STMT_FUNCTOR_DISPATCH(ExprStmtNode);
     IR_STMT_FUNCTOR_DISPATCH(HLOYieldNode);
+
+    IR_STMT_FUNCTOR_DISPATCH(PrimFuncNode);
+    IR_STMT_FUNCTOR_DISPATCH(FunctionNode);
 
     IR_STMT_FUNCTOR_DISPATCH(ComputeBlockNode);
     return vtable;
@@ -174,6 +180,9 @@ class MATX_DLL StmtVisitor : protected StmtFunctor<void(const Stmt&)> {
   void VisitStmt_(const ContinueNode* op) override;
   void VisitStmt_(const ExprStmtNode* op) override;
   void VisitStmt_(const HLOYieldNode* op) override;
+
+  void VisitStmt_(const PrimFuncNode* op) override;
+  void VisitStmt_(const FunctionNode* op) override;
 
   void VisitStmt_(const ComputeBlockNode* op) override;
 };
@@ -270,6 +279,9 @@ class MATX_DLL StmtMutator : protected StmtFunctor<Stmt(const Stmt&)> {
   Stmt VisitStmt_(const ExprStmtNode* op) override;
   Stmt VisitStmt_(const HLOYieldNode* op) override;
 
+  Stmt VisitStmt_(const PrimFuncNode* op) override;
+  Stmt VisitStmt_(const FunctionNode* op) override;
+
   Stmt VisitStmt_(const ComputeBlockNode* op) override;
 
   /*!
@@ -312,8 +324,6 @@ class StmtExprVisitor : public StmtVisitor, public ExprVisitor {
     return ExprVisitor::VisitExpr(e);
   }
 
-  void VisitExpr_(const PrimFuncNode* op) override;
-  void VisitExpr_(const FunctionNode* op) override;
   void VisitExpr_(const LambdaFunctionNode* op) override;
 };
 
@@ -328,10 +338,6 @@ class StmtExprMutator : public StmtMutator, public ExprMutator {
  protected:
   using StmtMutator::Mutate;
 
-  BaseFunc VisitExpr(const BaseFunc& f) {
-    return runtime::Downcast<BaseFunc>(ExprMutator::VisitExpr(f));
-  }
-
   BaseExpr VisitExpr(const BaseExpr& e) override {
     return ExprMutator::VisitExpr(e);
   }
@@ -342,8 +348,6 @@ class StmtExprMutator : public StmtMutator, public ExprMutator {
     return ExprMutator::VisitExpr(e);
   }
 
-  HLOExpr VisitExpr_(const PrimFuncNode* op) override;
-  HLOExpr VisitExpr_(const FunctionNode* op) override;
   HLOExpr VisitExpr_(const LambdaFunctionNode* op) override;
 };
 
@@ -383,6 +387,7 @@ MATX_DLL void PostOrderVisit(const ObjectRef& node, std::function<void(const Obj
  */
 MATX_DLL Stmt Substitute(Stmt stmt, std::function<Optional<PrimExpr>(const PrimVar& var)> vmap);
 MATX_DLL Stmt Substitute(Stmt stmt, std::function<Optional<HLOExpr>(const HLOVar& var)> vmap);
+MATX_DLL Stmt Substitute(Stmt stmt, std::function<Optional<BaseExpr>(const BaseExpr& var)> vmap);
 
 /*!
  * \brief Substitute the var specified by vmap.

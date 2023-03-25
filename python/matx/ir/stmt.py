@@ -32,7 +32,7 @@ Each statement node have subfields that can be visited from python side.
 """
 from typing import Union
 from .. import _ffi
-from .base import Span
+from .base import Stmt, Span
 
 from ..runtime import Object
 from . import _ffi_api
@@ -50,10 +50,6 @@ def _make_string_imm(value):
         value = value.encode()
     assert isinstance(value, (bytes, bytearray))
     return StringImm(value)
-
-
-class Stmt(Object):
-    """Base class of all the statements."""
 
 
 @_ffi.register_object("ir.ExprStmt")
