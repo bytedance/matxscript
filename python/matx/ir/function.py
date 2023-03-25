@@ -218,7 +218,6 @@ class LambdaFunction(BaseFunc):
                  params,
                  body,
                  ret_type=None,
-                 attrs=None,
                  span=Span()):
         self.__init_handle_by_constructor__(
             _ffi_api.LambdaFunction,
@@ -226,7 +225,6 @@ class LambdaFunction(BaseFunc):
             _to_ir(params),
             _to_ir(body),
             _to_ir(ret_type),
-            _to_ir(attrs),
             _to_ir(span)
         )
 

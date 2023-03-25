@@ -164,10 +164,7 @@ void ExprVisitor::VisitExpr_(const CallNode* op) {
   }
 
   for (auto arg : op->args) {
-    // TODO: fix me
-    if (arg->IsInstance<BaseExprNode>()) {
-      this->VisitExpr(arg);
-    }
+    this->VisitExpr(arg);
   }
 }
 
@@ -422,14 +419,9 @@ HLOExpr ExprMutator::VisitExpr_(const CallNode* call_node) {
 
   Array<BaseExpr> call_args;
   for (auto arg : call_node->args) {
-    // TODO: fix me
-    if (arg->IsInstance<BaseExprNode>()) {
-      auto new_arg = this->VisitExpr(arg);
-      call_args.push_back(new_arg);
-      unchanged &= new_arg.same_as(arg);
-    } else {
-      call_args.push_back(arg);
-    }
+    auto new_arg = this->VisitExpr(arg);
+    call_args.push_back(new_arg);
+    unchanged &= new_arg.same_as(arg);
   }
 
   if (unchanged) {

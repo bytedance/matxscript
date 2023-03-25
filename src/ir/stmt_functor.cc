@@ -651,9 +651,9 @@ void StmtVisitor::VisitStmt_(const FunctionNode* op) {
   }
 }
 
-void StmtVisitor::VisitStmt_(const LambdaFunctionNode* op) {
-  // this->VisitSpan(op->span);
-  // this->VisitType(op->ret_type);
+void StmtExprVisitor::VisitExpr_(const LambdaFunctionNode* op) {
+  this->VisitSpan(op->span);
+  this->VisitType(op->ret_type);
   for (auto param : op->params) {
     this->VisitExpr(param);
   }
@@ -745,10 +745,10 @@ Stmt StmtMutator::VisitStmt_(const FunctionNode* op) {
   }
 }
 
-Stmt StmtMutator::VisitStmt_(const LambdaFunctionNode* op) {
+HLOExpr StmtExprMutator::VisitExpr_(const LambdaFunctionNode* op) {
   bool all_fields_unchanged = true;
   // ret_type
-  Type ret_type = op->ret_type;  // TODO: this->VisitType(op->ret_type);
+  Type ret_type = this->VisitType(op->ret_type);
   all_fields_unchanged &= ret_type.same_as(op->ret_type);
 
   // params
@@ -774,7 +774,7 @@ Stmt StmtMutator::VisitStmt_(const LambdaFunctionNode* op) {
   if (all_fields_unchanged) {
     return GetRef<LambdaFunction>(op);
   } else {
-    return LambdaFunction(captures, params, body, ret_type, op->attrs, op->span);
+    return LambdaFunction(captures, params, body, ret_type, op->span);
   }
 }
 

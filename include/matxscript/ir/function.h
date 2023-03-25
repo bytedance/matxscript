@@ -414,7 +414,7 @@ class Function : public BaseFunc {
  * \brief Lambda Function container
  * \sa LambdaFunction
  */
-class LambdaFunctionNode : public BaseFuncNode {
+class LambdaFunctionNode : public HLOExprNode {
  public:
   /*! \brief Function parameters */
   Array<BaseExpr> params;
@@ -434,7 +434,6 @@ class LambdaFunctionNode : public BaseFuncNode {
     v->Visit("captures", &captures);
     v->Visit("body", &body);
     v->Visit("ret_type", &ret_type);
-    v->Visit("attrs", &attrs);
     v->Visit("span", &span);
   }
 
@@ -442,8 +441,7 @@ class LambdaFunctionNode : public BaseFuncNode {
     // Important to make def equal first.
     equal->MarkGraphNode();
     return equal.DefEqual(params, other->params) && equal.DefEqual(captures, other->captures) &&
-           equal(ret_type, other->ret_type) && equal(attrs, other->attrs) &&
-           equal(body, other->body);
+           equal(ret_type, other->ret_type) && equal(body, other->body);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
@@ -451,33 +449,18 @@ class LambdaFunctionNode : public BaseFuncNode {
     hash_reduce.DefHash(params);
     hash_reduce.DefHash(captures);
     hash_reduce(ret_type);
-    hash_reduce(attrs);
     hash_reduce(body);
   }
 
-  /*!
-   * \brief Return the derived function annotation of this expression.
-   *
-   * \return The function type annotation.
-   * \note The function type annotation can contain IncompleteType.
-   */
-  MATX_DLL FuncType func_type_annotation() const override;
-
-  MATX_DLL Array<BaseExpr> GetParams() const override;
-  MATX_DLL Array<BaseExpr> GetDefaultParams() const override;
-  MATX_DLL Type GetReturnType() const override;
-  MATX_DLL Stmt GetBody() const override;
-  MATX_DLL StringRef GetReprName() const override;
-
   static constexpr const char* _type_key = "ir.LambdaFunction";
-  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(LambdaFunctionNode, BaseFuncNode);
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(LambdaFunctionNode, HLOExprNode);
 };
 
 /*!
  * \brief Managed reference to LambdaFunctionNode.
  * \sa LambdaFunctionNode
  */
-class LambdaFunction : public BaseFunc {
+class LambdaFunction : public HLOExpr {
  public:
   /*!
    * \brief Constructor
@@ -485,17 +468,15 @@ class LambdaFunction : public BaseFunc {
    * \param params The parameters of the function.
    * \param body The body of the function.
    * \param ret_type The return type of the function.
-   * \param attrs Additional function attributes.
    * \param span The span of the function.
    */
   MATX_DLL LambdaFunction(Array<BaseExpr> captures,
                           Array<BaseExpr> params,
                           Stmt body,
                           Type ret_type,
-                          DictAttrs attrs = NullValue<DictAttrs>(),
                           Span span = Span());
 
-  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(LambdaFunction, BaseFunc, LambdaFunctionNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(LambdaFunction, HLOExpr, LambdaFunctionNode);
   MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(LambdaFunctionNode);
 };
 
