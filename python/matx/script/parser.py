@@ -449,13 +449,15 @@ class MATXScriptParser(ast.NodeVisitor):
         # parse other
         base_stmt = None
         if node.bases:
-            assert len(node.bases) == 1, "Only supports single inheritance!!!"
+            if len(node.bases) != 1:
+                self.report_error("Only supports single inheritance!!!", TypeError)
             base_raw = self.custom_ast_node.raw.__bases__[0]
-            for dep_node in self.custom_ast_node.deps:
-                if dep_node.raw is base_raw:
-                    base_stmt = dep_node.ir
-                    break
-            assert base_stmt, "internal error: failed to find base type"
+            if base_raw is not object:
+                for dep_node in self.custom_ast_node.deps:
+                    if dep_node.raw is base_raw:
+                        base_stmt = dep_node.ir
+                        break
+                assert base_stmt, "internal error: failed to find base type"
         # gen result
         cls_stmt = _ir.ClassStmt(
             name=node.name,
