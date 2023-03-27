@@ -1530,6 +1530,8 @@ class ClassDocNode : public StmtDocNode {
  public:
   /*! \brief The name of class. */
   IdDoc name{nullptr};
+  /*! \brief The name of class. */
+  IdDoc base{nullptr};
   /*! \brief Decorators of class. */
   Array<ExprDoc> decorators;
   /*! \brief The body of class. */
@@ -1538,6 +1540,7 @@ class ClassDocNode : public StmtDocNode {
   void VisitAttrs(AttrVisitor* v) {
     StmtDocNode::VisitAttrs(v);
     v->Visit("name", &name);
+    v->Visit("base", &base);
     v->Visit("decorators", &decorators);
     v->Visit("body", &body);
   }
@@ -1559,7 +1562,7 @@ class ClassDoc : public StmtDoc {
    * \param decorators The decorator of class.
    * \param body The body of class.
    */
-  explicit ClassDoc(IdDoc name, Array<ExprDoc> decorators, Array<StmtDoc> body);
+  explicit ClassDoc(IdDoc name, IdDoc base, Array<ExprDoc> decorators, Array<StmtDoc> body);
   MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(ClassDoc, StmtDoc, ClassDocNode);
 };
 

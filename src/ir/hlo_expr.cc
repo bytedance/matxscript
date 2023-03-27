@@ -1056,7 +1056,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
       } else if (const auto* gv = call->op.as<GlobalVarNode>()) {
         prefix = LiteralDoc::Str(gv->name_hint, call_p->Attr("op"));
       } else {
-        MXLOG(FATAL) << "call: " << call;
+        prefix = d->AsDoc<ExprDoc>(call->op, call_p->Attr("op"));
       }
       Array<ExprDoc> args = build_arrays<ExprDoc>(call->args, call_p, d, 0);
       return prefix->Call(args, kw_keys, kw_values);
@@ -1253,6 +1253,17 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::ClassGetItem>(
         "", [](ir::ClassGetItem cls_getitem, ObjectPath cls_getitem_p, IRDocsifier d) -> Doc {
           auto self = d->AsDoc<ExprDoc>(cls_getitem->self, cls_getitem_p->Attr("self"));
+          // super()
+          if (auto* self_ty = cls_getitem->self->checked_type_.as<ClassTypeNode>()) {
+            if (self_ty->base.defined()) {
+              if (auto* base_ty = self_ty->base.as<ClassTypeNode>()) {
+                auto super_init_attr = base_ty->header->name_hint + "::__init__";
+                if (cls_getitem->attr->value == super_init_attr) {
+                  return IdDoc("super")->Call({})->Attr("__init__");
+                }
+              }
+            }
+          }
           return self->Attr(cls_getitem->attr->value);
         });
 

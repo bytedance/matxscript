@@ -221,7 +221,7 @@ class MATXScriptParser(ast.NodeVisitor):
             self.fn_ctx = None
         self.context = None
         self.fn_live_out_variables = dict()
-        self.functions = {}
+        self.functions = []
         self.current_node = None
         self.parent_node = None
         self.class_mode = False
@@ -419,6 +419,7 @@ class MATXScriptParser(ast.NodeVisitor):
             ClassDef(identifier name, expr* bases, keyword* keywords, stmt* body,
                      expr* decorator_list)
         """
+        span = self.build_span(node)
         # https://docs.python.org/3/library/ast.html#ast.ClassDef
         class_mode = self.class_mode
         self.class_mode = True
@@ -444,14 +445,32 @@ class MATXScriptParser(ast.NodeVisitor):
                 ir_func = ir_func.with_attr({_ir.FuncAttr.kBoundSymbol: bound_name})
                 if func_name == "__init__":
                     ir_func = ir_func.with_attr({_ir.FuncAttr.kClassConstructor: True})
-                self.functions[unbound_name] = ir_func
+                self.functions.append(ir_func)
         # parse other
+        base_stmt = None
+        if node.bases:
+            if len(node.bases) != 1:
+                self.report_error("Only supports single inheritance!!!", TypeError)
+            base_raw = self.custom_ast_node.raw.__bases__[0]
+            from abc import ABC
+            if base_raw is not object and base_raw is not ABC:
+                for dep_node in self.custom_ast_node.deps:
+                    if dep_node.raw is base_raw:
+                        base_stmt = dep_node.ir
+                        break
+                assert base_stmt, "internal error: failed to find base type"
         # gen result
-        ir_module = _ir.IRModule(self.functions, {node.name: self.class_or_func_type})
+        cls_stmt = _ir.ClassStmt(
+            name=node.name,
+            base=base_stmt,
+            body=self.functions,
+            cls_type=self.class_or_func_type,
+            span=span,
+        )
         self.class_mode = class_mode
         self.class_instance_var = last_class_ins_var
         self.pop_handle_var()
-        return ir_module
+        return cls_stmt
 
     def visit_FunctionDef(self, node: ast.FunctionDef):
         """FunctionDef visitor
@@ -544,7 +563,6 @@ class MATXScriptParser(ast.NodeVisitor):
         func = func.with_attr(_ir.FuncAttr.kGlobalSymbol, node.name)
         if is_class_init or is_function:
             func = func.with_attr({_ir.FuncAttr.kCaptureSessionHandle: True})
-        self.functions[node.name] = func
 
         if is_function:
             self.pop_handle_var()

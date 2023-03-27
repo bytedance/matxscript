@@ -32,6 +32,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include <matxscript/ir/class_stmt.h>
 #include <matxscript/ir/expr.h>
 #include <matxscript/ir/expr_functor.h>
 #include <matxscript/ir/stmt.h>
@@ -111,6 +112,7 @@ class StmtFunctor<R(const Stmt& n, Args... args)> {
 
   virtual R VisitStmt_(const PrimFuncNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
   virtual R VisitStmt_(const FunctionNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
+  virtual R VisitStmt_(const ClassStmtNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
 
   virtual R VisitStmt_(const ComputeBlockNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
 
@@ -142,6 +144,7 @@ class StmtFunctor<R(const Stmt& n, Args... args)> {
 
     IR_STMT_FUNCTOR_DISPATCH(PrimFuncNode);
     IR_STMT_FUNCTOR_DISPATCH(FunctionNode);
+    IR_STMT_FUNCTOR_DISPATCH(ClassStmtNode);
 
     IR_STMT_FUNCTOR_DISPATCH(ComputeBlockNode);
     return vtable;
@@ -183,6 +186,7 @@ class MATX_DLL StmtVisitor : protected StmtFunctor<void(const Stmt&)> {
 
   void VisitStmt_(const PrimFuncNode* op) override;
   void VisitStmt_(const FunctionNode* op) override;
+  void VisitStmt_(const ClassStmtNode* op) override;
 
   void VisitStmt_(const ComputeBlockNode* op) override;
 };
@@ -281,6 +285,7 @@ class MATX_DLL StmtMutator : protected StmtFunctor<Stmt(const Stmt&)> {
 
   Stmt VisitStmt_(const PrimFuncNode* op) override;
   Stmt VisitStmt_(const FunctionNode* op) override;
+  Stmt VisitStmt_(const ClassStmtNode* op) override;
 
   Stmt VisitStmt_(const ComputeBlockNode* op) override;
 

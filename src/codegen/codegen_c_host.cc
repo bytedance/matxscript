@@ -62,8 +62,8 @@ void CodeGenCHost::Init(bool output_ssa, bool emit_asserts) {
   CodeGenC::Init(output_ssa);
 }
 
-void CodeGenCHost::InitTypeRegistry(const ClassType& cls_ty) {
-  auto class_name = cls_ty->header->name_hint;
+void CodeGenCHost::InitTypeRegistry(const ClassStmt& cls_stmt) {
+  auto class_name = cls_stmt->name;
   this->stream << "extern \"C\" MATX_DLL MATXScriptFuncRegistry " << symbol::library_func_registry
                << class_name << ";\n";
 }
@@ -76,8 +76,8 @@ void CodeGenCHost::EndAnonymousNamespace() {
   this->stream << "\n} // namespace\n\n";
 }
 
-void CodeGenCHost::AddUserStructDeclaration(const ClassType& cls_ty) {
-  auto class_name = cls_ty->header->name_hint;
+void CodeGenCHost::AddUserStructDeclaration(const ClassStmt& cls_stmt) {
+  auto class_name = cls_stmt->name;
   this->PrintIndent(this->stream);
   this->stream << "// User class forward declarations\n";
   this->PrintIndent(this->stream);
@@ -86,10 +86,10 @@ void CodeGenCHost::AddUserStructDeclaration(const ClassType& cls_ty) {
   this->stream << "struct " << FunctionNameRules::get_class_view_name(class_name) << ";\n\n";
 }
 
-void CodeGenCHost::AddUserStructInitDeclaration(const ClassType& cls_ty,
+void CodeGenCHost::AddUserStructInitDeclaration(const ClassStmt& cls_stmt,
                                                 const BaseFunc& init_func) {
   this->InitAllState();
-  auto class_name = cls_ty->header->name_hint;
+  auto class_name = cls_stmt->name;
   auto class_view_name = FunctionNameRules::get_class_view_name(class_name);
   // init function wrapper
   if (init_func.defined()) {
@@ -125,10 +125,11 @@ static bool IsClassOnlyWithInitFunctions(const ClassType& cls_ty, const BaseFunc
   }
 }
 
-void CodeGenCHost::DefineUserStruct(const ClassType& cls_ty,
+void CodeGenCHost::DefineUserStruct(const ClassStmt& cls_stmt,
                                     const std::unordered_map<String, BaseFunc>& methods) {
   this->InitAllState();
-  auto class_name = cls_ty->header->name_hint;
+  auto class_name = cls_stmt->name;
+  auto cls_ty = cls_stmt->type;
 
   String reserved_keyword = "_2_71828182846";
   auto virtual_var_name_tables = cls_ty->GetVarNamesLookupTable();
@@ -465,10 +466,10 @@ void CodeGenCHost::DefineUserStruct(const ClassType& cls_ty,
   this->stream << "};\n\n";
 }
 
-void CodeGenCHost::DefineUserStructInitFunc(const ClassType& cls_ty, const BaseFunc& init_func) {
+void CodeGenCHost::DefineUserStructInitFunc(const ClassStmt& cls_stmt, const BaseFunc& init_func) {
   this->InitAllState();
   String reserved_keyword = "_2_71828182846";
-  auto class_name = cls_ty->header->name_hint;
+  auto class_name = cls_stmt->name;
   auto class_view_name = FunctionNameRules::get_class_view_name(class_name);
   // __del__
   auto func_deleter_name = class_name + "_F__deleter__";
@@ -1384,58 +1385,65 @@ static Function GetUnboundFunction(const Function& f) {
       params, f->default_params, body, f->ret_type, f->type_params, DictAttrs(attrs), f->span);
 }
 
-runtime::Module BuildCHost(IRModule mod) {
-  using ::matxscript::runtime::FunctionRegistry;
-
+static BaseFunc RunOptimizations(BaseFunc func) {
   // Optimizer
   FuncArgsOptimizerMutator args_opt;
   FuseContBinaryAddOptimizer fuse_cont_bin_add_opt;
   FuseContAnyGetSetItemOptimizer fuse_cont_get_set_item_opt;
   FuseContCasterOptimizer fuse_cont_caster_opt;
-  Map<GlobalVar, BaseFunc> mod_functions;
-  for (auto kv : mod->functions) {
-    auto func = fuse_cont_bin_add_opt.run(kv.second);
-    func = fuse_cont_get_set_item_opt.run(func);
-    func = fuse_cont_caster_opt.run(func);
-    bool is_yield_func = YieldDetector().GetYields(func).size() > 0;
-    if (is_yield_func) {
-      mod_functions.Set(kv.first, func);
+
+  func = fuse_cont_get_set_item_opt.run(func);
+  func = fuse_cont_caster_opt.run(func);
+  bool is_yield_func = YieldDetector().GetYields(func).size() > 0;
+  if (!is_yield_func) {
+    func = args_opt.run(func);
+  }
+  return func;
+}
+
+runtime::Module BuildCHost(IRModule mod) {
+  using ::matxscript::runtime::FunctionRegistry;
+
+  // TODO: clean code
+  Array<BaseFunc> mod_functions;
+  Array<ClassStmt> mod_classes;
+  for (auto stmt : mod->body) {
+    if (const auto* cls_node = stmt.as<ClassStmtNode>()) {
+      auto cls_stmt = runtime::GetRef<ClassStmt>(cls_node);
+      Array<Stmt> cls_new_body;
+      for (auto cls_stmt : cls_node->body) {
+        MXCHECK(cls_stmt->IsInstance<BaseFuncNode>()) << "internal error";
+        cls_new_body.push_back(RunOptimizations(Downcast<BaseFunc>(cls_stmt)));
+      }
+      cls_stmt.CopyOnWrite()->body = cls_new_body;
+      mod_classes.push_back(cls_stmt);
+    } else if (const auto* fn_node = stmt.as<BaseFuncNode>()) {
+      auto func = RunOptimizations(GetRef<BaseFunc>(fn_node));
+      mod_functions.push_back(func);
     } else {
-      mod_functions.Set(kv.first, args_opt.run(func));
+      MXTHROW << "[BuildCHost] unsupported stmt: " << stmt;
     }
   }
 
   // Find class init function
-  auto FindInitFunc = [&mod_functions](const ClassType& cls_ty) -> BaseFunc {
-    for (auto kv : mod_functions) {
-      if (kv.second->IsClassMember() && kv.second->IsClassConstructor()) {
-        auto cur_cls_name = kv.second->GetBelongToClassName();
-        auto cons_name = kv.second->GetGlobalName();
-        if (cls_ty->header->name_hint == cur_cls_name && cls_ty->GetItem(cons_name).defined()) {
-          return kv.second;
+  auto FindInitFunc = [](const ClassStmt& cls) -> BaseFunc {
+    for (auto stmt : cls->body) {
+      if (auto* fn_node = stmt.as<BaseFuncNode>()) {
+        if (fn_node->IsClassConstructor()) {
+          return GetRef<BaseFunc>(fn_node);
         }
       }
     }
     return BaseFunc(nullptr);
   };
 
-  std::vector<ClassType> type_definitions;
-  std::unordered_set<StringRef> types_visited;
-  std::unordered_map<StringRef, ClassType> types_map;
-  for (auto& kv : mod->type_definitions) {
-    types_map.emplace(kv.second->header->name_hint, kv.second);
-  }
-  for (auto& kv : mod->type_definitions) {
-    TypeVisitFunc(kv.second, type_definitions, types_visited, types_map);
-  }
-
   bool output_ssa = false;
   bool emit_asserts = false;
   CodeGenCHost cg;
   cg.Init(output_ssa, emit_asserts);
 
-  for (auto& type_def : type_definitions) {
-    cg.InitTypeRegistry(type_def);
+  for (auto& cls : mod_classes) {
+    cg.InitTypeRegistry(cls);
   }
 
   cg.BeginAnonymousNamespace();
@@ -1443,39 +1451,43 @@ runtime::Module BuildCHost(IRModule mod) {
   // class methods
   std::unordered_map<const void*, std::unordered_map<String, BaseFunc>> class_methods;
   // Add User Data declaration
-  for (auto& type_def : type_definitions) {
-    for (auto fn_kv : mod_functions) {
-      if (fn_kv.second->IsClassMember()) {
-        auto cur_cls_name = fn_kv.second->GetBelongToClassName();
-        if (type_def->header->name_hint == cur_cls_name) {
-          class_methods[type_def.get()][fn_kv.second->GetGlobalName()] = fn_kv.second;
-        }
-      }
+  for (auto& cls : mod_classes) {
+    for (auto stmt : cls->body) {
+      BaseFunc fn = Downcast<BaseFunc>(stmt);
+      class_methods[cls.get()][fn->GetGlobalName()] = fn;
     }
   }
 
   // Add User Data declaration
-  for (auto& type_def : type_definitions) {
-    cg.AddUserStructDeclaration(type_def);
+  for (auto& cls : mod_classes) {
+    cg.AddUserStructDeclaration(cls);
   }
 
   // Add User Data init wrapper function declaration
-  for (auto& type_def : type_definitions) {
-    auto init_func = FindInitFunc(type_def);
-    cg.AddUserStructInitDeclaration(type_def, init_func);
+  for (auto& cls : mod_classes) {
+    auto init_func = FindInitFunc(cls);
+    cg.AddUserStructInitDeclaration(cls, init_func);
   }
 
   // Add Function forward declaration
-  for (auto kv : mod_functions) {
-    if (kv.second->IsInstance<PrimFuncNode>()) {
-      auto f = Downcast<PrimFunc>(kv.second);
-      cg.AddFunctionDeclaration(f);
+  for (auto fn : mod_functions) {
+    if (fn->IsInstance<PrimFuncNode>()) {
+      auto prim_fn = Downcast<PrimFunc>(fn);
+      cg.AddFunctionDeclaration(prim_fn);
     } else {
-      auto f = Downcast<Function>(kv.second);
-      if (f->IsClassMember()) {
-        f = GetUnboundFunction(f);
+      auto hlo_fn = Downcast<Function>(fn);
+      cg.AddFunctionDeclaration(hlo_fn);
+    }
+  }
+  for (auto cls : mod_classes) {
+    for (auto fn : cls->body) {
+      if (fn->IsInstance<PrimFuncNode>()) {
+        auto prim_fn = Downcast<PrimFunc>(fn);
+        cg.AddFunctionDeclaration(prim_fn);
+      } else {
+        auto hlo_fn = GetUnboundFunction(Downcast<Function>(fn));
+        cg.AddFunctionDeclaration(hlo_fn);
       }
-      cg.AddFunctionDeclaration(f);
     }
   }
 
@@ -1484,58 +1496,70 @@ runtime::Module BuildCHost(IRModule mod) {
   std::unordered_map<StringRef, std::vector<String>> class_func_names;
 
   // Add User Data define
-  for (auto& type_def : type_definitions) {
-    class_func_names.emplace(type_def->header->name_hint, std::vector<String>());
-    auto init_func = FindInitFunc(type_def);
+  for (auto& cls : mod_classes) {
+    class_func_names.emplace(cls->name, std::vector<String>());
+    auto init_func = FindInitFunc(cls);
     if (init_func.defined()) {
       auto wrapper_func = FunctionNameRules::add_wrapper_suffix(init_func->GetGlobalName());
       func_names.push_back(wrapper_func);
       closures_names.push_back(wrapper_func);
-      class_func_names[type_def->header->name_hint].emplace_back(wrapper_func);
+      class_func_names[cls->name].emplace_back(wrapper_func);
     }
-    cg.DefineUserStruct(type_def, class_methods[type_def.get()]);
-    for (auto& member_fn : type_def->unbound_func_names) {
-      class_func_names[type_def->header->name_hint].emplace_back(member_fn.operator String());
+    cg.DefineUserStruct(cls, class_methods[cls.get()]);
+    for (auto& member_fn : cls->type->unbound_func_names) {
+      class_func_names[cls->name].emplace_back(member_fn.operator String());
     }
   }
 
   // Add User Data init wrapper function define
-  for (auto& type_def : type_definitions) {
-    auto init_func = FindInitFunc(type_def);
-    cg.DefineUserStructInitFunc(type_def, init_func);
+  for (auto& cls : mod_classes) {
+    auto init_func = FindInitFunc(cls);
+    cg.DefineUserStructInitFunc(cls, init_func);
   }
 
-  for (auto kv : mod_functions) {
-    cg.AddFunction(kv.second);
-    if (kv.second->IsClassMember()) {
-      auto f = GetUnboundFunction(Downcast<Function>(kv.second));
+  for (auto fn : mod_functions) {
+    cg.AddFunction(fn);
+    cg.PrintPackedFunctionMacro(fn);
+    if (fn->CaptureSessionHandle()) {
+      closures_names.push_back(fn->GetGlobalName());
+    }
+    if (fn->ExportSymbol()) {
+      func_names.push_back(fn->GetGlobalName());
+    }
+  }
+
+  for (auto cls : mod_classes) {
+    for (auto stmt : cls->body) {
+      auto fn = Downcast<BaseFunc>(stmt);
+      cg.AddFunction(fn);
+
+      auto f = GetUnboundFunction(Downcast<Function>(fn));
       cg.AddFunction(f);
       cg.PrintPackedFunctionMacro(f);
-    } else {
-      cg.PrintPackedFunctionMacro(kv.second);
-    }
-    if (kv.second->CaptureSessionHandle()) {
-      closures_names.push_back(kv.second->GetGlobalName());
-    }
-    if (kv.second->ExportSymbol()) {
-      func_names.push_back(kv.second->GetGlobalName());
-    }
-    if (kv.second->IsClassConstructor()) {
-      auto wrapper_func = FunctionNameRules::add_wrapper_suffix(kv.second->GetGlobalName());
-      auto raw_params = kv.second->GetParams();
-      MXCHECK((!raw_params.empty())) << "__init__ function has no self arg ???";
-      auto new_params = Array<BaseExpr>();
-      for (auto i = 1; i < raw_params.size(); ++i) {
-        new_params.push_back(raw_params[i]);
+
+      if (fn->CaptureSessionHandle()) {
+        closures_names.push_back(fn->GetGlobalName());
       }
-      cg.PrintPackedFunctionMacro(wrapper_func,
-                                  kv.second->GetBoundName(),
-                                  raw_params[0]->checked_type(),
-                                  new_params,
-                                  kv.second->GetDefaultParams(),
-                                  false,
-                                  kv.second->CaptureSessionHandle(),
-                                  kv.second->span);
+      if (fn->ExportSymbol()) {
+        func_names.push_back(fn->GetGlobalName());
+      }
+      if (fn->IsClassConstructor()) {
+        auto wrapper_func = FunctionNameRules::add_wrapper_suffix(fn->GetGlobalName());
+        auto raw_params = fn->GetParams();
+        MXCHECK((!raw_params.empty())) << "__init__ function has no self arg ???";
+        auto new_params = Array<BaseExpr>();
+        for (auto i = 1; i < raw_params.size(); ++i) {
+          new_params.push_back(raw_params[i]);
+        }
+        cg.PrintPackedFunctionMacro(wrapper_func,
+                                    fn->GetBoundName(),
+                                    raw_params[0]->checked_type(),
+                                    new_params,
+                                    fn->GetDefaultParams(),
+                                    false,
+                                    fn->CaptureSessionHandle(),
+                                    fn->span);
+      }
     }
   }
 

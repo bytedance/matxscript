@@ -58,7 +58,7 @@ TEST(IR, AllocaVarStmt) {
   std::cout << code << std::endl;
 
   IRModule mod;
-  mod->Add(GlobalVar("test_alloca"), func);
+  mod->Add(func);
   ::matxscript::runtime::Module m = (*build_module)({mod}).As<Module>();
   std::cout << m->GetSource() << std::endl;
 }

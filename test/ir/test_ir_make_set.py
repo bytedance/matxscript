@@ -52,7 +52,7 @@ class TestIRMakeSet(unittest.TestCase):
         ir_func = func()
         ir_func = ir_func.with_attr("global_symbol", func_name)
         ir_m = matx.ir.IRModule()
-        ir_m[func_name] = ir_func
+        ir_m.add(ir_func)
         ir_m.set_main(func_name)
         self.current_ir = str(ir_m)
         rt_m = self.build_module(ir_m)

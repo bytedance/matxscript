@@ -41,17 +41,17 @@ class CodeGenCHost final : public CodeGenC {
  public:
   CodeGenCHost();
   void Init(bool output_ssa, bool emit_asserts);
-  void InitTypeRegistry(const ClassType& cls_ty);
+  void InitTypeRegistry(const ClassStmt& cls_stmt);
 
   void BeginAnonymousNamespace();
   void EndAnonymousNamespace();
 
-  void AddUserStructDeclaration(const ClassType& cls_ty);
-  void AddUserStructInitDeclaration(const ClassType& cls_ty,
+  void AddUserStructDeclaration(const ClassStmt& cls_stmt);
+  void AddUserStructInitDeclaration(const ClassStmt& cls_stmt,
                                     const BaseFunc& init_func = BaseFunc(nullptr));
-  void DefineUserStruct(const ClassType& cls_ty,
+  void DefineUserStruct(const ClassStmt& cls_stmt,
                         const std::unordered_map<String, BaseFunc>& methods);
-  void DefineUserStructInitFunc(const ClassType& cls_ty,
+  void DefineUserStructInitFunc(const ClassStmt& cls_stmt,
                                 const BaseFunc& init_func = BaseFunc(nullptr));
 
   void AddFunction(const BaseFunc& f);

@@ -55,354 +55,102 @@ namespace ir {
 using namespace ::matxscript::runtime;
 using namespace ::matxscript::ir::printer;
 
-IRModule::IRModule(Map<GlobalVar, BaseFunc> functions,
-                   Map<GlobalTypeVar, ClassType> type_definitions,
-                   std::unordered_set<StringRef> import_set) {
+IRModule::IRModule(Array<Stmt> body) {
   auto n = make_object<IRModuleNode>();
-  n->functions = std::move(functions);
-  n->type_definitions = std::move(type_definitions);
-  n->global_type_var_map_ = {};
-  n->global_var_map_ = {};
-  n->import_set_ = std::move(import_set);
-
-  for (const auto& kv : n->functions) {
-    // set global var map
-    MXCHECK(n->global_var_map_.count(kv.first->name_hint) == 0)
-        << "Duplicate global function name " << kv.first->name_hint;
-    n->global_var_map_.Set(kv.first->name_hint, kv.first);
-  }
-
-  for (const auto& kv : n->type_definitions) {
-    // set global typevar map
-    MXCHECK(n->global_type_var_map_.count(kv.first->name_hint) == 0)
-        << "Duplicate global type definition name " << kv.first->name_hint;
-    n->global_type_var_map_.Set(kv.first->name_hint, kv.first);
-  }
+  n->body = std::move(body);
   data_ = std::move(n);
 }
 
 bool IRModuleNode::SEqualReduce(const IRModuleNode* other, SEqualReducer equal) const {
-  if (functions.size() != other->functions.size())
+  if (body.size() != other->body.size())
     return false;
-  for (const auto& kv : this->functions) {
-    if (!other->ContainGlobalVar(kv.first->name_hint))
-      return false;
-    if (!equal(kv.second, other->Lookup(kv.first->name_hint)))
-      return false;
-  }
-  if (type_definitions.size() != other->type_definitions.size())
-    return false;
-  for (const auto& kv : this->type_definitions) {
-    if (!other->ContainGlobalTypeVar(kv.first->name_hint))
-      return false;
-    if (!equal(kv.second, other->LookupTypeDef(kv.first->name_hint)))
-      return false;
-  }
-  return true;
+  return equal(body, other->body);
 }
 
 void IRModuleNode::SHashReduce(SHashReducer hash_reduce) const {
-  using KV = std::pair<StringRef, ObjectRef>;
-  // hash the functions.
-  std::vector<KV> temp;
-
-  auto reduce_temp = [&]() {
-    // sort by the hash key of the keys.
-    std::sort(temp.begin(), temp.end(), [](const KV& lhs, const KV& rhs) {
-      return lhs.first < rhs.first;
-    });
-
-    hash_reduce(static_cast<uint64_t>(temp.size()));
-    // hash the content
-    for (size_t i = 0; i < temp.size(); ++i) {
-      hash_reduce(temp[i].first);
-      hash_reduce(temp[i].second);
-    }
-  };
-
-  for (const auto& kv : this->functions) {
-    temp.emplace_back(kv.first->name_hint, kv.second);
-  }
-  reduce_temp();
-
-  temp.clear();
-  for (const auto& kv : this->type_definitions) {
-    temp.emplace_back(kv.first->name_hint, kv.second);
-  }
-  reduce_temp();
-}
-
-bool IRModuleNode::ContainGlobalVar(const StringRef& name) const {
-  return global_var_map_.find(name) != global_var_map_.end();
-}
-
-bool IRModuleNode::ContainGlobalTypeVar(const StringRef& name) const {
-  return global_type_var_map_.find(name) != global_type_var_map_.end();
-}
-
-GlobalVar IRModuleNode::GetGlobalVar(const StringRef& name) const {
-  auto it = global_var_map_.find(name);
-  if (it == global_var_map_.end()) {
-    std::ostringstream msg;
-    msg << "ValueError: Cannot find global var \"" << name << "\" in the Module\n"
-        << "candidates are: [";
-    int counter = 0;
-    for (auto kv : global_var_map_) {
-      if (counter++ != 0) {
-        msg << ", ";
-      }
-      msg << "\"" << kv.first << "\"";
-    }
-    msg << "]";
-    MXLOG(FATAL) << msg.str();
-  }
-  return (*it).second;
-}
-
-Array<GlobalVar> IRModuleNode::GetGlobalVars() const {
-  std::vector<GlobalVar> global_vars;
-  for (const auto& pair : global_var_map_) {
-    global_vars.push_back(pair.second);
-  }
-  return Array<GlobalVar>(global_vars);
-}
-
-GlobalTypeVar IRModuleNode::GetGlobalTypeVar(const StringRef& name) const {
-  MXCHECK(global_type_var_map_.defined());
-  auto it = global_type_var_map_.find(name);
-  MXCHECK(it != global_type_var_map_.end())
-      << "Cannot find global type var " << name << " in the Module";
-  return (*it).second;
-}
-
-Array<GlobalTypeVar> IRModuleNode::GetGlobalTypeVars() const {
-  std::vector<GlobalTypeVar> global_type_vars;
-  for (const auto& pair : global_type_var_map_) {
-    global_type_vars.push_back(pair.second);
-  }
-  return Array<GlobalTypeVar>(global_type_vars);
-}
-
-void WarnIfMalformed(const IRModule& mod, Function func) {
-  //  func = Downcast<relay::Function>(relay::DeDup(func));
-  //  // Type check the item before we add it to the module.
-  //  auto fv = relay::FreeVars(func);
-  //  auto ftv = relay::FreeTypeVars(func, mod);
-  //  // TODO(@jroesch): refactor to use diagnostic context
-  //  CHECK_EQ(fv.size(), 0) << "There are free variables: " << fv << std::endl;
-  //  CHECK_EQ(ftv.size(), 0) << "There are free type variables: " << fv
-  //                          << " in function: " << AsText(func, false);
+  hash_reduce(body);
 }
 
 void IRModuleNode::AddExportFunction(const StringRef& func_name) {
+  // TODO: remove this function
   const auto* BaseFuncWithAttr =
       ::matxscript::runtime::FunctionRegistry::Get("ir.BaseFuncWithAttr");
-  Map<GlobalVar, BaseFunc> new_functions;
-  for (auto kv : functions) {
-    if (kv.first->name_hint == func_name) {
-      BaseFunc func =
-          (*BaseFuncWithAttr)({kv.second, String(attr::kExportSymbol), Bool(true)}).As<BaseFunc>();
-      new_functions.Set(kv.first, func);
-    } else {
-      new_functions.Set(kv.first, kv.second);
+
+  auto fn_mutate = [&func_name, &BaseFuncWithAttr](Stmt s) -> Stmt {
+    if (const auto* fn_node = s.as<BaseFuncNode>()) {
+      if (fn_node->GetGlobalName() == func_name) {
+        BaseFunc func =
+            (*BaseFuncWithAttr)({s, String(attr::kExportSymbol), Bool(true)}).As<BaseFunc>();
+        return func;
+      }
     }
-  }
-  functions = new_functions;
+    return s;
+  };
+
+  auto mod_mutate = [&fn_mutate](Stmt s) -> Stmt {
+    if (const auto* cls_node = s.as<ClassStmtNode>()) {
+      auto new_body = cls_node->body.Map(fn_mutate);
+      if (new_body.same_as(cls_node->body)) {
+        return s;
+      }
+      auto new_cls = Downcast<ClassStmt>(s);
+      new_cls.CopyOnWrite()->body = new_body;
+      return new_cls;
+    } else {
+      return fn_mutate(s);
+    }
+  };
+
+  Array<Stmt> new_body = this->body.Map(mod_mutate);
+  this->body = new_body;
 }
 
-void IRModuleNode::Add(const GlobalVar& var, const BaseFunc& f, bool update) {
-  BaseFunc checked_func = f;
-  if (auto* ptr = f.as<FunctionNode>()) {
-    WarnIfMalformed(GetRef<IRModule>(this), GetRef<Function>(ptr));
-  }
-
-  AddUnchecked(var, checked_func);
-}
-
-void IRModuleNode::AddUnchecked(const GlobalVar& var, const BaseFunc& func) {
-  this->functions.Set(var, func);
-
-  auto it = global_var_map_.find(var->name_hint);
-  if (it != global_var_map_.end()) {
-    MXCHECK_EQ((*it).second, var);
-  } else {
-    MXCHECK(global_var_map_.count(var->name_hint) == 0)
-        << "Duplicate global function name " << var->name_hint;
-  }
-
-  global_var_map_.Set(var->name_hint, var);
-}
-
-void IRModuleNode::AddTypeDef(const GlobalTypeVar& var, const ClassType& type, bool update) {
-  AddTypeDefUnchecked(var, type, update);
-}
-
-void IRModuleNode::AddTypeDefUnchecked(const GlobalTypeVar& var,
-                                       const ClassType& type,
-                                       bool update) {
-  this->type_definitions.Set(var, type);
-  if (!update) {
-    // set global type var map
-    MXCHECK(global_type_var_map_.count(var->name_hint) == 0)
-        << "Duplicate global type definition name " << var->name_hint;
-  }
-  global_type_var_map_.Set(var->name_hint, var);
-}
-
-void IRModuleNode::Update(const GlobalVar& var, const BaseFunc& func) {
-  this->Add(var, func, true);
-}
-
-void IRModuleNode::UpdateTypeDef(const GlobalTypeVar& var, const ClassType& type) {
-  this->AddTypeDef(var, type, true);
-}
-
-void IRModuleNode::Remove(const GlobalVar& var) {
-  auto functions_node = this->functions.CopyOnWrite();
-  functions_node->erase(var);
-  auto gvar_node = global_var_map_.CopyOnWrite();
-  gvar_node->erase(var->name_hint);
-}
-
-BaseFunc IRModuleNode::Lookup(const GlobalVar& var) const {
-  auto it = functions.find(var);
-  MXCHECK(it != functions.end()) << "There is no definition of " << var->name_hint;
-  return (*it).second;
-}
-
-BaseFunc IRModuleNode::Lookup(const StringRef& name) const {
-  GlobalVar id = this->GetGlobalVar(name);
-  return this->Lookup(id);
-}
-
-ClassType IRModuleNode::LookupTypeDef(const GlobalTypeVar& var) const {
-  auto it = type_definitions.find(var);
-  MXCHECK(it != type_definitions.end()) << "There is no definition of " << var->name_hint;
-  return (*it).second;
-}
-
-ClassType IRModuleNode::LookupTypeDef(const StringRef& name) const {
-  GlobalTypeVar id = this->GetGlobalTypeVar(name);
-  return this->LookupTypeDef(id);
+void IRModuleNode::Add(const Stmt& stmt) {
+  this->body.push_back(stmt);
 }
 
 void IRModuleNode::Update(const IRModule& mod) {
-  for (auto pair : mod->type_definitions) {
-    this->AddTypeDef(pair.first, pair.second, false);
-  }
-  for (auto pair : mod->functions) {
-    this->Add(pair.first, pair.second);
+  for (auto stmt : mod->body) {
+    this->Add(stmt);
   }
 }
 
-IRModule IRModule::FromExpr(const HLOExpr& expr,
-                            const Map<GlobalVar, BaseFunc>& global_funcs,
-                            const Map<GlobalTypeVar, ClassType>& type_definitions) {
-  auto mod = IRModule(global_funcs, type_definitions);
-  BaseFunc func;
-  StringRef gv_name = "main";
-
-  if (auto* func_node = expr.as<BaseFuncNode>()) {
-    func = GetRef<BaseFunc>(func_node);
-    if (auto opt = func->GetAttr<StringRef>(attr::kGlobalSymbol)) {
-      gv_name = opt.value();
+Stmt IRModuleNode::Lookup(const StringRef& name) const {
+  for (auto stmt : this->body) {
+    if (const auto* fn_node = stmt.as<BaseFuncNode>()) {
+      if (fn_node->GetGlobalName() == name) {
+        return stmt;
+      }
+    } else if (const auto* cls_node = stmt.as<ClassStmtNode>()) {
+      if (cls_node->name == name) {
+        return stmt;
+      }
     }
-  } else {
-    MXCHECK(false) << "[FromExpr] only support BaseFunc";
-    // func = Function(relay::FreeVars(expr), {}, expr, Type(), relay::FreeTypeVars(expr, mod), {});
   }
-  auto main_gv = GlobalVar(gv_name);
-  mod->Add(main_gv, func);
-  return mod;
-}
-
-std::unordered_set<StringRef> IRModuleNode::Imports() const {
-  return this->import_set_;
+  MXCHECK(false) << "[IRModule] There is no definition of " << name;
+  return Stmt{nullptr};
 }
 
 MATXSCRIPT_REGISTER_NODE_TYPE(IRModuleNode);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.IRModule")
-    .set_body_typed([](Map<GlobalVar, BaseFunc> funcs, Map<GlobalTypeVar, ClassType> types) {
-      return IRModule(std::move(funcs), std::move(types), std::unordered_set<StringRef>());
-    });
+MATXSCRIPT_REGISTER_GLOBAL("ir.IRModule").set_body_typed([](Array<Stmt> body) {
+  return IRModule(std::move(body));
+});
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.Module_Add").set_body([](PyArgs args) -> RTValue {
   IRModule mod = args[0].As<IRModule>();
-  GlobalVar var = args[1].As<GlobalVar>();
-  ObjectRef val = args[2].As<ObjectRef>();
-  bool update = args[3].As<bool>();
-
-  if (val->IsInstance<BaseFuncNode>()) {
-    mod->Add(var, Downcast<BaseFunc>(val), update);
-  } else if (val->IsInstance<GlobalVarNode>()) {
-    GlobalVar gv = Downcast<GlobalVar>(val);
-    auto mod_copy = IRModule(make_object<IRModuleNode>(*mod.operator->()));
-    //    mod_copy = relay::transform::EtaExpand(
-    //        /* expand_constructor */ false,
-    //        /* expand_global_var */ true)(mod_copy);
-    auto func = mod_copy->Lookup(gv->name_hint);
-    mod->Add(var, Downcast<Function>(func), update);
-  } else {
-    auto func = Function({}, {}, Downcast<Stmt>(val), Type(nullptr), {});
-    mod->Add(var, func, update);
-  }
+  Stmt val = args[1].As<Stmt>();
+  mod->Add(val);
   return mod;
 });
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.Module_AddDef")
-    .set_body_typed([](IRModule mod, const GlobalTypeVar& var, const ClassType& type, bool update) {
-      return mod->AddTypeDef(var, type, update);
-    });
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.Module_GetGlobalVar")
-    .set_body_typed([](IRModule mod, const StringRef& str) { return mod->GetGlobalVar(str); });
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.Module_GetGlobalVars").set_body_typed([](IRModule mod) {
-  return mod->GetGlobalVars();
-});
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.Module_GetGlobalTypeVars").set_body_typed([](IRModule mod) {
-  return mod->GetGlobalTypeVars();
-});
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.Module_ContainGlobalVar")
-    .set_body_typed([](IRModule mod, const StringRef& name) {
-      return mod->ContainGlobalVar(name);
-    });
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.Module_GetGlobalTypeVar")
-    .set_body_typed([](IRModule mod, const StringRef& name) {
-      return mod->GetGlobalTypeVar(name);
-    });
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.Module_Lookup").set_body_typed([](IRModule mod, GlobalVar var) {
-  return mod->Lookup(var);
-});
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.Module_Lookup_str").set_body_typed([](IRModule mod, StringRef var) {
-  return mod->Lookup(var);
-});
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.Module_LookupDef")
-    .set_body_typed([](IRModule mod, GlobalTypeVar var) { return mod->LookupTypeDef(var); });
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.Module_LookupDef_str")
-    .set_body_typed([](IRModule mod, StringRef var) { return mod->LookupTypeDef(var); });
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.Module_FromExpr")
-    .set_body_typed([](HLOExpr e,
-                       Map<GlobalVar, BaseFunc> funcs,
-                       Map<GlobalTypeVar, ClassType> type_defs) {
-      return IRModule::FromExpr(e, funcs, type_defs);
-    });
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.Module_Update").set_body_typed([](IRModule mod, IRModule from) {
   mod->Update(from);
 });
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.Module_UpdateFunction")
-    .set_body_typed([](IRModule mod, GlobalVar gv, BaseFunc func) { mod->Update(gv, func); });
+MATXSCRIPT_REGISTER_GLOBAL("ir.Module_Lookup").set_body_typed([](IRModule mod, StringRef name) {
+  return mod->Lookup(name);
+});
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.Module_AddExportFunction")
     .set_body_typed([](IRModule mod, StringRef export_func) {
@@ -412,60 +160,25 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.Module_AddExportFunction")
 MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
     .set_dispatch<IRModuleNode>([](const ObjectRef& ref, ReprPrinter* p) {
       auto* node = static_cast<const IRModuleNode*>(ref.get());
-      p->stream << "IRModule(" << node->functions << ")";
+      p->stream << "IRModule(" << node->body << ")";
     });
-
-struct SortableFunction {
-  int priority;
-  GlobalVar gv;
-  BaseFunc func;
-
-  explicit SortableFunction(const std::pair<GlobalVar, BaseFunc>& obj)
-      : priority(0), gv(obj.first), func(obj.second) {
-    if (gv->name_hint == "main") {
-      priority = 1000;
-    } else if (obj.second->GetTypeKey() == "ir.PrimFunc") {
-      priority = 1;
-    } else if (obj.second->GetTypeKey() == "ir.LambdaFunction") {
-      priority = 2;
-    } else if (obj.second->GetTypeKey() == "ir.Function") {
-      priority = 3;
-    } else {
-      MXLOG(FATAL) << "TypeError: MATX cannot print functions of type: "
-                   << obj.second->GetTypeKey();
-    }
-  }
-
-  bool operator<(const SortableFunction& other) const {
-    if (this->priority != other.priority) {
-      return this->priority < other.priority;
-    }
-    return this->gv->name_hint < other.gv->name_hint;
-  }
-};
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<IRModule>("", [](IRModule mod, ObjectPath p, IRDocsifier d) -> Doc {
-      std::vector<SortableFunction> functions;
-      for (const auto& kv : mod->functions) {
-        functions.push_back(SortableFunction(kv));
-      }
-      std::sort(functions.begin(), functions.end());
       With<IRFrame> f(d, ObjectRef{nullptr});
       (*f)->AddDispatchToken(d, "ir");
-      for (const auto& entry : functions) {
-        const GlobalVar& gv = entry.gv;
-        const BaseFunc& func = entry.func;
-        d->cfg->binding_names.push_back(gv->name_hint);
-        Doc doc = d->AsDoc(func, p->Attr("functions")->MapValue(gv));
-        d->cfg->binding_names.pop_back();
+      for (int i = 0; i < mod->body.size(); ++i) {
+        auto stmt = mod->body[i];
+        Doc doc = d->AsDoc(stmt, p->Attr("body")->ArrayIndex(i));
         if (const auto* stmt_block = doc.as<StmtBlockDocNode>()) {
           (*f)->stmts.push_back(stmt_block->stmts.back());
           (*f)->stmts.back()->source_paths = std::move(doc->source_paths);
         } else if (const auto* stmt = doc.as<StmtDocNode>()) {
           (*f)->stmts.push_back(GetRef<StmtDoc>(stmt));
+        } else if (const auto* stmt = doc.as<FunctionDocNode>()) {
+          (*f)->stmts.push_back(GetRef<FunctionDoc>(stmt));
         } else {
-          (*f)->stmts.push_back(Downcast<FunctionDoc>(doc));
+          (*f)->stmts.push_back(Downcast<ClassDoc>(doc));
         }
       }
       return ModuleDoc((*f)->stmts);
