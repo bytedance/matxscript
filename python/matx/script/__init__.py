@@ -72,7 +72,7 @@ def _parser(sc_ctx: context.ScriptContext):
         node.ir = MATXScriptParser(node, sc_ctx).visit(node.ast)
         # print(node.ir)
 
-    for dep_node in sc_ctx.deps_node:
+    for dep_node in reversed(sc_ctx.deps_node):
         parser_node(dep_node)
     parser_node(sc_ctx.main_node)
 
@@ -88,7 +88,7 @@ def _link_ir_module(sc_ctx: context.ScriptContext):
         else:
             raise TypeError('Only BaseFunc, ClassStmt and IRModule are supported.')
 
-    for dep_node in sc_ctx.deps_node:
+    for dep_node in reversed(sc_ctx.deps_node):
         update_ir_module(dep_node.ir)
     update_ir_module(sc_ctx.main_node.ir)
     sc_ctx.ir_module = ir_module

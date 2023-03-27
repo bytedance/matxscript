@@ -454,6 +454,7 @@ class MATXScriptParser(ast.NodeVisitor):
             for dep_node in self.custom_ast_node.deps:
                 if dep_node.raw is base_raw:
                     base_stmt = dep_node.ir
+                    break
             assert base_stmt, "internal error: failed to find base type"
         # gen result
         cls_stmt = _ir.ClassStmt(
