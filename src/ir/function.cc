@@ -320,6 +320,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
       int default_begin_pos = func->params.size() - func->default_params.size();
       Array<AssignDoc> args;
       args.reserve(n_args);
+      bool is_method = func->IsClassMember();
       for (int i = 0; i < n_args; ++i) {
         ir::BaseExpr var = func->params[i];
         ObjectPath var_p = p->Attr("params")->ArrayIndex(i);
@@ -342,10 +343,16 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
       AsDocBody(func->body, p->Attr("body"), f->get(), d);
       Optional<ExprDoc> ret_type = NullOpt;
       ret_type = d->AsDoc<ExprDoc>(func->ret_type, p->Attr("ret_type"));
+
+      StringRef fn_name = is_method ? func->GetBoundName() : func->GetGlobalName();
+      Array<ExprDoc> decorators;
+      if (!is_method) {
+        decorators.push_back(Dialect(d, "script"));
+      }
       return FunctionDoc(
-          /*name=*/IdDoc(func->GetGlobalName()),
+          /*name=*/IdDoc(fn_name),
           /*args=*/args,
-          /*decorators=*/{Dialect(d, "script")},
+          /*decorators=*/decorators,
           /*return_type=*/ret_type,
           /*body=*/(*f)->stmts);
     });

@@ -52,6 +52,7 @@ from .stmt import ExprStmt, HLOYield, AutoFor
 from .stmt import ExceptionHandler, TryExcept, Raise
 
 from .function import PrimFunc, Function, LambdaFunction, FuncAttr
+from .class_stmt import ClassStmt
 from .module import IRModule
 
 from .op import call_intrin, call_extern

@@ -305,9 +305,10 @@ FunctionDoc::FunctionDoc(IdDoc name,
   this->data_ = std::move(n);
 }
 
-ClassDoc::ClassDoc(IdDoc name, Array<ExprDoc> decorators, Array<StmtDoc> body) {
+ClassDoc::ClassDoc(IdDoc name, IdDoc base, Array<ExprDoc> decorators, Array<StmtDoc> body) {
   ObjectPtr<ClassDocNode> n = make_object<ClassDocNode>();
   n->name = std::move(name);
+  n->base = std::move(base);
   n->decorators = std::move(decorators);
   n->body = std::move(body);
   this->data_ = std::move(n);
@@ -558,8 +559,8 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.printer.FunctionDoc")
 
 MATXSCRIPT_REGISTER_NODE_TYPE(ClassDocNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.printer.ClassDoc")
-    .set_body_typed([](IdDoc name, Array<ExprDoc> decorators, Array<StmtDoc> body) {
-      return ClassDoc(std::move(name), std::move(decorators), std::move(body));
+    .set_body_typed([](IdDoc name, IdDoc base, Array<ExprDoc> decorators, Array<StmtDoc> body) {
+      return ClassDoc(std::move(name), std::move(base), std::move(decorators), std::move(body));
     });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(CommentDocNode);

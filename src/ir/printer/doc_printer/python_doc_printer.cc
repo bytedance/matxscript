@@ -806,6 +806,11 @@ void PythonDocPrinter::PrintTypedDoc(const ClassDoc& doc) {
 
   output_ << "class ";
   PrintDoc(doc->name);
+  if (doc->base.defined()) {
+    output_ << "(";
+    PrintDoc(doc->base);
+    output_ << ")";
+  }
   output_ << ":";
 
   if (doc->comment.defined()) {

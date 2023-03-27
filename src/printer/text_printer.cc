@@ -37,23 +37,29 @@ static const char* kSemVer = "0.0.5";
 printer::Doc TextPrinter::PrintMod(const ir::IRModule& mod) {
   Doc doc;
   int counter = 0;
-  // type definitions
-  for (const auto& kv : mod->type_definitions) {
-    if (counter++ != 0) {
-      doc << Doc::NewLine();
-    }
-    doc << ir_text_printer_.Print(kv.second);
-    doc << Doc::NewLine();
-  }
   // functions
-  for (const auto& kv : mod->functions) {
+  for (const auto& stmt : mod->body) {
     if (counter++ != 0) {
       doc << Doc::NewLine();
     }
-    std::ostringstream os;
-    os << "def @" << kv.first->name_hint << " ";
-    doc << ir_text_printer_.PrintFunc(Doc::Text(os.str()), kv.second);
-    doc << Doc::NewLine();
+    if (auto* fn_node = stmt.as<ir::BaseFuncNode>()) {
+      std::ostringstream os;
+      os << "def @" << fn_node->GetGlobalName() << " ";
+      doc << ir_text_printer_.PrintFunc(Doc::Text(os.str()), GetRef<ir::BaseFunc>(fn_node));
+      doc << Doc::NewLine();
+    } else if (auto* cls_node = stmt.as<ir::ClassStmtNode>()) {
+      for (const auto& cls_stmt : cls_node->body) {
+        if (counter++ != 0) {
+          doc << Doc::NewLine();
+        }
+        auto* fn_node = cls_stmt.as<ir::BaseFuncNode>();
+        MXCHECK(fn_node);
+        std::ostringstream os;
+        os << "def @" << cls_node->name << "." << fn_node->GetBoundName() << " ";
+        doc << ir_text_printer_.PrintFunc(Doc::Text(os.str()), GetRef<ir::BaseFunc>(fn_node));
+        doc << Doc::NewLine();
+      }
+    }
   }
   return doc;
 }

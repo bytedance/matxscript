@@ -80,17 +80,17 @@ def _parser(sc_ctx: context.ScriptContext):
 def _link_ir_module(sc_ctx: context.ScriptContext):
     ir_module = _ir.IRModule()
 
-    def update_ir_module(name, func_or_mod):
-        if isinstance(func_or_mod, _ir.BaseFunc):
-            ir_module[name] = func_or_mod
-        elif isinstance(func_or_mod, _ir.IRModule):
-            ir_module.update(func_or_mod)
+    def update_ir_module(stmt_or_mod):
+        if isinstance(stmt_or_mod, (_ir.BaseFunc, _ir.ClassStmt)):
+            ir_module.add(stmt_or_mod)
+        elif isinstance(stmt_or_mod, _ir.IRModule):
+            ir_module.update(stmt_or_mod)
         else:
-            raise TypeError('Only ir.BaseFunc and _ir.IRModule are supported.')
+            raise TypeError('Only BaseFunc, ClassStmt and IRModule are supported.')
 
-    update_ir_module(sc_ctx.main_node.context.name, sc_ctx.main_node.ir)
     for dep_node in sc_ctx.deps_node:
-        update_ir_module(dep_node.context.name, dep_node.ir)
+        update_ir_module(dep_node.ir)
+    update_ir_module(sc_ctx.main_node.ir)
     sc_ctx.ir_module = ir_module
 
 

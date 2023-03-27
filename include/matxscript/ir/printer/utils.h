@@ -78,19 +78,25 @@ inline IdDoc DefineBuffer(const ir::Buffer& buffer, const Frame& frame, const IR
  * \param f The frame
  * \param d The IRDocsifier
  */
+inline void AsDocBody(const Array<ir::Stmt>& stmts,
+                      ObjectPath p,
+                      IRFrameNode* f,
+                      const IRDocsifier& d) {
+  for (int i = 0, n = stmts.size(); i < n; ++i) {
+    f->allow_concise_scoping = (i == n - 1);
+    Doc doc = d->AsDoc(stmts[i], p->Attr("seq")->ArrayIndex(i));
+    doc->source_paths.push_back(p);
+    if (const auto* block = doc.as<StmtBlockDocNode>()) {
+      f->stmts.insert(f->stmts.end(), block->stmts.begin(), block->stmts.end());
+    } else {
+      f->stmts.push_back(runtime::Downcast<StmtDoc>(doc));
+    }
+  }
+}
+
 inline void AsDocBody(const ir::Stmt& stmt, ObjectPath p, IRFrameNode* f, const IRDocsifier& d) {
   if (const auto* seq_stmt = stmt.as<ir::SeqStmtNode>()) {
-    Array<ir::Stmt> body = seq_stmt->seq;
-    for (int i = 0, n = body.size(); i < n; ++i) {
-      f->allow_concise_scoping = (i == n - 1);
-      Doc doc = d->AsDoc(body[i], p->Attr("seq")->ArrayIndex(i));
-      doc->source_paths.push_back(p);
-      if (const auto* block = doc.as<StmtBlockDocNode>()) {
-        f->stmts.insert(f->stmts.end(), block->stmts.begin(), block->stmts.end());
-      } else {
-        f->stmts.push_back(runtime::Downcast<StmtDoc>(doc));
-      }
-    }
+    AsDocBody(seq_stmt->seq, p, f, d);
   } else {
     f->allow_concise_scoping = true;
     Doc doc = d->AsDoc(stmt, p);

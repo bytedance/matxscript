@@ -651,6 +651,13 @@ void StmtVisitor::VisitStmt_(const FunctionNode* op) {
   }
 }
 
+void StmtVisitor::VisitStmt_(const ClassStmtNode* op) {
+  if (op->base.defined()) {
+    this->VisitStmt(op->base);
+  }
+  VisitArray(op->body, [this](const Stmt& s) { this->VisitStmt(s); });
+}
+
 void StmtExprVisitor::VisitExpr_(const LambdaFunctionNode* op) {
   this->VisitSpan(op->span);
   this->VisitType(op->ret_type);
@@ -742,6 +749,23 @@ Stmt StmtMutator::VisitStmt_(const FunctionNode* op) {
     return GetRef<Function>(op);
   } else {
     return Function(params, default_params, body, ret_type, type_params, op->attrs, op->span);
+  }
+}
+
+Stmt StmtMutator::VisitStmt_(const ClassStmtNode* op) {
+  Stmt base{nullptr};
+  if (op->base.defined()) {
+    base = this->VisitStmt(op->base);
+  }
+  Array<Stmt> body = Internal::Mutate(this, op->body);
+  if (base.same_as(op->base) && body.same_as(op->body)) {
+    return GetRef<Stmt>(op);
+  } else {
+    auto n = CopyOnWrite(op);
+    n->base = std::move(base);
+    n->body = std::move(body);
+    n->span = op->span;
+    return Stmt(n);
   }
 }
 
