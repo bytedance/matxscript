@@ -94,6 +94,13 @@ class ClassStmtNode : public StmtNode {
                                Optional<TObjectRef>(std::forward<TObjectRef>(default_value)));
   }
 
+  /*!
+   * \brief Look up a method its string name
+   * \param name The name of the method.
+   * \returns The method named by the argument.
+   */
+  MATX_DLL Stmt Lookup(const StringRef& name) const;
+
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("name", &name);
     v->Visit("base", &base);

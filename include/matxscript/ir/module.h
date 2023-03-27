@@ -87,6 +87,13 @@ class IRModuleNode : public Object {
    */
   MATX_DLL void Update(const IRModule& other);
 
+  /*!
+   * \brief Look up a global function or class by its string name
+   * \param name The name of the function/class.
+   * \returns The Stmt named by the argument.
+   */
+  MATX_DLL Stmt Lookup(const StringRef& name) const;
+
   static constexpr const char* _type_key = "ir.IRModule";
   static constexpr const bool _type_has_method_sequal_reduce = true;
   static constexpr const bool _type_has_method_shash_reduce = true;

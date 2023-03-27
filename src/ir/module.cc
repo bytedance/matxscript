@@ -115,6 +115,22 @@ void IRModuleNode::Update(const IRModule& mod) {
   }
 }
 
+Stmt IRModuleNode::Lookup(const StringRef& name) const {
+  for (auto stmt : this->body) {
+    if (const auto* fn_node = stmt.as<BaseFuncNode>()) {
+      if (fn_node->GetGlobalName() == name) {
+        return stmt;
+      }
+    } else if (const auto* cls_node = stmt.as<ClassStmtNode>()) {
+      if (cls_node->name == name) {
+        return stmt;
+      }
+    }
+  }
+  MXCHECK(false) << "[IRModule] There is no definition of " << name;
+  return Stmt{nullptr};
+}
+
 MATXSCRIPT_REGISTER_NODE_TYPE(IRModuleNode);
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.IRModule").set_body_typed([](Array<Stmt> body) {
@@ -130,6 +146,10 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.Module_Add").set_body([](PyArgs args) -> RTValue 
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.Module_Update").set_body_typed([](IRModule mod, IRModule from) {
   mod->Update(from);
+});
+
+MATXSCRIPT_REGISTER_GLOBAL("ir.Module_Lookup").set_body_typed([](IRModule mod, StringRef name) {
+  return mod->Lookup(name);
 });
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.Module_AddExportFunction")

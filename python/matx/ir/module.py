@@ -47,6 +47,20 @@ class IRModule(Node):
             _to_ir(body),
         )
 
+    def __getitem__(self, name):
+        """Lookup a global definition by name.
+        Parameters
+        ----------
+        name: str
+            The name or global variable.
+        Returns
+        -------
+        val: Union[Function, Class]
+            The definition referenced by :code:`var` (either a function or class).
+        """
+        assert isinstance(name, (bytes, bytearray, str))
+        return _ffi_api.Module_Lookup(self, _to_ir(name))
+
     def add(self, val):
         assert isinstance(val, Stmt)
         _ffi_api.Module_Add(self, val)

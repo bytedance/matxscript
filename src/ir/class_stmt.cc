@@ -40,6 +40,18 @@ namespace ir {
 using namespace ::matxscript::runtime;
 using namespace ::matxscript::ir::printer;
 
+Stmt ClassStmtNode::Lookup(const StringRef& name) const {
+  for (auto stmt : this->body) {
+    if (const auto* fn_node = stmt.as<BaseFuncNode>()) {
+      if (fn_node->GetGlobalName() == name) {
+        return stmt;
+      }
+    }
+  }
+  MXCHECK(false) << "[ClassStmt] There is no definition of " << name;
+  return Stmt{nullptr};
+}
+
 ClassStmt::ClassStmt(
     StringRef name, Stmt base, Array<Stmt> body, ClassType type, DictAttrs attrs, Span span) {
   auto n = make_object<ClassStmtNode>();
@@ -121,6 +133,10 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.ClassStmt_WithAttr")
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.ClassStmt_GetType").set_body_typed([](ClassStmt stmt) {
   return stmt->type;
+});
+
+MATXSCRIPT_REGISTER_GLOBAL("ir.ClassStmt_Lookup").set_body_typed([](ClassStmt cls, StringRef name) {
+  return cls->Lookup(name);
 });
 
 }  // namespace ir
