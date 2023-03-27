@@ -452,7 +452,8 @@ class MATXScriptParser(ast.NodeVisitor):
             if len(node.bases) != 1:
                 self.report_error("Only supports single inheritance!!!", TypeError)
             base_raw = self.custom_ast_node.raw.__bases__[0]
-            if base_raw is not object:
+            from abc import ABC
+            if base_raw is not object and base_raw is not ABC:
                 for dep_node in self.custom_ast_node.deps:
                     if dep_node.raw is base_raw:
                         base_stmt = dep_node.ir
