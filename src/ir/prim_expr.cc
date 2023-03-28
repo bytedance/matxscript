@@ -168,8 +168,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<HLOCastPrim>("", [](HLOCastPrim s, ObjectPath p, IRDocsifier d) -> Doc {
-      ExprDoc dtype = LiteralDoc::DataType(s->dtype, p->Attr("dtype"));
       ExprDoc value = d->AsDoc<ExprDoc>(s->value, p->Attr("value"));
+      if (d->cfg->ignore_type_cast) {
+        return value;
+      }
+      ExprDoc dtype = LiteralDoc::DataType(s->dtype, p->Attr("dtype"));
       return Dialect(d, "HLOCastPrim")->Call({dtype, value});
     });
 
@@ -209,11 +212,6 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
       .set_dispatch<ir::NodeType>("", [](ir::NodeType node, ObjectPath p, IRDocsifier d) -> Doc { \
         ExprDoc a = d->AsDoc<ExprDoc>(node->a, p->Attr("a"));                                     \
         ExprDoc b = d->AsDoc<ExprDoc>(node->b, p->Attr("b"));                                     \
-        PrimExpr ret = matxscript::ir::NodeFunc(node->a, node->b);                                \
-        if (!ret->IsInstance<ir::NodeObj>() && ret->IsInstance<ir::IntImmNode>() &&               \
-            ret->IsInstance<ir::FloatImmNode>()) {                                                \
-          return Dialect(d, OpString)->Call({a, b});                                              \
-        }                                                                                         \
         return OperationDoc(OperationDocNode::Kind::OpKind, {a, b});                              \
       });
 

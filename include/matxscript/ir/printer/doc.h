@@ -818,7 +818,7 @@ class ComprehensionDoc : public ExprDoc {
 /*!
  * \brief Representing the ListComp.
  */
-class ListCompDocNode : public Object {
+class ListCompDocNode : public ExprDocNode {
  public:
   ExprDoc elt{nullptr};
   Array<ComprehensionDoc> generators;
@@ -846,7 +846,7 @@ class ListCompDoc : public ExprDoc {
 /*!
  * \brief Representing the SetComp.
  */
-class SetCompDocNode : public Object {
+class SetCompDocNode : public ExprDocNode {
  public:
   ExprDoc elt{nullptr};
   Array<ComprehensionDoc> generators;
@@ -874,7 +874,7 @@ class SetCompDoc : public ExprDoc {
 /*!
  * \brief Representing the DictComp.
  */
-class DictCompDocNode : public Object {
+class DictCompDocNode : public ExprDocNode {
  public:
   ExprDoc key{nullptr};
   ExprDoc value{nullptr};

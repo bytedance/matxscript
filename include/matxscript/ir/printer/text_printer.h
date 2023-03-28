@@ -47,6 +47,8 @@ class PrinterConfigNode : public Object {
   Array<StringRef> binding_names = {};
   /*! \brief The prefix of module */
   StringRef dialect_prefix = "matx";
+  /*! \brief Ignore Type Cast */
+  bool ignore_type_cast = true;
   /*! \brief Number of spaces used for indentation*/
   int indent_spaces = 4;
   /*! \brief Whether to print line numbers */

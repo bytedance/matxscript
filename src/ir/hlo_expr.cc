@@ -1041,7 +1041,10 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
             Op::GetAttrMap<TPrinterMethodSymbol>("TPrinterMethodSymbol");
 
         auto op_ref = GetRef<Op>(op);
-        if (op_ref.same_as(builtin::builtins_print())) {
+        if (op_ref.same_as(builtin::call_lambda())) {
+          MXCHECK(call->args.size() == 1);
+          return d->AsDoc<ExprDoc>(call->args[0], call_p->Attr("args")->ArrayIndex(0));
+        } else if (op_ref.same_as(builtin::builtins_print())) {
           return BuiltinsPrintToDoc(call, call_p, d);
         } else if (op_global_symbol.count(op_ref)) {
           StringRef name = op_global_symbol[op_ref];
@@ -1293,8 +1296,11 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::HLOCast>("", [](ir::HLOCast e, ObjectPath p, IRDocsifier d) -> Doc {
-      ExprDoc dtype = LiteralDoc::HLOType(e->checked_type_, p->Attr("checked_type_"));
       ExprDoc value = d->AsDoc<ExprDoc>(e->value, p->Attr("value"));
+      if (d->cfg->ignore_type_cast) {
+        return value;
+      }
+      ExprDoc dtype = LiteralDoc::HLOType(e->checked_type_, p->Attr("checked_type_"));
       return Dialect(d, "HLOCast")->Call({dtype, value});
     });
 

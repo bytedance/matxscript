@@ -121,6 +121,19 @@ MATX_DLL const Op& dict_values();
 MATX_DLL const Op& dict_items();
 MATX_DLL const Op& dict_get();
 MATX_DLL const Op& dict_pop();
+
+MATX_DLL const Op& ft_dict___len__();
+MATX_DLL const Op& ft_dict___contains__();
+MATX_DLL const Op& ft_dict___getitem__();
+MATX_DLL const Op& ft_dict___setitem__();
+MATX_DLL const Op& ft_dict_clear();
+MATX_DLL const Op& ft_dict_reserve();
+MATX_DLL const Op& ft_dict_bucket_count();
+MATX_DLL const Op& ft_dict_keys();
+MATX_DLL const Op& ft_dict_values();
+MATX_DLL const Op& ft_dict_items();
+MATX_DLL const Op& ft_dict_get();
+MATX_DLL const Op& ft_dict_pop();
 /******************************************************************************
  * ADT builtin functions
  *****************************************************************************/
@@ -139,6 +152,18 @@ MATX_DLL const Op& set_difference_update();
 MATX_DLL const Op& set_update();
 MATX_DLL const Op& set_union();
 MATX_DLL const Op& set_discard();
+
+MATX_DLL const Op& ft_set___len__();
+MATX_DLL const Op& ft_set___contains__();
+MATX_DLL const Op& ft_set_add();
+MATX_DLL const Op& ft_set_clear();
+MATX_DLL const Op& ft_set_reserve();
+MATX_DLL const Op& ft_set_bucket_count();
+MATX_DLL const Op& ft_set_difference();
+MATX_DLL const Op& ft_set_difference_update();
+MATX_DLL const Op& ft_set_update();
+MATX_DLL const Op& ft_set_union();
+MATX_DLL const Op& ft_set_discard();
 /******************************************************************************
  * String builtin functions
  *****************************************************************************/
