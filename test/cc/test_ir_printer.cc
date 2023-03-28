@@ -34,7 +34,7 @@ namespace ir {
 using namespace runtime;
 
 TEST(IR, Printer) {
-  const auto* printer = ::matxscript::runtime::FunctionRegistry::Get("ir.AsText");
+  const auto* printer = ::matxscript::runtime::FunctionRegistry::Get("node.IRTextPrinter_Print");
   const auto* build_module = ::matxscript::runtime::FunctionRegistry::Get("module.build.c");
 
   PrimExpr a(3);
@@ -53,11 +53,10 @@ TEST(IR, Printer) {
   SeqStmt body(seq_stmt);
   Array<PrimVar> params{PrimVar("n", DataType::Bool())};
   PrimFunc func(params, {}, body, PrimType(DataType::Int(32)));
-
-  String ir_text = (*printer)({func}).As<String>();
-  std::cout << ir_text << std::endl;
-
   func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_arith"));
+
+  StringRef ir_text = (*printer)({func, None}).As<StringRef>();
+  std::cout << ir_text << std::endl;
 
   codegen::CodeGenCHost cg;
   cg.AddFunction(func);

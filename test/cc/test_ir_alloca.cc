@@ -32,7 +32,7 @@ using namespace runtime;
 
 TEST(IR, AllocaVarStmt) {
   DataType int_ty = DataType::Int(64);
-  const auto* printer = ::matxscript::runtime::FunctionRegistry::Get("ir.AsText");
+  const auto* printer = ::matxscript::runtime::FunctionRegistry::Get("node.IRTextPrinter_Print");
   const auto* build_module = ::matxscript::runtime::FunctionRegistry::Get("module.build.c");
 
   AllocaVarStmt alloca_stmt("b", PrimType(int_ty), IntImm(int_ty, 0));
@@ -47,10 +47,10 @@ TEST(IR, AllocaVarStmt) {
   Array<PrimVar> params{};
   PrimFunc func(params, {}, body, PrimType(DataType::Int(32)));
 
-  String ir_text = (*printer)({func}).As<String>();
-  std::cout << ir_text << std::endl;
-
   func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_alloca"));
+
+  StringRef ir_text = (*printer)({func, None}).As<StringRef>();
+  std::cout << ir_text << std::endl;
 
   codegen::CodeGenCHost cg;
   cg.AddFunction(func);

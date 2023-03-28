@@ -84,9 +84,3 @@ class IRModule(Node):
 
     def set_main(self, main):
         self.add_export_func(main)
-
-    def __str__(self):
-        return self.astext()
-
-    def __repr__(self):
-        return self.astext()

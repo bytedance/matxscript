@@ -211,8 +211,9 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
       AsDocBody(func->body, p->Attr("body"), f->get(), d);
       Optional<ExprDoc> ret_type = NullOpt;
       ret_type = d->AsDoc<ExprDoc>(func->ret_type, p->Attr("ret_type"));
+      StringRef fn_name = func->HasGlobalName() ? func->GetGlobalName() : "main";
       return FunctionDoc(
-          /*name=*/IdDoc(func->GetGlobalName()),
+          /*name=*/IdDoc(fn_name),
           /*args=*/args,
           /*decorators=*/{Dialect(d, "kernel")},
           /*return_type=*/ret_type,
@@ -344,7 +345,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
       Optional<ExprDoc> ret_type = NullOpt;
       ret_type = d->AsDoc<ExprDoc>(func->ret_type, p->Attr("ret_type"));
 
-      StringRef fn_name = is_method ? func->GetBoundName() : func->GetGlobalName();
+      StringRef fn_name = is_method ? (func->HasBoundName() ? func->GetBoundName() : "main")
+                                    : (func->HasGlobalName() ? func->GetGlobalName() : "main");
       Array<ExprDoc> decorators;
       if (!is_method) {
         decorators.push_back(Dialect(d, "script"));
