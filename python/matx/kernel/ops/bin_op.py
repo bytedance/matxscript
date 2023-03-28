@@ -23,9 +23,7 @@ from .base_op import *
 from .registry.registry import OpRegistry
 from .utils import *
 from ... import ir as _ir
-from ...ir import AssignStmt
 from ...ir.expr import *
-from ...ir.tensor_stmt import ComputeBlock, BufferRegion
 
 
 class ArithmeticBinaryOp(KernelBaseOp):
@@ -75,35 +73,55 @@ class DivOp(ArithmeticBinaryOp):
 
 
 class ArrayArrayBinaryOp:
-    def __init__(self, lhs_context, rhs_context, op_class: ArithmeticBinaryOp.__class__):
-        self.op: ArithmeticBinaryOp = op_class(lhs_context.kernel_type, rhs_context.kernel_type)
-        self.lhs_context = lhs_context
-        self.rhs_context = rhs_context
+    def __init__(self, lhs_ctx, rhs_ctx, op_class: ArithmeticBinaryOp.__class__):
+        self.lhs_ctx = lhs_ctx
+        self.rhs_ctx = rhs_ctx
+        self.lhs_kernel_type = lhs_ctx.kernel_type
+        self.rhs_kernel_type = rhs_ctx.kernel_type
+        self.op: ArithmeticBinaryOp = op_class(self.lhs_kernel_type, self.rhs_kernel_type)
+        self.ir_class = self.op.ir_class
+        self.opname = self.op.operator
 
     def result_type(self):
         return self.op.result_type
 
-    def __call__(self, dst_context):
-        lhs_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64"))
-                      for dim in self.op.lhs_broad_cast_shape]
-        rhs_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64"))
-                      for dim in self.op.rhs_broad_cast_shape]
-        dst_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64"))
-                      for dim in self.op.result_shape]
-        iter_vars = [PrimIterVar(dom, None) for dom in dst_ranges]
-        lhs_buffer_region = BufferRegion(self.lhs_context.buffer, lhs_ranges)
-        rhs_buffer_region = BufferRegion(self.rhs_context.buffer, rhs_ranges)
-        dst_buffer_region = BufferRegion(dst_context.buffer, dst_ranges)
-        reads = [lhs_buffer_region, rhs_buffer_region]
-        writes = [dst_buffer_region]
-        name_hint = f"{self.lhs_context.name} {self.op.opname} {self.rhs_context.name}"
-        element_op = self.op.ir_class(
-            self.lhs_context.script_data_var,
-            self.rhs_context.script_data_var)
-        body = AssignStmt(dst_context.script_data_var, element_op)
-        compute_block = ComputeBlock(iter_vars, reads, writes, name_hint, body)
+    def lhs_range(self):
+        return [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64"))
+                for dim in self.op.lhs_broad_cast_shape]
 
-        return compute_block
+    def rhs_range(self):
+        return [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64"))
+                for dim in self.op.rhs_broad_cast_shape]
+
+    def dst_range(self):
+        return [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64")) for dim in self.op.result_shape]
+
+    def dst_kernel_type(self):
+        return self.op.result_type
+
+    def dst_shape(self):
+        return self.op.result_shape
+
+    # def __call__(self, dst_context):
+    #    lhs_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64"))
+    #                  for dim in self.op.lhs_broad_cast_shape]
+    #    rhs_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64"))
+    #                  for dim in self.op.rhs_broad_cast_shape]
+    #    dst_ranges = [RangeExpr(_ir.const(0), PrimVar(str(dim), "int64"))
+    #                  for dim in self.op.result_shape]
+    #    iter_vars = [PrimIterVar(dom, None) for dom in dst_ranges]
+    #    lhs_buffer_region = BufferRegion(self.lhs_context.buffer, lhs_ranges)
+    #    rhs_buffer_region = BufferRegion(self.rhs_context.buffer, rhs_ranges)
+    #    dst_buffer_region = BufferRegion(dst_context.buffer, dst_ranges)
+    #    reads = [lhs_buffer_region, rhs_buffer_region]
+    #    writes = [dst_buffer_region]
+    #    name_hint = f"{self.lhs_context.name} {self.op.opname} {self.rhs_context.name}"
+    #    element_op = self.op.ir_class(
+    #        self.lhs_context.script_data_var,
+    #        self.rhs_context.script_data_var)
+    #    body = AssignStmt(dst_context.script_data_var, element_op)
+    #    compute_block = ComputeBlock(iter_vars, reads, writes, name_hint, body)
+    #    return lhs_buffer_region, rhs_buffer_region
 
 
 def make_bin_op(op_class):

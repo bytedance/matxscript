@@ -21,7 +21,9 @@
 
 import numbers
 
-from .kernel_type import NDArrayType, is_symbol
+import numpy as np
+
+from .kernel_type import NDArrayType, is_symbol, ScalarType
 
 
 def is_scalar(x: NDArrayType):
@@ -40,3 +42,16 @@ def is_scalar_shape(shape):
 
 def is_ndarray_type(t):
     return t is NDArrayType or isinstance(t, NDArrayType)
+
+
+def is_scalar_type(t):
+    return t is ScalarType or isinstance(t, ScalarType)
+
+
+def get_dtype(x):
+    if isinstance(x, bool):
+        return bool
+    if isinstance(x, int):
+        return np.int32
+    if isinstance(x, float):
+        return np.float32

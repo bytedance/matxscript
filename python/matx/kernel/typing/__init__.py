@@ -19,8 +19,6 @@
 #   */
 
 
-import numpy as np
-
 from .broadcast import *
 from .kernel_type import *
 from .utils import *
@@ -58,4 +56,22 @@ PYTYPE_TO_KERNEL_TYPE = {
     np.float64: float64,
     np.longlong: int64,
     np.ulonglong: uint64
+}
+
+STR_TO_KERNEL_TYPE = {
+    "int8": int8,
+    "int16": int16,
+    "int32": int32,
+    "int64": int64,
+    "intc": int32,
+    "uint8": uint8,
+    "uint16": uint16,
+    "uint32": uint32,
+    "uint64": uint64,
+    "uintc": uint32,
+    "float16": float16,
+    "float32": float32,
+    "float64": float64,
+    "longlong": int64,
+    "ulonglong": uint64
 }

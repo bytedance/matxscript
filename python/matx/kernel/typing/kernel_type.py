@@ -54,6 +54,10 @@ class NDArrayType:
     def dtype_str(self):
         return NPDTYPE_TO_STR[self.dtype]
 
+    def compatible_with(self, other):
+        # todo check dtype
+        return self.shape == other and self.dtype == self.dtype
+
 
 class ScalarType(NDArrayType):
 
