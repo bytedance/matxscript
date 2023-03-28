@@ -49,16 +49,16 @@ class Node(Object):
         However, it can contain dumps that are big (e.g constant weights),
         so it can be helpful to skip printing the meta data section.
         """
-        node_text = _ffi_api.AsText(self)
+        node_text = _ffi_node_api.IRTextPrinter_Print(self, None)
         if isinstance(node_text, (bytes, bytearray)):
             node_text = node_text.decode('utf-8')
         return node_text
 
     def __str__(self):
-        node_text = _ffi_api.PrettyPrint(self)
-        if isinstance(node_text, (bytes, bytearray)):
-            node_text = node_text.decode('utf-8')
-        return node_text
+        return self.astext()
+
+    def __repr__(self):
+        return self.astext()
 
 
 @_ffi.register_object("SourceName")
