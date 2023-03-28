@@ -27,6 +27,7 @@
 #include <matxscript/ir/function.h>
 
 #include <matxscript/ir/_base/with.h>
+#include <matxscript/ir/hlo_builtin.h>
 #include <matxscript/ir/prim_ops.h>
 #include <matxscript/ir/printer/doc.h>
 #include <matxscript/ir/printer/ir_docsifier.h>
@@ -333,11 +334,10 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
         }
         args.push_back(AssignDoc(DefineVar(var, *f, d), rhs, a));
       }
-      // Step 2. Handle `func->attrs`
+      // Step 2. Handle `class->attrs`
       if (func->attrs.defined() && !func->attrs->dict.empty()) {
-        (*f)->stmts.push_back(
-            ExprStmtDoc(Dialect(d, "func_attr")  //
-                            ->Call({d->AsDoc<ExprDoc>(func->attrs, p->Attr("attrs"))})));
+        auto attrs = IRTextPrinter::Print(func->attrs, d->cfg);
+        (*f)->stmts.push_back(CommentDoc(attrs));
       }
       // Step 3. Handle `func->body`
       AsDocBody(func->body, p->Attr("body"), f->get(), d);
@@ -393,31 +393,155 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
                 << node->body << ", " << node->captures << ")";
     });
 
+namespace {
+struct LambdaFunctionToComprehension {
+  struct ComprehensionHelper {
+    ExprDoc target{nullptr};
+    ExprDoc iter{nullptr};
+    Array<ExprDoc> ifs;
+  };
+
+  void VisitExpr_(const CallNode* op, ObjectPath p) {
+    if (op->op.same_as(builtin::list_append()) || op->op.same_as(builtin::ft_list_append())) {
+      elt.push_back(d->AsDoc<ExprDoc>(op->args[1], p->Attr("args")->ArrayIndex(1)));
+    } else if (op->op.same_as(builtin::set_add()) || op->op.same_as(builtin::ft_set_add())) {
+      elt.push_back(d->AsDoc<ExprDoc>(op->args[1], p->Attr("args")->ArrayIndex(1)));
+    } else if (op->op.same_as(builtin::dict___setitem__()) ||
+               op->op.same_as(builtin::ft_dict___setitem__())) {
+      elt.push_back(d->AsDoc<ExprDoc>(op->args[1], p->Attr("args")->ArrayIndex(1)));
+      elt.push_back(d->AsDoc<ExprDoc>(op->args[2], p->Attr("args")->ArrayIndex(2)));
+    } else {
+      MXTHROW << "internal error: ";
+    }
+  }
+
+  void VisitStmt_(const IfThenElseNode* op, ObjectPath p) {
+    ExprDoc cond = d->AsDoc<ExprDoc>(op->condition, p->Attr("condition"));
+    MXCHECK(!op->else_case.defined()) << "invalid syntax";
+    docs.back().ifs.push_back(cond);
+    this->Visit(op->then_case, p->Attr("then_case"));
+  }
+
+  void VisitStmt_(const ForNode* op, ObjectPath p) {
+    ExprDoc target = d->AsDoc<ExprDoc>(op->loop_var, p->Attr("loop_var"));
+    Optional<ExprDoc> min = NullOpt;
+    Optional<ExprDoc> max = NullOpt;
+    Optional<ExprDoc> step = NullOpt;
+    min = d->AsDoc<ExprDoc>(op->min, p->Attr("min"));
+    max = d->AsDoc<ExprDoc>(op->max, p->Attr("max"));
+    step = d->AsDoc<ExprDoc>(op->step, p->Attr("step"));
+    Array<ExprDoc> args;
+    Array<StringRef> kwargs_keys;
+    Array<ExprDoc> kwargs_values;
+    if (min.defined()) {
+      args.push_back(min.value());
+    }
+    if (max.defined()) {
+      args.push_back(max.value());
+    }
+    if (step.defined()) {
+      args.push_back(step.value());
+    }
+    ExprDoc rhs = IdDoc("range")->Call(args, kwargs_keys, kwargs_values);
+    Array<ExprDoc> ifs;
+    docs.push_back(ComprehensionHelper{target, rhs, ifs});
+    this->Visit(op->body, p->Attr("body"));
+  }
+
+  void VisitStmt_(const AutoForNode* op, ObjectPath p) {
+    ExprDoc lhs{nullptr};
+    if (op->loop_vars.size() > 1) {
+      int n = op->loop_vars.size();
+      Array<ExprDoc> loop_vars;
+      loop_vars.reserve(n);
+      for (int i = 0; i < n; ++i) {
+        loop_vars.push_back(
+            d->AsDoc<ExprDoc>(op->loop_vars[i], p->Attr("loop_vars")->ArrayIndex(i)));
+      }
+      lhs = TupleDoc(loop_vars);
+    } else {
+      lhs = d->AsDoc<ExprDoc>(op->loop_vars[0], p->Attr("loop_vars")->ArrayIndex(0));
+    }
+    ExprDoc rhs = d->AsDoc<ExprDoc>(op->raw_container, p->Attr("raw_container"));
+    Array<ExprDoc> ifs;
+    docs.push_back(ComprehensionHelper{lhs, rhs, ifs});
+    this->Visit(op->body, p->Attr("body"));
+  }
+
+  void Visit(ObjectRef op, ObjectPath p) {
+    if (auto const* node = op.as<AutoForNode>()) {
+      VisitStmt_(node, p);
+    } else if (auto const* node = op.as<ForNode>()) {
+      VisitStmt_(node, p);
+    } else if (auto const* node = op.as<IfThenElseNode>()) {
+      VisitStmt_(node, p);
+    } else if (auto const* node = op.as<CallNode>()) {
+      VisitExpr_(node, p);
+    } else if (auto const* node = op.as<ExprStmtNode>()) {
+      this->Visit(node->expr, p->Attr("expr"));
+    } else {
+      MXTHROW << "internal error: " << op->GetTypeKey();
+    }
+  }
+
+  Array<ComprehensionDoc> GenCompList() const {
+    Array<ComprehensionDoc> comps;
+    comps.reserve(int64_t(docs.size()));
+    for (auto& ch : docs) {
+      comps.push_back(ComprehensionDoc(ch.target, ch.iter, ch.ifs));
+    }
+    return comps;
+  }
+
+  std::vector<ExprDoc> elt;
+  std::vector<ComprehensionHelper> docs;
+  IRDocsifier d{nullptr};
+};
+
+}  // namespace
+
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::LambdaFunction>(
         "", [](ir::LambdaFunction func, ObjectPath p, IRDocsifier d) -> Doc {
+          // Currently Lambda functions are mainly used to represent Comprehension.
           With<IRFrame> f(d, func);
           (*f)->AddDispatchToken(d, "ir");
           d->SetCommonPrefix(func, [](const ObjectRef& obj) {
             return obj->IsInstance<ir::PrimVarNode>() || obj->IsInstance<ir::HLOVarNode>() ||
                    obj->IsInstance<ir::BufferNode>();
           });
-          int n_args = func->params.size();
           // Step 1. Handle `func->params`
-          Array<IdDoc> args;
-          args.reserve(n_args);
-          for (int i = 0; i < n_args; ++i) {
-            ir::BaseExpr var = func->params[i];
-            ObjectPath var_p = p->Attr("params")->ArrayIndex(i);
-            IdDoc a = d->AsDoc<IdDoc>(var, var_p);
-            args.push_back(a);
-          }
-          // TODO: fix lambda doc
+          MXCHECK(func->params.empty()) << "internal error";
           // Step 2. Handle `func->body`
-          auto body = d->AsDoc<ExprDoc>(func->body, p->Attr("body"));
-          return LambdaDoc(
-              /*args=*/args,
-              /*body=*/body);
+          MXCHECK(func->body->IsInstance<SeqStmtNode>()) << "internal error";
+          const auto* body_node = func->body.as<SeqStmtNode>();
+          ObjectRef for_n{nullptr};
+          int count = 0;
+          int i = 0;
+          for (; i < body_node->size(); ++i) {
+            if (body_node->seq[i].as<ForNode>() || body_node->seq[i].as<AutoForNode>()) {
+              for_n = body_node->seq[i];
+              count++;
+            }
+          }
+          MXCHECK(count == 1 && for_n.defined()) << "internal error";
+          LambdaFunctionToComprehension helper;
+          helper.d = d;
+          helper.Visit(for_n, p->Attr("body")->ArrayIndex(i));
+
+          if (func->ret_type->IsInstance<ListTypeNode>()) {
+            MXCHECK(helper.elt.size() == 1) << "internal error";
+            return ListCompDoc(helper.elt[0], helper.GenCompList());
+          } else if (func->ret_type->IsInstance<SetTypeNode>()) {
+            MXCHECK(helper.elt.size() == 1) << "internal error";
+            return SetCompDoc(helper.elt[0], helper.GenCompList());
+          } else if (func->ret_type->IsInstance<DictTypeNode>()) {
+            MXCHECK(helper.elt.size() == 2) << "internal error";
+            return DictCompDoc(helper.elt[0], helper.elt[1], helper.GenCompList());
+          } else {
+            MXTHROW << "unexpected lambda function ret_type: " << func->ret_type;
+          }
+          return ExprDoc{nullptr};
         });
 
 /******************************************************************************

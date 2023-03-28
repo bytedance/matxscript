@@ -552,7 +552,7 @@ void PythonDocPrinter::PrintTypedDoc(const ComprehensionDoc& doc) {
   if (doc->ifs.defined()) {
     auto ifs = doc->ifs.value();
     if (ifs.size()) {
-      output_ << " ";
+      output_ << " if ";
       PrintJoinedDocs(doc->ifs.value(), " ");
     }
   }
