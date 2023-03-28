@@ -946,6 +946,38 @@ class SliceDoc : public Doc {
 };
 
 /*!
+ * \brief Doc that represents yield statement.
+ *
+ * \sa YieldDoc
+ */
+class YieldDocNode : public ExprDocNode {
+ public:
+  Optional<ExprDoc> value;
+
+  void VisitAttrs(AttrVisitor* v) {
+    ExprDocNode::VisitAttrs(v);
+    v->Visit("value", &value);
+  }
+
+  static constexpr const char* _type_key = "ir.printer.YieldDoc";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(YieldDocNode, ExprDocNode);
+};
+
+/*!
+ * \brief Reference type of YieldDocNode.
+ *
+ * \sa YieldDocNode
+ */
+class YieldDoc : public ExprDoc {
+ public:
+  /*!
+   * \brief Constructor of YieldDoc.
+   */
+  explicit YieldDoc(Optional<ExprDoc> value);
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(YieldDoc, ExprDoc, YieldDocNode);
+};
+
+/*!
  * \brief Doc that represents assign statement.
  *
  * \sa AssignDoc
