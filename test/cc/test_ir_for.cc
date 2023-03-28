@@ -36,7 +36,7 @@ using namespace runtime;
 TEST(IR, ForRange) {
   DataType f64_ty = DataType::Float(64);
   DataType i64_ty = DataType::Int(64);
-  const auto* printer = ::matxscript::runtime::FunctionRegistry::Get("ir.AsText");
+  const auto* printer = ::matxscript::runtime::FunctionRegistry::Get("node.IRTextPrinter_Print");
 
   PrimVar arg_ib("ib", i64_ty);
   AllocaVarStmt alloca_result("result", PrimType(f64_ty), FloatImm(f64_ty, 0.0));
@@ -52,7 +52,7 @@ TEST(IR, ForRange) {
   Array<BaseExpr> params{arg_ib};
   Function func(params, {}, body, PrimType(DataType::Float(64)), {});
 
-  String ir_text = (*printer)({func}).As<String>();
+  String ir_text = (*printer)({func, None}).As<String>();
   std::cout << ir_text << std::endl;
 }
 

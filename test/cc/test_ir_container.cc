@@ -34,7 +34,7 @@ namespace ir {
 using namespace runtime;
 
 TEST(IR, ListContainer) {
-  const auto* printer = ::matxscript::runtime::FunctionRegistry::Get("ir.AsText");
+  const auto* printer = ::matxscript::runtime::FunctionRegistry::Get("node.IRTextPrinter_Print");
   ListType list_ty;
 
   auto list_append_op = Op::Get("ir.list_append");
@@ -52,7 +52,7 @@ TEST(IR, ListContainer) {
   seqs.push_back(ret_stmt);
 
   Function func({}, {}, SeqStmt(seqs), list_ty, {});
-  String ir_text = (*printer)({func}).As<String>();
+  String ir_text = (*printer)({func, None}).As<String>();
 
   func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("return_list"));
   std::cout << ir_text << std::endl;

@@ -33,7 +33,7 @@ namespace ir {
 using namespace runtime;
 
 TEST(IR, Yield) {
-  const auto* printer = ::matxscript::runtime::FunctionRegistry::Get("ir.AsText");
+  const auto* printer = ::matxscript::runtime::FunctionRegistry::Get("node.IRTextPrinter_Print");
   const auto* build_module = ::matxscript::runtime::FunctionRegistry::Get("module.build.c");
 
   PrimVar n("n", DataType::Int(32));
@@ -50,7 +50,7 @@ TEST(IR, Yield) {
   Array<BaseExpr> params{n};
   Function func(params, {}, body, ObjectType(), {});
 
-  String ir_text = (*printer)({func}).As<String>();
+  String ir_text = (*printer)({func, None}).As<String>();
   std::cout << ir_text << std::endl;
 
   func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_generator"));
