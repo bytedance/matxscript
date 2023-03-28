@@ -54,7 +54,7 @@ TEST(IR, ListContainer) {
   Function func({}, {}, SeqStmt(seqs), list_ty, {});
   func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("return_list"));
 
-  String ir_text = (*printer)({func, None}).As<String>();
+  StringRef ir_text = (*printer)({func, None}).As<StringRef>();
 
   std::cout << ir_text << std::endl;
 

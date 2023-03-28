@@ -49,7 +49,7 @@ TEST(IR, AllocaVarStmt) {
 
   func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_alloca"));
 
-  String ir_text = (*printer)({func, None}).As<String>();
+  StringRef ir_text = (*printer)({func, None}).As<StringRef>();
   std::cout << ir_text << std::endl;
 
   codegen::CodeGenCHost cg;

@@ -51,7 +51,7 @@ TEST(IR, Yield) {
   Function func(params, {}, body, ObjectType(), {});
   func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_generator"));
 
-  String ir_text = (*printer)({func, None}).As<String>();
+  StringRef ir_text = (*printer)({func, None}).As<StringRef>();
   std::cout << ir_text << std::endl;
 
   codegen::CodeGenCHost cg;

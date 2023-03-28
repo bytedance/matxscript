@@ -900,8 +900,8 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::HLOYield>(  //
         "",
         [](ir::HLOYield stmt, ObjectPath p, IRDocsifier d) -> Doc {
-          MXTHROW << "TODO: support HLOYieldDoc";
-          return ExprDoc{nullptr};
+          // TODO: support HLOYieldDoc;
+          return CommentDoc("TODO");
         });
 
 }  // namespace ir

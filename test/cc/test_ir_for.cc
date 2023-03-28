@@ -54,7 +54,7 @@ TEST(IR, ForRange) {
 
   func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_for_range"));
 
-  String ir_text = (*printer)({func, None}).As<String>();
+  StringRef ir_text = (*printer)({func, None}).As<StringRef>();
   std::cout << ir_text << std::endl;
 }
 

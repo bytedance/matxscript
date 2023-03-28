@@ -55,7 +55,7 @@ TEST(IR, Printer) {
   PrimFunc func(params, {}, body, PrimType(DataType::Int(32)));
   func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_arith"));
 
-  String ir_text = (*printer)({func, None}).As<String>();
+  StringRef ir_text = (*printer)({func, None}).As<StringRef>();
   std::cout << ir_text << std::endl;
 
   codegen::CodeGenCHost cg;
