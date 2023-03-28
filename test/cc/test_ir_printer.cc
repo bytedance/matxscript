@@ -53,11 +53,10 @@ TEST(IR, Printer) {
   SeqStmt body(seq_stmt);
   Array<PrimVar> params{PrimVar("n", DataType::Bool())};
   PrimFunc func(params, {}, body, PrimType(DataType::Int(32)));
+  func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_arith"));
 
   String ir_text = (*printer)({func, None}).As<String>();
   std::cout << ir_text << std::endl;
-
-  func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_arith"));
 
   codegen::CodeGenCHost cg;
   cg.AddFunction(func);

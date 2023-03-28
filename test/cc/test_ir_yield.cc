@@ -49,11 +49,10 @@ TEST(IR, Yield) {
   SeqStmt body(seq_stmt);
   Array<BaseExpr> params{n};
   Function func(params, {}, body, ObjectType(), {});
+  func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_generator"));
 
   String ir_text = (*printer)({func, None}).As<String>();
   std::cout << ir_text << std::endl;
-
-  func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_generator"));
 
   codegen::CodeGenCHost cg;
   cg.AddFunction(func);

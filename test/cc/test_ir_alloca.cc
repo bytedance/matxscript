@@ -47,10 +47,10 @@ TEST(IR, AllocaVarStmt) {
   Array<PrimVar> params{};
   PrimFunc func(params, {}, body, PrimType(DataType::Int(32)));
 
+  func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_alloca"));
+
   String ir_text = (*printer)({func, None}).As<String>();
   std::cout << ir_text << std::endl;
-
-  func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_alloca"));
 
   codegen::CodeGenCHost cg;
   cg.AddFunction(func);

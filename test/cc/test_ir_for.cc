@@ -52,6 +52,8 @@ TEST(IR, ForRange) {
   Array<BaseExpr> params{arg_ib};
   Function func(params, {}, body, PrimType(DataType::Float(64)), {});
 
+  func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("test_for_range"));
+
   String ir_text = (*printer)({func, None}).As<String>();
   std::cout << ir_text << std::endl;
 }

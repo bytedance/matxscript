@@ -52,9 +52,10 @@ TEST(IR, ListContainer) {
   seqs.push_back(ret_stmt);
 
   Function func({}, {}, SeqStmt(seqs), list_ty, {});
+  func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("return_list"));
+
   String ir_text = (*printer)({func, None}).As<String>();
 
-  func = WithAttr(std::move(func), attr::kGlobalSymbol, StringRef("return_list"));
   std::cout << ir_text << std::endl;
 
   codegen::CodeGenCHost cg;
