@@ -30,6 +30,15 @@ def equals(x, y):
     return sympy.simplify(x - y) == 0
 
 
+def compare(x, y):
+    simplified = sympy.simplify(x - y)
+    if simplified == 0:
+        return 0
+    if simplified.is_positive():
+        return 1
+    return -1
+
+
 def simplify(x):
     return sympy.simplify(x)
 

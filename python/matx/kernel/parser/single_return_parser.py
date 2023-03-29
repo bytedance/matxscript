@@ -26,6 +26,7 @@ from matx.kernel.ops import OpRegistry
 from matx.script import context as script_context
 from .context import *
 from .utils import build_span
+from ..symbol.utils import compare as symbol_compare
 from ...ir import AssignStmt
 from ...ir.expr import *
 from ...ir.tensor_stmt import ComputeBlock, BufferRegion
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
 
 
 class KernelSingleReturnParser(ast.NodeVisitor):
-    allowed_ast_node = [ast.Return, ast.BinOp, ast.Add, ast.UnaryOp, ast.BinOp, ast.Compare,
+    allowed_ast_node = [ast.Return, ast.BinOp, ast.Add, ast.Div, ast.UnaryOp, ast.BinOp, ast.Compare,
                         ast.Name, ast.Load, ast.Constant]
 
     def __init__(
@@ -187,7 +188,7 @@ class KernelSingleReturnParser(ast.NodeVisitor):
             op = op_class(lhs_ctx, rhs_ctx)
             dst_kernel_type = op.dst_kernel_type()
             var_info = (None, AbstractNDArrayContext(dst_kernel_type), dst_kernel_type)
-            self.name_hint = f"{lhs_ctx.name} {op.opname} {rhs_ctx.name}"
+            self.name_hint = f"tobe fix"
             self.ops.append(op)
             self.var_stack.append(var_info)
             return op.ir_class(lhs_ir, rhs_ir)
@@ -252,6 +253,8 @@ class KernelSingleReturnParser(ast.NodeVisitor):
             if is_symbol(dim):
                 symbol_ctx = self.shape_symbol_table[str(dim)]
                 end = symbol_ctx.script_var
+            elif dim is None:
+                continue
             else:
                 end = _ir.const(dim)
             rng_expr = RangeExpr(start, end)
@@ -265,6 +268,6 @@ class KernelSingleReturnParser(ast.NodeVisitor):
             if len(dst_shape) > len(longest_shape):
                 longest_shape = dst_shape
             elif len(dst_shape) == len(longest_shape) \
-                    and sum(dst_shape) > sum(longest_shape):
+                    and symbol_compare(sum(dst_shape), sum(longest_shape)) > 0:
                 longest_shape = dst_shape
         return longest_shape
