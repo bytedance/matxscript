@@ -36,8 +36,17 @@ if TYPE_CHECKING:
 
 
 class KernelSingleReturnParser(ast.NodeVisitor):
-    allowed_ast_node = [ast.Return, ast.BinOp, ast.Add, ast.Div, ast.UnaryOp, ast.BinOp, ast.Compare,
-                        ast.Name, ast.Load, ast.Constant]
+    allowed_ast_node = [
+        ast.Return,
+        ast.BinOp,
+        ast.Add,
+        ast.Div,
+        ast.UnaryOp,
+        ast.BinOp,
+        ast.Compare,
+        ast.Name,
+        ast.Load,
+        ast.Constant]
 
     def __init__(
             self,
