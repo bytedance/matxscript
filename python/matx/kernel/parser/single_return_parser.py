@@ -189,8 +189,12 @@ class KernelSingleReturnParser(ast.NodeVisitor):
         opname = type(node.op).__name__
         lhs_ir = self.visit(node.left)
         lhs, lhs_ctx, lhs_t = self.var_stack.pop()
+        if not lhs_ctx.is_abstract_ctx():
+            lhs_ir = lhs_ctx.script_data_var
         rhs_ir = self.visit(node.right)
         rhs, rhs_ctx, rhs_t = self.var_stack.pop()
+        if not rhs_ctx.is_abstract_ctx():
+            rhs_ir = rhs_ctx.script_data_var
         if is_ndarray_type(lhs_t) and is_ndarray_type(rhs_t):
             op_class = OpRegistry.get_bin_op(
                 lhs_ctx.kernel_type, rhs_ctx.kernel_type, opname)

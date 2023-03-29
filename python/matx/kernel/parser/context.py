@@ -43,11 +43,15 @@ class NDArrayContext(AbstractNDArrayContext):
         assert is_ndarray_type(type_), 'syntax error'
         super().__init__(type_)
         self.name: str = name
-        self.script_ptr_var = _ir.PrimVar(name, self.script_type, span)  # HLO_VAR
-        self.script_data_var = _ir.PrimVar(name, type_.dtype_str(), span)  # PRIM_VAR
+        self.script_ptr_var = _ir.PrimVar(f"{name}", self.script_type, span)  # HLO_VAR
+        self.script_data_var = _ir.PrimVar(f"{name}.data", type_.dtype_str(), span)  # PRIM_VAR
         buffer_shape = [dim if not is_symbol(dim) else shape_symbol_table[str(dim)].script_var
                         for dim in self.shape]
-        self.buffer = decl_buffer(buffer_shape)
+        self.buffer = decl_buffer(
+            buffer_shape,
+            dtype=type_.dtype_str(),
+            name=name,
+            data=self.script_ptr_var)
         self._abstract_ctx = False
 
 
@@ -74,4 +78,4 @@ class SymbolContext:
         self.name: str = str(symbol)
         self.kernel_type = sympy.Basic
         self.script_type = _ir.PrimType("int64")
-        self.script_var = _ir.PrimVar(self.name, "int64", span)
+        self.script_var = _ir.PrimVar(f"symbol_{self.name}", "int64", span)
