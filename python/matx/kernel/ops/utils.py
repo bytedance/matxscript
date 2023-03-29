@@ -20,9 +20,8 @@
 
 from numbers import Number
 
-import numpy as np
-
 from ..typing import *
+from ...ir.tensor_stmt import BufferRegion
 
 
 def get_dtype(t):
@@ -50,3 +49,7 @@ def np_result_dtype(nptypes):
             if k == restype.type:
                 return k
     return restype.type
+
+
+def make_buffer_region(buffer, range):
+    return BufferRegion(buffer, range)
