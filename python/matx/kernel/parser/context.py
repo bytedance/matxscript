@@ -43,8 +43,8 @@ class NDArrayContext(AbstractNDArrayContext):
         assert is_ndarray_type(type_), 'syntax error'
         super().__init__(type_)
         self.name: str = name
-        self.script_ptr_var = _ir.PrimVar(f"{name}", self.script_type, span)  # HLO_VAR
-        self.script_data_var = _ir.PrimVar(f"{name}.data", type_.dtype_str(), span)  # PRIM_VAR
+        self.script_ptr_var = _ir.PrimVar(f"{name}", self.script_type, span)  # PTR_VAR
+        self.script_data_var = _ir.PrimVar(f"{name}_data", type_.dtype_str(), span)  # PRIM_VAR
         buffer_shape = [dim if not is_symbol(dim) else shape_symbol_table[str(dim)].script_var
                         for dim in self.shape]
         self.buffer = decl_buffer(

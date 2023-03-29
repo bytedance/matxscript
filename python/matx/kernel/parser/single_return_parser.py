@@ -69,7 +69,6 @@ class KernelSingleReturnParser(ast.NodeVisitor):
         self.var_stack = []
         self.ops = []
         self.read_ctx = []
-        self.name_hint = ''
 
     def generic_visit(self, node):
         """Override method in ast.NodeVisitor.
@@ -201,7 +200,6 @@ class KernelSingleReturnParser(ast.NodeVisitor):
             op = op_class(lhs_ctx, rhs_ctx)
             dst_kernel_type = op.dst_kernel_type()
             var_info = (None, AbstractNDArrayContext(dst_kernel_type), dst_kernel_type)
-            self.name_hint = f"tobe fix"
             self.ops.append(op)
             self.var_stack.append(var_info)
             return op.ir_class(lhs_ir, rhs_ir)
@@ -257,7 +255,7 @@ class KernelSingleReturnParser(ast.NodeVisitor):
 
         writes = [BufferRegion(self.return_ctx.buffer, return_range)]
 
-        return ComputeBlock(iter_vars, reads, writes, self.name_hint, body)
+        return ComputeBlock(iter_vars, reads, writes, self.kernel_p.func_name, body)
 
     def _make_range(self, shape):
         rng = []
