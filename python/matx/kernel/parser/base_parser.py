@@ -193,7 +193,8 @@ class ParserBase(ast.NodeVisitor):
                 self.reads.append(BufferRegion(rhs_ctx.buffer, range_))
             return op.ir_class(lhs_ir, rhs_ir)
         else:
-            raise SyntaxError(f"bin op does not support {lhs_t} and {rhs_t}")
+            raise SyntaxError(
+                f"bin op does not support {lhs_ctx.kernel_type} and {rhs_ctx.kernel_type}")
         # todo insert to ir
 
     def visit_BoolOp(self, node: ast.BoolOp) -> Any:
