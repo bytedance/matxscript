@@ -178,6 +178,12 @@ SliceDoc::SliceDoc(Optional<ExprDoc> start, Optional<ExprDoc> stop, Optional<Exp
   this->data_ = std::move(n);
 }
 
+YieldDoc::YieldDoc(Optional<ExprDoc> value) {
+  ObjectPtr<YieldDocNode> n = make_object<YieldDocNode>();
+  n->value = std::move(value);
+  this->data_ = std::move(n);
+}
+
 AssignDoc::AssignDoc(ExprDoc lhs, Optional<ExprDoc> rhs, Optional<ExprDoc> annotation) {
   MXCHECK(rhs.defined() || annotation.defined())
       << "ValueError: At least one of rhs and annotation needs to be non-null for AssignDoc.";
@@ -462,6 +468,11 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.printer.SliceDoc")
     .set_body_typed([](Optional<ExprDoc> start, Optional<ExprDoc> stop, Optional<ExprDoc> step) {
       return SliceDoc(std::move(start), std::move(stop), std::move(step));
     });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(YieldDocNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.printer.YieldDoc").set_body_typed([](Optional<ExprDoc> value) {
+  return YieldDoc(std::move(value));
+});
 
 MATXSCRIPT_REGISTER_NODE_TYPE(AssignDocNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.printer.AssignDoc")

@@ -171,6 +171,7 @@ class PythonDocPrinter : public DocPrinter {
   void PrintTypedDoc(const SetCompDoc& doc) final;
   void PrintTypedDoc(const DictCompDoc& doc) final;
   void PrintTypedDoc(const SliceDoc& doc) final;
+  void PrintTypedDoc(const YieldDoc& doc) final;
   void PrintTypedDoc(const StmtBlockDoc& doc) final;
   void PrintTypedDoc(const AssignDoc& doc) final;
   void PrintTypedDoc(const IfDoc& doc) final;
@@ -595,6 +596,14 @@ void PythonDocPrinter::PrintTypedDoc(const SliceDoc& doc) {
   if (doc->step != nullptr) {
     output_ << ":";
     PrintDoc(doc->step.value());
+  }
+}
+
+void PythonDocPrinter::PrintTypedDoc(const YieldDoc& doc) {
+  output_ << "yield";
+  if (doc->value.defined()) {
+    output_ << " ";
+    PrintDoc(doc->value.value());
   }
 }
 

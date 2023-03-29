@@ -357,6 +357,8 @@ void DocPrinter::PrintDoc(const Doc& doc) {
     PrintTypedDoc(GetRef<DictCompDoc>(doc_node));
   } else if (const auto* doc_node = doc.as<SliceDocNode>()) {
     PrintTypedDoc(GetRef<SliceDoc>(doc_node));
+  } else if (const auto* doc_node = doc.as<YieldDocNode>()) {
+    PrintTypedDoc(GetRef<YieldDoc>(doc_node));
   } else if (const auto* doc_node = doc.as<StmtBlockDocNode>()) {
     PrintTypedDoc(GetRef<StmtBlockDoc>(doc_node));
   } else if (const auto* doc_node = doc.as<AssignDocNode>()) {

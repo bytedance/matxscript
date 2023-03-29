@@ -178,6 +178,11 @@ class DocPrinter {
   virtual void PrintTypedDoc(const SliceDoc& doc) = 0;
 
   /*!
+   * \brief Virtual method to print a YieldDoc
+   */
+  virtual void PrintTypedDoc(const YieldDoc& doc) = 0;
+
+  /*!
    * \brief Virtual method to print a StmtBlockDoc
    */
   virtual void PrintTypedDoc(const StmtBlockDoc& doc) = 0;
