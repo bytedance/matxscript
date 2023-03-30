@@ -23,19 +23,44 @@ from matx import ir as _ir
 from matx.ir.tensor_stmt import decl_buffer
 from matx.kernel.typing import *
 from matx.kernel.typing import NDArrayType as kernelNDArrayT
+from ..symbol import is_symbol_type
 
 
-class AbstractNDArrayContext:
+class AbstractBaseVariableContext:
 
-    def __init__(self, type_: kernelNDArrayT) -> None:
-        assert is_ndarray_type(type_), 'syntax error'
-        self.shape = type_.shape
-        self.kernel_type: kernelNDArrayT = type_  # NDARRAY TYPE
-        self.script_type = _ir.PointerType(_ir.PrimType(type_.dtype_str()))
+    def __init__(self, type_) -> None:
+        self.kernel_type = type_  # NDARRAY TYPE
+        if is_scalar_type(type_):
+            self.script_type = _ir.PrimType(type_.dtype_str())
+        elif is_ndarray_type(type_):
+            self.script_type = _ir.PointerType(_ir.PrimType(type_.dtype_str()))
+        elif is_symbol_type(type_):
+            self.script_type = _ir.PrimType("int64")
+        else:
+            raise SyntaxError(f"unknown type {type_}")
         self._abstract_ctx = True
 
     def is_abstract_ctx(self):
         return self._abstract_ctx
+
+
+class AbstractNDArrayContext(AbstractBaseVariableContext):
+
+    def __init__(self, type_: kernelNDArrayT) -> None:
+        assert is_ndarray_type(type_), 'syntax error'
+        super().__init__(type_)
+        self.shape = type_.shape
+        self.data = AbstractScalarContext(ScalarType(type_.dtype))
+
+
+class AbstractScalarContext(AbstractBaseVariableContext):
+
+    def __init__(self, type_: kernelNDArrayT):
+        assert is_scalar_type(type_), 'syntax error'
+        assert is_scalar_shape(type_.shape), 'syntax error'
+        super().__init__(type_)
+        self.shape = type_.shape
+        self.data = None
 
 
 class NDArrayContext(AbstractNDArrayContext):
@@ -43,39 +68,43 @@ class NDArrayContext(AbstractNDArrayContext):
         assert is_ndarray_type(type_), 'syntax error'
         super().__init__(type_)
         self.name: str = name
-        self.script_ptr_var = _ir.PrimVar(f"{name}", self.script_type, span)  # PTR_VAR
-        self.script_data_var = _ir.PrimVar(f"{name}_data", type_.dtype_str(), span)  # PRIM_VAR
+        self.script_var = _ir.PrimVar(f"{name}", self.script_type, span)  # PTR_VAR
         buffer_shape = [dim if not is_symbol(dim) else shape_symbol_table[str(dim)].script_var
                         for dim in self.shape]
+        self.data = ScalarContext(f"{name}_data", ScalarType(type_.dtype), span)
         self.buffer = decl_buffer(
             buffer_shape,
             dtype=type_.dtype_str(),
             name=name,
-            data=self.script_ptr_var)
+            data=self.script_var)
         self._abstract_ctx = False
 
 
-class ScalarContext(NDArrayContext):
+class ScalarContext(AbstractScalarContext):
     def __init__(self, name: str, type_: kernelNDArrayT, span):
-        super().__init__(name, type_, {}, span)
+        super().__init__(type_)
         assert is_scalar_type(type_), 'syntax error'
         assert is_scalar_shape(self.shape), 'sytax error'
+        self.name: str = name
         self.script_type = _ir.PrimType(type_.dtype_str())
-        self.script_ptr_var = None
+        self.script_var = _ir.PrimVar(name, self.script_type, span)
+        self.data = None
+        self._abstract_ctx = False
 
 
 class ConstScalarContext(ScalarContext):
 
     def __init__(self, value, type_: kernelNDArrayT, span):
         super().__init__("const", type_, span)
-        self.script_data_var = _ir.const(value, type_.dtype_str())
+        self.script_type = _ir.PrimType(type_.dtype_str())
+        self.script_var = _ir.const(value, self.script_type)
 
 
-class SymbolContext:
+class SymbolContext(AbstractBaseVariableContext):
 
     def __init__(self, symbol, span) -> None:
+        super().__init__(sympy.Basic)
         assert is_symbol(symbol), 'syntax error'
         self.name: str = str(symbol)
-        self.kernel_type = sympy.Basic
-        self.script_type = _ir.PrimType("int64")
         self.script_var = _ir.PrimVar(f"symbol_{self.name}", "int64", span)
+        self.data = None

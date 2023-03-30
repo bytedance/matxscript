@@ -102,8 +102,8 @@ class ParserBase(ast.NodeVisitor):
         span = build_span(self.root_node, node)
         # add parameters of function
         for arg, ctx in self.ndarray_context_table.items():
-            self.context.update_symbol(arg, ctx.script_ptr_var)
-            self.context.func_params.append(ctx.script_ptr_var)
+            self.context.update_symbol(arg, ctx.script_var)
+            self.context.func_params.append(ctx.script_var)
 
         # make dim variables as args
         for dim, dim_var in self.shape_symbol_table.items():
@@ -146,7 +146,7 @@ class ParserBase(ast.NodeVisitor):
                                                   build_span(self.root_node, node))
 
             self.var_stack.append(const_scalar_ctx)  # todo none for now
-            return const_scalar_ctx.script_data_var
+            return const_scalar_ctx.data.script_var
         else:
             raise NotImplementedError(f'Unsupported value {node.value}')
 
@@ -160,7 +160,7 @@ class ParserBase(ast.NodeVisitor):
         if name in self.ndarray_context_table:
             ctx = self.ndarray_context_table[name]
             self.var_stack.append(ctx)
-            return ctx.script_ptr_var
+            return ctx.script_var
         raise NotImplementedError(f'the type of {name} is not support')
         # return node.id
 
@@ -184,11 +184,11 @@ class ParserBase(ast.NodeVisitor):
             var_info = AbstractNDArrayContext(dst_kernel_type)
             self.var_stack.append(var_info)
             if not lhs_ctx.is_abstract_ctx():
-                lhs_ir = lhs_ctx.script_data_var
+                lhs_ir = lhs_ctx.data.script_var
                 range_ = self._make_range(op.op.lhs_broad_cast_shape)
                 self.reads.append(BufferRegion(lhs_ctx.buffer, range_))
             if not rhs_ctx.is_abstract_ctx():
-                rhs_ir = rhs_ctx.script_data_var
+                rhs_ir = rhs_ctx.data.script_var
                 range_ = self._make_range(op.op.rhs_broad_cast_shape)
                 self.reads.append(BufferRegion(rhs_ctx.buffer, range_))
             return op.ir_class(lhs_ir, rhs_ir)

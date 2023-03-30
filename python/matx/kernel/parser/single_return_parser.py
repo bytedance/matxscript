@@ -60,7 +60,7 @@ class KernelSingleReturnParser(ParserBase):
         rt_ctx = self.var_stack.pop()
 
         # todo make compute block
-        body = AssignStmt(self.return_ctx.script_data_var, rt_ir)
+        body = AssignStmt(self.return_ctx.data.script_var, rt_ir)
         result_shape = rt_ctx.shape
         if list(result_shape) != list(self.return_ctx.shape):
             raise RuntimeError(f"the marked shape {self.return_ctx.shape} "
