@@ -174,6 +174,19 @@ class Buffer : public ObjectRef {
                   Array<IntImm> axis_separators = {},
                   Span span = Span());
 
+  /*!
+   * \brief Create an Expr that does a vector load at begin index.
+   * \param begin The beginning index
+   * \param dtype The data type to be loaded.
+   */
+  MATX_DLL PrimExpr vload(Array<PrimExpr> begin, runtime::DataType dtype) const;
+  /*!
+   * \brief Create a Stmt that does a vector store at begin index.
+   * \param begin The beginning index
+   * \param value The value to be stored.
+   */
+  MATX_DLL Stmt vstore(Array<PrimExpr> begin, PrimExpr value) const;
+
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(Buffer, ObjectRef, BufferNode);
   MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(BufferNode);
 };
@@ -289,6 +302,133 @@ class MatchBufferRegion : public ObjectRef {
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(MatchBufferRegion, ObjectRef, MatchBufferRegionNode);
   MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(MatchBufferRegionNode);
+};
+
+/******************************************************************************
+ * BufferLoad
+ *****************************************************************************/
+
+/*!
+ * \brief Load value from the high dimension buffer.
+ *
+ * \code
+ *
+ *  value = buffer[i, j];
+ *
+ * \endcode
+ * \sa BufferLoad
+ */
+class BufferLoadNode : public PrimExprNode {
+ public:
+  /*! \brief The buffer variable. */
+  Buffer buffer;
+  /*! \brief The indices location to be loaded. */
+  Array<PrimExpr> indices;
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("dtype", &(this->dtype));
+    v->Visit("buffer", &buffer);
+    v->Visit("indices", &indices);
+    v->Visit("span", &span);
+  }
+
+  bool SEqualReduce(const BufferLoadNode* other, SEqualReducer equal) const {
+    return equal(dtype, other->dtype) && equal(buffer, other->buffer) &&
+           equal(indices, other->indices);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    hash_reduce(dtype);
+    hash_reduce(buffer);
+    hash_reduce(indices);
+  }
+
+  static constexpr const char* _type_key = "ir.BufferLoad";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(BufferLoadNode, PrimExprNode);
+
+ private:
+  /*! \brief Set the dtype based on the buffer/indices
+   *
+   * Usually, the BufferLoad's dtype will be the same dtype as the
+   * buffer.  This may have a different number of lanes than the
+   * buffer's dtype if index values have more than 1 lane.
+   *
+   * This function should only be called during construction and after
+   * CopyOnWrite.  Friend class used here to restrict usage.
+   */
+  void LegalizeDType();
+  friend class BufferLoad;
+};
+
+/*!
+ * \brief Managed reference to BufferLoadNode.
+ * \sa BufferLoadNode
+ */
+class BufferLoad : public PrimExpr {
+ public:
+  MATX_DLL explicit BufferLoad(Buffer buffer, Array<PrimExpr> indices, Span span = Span());
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(BufferLoad, PrimExpr, BufferLoadNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(BufferLoadNode);
+};
+
+/******************************************************************************
+ * BufferStore
+ *****************************************************************************/
+
+/*!
+ * \brief Store value to the high dimension buffer.
+ *
+ * \code
+ *
+ *  buffer[i, j] = value;
+ *
+ * \endcode
+ * \sa BufferStore
+ */
+class BufferStoreNode : public StmtNode {
+ public:
+  /*! \brief The buffer variable. */
+  Buffer buffer;
+  /*! \brief The value to be stored. */
+  PrimExpr value;
+  /*! \brief The indices location to be stored. */
+  Array<PrimExpr> indices;
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("buffer", &buffer);
+    v->Visit("value", &value);
+    v->Visit("indices", &indices);
+    v->Visit("span", &span);
+  }
+
+  bool SEqualReduce(const BufferStoreNode* other, SEqualReducer equal) const {
+    return equal(buffer, other->buffer) && equal(value, other->value) &&
+           equal(indices, other->indices);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    hash_reduce(buffer);
+    hash_reduce(value);
+    hash_reduce(indices);
+  }
+
+  static constexpr const char* _type_key = "ir.BufferStore";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(BufferStoreNode, StmtNode);
+};
+
+/*!
+ * \brief Managed reference to BufferStoreNode.
+ * \sa BufferStoreNode
+ */
+class BufferStore : public Stmt {
+ public:
+  MATX_DLL explicit BufferStore(Buffer buffer,
+                                PrimExpr value,
+                                Array<PrimExpr> indices,
+                                Span span = Span());
+
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(BufferStore, Stmt, BufferStoreNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(BufferStoreNode);
 };
 
 /******************************************************************************

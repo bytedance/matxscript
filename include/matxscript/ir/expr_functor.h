@@ -32,6 +32,7 @@
 #include <matxscript/ir/expr.h>
 #include <matxscript/ir/function.h>
 #include <matxscript/ir/op_expr.h>
+#include <matxscript/ir/tensor_stmt.h>
 #include <matxscript/runtime/demangle.h>
 #include <matxscript/runtime/functor.h>
 
@@ -160,6 +161,8 @@ class PrimExprFunctor<R(const PrimExpr& n, Args...)> {
   virtual R VisitExpr_(const PrimCastNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const HLOCastPrimNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
 
+  virtual R VisitExpr_(const BufferLoadNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
+
   virtual R VisitExprDefault_(const Object* op, Args...) {
     MXTHROW << "[" << runtime::DemangleType(typeid(*this).name()) << "] Do not have a default for "
             << op->GetTypeKey();
@@ -202,6 +205,8 @@ class PrimExprFunctor<R(const PrimExpr& n, Args...)> {
     IR_EXPR_FUNCTOR_DISPATCH(PrimLetNode);
     IR_EXPR_FUNCTOR_DISPATCH(PrimCastNode);
     IR_EXPR_FUNCTOR_DISPATCH(HLOCastPrimNode);
+
+    IR_EXPR_FUNCTOR_DISPATCH(BufferLoadNode);
 
     return vtable;
   }
@@ -412,6 +417,8 @@ class MATX_DLL ExprVisitor : public PrimExprFunctor<void(const PrimExpr&)>,
   void VisitExpr_(const PrimCastNode* op) override;
   void VisitExpr_(const HLOCastPrimNode* op) override;
 
+  void VisitExpr_(const BufferLoadNode* op) override;
+
   // HLO expr
   void VisitExpr_(const HLOAddNode* op) override;
   void VisitExpr_(const HLOSubNode* op) override;
@@ -519,6 +526,8 @@ class MATX_DLL ExprMutator : public PrimExprFunctor<PrimExpr(const PrimExpr&)>,
   PrimExpr VisitExpr_(const PrimCallNode* op) override;
   PrimExpr VisitExpr_(const PrimCastNode* op) override;
   PrimExpr VisitExpr_(const HLOCastPrimNode* op) override;
+
+  PrimExpr VisitExpr_(const BufferLoadNode* op) override;
 
   // HLO expr
   HLOExpr VisitExpr_(const HLOAddNode* op) override;

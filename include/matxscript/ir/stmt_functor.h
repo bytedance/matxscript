@@ -114,7 +114,9 @@ class StmtFunctor<R(const Stmt& n, Args... args)> {
   virtual R VisitStmt_(const FunctionNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
   virtual R VisitStmt_(const ClassStmtNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
 
+  virtual R VisitStmt_(const BufferStoreNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
   virtual R VisitStmt_(const ComputeBlockNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
+  virtual R VisitStmt_(const ComputeBlockRealizeNode* op, Args... args) STMT_FUNCTOR_DEFAULT;
 
   virtual R VisitStmtDefault_(const Object* op, Args...) {
     MXLOG(FATAL) << "Do not have a default for " << op->GetTypeKey();
@@ -146,7 +148,9 @@ class StmtFunctor<R(const Stmt& n, Args... args)> {
     IR_STMT_FUNCTOR_DISPATCH(FunctionNode);
     IR_STMT_FUNCTOR_DISPATCH(ClassStmtNode);
 
+    IR_STMT_FUNCTOR_DISPATCH(BufferStoreNode);
     IR_STMT_FUNCTOR_DISPATCH(ComputeBlockNode);
+    IR_STMT_FUNCTOR_DISPATCH(ComputeBlockRealizeNode);
     return vtable;
   }
 };
@@ -188,7 +192,9 @@ class MATX_DLL StmtVisitor : protected StmtFunctor<void(const Stmt&)> {
   void VisitStmt_(const FunctionNode* op) override;
   void VisitStmt_(const ClassStmtNode* op) override;
 
+  void VisitStmt_(const BufferStoreNode* op) override;
   void VisitStmt_(const ComputeBlockNode* op) override;
+  void VisitStmt_(const ComputeBlockRealizeNode* op) override;
 };
 
 /*!
@@ -287,7 +293,9 @@ class MATX_DLL StmtMutator : protected StmtFunctor<Stmt(const Stmt&)> {
   Stmt VisitStmt_(const FunctionNode* op) override;
   Stmt VisitStmt_(const ClassStmtNode* op) override;
 
+  Stmt VisitStmt_(const BufferStoreNode* op) override;
   Stmt VisitStmt_(const ComputeBlockNode* op) override;
+  Stmt VisitStmt_(const ComputeBlockRealizeNode* op) override;
 
   /*!
    * \brief Alternative advance method for SeqStmtNode.

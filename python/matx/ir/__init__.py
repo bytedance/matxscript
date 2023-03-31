@@ -44,12 +44,15 @@ from .expr import HLOVar, NoneExpr, EnumAttr, HLOCast
 from .expr import RangeExpr
 
 from .stmt import Stmt, AssertStmt, For, While, Break, Continue
-# from .stmt import BufferStore, BufferRealize, Store, ProducerStore, Allocate, AttrStmt
 from .stmt import SeqStmt
 from .stmt import IfThenElse, stmt_seq, stmt_list
 from .stmt import ReturnStmt, AssignStmt, AllocaVarStmt
 from .stmt import ExprStmt, HLOYield, AutoFor
 from .stmt import ExceptionHandler, TryExcept, Raise
+
+from .tensor_stmt import Buffer, decl_buffer
+from .tensor_stmt import BufferStore, BufferLoad, BufferRegion, MatchBufferRegion
+from .tensor_stmt import ComputeBlock, ComputeBlockRealize
 
 from .function import PrimFunc, Function, LambdaFunction, FuncAttr
 from .class_stmt import ClassStmt

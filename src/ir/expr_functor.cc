@@ -105,6 +105,10 @@ void ExprVisitor::VisitExpr_(const PrimSelectNode* op) {
 void ExprVisitor::VisitExpr_(const PrimVarNode* op) {
 }
 
+void ExprVisitor::VisitExpr_(const BufferLoadNode* op) {
+  VisitArray(op->indices, [this](const PrimExpr& e) { this->VisitExpr(e); });
+}
+
 void ExprVisitor::VisitExpr_(const PrimCastNode* op) {
   this->VisitExpr(op->value);
 }
@@ -394,6 +398,16 @@ HLOExpr ExprMutator::VisitExpr_(const HLOVarNode* op) {
   }
   // default case return self.
   return GetRef<HLOExpr>(op);
+}
+
+PrimExpr ExprMutator::VisitExpr_(const BufferLoadNode* op) {
+  auto fmutate = [this](const PrimExpr& e) { return this->VisitExpr(e); };
+  Array<PrimExpr> indices = op->indices.Map(fmutate);
+  if (indices.same_as(op->indices)) {
+    return GetRef<PrimExpr>(op);
+  } else {
+    return BufferLoad(op->buffer, indices);
+  }
 }
 
 HLOExpr ExprMutator::VisitExpr_(const GlobalVarNode* op) {
