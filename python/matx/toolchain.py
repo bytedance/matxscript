@@ -43,6 +43,8 @@ DISABLE_SCRIPT = os.environ.get('MATX_DISABLE_SCRIPT', '').lower() == 'true'
 DISABLE_GENERATE_CC = os.environ.get('MATX_DISABLE_GENERATE_CC', '').lower() == 'true'
 FLAG_COMPILED_OBJECT = object()
 
+logger = logging.getLogger('matx.toolchain')
+
 
 class ArgumentValueError(ValueError):
     pass
@@ -193,7 +195,7 @@ def make_jit_object_creator(sc_ctx: context.ScriptContext, share=False, bundle_a
                         guess_arguments[init_func_param_name] = init_func_param_value
                 guesser.guess(guess_arguments)
             need_bundle = guesser.need_bundle
-            logging.info('need_bundle: %s', need_bundle)
+            # logger.info('need_bundle: %s', need_bundle)
             try:
                 ctor_func_meta, init_args = make_func_meta(cls_ctx.init_fn,
                                                            bound_self=False,
@@ -285,13 +287,14 @@ def toolchain_build(sc_ctx: context.ScriptContext, toolchain: ToolChain):
         # save file
         rt_mod.save(file_path)
         if not hit_cache(so_path):
-            logging.info(
-                "matx compile function/class: [{}:{}]".format(main_node_name, so_path))
+            # logger.info(
+            #     "matx compile function/class: [{}:{}]".format(main_node_name, so_path))
             toolchain.build(file_path)
         else:
-            logging.info(
-                "info matched, skip compiling: [{}:{}]".format(
-                    main_node_name, so_path))
+            # logger.info(
+            #     "info matched, skip compiling: [{}:{}]".format(
+            #         main_node_name, so_path))
+            pass
 
         sc_ctx.dso_path = (sc_ctx.dso_path[0], so_path)
 
@@ -302,8 +305,7 @@ def build_dso(sc_ctx: context.ScriptContext, use_toolchain=False):
     base_path = path_prefix(sc_ctx)
 
     with contrib.util.filelock(base_path):
-        sopath = base_path + '.so'
-        sopath_cxx11 = base_path + '_cxx11.so'
+        dll_path = base_path + '.so'
 
         base_options = [
             "-std=c++14",
@@ -316,34 +318,32 @@ def build_dso(sc_ctx: context.ScriptContext, use_toolchain=False):
         sys_cc_path = contrib.cc.find_sys_cc_path()
 
         contrib.cc.check_cc_version(sys_cc_path, False)
-        if not hit_cache(sopath):
-            logging.info("matx compile function/class: [{}:{}]".format(main_node_name, sopath))
-            rt_mod.export_library(sopath, options=cxx11_no_abi_options, cc=sys_cc_path)
+        if not hit_cache(dll_path):
+            # logger.info("matx compile function/class: [{}:{}]".format(main_node_name, dll_path))
+            rt_mod.export_library(dll_path, options=cxx11_no_abi_options, cc=sys_cc_path)
         else:
-            logging.info("info matched, skip compiling: [{}:{}]".format(main_node_name, sopath))
+            # logger.info("info matched, skip compiling: [{}:{}]".format(main_node_name, dll_path))
+            pass
+        dll_path_cxx11 = ""
         if not use_toolchain:
             server_cc_path = contrib.cc.find_server_gcc_path()
             if server_cc_path is not None:
                 contrib.cc.check_cc_version(server_cc_path, True)
-                if not hit_cache(sopath_cxx11):
-                    logging.info(
-                        "matx compile function/class: [{}:{}]".format(main_node_name, sopath_cxx11))
+                dll_path_cxx11 = base_path + '_cxx11.so'
+                if not hit_cache(dll_path_cxx11):
+                    # logger.info(
+                    #     "matx compile function/class: [{}:{}]".format(main_node_name, dll_path_cxx11))
                     rt_mod.export_library(
-                        sopath_cxx11,
+                        dll_path_cxx11,
                         options=cxx11_with_abi_options,
                         cc=server_cc_path)
                 else:
-                    logging.info(
-                        "info matched, skip compiling: [{}:{}]".format(
-                            main_node_name, sopath_cxx11))
-            else:
-                msg_t = "matx compile \"{}\": server gcc not found, will disable build \"{}\""
-                logging.warning(msg_t.format(main_node_name, os.path.basename(sopath_cxx11)))
-                sopath_cxx11 = ""
-        else:
-            sopath_cxx11 = ""
+                    # logger.info(
+                    #     "info matched, skip compiling: [{}:{}]".format(
+                    #         main_node_name, dll_path_cxx11))
+                    pass
 
-        sc_ctx.dso_path = (sopath, sopath_cxx11)
+        sc_ctx.dso_path = (dll_path, dll_path_cxx11)
 
 
 def disable_script():

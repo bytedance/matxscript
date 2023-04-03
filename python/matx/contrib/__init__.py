@@ -22,9 +22,13 @@ Contrib API provides many useful not core features.
 Some of these are useful utilities to interact with
 third-party libraries and tools.
 """
+import logging
 
 from . import cc
 from . import ndk
 from . import tar
 from . import util
 from . import cpp_extension
+
+if cc.find_server_gcc_path() is None:
+    logging.warning("[matx] C++ server compiler is not configured, please set env SERVER_CXX")
