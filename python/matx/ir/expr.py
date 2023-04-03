@@ -35,7 +35,7 @@ from .. import _ffi
 
 from ..runtime import Object, ObjectGeneric, DataType, DataTypeCode
 from ._converter import const
-from .base import BaseExpr, PrimExpr, HLOExpr, Span
+from .base import Node, BaseExpr, PrimExpr, HLOExpr, Span
 from .op_expr import Op
 from . import generic as _generic
 from . import _ffi_api
@@ -1296,13 +1296,14 @@ class RangeExpr(HLOExpr):
         The end value of the range.
     """
 
-    def __init__(self, start, stop, step=None):
+    def __init__(self, start, stop, step=None, span=Span()):
         if step is None:
             self.__init_handle_by_constructor__(
                 _ffi_api.RangeExpr,
                 _to_ir(start),
                 _to_ir(stop),
                 _to_ir(1),
+                _to_ir(span),
             )
         else:
             self.__init_handle_by_constructor__(
@@ -1310,6 +1311,7 @@ class RangeExpr(HLOExpr):
                 _to_ir(start),
                 _to_ir(stop),
                 _to_ir(step),
+                _to_ir(span),
             )
 
 
@@ -1458,4 +1460,100 @@ class HLOZip(HLOExprWithOp):
     def __init__(self, values, span=Span()):
         self.__init_handle_by_constructor__(
             _ffi_api.HLOZip, _to_ir(values), span
+        )
+
+
+@_ffi.register_object("ir.Comprehension")
+class Comprehension(Node):
+    """comprehension node.
+
+    Parameters
+    ----------
+    target : BaseExpr
+        The iter var.
+    iter_expr : BaseExpr
+        The iterable container.
+    ifs : list of BaseExpr
+        The conditions.
+    """
+
+    def __init__(self, target, iter_expr, ifs):
+        self.__init_handle_by_constructor__(
+            _ffi_api.Comprehension,
+            _to_ir(target), _to_ir(iter_expr), _to_ir(ifs)
+        )
+
+
+@_ffi.register_object("ir.ListComp")
+class ListComp(HLOExprWithOp):
+    """list comprehension node.
+
+    Parameters
+    ----------
+    ann_type : Type
+        The annotation
+    elt : BaseExpr
+        The item expr.
+    generators : list of Comprehension
+        The nested comprehensions.
+    """
+
+    def __init__(self, ann_type, elt, generators, span=Span()):
+        self.__init_handle_by_constructor__(
+            _ffi_api.ListComp,
+            _to_ir(ann_type),
+            _to_ir(elt),
+            _to_ir(generators),
+            span,
+        )
+
+
+@_ffi.register_object("ir.SetComp")
+class SetComp(HLOExprWithOp):
+    """set comprehension node.
+
+    Parameters
+    ----------
+    ann_type : Type
+        The annotation
+    elt : BaseExpr
+        The item expr.
+    generators : list of Comprehension
+        The nested comprehensions.
+    """
+
+    def __init__(self, ann_type, elt, generators, span=Span()):
+        self.__init_handle_by_constructor__(
+            _ffi_api.SetComp,
+            _to_ir(ann_type),
+            _to_ir(elt),
+            _to_ir(generators),
+            span,
+        )
+
+
+@_ffi.register_object("ir.DictComp")
+class DictComp(HLOExprWithOp):
+    """dict comprehension node.
+
+    Parameters
+    ----------
+    ann_type : Type
+        The annotation
+    key : BaseExpr
+        The key expr.
+    value : BaseExpr
+        The value expr.
+    generators : list of Comprehension
+        The nested comprehensions.
+    """
+
+    def __init__(self, ann_type, key, value, generators, span=Span()):
+        self.__init_handle_by_constructor__(
+            _ffi_api.DictComp,
+            _to_ir(ann_type),
+            _to_ir(key),
+            _to_ir(value),
+            _to_ir(generators),
+            span,
         )

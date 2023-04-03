@@ -41,7 +41,8 @@ from .expr import PrimLE, PrimGT, PrimGE, PrimAnd, PrimOr, PrimNot
 from .expr import PrimSelect, PrimCall, CallEffectKind, PrimLet
 from .expr import GlobalVar, Call, InitializerList, InitializerDict
 from .expr import HLOVar, NoneExpr, EnumAttr, HLOCast
-from .expr import RangeExpr
+from .expr import RangeExpr, TupleExpr
+from .expr import Comprehension, ListComp, SetComp, DictComp
 
 from .stmt import Stmt, AssertStmt, For, While, Break, Continue
 from .stmt import SeqStmt

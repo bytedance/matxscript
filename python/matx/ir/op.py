@@ -33,10 +33,12 @@ from .base import BaseExpr, PrimExpr
 from .expr import HLOCast
 from .expr import HLOEnumerate
 from .expr import HLOZip
+from .expr import RangeExpr
 from .expr import InitializerList
 from .expr import IntImm, StringImm, NoneExpr
 from .expr import PrimCall, Call, UnicodeImm, EnumAttr, ClassGetItem
 from .generic import _cast_to_prim_expr, _cast_to_prim_float, convert_type, handle_error, _is_prim_type
+from .generic import _cast_to_prim_int
 from .op_expr import Op
 from .type_checker import check_int_or_generic
 from .type_converter import _AnnTypeConvert
@@ -2773,6 +2775,28 @@ def builtins_enumerate(span, iterable, start=0):
 
 def builtins_zip(span, *iterables):
     return HLOZip(iterables, span)
+
+
+def builtins_range(span, *args):
+    n_args = len(args)
+    if n_args == 1:
+        start = const(0, 'int64')
+        stop = _cast_to_prim_int(args[0])
+        step = const(1, 'int64')
+    elif n_args == 2:
+        start = _cast_to_prim_int(args[0])
+        stop = _cast_to_prim_int(args[1])
+        step = const(1, 'int64')
+    elif n_args == 3:
+        start = _cast_to_prim_int(args[0])
+        stop = _cast_to_prim_int(args[1])
+        step = _cast_to_prim_int(args[2])
+    else:  # error report
+        if n_args == 0:
+            raise TypeError("range expected at least 1 argument, got 0")
+        else:
+            raise TypeError(f"range expected at most 3 arguments, got {n_args}")
+    return RangeExpr(start, stop, step, span)
 
 
 def builtins_print(span, *args, sep=' ', end='\n', file=None):

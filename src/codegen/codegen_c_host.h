@@ -91,6 +91,10 @@ class CodeGenCHost final : public CodeGenC {
   void VisitStmt_(const TryExceptNode* op, std::ostream& os) final;         // NOLINT(*)
   void VisitStmt_(const RaiseNode* op, std::ostream& os) final;             // NOLINT(*)
 
+  void VisitExpr_(const ListCompNode* op, std::ostream& os) final;  // NOLINT(*)
+  void VisitExpr_(const SetCompNode* op, std::ostream& os) final;   // NOLINT(*)
+  void VisitExpr_(const DictCompNode* op, std::ostream& os) final;  // NOLINT(*)
+
   /*! \brief Generate C runtime FuncRegistry global constant. */
   void GenerateFuncRegistry(const std::vector<String>& func_names, const String& class_name = "");
 

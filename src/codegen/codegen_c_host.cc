@@ -1274,6 +1274,226 @@ void CodeGenCHost::VisitExpr_(const PrimMaxNode* op, std::ostream& os) {  // NOL
   PrintTernaryCondExpr(op, ">", os);
 }
 
+static Stmt BuildForStmtFromComprehension(const ComprehensionNode* op, Stmt body) {
+  static PrimType int64_type(runtime::DataType::Int(64));
+
+  // process body
+  if (op->ifs.size()) {
+    for (auto predicate : op->ifs) {
+      body = IfThenElse(predicate, body, Stmt{nullptr}, body->span);
+    }
+  }
+
+  Array<Stmt> seq_stmt;
+  if (const auto* range_node = op->iter.as<RangeExprNode>()) {
+    auto fn_eval_iter = [&](BaseExpr expr, const char* prefix) -> BaseExpr {
+      if (!(expr->IsInstance<PrimVarNode>() || expr->IsInstance<IntImmNode>())) {
+        if (!IsPrimType(expr)) {
+          expr = HLOCastPrim(runtime::DataType::Int(64), expr, body->span);
+        }
+        // TODO: fixname
+        String new_name(prefix);
+        AllocaVarStmt alloca_stmt(new_name, int64_type, expr, body->span);
+        seq_stmt.push_back(alloca_stmt);
+        expr = alloca_stmt->var;
+      }
+      return expr;
+    };
+    BaseExpr start = fn_eval_iter(range_node->start, "start");
+    BaseExpr stop = fn_eval_iter(range_node->stop, "stop");
+    BaseExpr step = fn_eval_iter(range_node->step, "step");
+    MXCHECK(op->target->IsInstance<PrimVarNode>()) << "internal error";
+    For loop_stmt(Downcast<PrimVar>(op->target),
+                  std::move(start),
+                  std::move(stop),
+                  std::move(step),
+                  ForType::Serial,
+                  body,
+                  body->span);
+    seq_stmt.push_back(loop_stmt);
+  } else {
+    BaseExpr iter = op->iter;
+    if (!(iter->IsInstance<HLOVarNode>())) {
+      AllocaVarStmt alloca_stmt("iter", iter->checked_type_, iter, body->span);
+      seq_stmt.push_back(alloca_stmt);
+      iter = alloca_stmt->var;
+    }
+    if (auto const* tup = op->target.as<TupleExprNode>()) {
+      AutoFor loop_stmt(tup->fields, std::move(iter), body, body->span);
+      seq_stmt.push_back(loop_stmt);
+    } else {
+      AutoFor loop_stmt(op->target, std::move(iter), body, body->span);
+      seq_stmt.push_back(loop_stmt);
+    }
+  }
+  if (seq_stmt.size() == 1) {
+    return seq_stmt[0];
+  }
+  return SeqStmt(seq_stmt, body->span);
+}
+
+void CodeGenCHost::VisitExpr_(const ListCompNode* op, std::ostream& os) {
+  // capture all free_var
+  os << "[&]";
+  // print args and return types
+  os << "() -> ";
+  this->PrintType(op->checked_type_, os);
+  // print body begin
+  os << " {";
+  this->PrintSpan(op->span, os);
+  os << "\n";
+  int func_scope = this->BeginScope();
+
+  // make body
+  Array<Stmt> body;
+  {
+    auto const* li_ty_node = op->checked_type_.as<ListTypeNode>();
+    MXCHECK(li_ty_node) << "internal error";
+    AllocaVarStmt alloc_stmt(
+        "__reserved_list_comp_result", op->checked_type_, BaseExpr{nullptr}, op->span);
+    body.push_back(alloc_stmt);
+    {
+      HLOExpr call_op =
+          li_ty_node->is_full_typed ? builtin::ft_list_reserve() : builtin::list_reserve();
+      Call call_list_reserve(VoidType(), call_op, {alloc_stmt->var}, op->span, {});
+      // TODO: fix reserve
+      // body.push_back(ExprStmt(call_list_reserve, op->span));
+    }
+    Stmt last_stmt{nullptr};
+    {
+      HLOExpr call_op =
+          li_ty_node->is_full_typed ? builtin::ft_list_append() : builtin::list_append();
+      Call call_list_append(VoidType(), call_op, {alloc_stmt->var, op->elt}, op->span, {});
+      last_stmt = ExprStmt(call_list_append, op->span);
+    }
+
+    for (auto gen_itr = op->generators.rbegin(); gen_itr != op->generators.rend(); ++gen_itr) {
+      last_stmt = BuildForStmtFromComprehension((*gen_itr).get(), last_stmt);
+    }
+    body.push_back(last_stmt);
+    // return
+    body.push_back(ReturnStmt(alloc_stmt->var, op->span));
+  }
+
+  // visit body
+  this->PrintStmt(SeqStmt(body, op->span), os);
+
+  // print body end
+  this->EndScope(func_scope);
+  this->PrintIndent(os);
+  os << "}";
+  // print call
+  os << "()";
+}
+
+void CodeGenCHost::VisitExpr_(const SetCompNode* op, std::ostream& os) {
+  // capture all free_var
+  os << "[&]";
+  // print args and return types
+  os << "() -> ";
+  this->PrintType(op->checked_type_, os);
+  // print body begin
+  os << " {";
+  this->PrintSpan(op->span, os);
+  os << "\n";
+  int func_scope = this->BeginScope();
+
+  // make body
+  Array<Stmt> body;
+  {
+    auto const* set_ty_node = op->checked_type_.as<SetTypeNode>();
+    MXCHECK(set_ty_node) << "internal error";
+    AllocaVarStmt alloc_stmt(
+        "__reserved_set_comp_result", op->checked_type_, BaseExpr{nullptr}, op->span);
+    body.push_back(alloc_stmt);
+    {
+      HLOExpr call_op =
+          set_ty_node->is_full_typed ? builtin::ft_set_reserve() : builtin::set_reserve();
+      Call call_set_reserve(VoidType(), call_op, {alloc_stmt->var}, op->span, {});
+      // TODO: fix reserve
+      // body.push_back(ExprStmt(call_set_reserve, op->span));
+    }
+    Stmt last_stmt{nullptr};
+    {
+      HLOExpr call_op = set_ty_node->is_full_typed ? builtin::ft_set_add() : builtin::set_add();
+      Call call_set_add(VoidType(), call_op, {alloc_stmt->var, op->elt}, op->span, {});
+      last_stmt = ExprStmt(call_set_add, op->span);
+    }
+
+    for (auto gen_itr = op->generators.rbegin(); gen_itr != op->generators.rend(); ++gen_itr) {
+      last_stmt = BuildForStmtFromComprehension((*gen_itr).get(), last_stmt);
+    }
+    body.push_back(last_stmt);
+    // return
+    body.push_back(ReturnStmt(alloc_stmt->var, op->span));
+  }
+
+  // visit body
+  this->PrintStmt(SeqStmt(body, op->span), os);
+
+  // print body end
+  this->EndScope(func_scope);
+  this->PrintIndent(os);
+  os << "}";
+  // print call
+  os << "()";
+}
+
+void CodeGenCHost::VisitExpr_(const DictCompNode* op, std::ostream& os) {
+  // capture all free_var
+  os << "[&]";
+  // print args and return types
+  os << "() -> ";
+  this->PrintType(op->checked_type_, os);
+  // print body begin
+  os << " {";
+  this->PrintSpan(op->span, os);
+  os << "\n";
+  int func_scope = this->BeginScope();
+
+  // make body
+  Array<Stmt> body;
+  {
+    auto const* dict_ty_node = op->checked_type_.as<DictTypeNode>();
+    MXCHECK(dict_ty_node) << "internal error";
+    AllocaVarStmt alloc_stmt(
+        "__reserved_dict_comp_result", op->checked_type_, BaseExpr{nullptr}, op->span);
+    body.push_back(alloc_stmt);
+    {
+      HLOExpr call_op =
+          dict_ty_node->is_full_typed ? builtin::ft_dict_reserve() : builtin::dict_reserve();
+      Call call_dict_reserve(VoidType(), call_op, {alloc_stmt->var}, op->span, {});
+      // TODO: fix reserve
+      // body.push_back(ExprStmt(call_dict_reserve, op->span));
+    }
+    Stmt last_stmt{nullptr};
+    {
+      HLOExpr call_op = dict_ty_node->is_full_typed ? builtin::ft_dict___setitem__()
+                                                    : builtin::dict___setitem__();
+      Call call_dict_setitem(
+          VoidType(), call_op, {alloc_stmt->var, op->key, op->value}, op->span, {});
+      last_stmt = ExprStmt(call_dict_setitem, op->span);
+    }
+
+    for (auto gen_itr = op->generators.rbegin(); gen_itr != op->generators.rend(); ++gen_itr) {
+      last_stmt = BuildForStmtFromComprehension((*gen_itr).get(), last_stmt);
+    }
+    body.push_back(last_stmt);
+    // return
+    body.push_back(ReturnStmt(alloc_stmt->var, op->span));
+  }
+
+  // visit body
+  this->PrintStmt(SeqStmt(body, op->span), os);
+
+  // print body end
+  this->EndScope(func_scope);
+  this->PrintIndent(os);
+  os << "}";
+  // print call
+  os << "()";
+}
+
 template <typename T>
 inline void CodeGenCHost::PrintTernaryCondExpr(const T* op,
                                                const char* compare,
