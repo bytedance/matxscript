@@ -54,6 +54,9 @@ class NDArrayType:
     def dtype_str(self):
         return NPDTYPE_TO_STR[self.dtype]
 
+    def __eq__(self, other):
+        return self.shape == other.shape and self.dtype == self.dtype
+
     def compatible_with(self, other):
         # todo check dtype
         return self.shape == other and self.dtype == self.dtype

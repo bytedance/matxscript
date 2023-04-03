@@ -97,7 +97,7 @@ class ConstScalarContext(ScalarContext):
     def __init__(self, value, type_: kernelNDArrayT, span):
         super().__init__("const", type_, span)
         self.script_type = _ir.PrimType(type_.dtype_str())
-        self.script_var = _ir.const(value, self.script_type)
+        self.script_var = _ir.const(value, type_.dtype_str())
 
 
 class SymbolContext(AbstractBaseVariableContext):

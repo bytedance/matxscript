@@ -28,14 +28,13 @@ from matx.kernel.ops import OpRegistry
 from matx.script import context as script_context
 from .context import *
 from .utils import build_span
-from ...ir.expr import *
 from ...ir.tensor_stmt import BufferRegion
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelParser
 
 
-class ParserBase(ast.NodeVisitor):
+class BaseParser(ast.NodeVisitor):
 
     def __init__(
             self,
@@ -53,6 +52,7 @@ class ParserBase(ast.NodeVisitor):
         # for kernel use
         self.ndarray_context_table = ndarray_context_table
         self.shape_symbol_table = shape_symbol_table
+        self.tmp_scalar_table = {}
         self.return_ctx = return_ctx
 
         self.var_stack = []
@@ -89,6 +89,9 @@ class ParserBase(ast.NodeVisitor):
                 and (len(body) == 0 or not isinstance(last_ast, ast.Return))):
             body.append(self.visit(ast.Return(value=None)))
         return body
+
+    def build_span(self, node):
+        return build_span(self.root_node, node)
 
     @staticmethod
     def to_seq_stmt(body: List[_ir.Stmt], span: _ir.Span):
@@ -197,6 +200,87 @@ class ParserBase(ast.NodeVisitor):
                 f"bin op does not support {lhs_ctx.kernel_type} and {rhs_ctx.kernel_type}")
         # todo insert to ir
 
+    def visit_Slice(self, node: ast.Slice) -> Any:
+        raise NotImplementedError("slice is not supported yet")
+
+    def visit_Subscript(self, node: ast.Subscript) -> Any:
+        value = self.visit(node.value)
+        sls = self._get_slice(node.slice)
+        raise NotImplementedError("to be finished ")
+
+    def _get_slice(self, sls):
+        # todo update this after save/load is ready
+        pass
+
+    def visit_Assign(self, node: ast.Assign) -> Any:
+        if not isinstance(node.targets, (ast.Name, ast.Subscript)):
+            raise SyntaxError(f"Assigning to {type(node.targets)} is not allowed.")
+        span = self.build_span(node)
+        target = self.visit(node.targets)
+        value = self.visit(node.value)
+        value_ctx = self.var_stack.pop()
+        if isinstance(node.targets, ast.Name):
+            return self._assign_scalar(target, value, value_ctx, node, span)
+        elif isinstance(node.targets, ast.Subscript):
+            raise NotImplementedError("assigning to ndarray not supported yet")
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
+        if not isinstance(node.target, (ast.Name, ast.Subscript)):
+            raise SyntaxError(f"Assigning to {type(node.target)} is not allowed.")
+        span = self.build_span(node)
+        ann = node.annotation
+        target = self.visit(node.target)
+        value = self.visit(node.value)
+        value_ctx = self.var_stack.pop()
+        # symbol case
+        if isinstance(node.target, ast.Name):
+            return self._allocate_scalar(target, value, value_ctx, ann, span)
+        elif isinstance(node.target, ast.Subscript):
+            raise NotImplementedError("assigning to ndarray not supported yet")
+
+    def _allocate_scalar(self, target, value, value_ctx, ann, span):
+        # the name is conflict with args
+        if target in self.ndarray_context_table:
+            raise SyntaxError(f"Reassigning scalars {target} defined in arguments is not allowed")
+        # the name is conflict with previous defined scalar
+        if target in self.tmp_scalar_table:
+            raise SyntaxError(f"Reallocating scalars {target} defined previous is not allowed")
+        # make sure it is annotated as scalar
+        if not is_scalar_type(ann):
+            raise SyntaxError(f"Annotating {target} with type {ann} is not allowed.")
+        # make sure the annotated type is the same as rhs value
+        if value_ctx != ann:
+            raise SyntaxError(f"Assigning {value_ctx.kernel_type} to {ann} is not allowed")
+        tmp_scalar_ctx = ScalarContext(target, ann, span)
+        alloca_stmt = _ir.AllocaVarStmt(
+            tmp_scalar_ctx.name, tmp_scalar_ctx.script_type, value, span)
+        self.var_stack.append(tmp_scalar_ctx)
+        return alloca_stmt
+
+    def _assign_scalar(self, target, value, value_ctx, node, span):
+        # the name is conflict with args
+        if target in self.ndarray_context_table:
+            raise SyntaxError(f"Reassigning scalars {target} defined in arguments is not allowed")
+        # it has not been defined
+        if target not in self.tmp_scalar_table:
+            raise SyntaxError(f"Assigning scalars {target} is not allowed because it not defined")
+        # node cannot be annotated assign or other (unlikely to be other)
+        if not isinstance(node, ast.Assign):
+            raise SyntaxError(f"Using annotated assign to assign {target} is not allowed "
+                              f"since it has already been defined above")
+        previous_ctx = self.tmp_scalar_table[target]
+        if value_ctx.kernel_type == previous_ctx.kernel_type:
+            raise SyntaxError(f"the value assigned to {target} is not scalar")
+        self.var_stack.pop(value_ctx)
+        return _ir.AssignStmt(previous_ctx.script_var, value, span)
+
+    def _assign_ndarray(self):
+        raise SyntaxError("Assigning to ndarray is not allowed")
+
+    def visit_Pass(self, node: ast.Pass) -> Any:
+        self.var_stack.append(AbstractBaseVariableContext(int32))
+        return _ir.NoneExpr()
+
     def visit_BoolOp(self, node: ast.BoolOp) -> Any:
         raise NotImplementedError("visit_BoolOp is not Implemented")
 
@@ -213,17 +297,5 @@ class ParserBase(ast.NodeVisitor):
             return [value, attr_name]
         return [*value, attr_name]
 
-    def _make_range(self, shape):
-        rng = []
-        for dim in shape:
-            start = _ir.const(0)
-            if is_symbol(dim):
-                symbol_ctx = self.shape_symbol_table[str(dim)]
-                end = symbol_ctx.script_var
-            elif dim is None:
-                continue
-            else:
-                end = _ir.const(dim)
-            rng_expr = RangeExpr(start, end)
-            rng.append(rng_expr)
-        return rng
+    def visit_Return(self, node: ast.Return) -> Any:
+        pass
