@@ -295,6 +295,8 @@ _register_python_builtin("math.isinf", "isinf")
 _register_python_builtin("math.pow", "power")
 _register_python_builtin("math.fmod", "fmod")
 _register_python_builtin("print", "builtins_print")
+_register_python_builtin("range", "builtins_range")
+_register_python_builtin("xrange", "builtins_range")
 
 ###############################################################################
 # runtime extension

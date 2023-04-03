@@ -25,7 +25,7 @@ from numbers import Integral
 
 from .. import _ffi
 from .base import PrimExpr, Span
-from .expr import PrimVar, RangeExpr, PrimIterVar
+from .expr import PrimExprWithOp, PrimVar, RangeExpr, PrimIterVar
 from .stmt import Stmt
 from .type import PointerType, PrimType
 
@@ -48,6 +48,46 @@ class Buffer(Object):
 
     READ = 1
     WRITE = 2
+
+    def vload(self, begin, dtype=None):
+        """Generate an Expr that loads dtype from begin index.
+
+        Parameters
+        ----------
+        begin : Array of Expr
+            The beginning index in unit of Buffer.dtype
+
+        dtype : str
+            The data type to be loaded,
+            can be vector type which have lanes that is multiple of Buffer.dtype
+
+        Returns
+        -------
+        load : Expr
+            The corresponding load expression.
+        """
+        begin = (begin,) if isinstance(begin, (int, PrimExpr)) else begin
+        dtype = dtype if dtype else self.dtype
+        return _ffi_api.BufferVLoad(self, _to_ir(begin), dtype)  # type: ignore
+
+    def vstore(self, begin, value):
+        """Generate a Stmt that store value into begin index.
+
+        Parameters
+        ----------
+        begin : Array of Expr
+            The beginning index in unit of Buffer.dtype
+
+        value : Expr
+            The value to be stored.
+
+        Returns
+        -------
+        store : Stmt
+            The corresponding store stmt.
+        """
+        begin = (begin,) if isinstance(begin, (int, PrimExpr)) else begin
+        return _ffi_api.BufferVStore(self, _to_ir(begin), value)  # type: ignore
 
 
 def decl_buffer(
@@ -146,7 +186,7 @@ def decl_buffer(
         dtype,
         _to_ir(shape),
         _to_ir(strides),
-        elem_offset,
+        _to_ir(elem_offset),
         _to_ir(name),
         data_alignment,
         offset_factor,
@@ -189,6 +229,53 @@ class MatchBufferRegion(Object):
     def __init__(self, buffer: Buffer, source: BufferRegion):
         self.__init_handle_by_constructor__(
             _ffi_api.MatchBufferRegion, buffer, source  # type: ignore
+        )
+
+
+@_ffi.register_object("ir.BufferLoad")
+class BufferLoad(PrimExprWithOp):
+    """Buffer load node.
+
+    Parameters
+    ----------
+    buffer : Buffer
+        The buffer to be loaded.
+
+    indices : List[PrimExpr]
+        The buffer indices.
+
+    span : Optional[Span]
+        The location of this itervar in the source code.
+    """
+
+    def __init__(self, buffer, indices, span=None):
+        self.__init_handle_by_constructor__(
+            _ffi_api.BufferLoad, buffer, indices, span  # type: ignore
+        )
+
+
+@_ffi.register_object("ir.BufferStore")
+class BufferStore(Stmt):
+    """Buffer store node.
+
+    Parameters
+    ----------
+    buffer : Buffer
+        The buffer.
+
+    value : PrimExpr
+        The value we to be stored.
+
+    indices : List[PrimExpr]
+        The indices location to be stored.
+
+    span : Optional[Span]
+        The location of this itervar in the source code.
+    """
+
+    def __init__(self, buffer, value, indices, span=None):
+        self.__init_handle_by_constructor__(
+            _ffi_api.BufferStore, buffer, value, indices, span  # type: ignore
         )
 
 

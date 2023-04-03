@@ -1418,5 +1418,169 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
       return IdDoc("zip")->Call(results);
     });
 
+// Comprehension
+Comprehension::Comprehension(BaseExpr target, BaseExpr iter, Array<BaseExpr> ifs) {
+  ObjectPtr<ComprehensionNode> node = make_object<ComprehensionNode>();
+  node->target = std::move(target);
+  node->iter = std::move(iter);
+  node->ifs = std::move(ifs);
+  data_ = std::move(node);
+}
+
+MATXSCRIPT_REGISTER_GLOBAL("ir.Comprehension")
+    .set_body_typed([](BaseExpr target, BaseExpr iter, Array<BaseExpr> ifs) {
+      return Comprehension(target, std::move(iter), std::move(ifs));
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(ComprehensionNode);
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::Comprehension>(
+        "", [](ir::Comprehension e, ObjectPath p, IRDocsifier d) -> Doc {
+          ExprDoc target = d->AsDoc<ExprDoc>(e->target, p->Attr("target"));
+          ExprDoc iter = d->AsDoc<ExprDoc>(e->iter, p->Attr("iter"));
+          p = p->Attr("ifs");
+          int n = e->ifs.size();
+          Optional<Array<ExprDoc>> ifs_opt{nullptr};
+          if (n > 0) {
+            auto ifs = Array<ExprDoc>();
+            ifs.reserve(n);
+            for (int i = 0; i < n; ++i) {
+              ifs.push_back(d->AsDoc<ExprDoc>(e->ifs[i], p->ArrayIndex(i)));
+            }
+            ifs_opt = ifs;
+          }
+          return ComprehensionDoc(target, iter, ifs_opt);
+        });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
+    .set_dispatch<ComprehensionNode>([](const ObjectRef& node, ReprPrinter* p) {
+      p->stream << IRTextPrinter::Print(node, NullOpt);
+    });
+
+// ListComp
+ListComp::ListComp(Type ann_typed, BaseExpr elt, Array<Comprehension> generators, Span span) {
+  ObjectPtr<ListCompNode> node = make_object<ListCompNode>();
+  node->elt = std::move(elt);
+  node->generators = std::move(generators);
+  if (ann_typed.defined()) {
+    node->checked_type_ = std::move(ann_typed);
+  } else {
+    node->checked_type_ = ListType(false, ObjectType(), span);
+  }
+  node->span = std::move(span);
+  data_ = std::move(node);
+}
+
+MATXSCRIPT_REGISTER_GLOBAL("ir.ListComp")
+    .set_body_typed([](Type ann_typed, BaseExpr elt, Array<Comprehension> generators, Span span) {
+      return ListComp(std::move(ann_typed), std::move(elt), std::move(generators), std::move(span));
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(ListCompNode);
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::ListComp>("", [](ir::ListComp e, ObjectPath p, IRDocsifier d) -> Doc {
+      ExprDoc elt = d->AsDoc<ExprDoc>(e->elt, p->Attr("elt"));
+      p = p->Attr("generators");
+      int n = e->generators.size();
+      Array<ComprehensionDoc> generators;
+      generators.reserve(n);
+      for (int i = 0; i < n; ++i) {
+        generators.push_back(d->AsDoc<ComprehensionDoc>(e->generators[i], p->ArrayIndex(i)));
+      }
+      return ListCompDoc(elt, generators);
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
+    .set_dispatch<ListCompNode>([](const ObjectRef& node, ReprPrinter* p) {
+      p->stream << IRTextPrinter::Print(node, NullOpt);
+    });
+
+// SetComp
+SetComp::SetComp(Type ann_typed, BaseExpr elt, Array<Comprehension> generators, Span span) {
+  ObjectPtr<SetCompNode> node = make_object<SetCompNode>();
+  node->elt = std::move(elt);
+  node->generators = std::move(generators);
+  if (ann_typed.defined()) {
+    node->checked_type_ = std::move(ann_typed);
+  } else {
+    node->checked_type_ = ListType(false, ObjectType(), span);
+  }
+  node->span = std::move(span);
+  data_ = std::move(node);
+}
+
+MATXSCRIPT_REGISTER_GLOBAL("ir.SetComp")
+    .set_body_typed([](Type ann_typed, BaseExpr elt, Array<Comprehension> generators, Span span) {
+      return SetComp(std::move(ann_typed), std::move(elt), std::move(generators), std::move(span));
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(SetCompNode);
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::SetComp>("", [](ir::SetComp e, ObjectPath p, IRDocsifier d) -> Doc {
+      ExprDoc elt = d->AsDoc<ExprDoc>(e->elt, p->Attr("elt"));
+      p = p->Attr("generators");
+      int n = e->generators.size();
+      Array<ComprehensionDoc> generators;
+      generators.reserve(n);
+      for (int i = 0; i < n; ++i) {
+        generators.push_back(d->AsDoc<ComprehensionDoc>(e->generators[i], p->ArrayIndex(i)));
+      }
+      return SetCompDoc(elt, generators);
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
+    .set_dispatch<SetCompNode>([](const ObjectRef& node, ReprPrinter* p) {
+      p->stream << IRTextPrinter::Print(node, NullOpt);
+    });
+
+// DictComp
+DictComp::DictComp(
+    Type ann_typed, BaseExpr key, BaseExpr value, Array<Comprehension> generators, Span span) {
+  ObjectPtr<DictCompNode> node = make_object<DictCompNode>();
+  node->key = std::move(key);
+  node->value = std::move(value);
+  node->generators = std::move(generators);
+  if (ann_typed.defined()) {
+    node->checked_type_ = std::move(ann_typed);
+  } else {
+    node->checked_type_ = ListType(false, ObjectType(), span);
+  }
+  node->span = std::move(span);
+  data_ = std::move(node);
+}
+
+MATXSCRIPT_REGISTER_GLOBAL("ir.DictComp")
+    .set_body_typed([](Type ann_typed,
+                       BaseExpr key,
+                       BaseExpr value,
+                       Array<Comprehension> generators,
+                       Span span) {
+      return DictComp(std::move(ann_typed),
+                      std::move(key),
+                      std::move(value),
+                      std::move(generators),
+                      std::move(span));
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(DictCompNode);
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::DictComp>("", [](ir::DictComp e, ObjectPath p, IRDocsifier d) -> Doc {
+      ExprDoc key = d->AsDoc<ExprDoc>(e->key, p->Attr("key"));
+      ExprDoc value = d->AsDoc<ExprDoc>(e->value, p->Attr("value"));
+      p = p->Attr("generators");
+      int n = e->generators.size();
+      Array<ComprehensionDoc> generators;
+      generators.reserve(n);
+      for (int i = 0; i < n; ++i) {
+        generators.push_back(d->AsDoc<ComprehensionDoc>(e->generators[i], p->ArrayIndex(i)));
+      }
+      return DictCompDoc(key, value, generators);
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
+    .set_dispatch<DictCompNode>([](const ObjectRef& node, ReprPrinter* p) {
+      p->stream << IRTextPrinter::Print(node, NullOpt);
+    });
+
 }  // namespace ir
 }  // namespace matxscript

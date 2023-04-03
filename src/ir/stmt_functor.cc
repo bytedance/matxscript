@@ -151,6 +151,11 @@ void StmtVisitor::VisitStmt_(const HLOYieldNode* op) {
   this->VisitExpr(op->label);
 }
 
+void StmtVisitor::VisitStmt_(const BufferStoreNode* op) {
+  this->VisitExpr(op->value);
+  VisitArray(op->indices, [this](const PrimExpr& e) { this->VisitExpr(e); });
+}
+
 void StmtVisitor::VisitStmt_(const ComputeBlockNode* op) {
   auto fn_visit_buffer_region = [this](const BufferRegion& s) {
     for (const auto& range : s->region) {
@@ -171,6 +176,12 @@ void StmtVisitor::VisitStmt_(const ComputeBlockNode* op) {
     this->VisitStmt(op->init.value());
   }
   this->VisitStmt(op->body);
+}
+
+void StmtVisitor::VisitStmt_(const ComputeBlockRealizeNode* op) {
+  VisitArray(op->iter_values, [this](const PrimExpr& e) { this->VisitExpr(e); });
+  this->VisitExpr(op->predicate);
+  this->VisitStmt(op->block);
 }
 
 class StmtMutator::Internal {
@@ -599,6 +610,20 @@ Stmt StmtMutator::VisitStmt_(const HLOYieldNode* op) {
   }
 }
 
+Stmt StmtMutator::VisitStmt_(const BufferStoreNode* op) {
+  PrimExpr value = this->VisitExpr(op->value);
+  Array<PrimExpr> indices = Internal::Mutate(this, op->indices);
+
+  if (value.same_as(op->value) && indices.same_as(op->indices)) {
+    return GetRef<Stmt>(op);
+  } else {
+    auto n = CopyOnWrite(op);
+    n->value = std::move(value);
+    n->indices = std::move(indices);
+    return Stmt(n);
+  }
+}
+
 Stmt StmtMutator::VisitStmt_(const ComputeBlockNode* op) {
   Array<PrimIterVar> iter_vars = Internal::Mutate(this, op->iter_vars);
   Array<BufferRegion> reads = Internal::Mutate(this, op->reads);
@@ -621,6 +646,21 @@ Stmt StmtMutator::VisitStmt_(const ComputeBlockNode* op) {
     n->body = std::move(body);
     n->init = std::move(init);
     n->match_buffers = std::move(match_buffers);
+    return Stmt(n);
+  }
+}
+
+Stmt StmtMutator::VisitStmt_(const ComputeBlockRealizeNode* op) {
+  Array<PrimExpr> v = Internal::Mutate(this, op->iter_values);
+  PrimExpr pred = this->VisitExpr(op->predicate);
+  Stmt block = this->VisitStmt(op->block);
+  if (v.same_as(op->iter_values) && pred.same_as(op->predicate) && block.same_as(op->block)) {
+    return GetRef<Stmt>(op);
+  } else {
+    auto n = CopyOnWrite(op);
+    n->iter_values = std::move(v);
+    n->predicate = std::move(pred);
+    n->block = Downcast<ComputeBlock>(block);
     return Stmt(n);
   }
 }
@@ -951,8 +991,56 @@ class IRSubstitue : public StmtExprMutator {
     return std::move(var);
   }
 
+  PrimExpr VisitExpr_(const BufferLoadNode* op) final {
+    auto node = Downcast<BufferLoad>(ExprMutator::VisitExpr_(op));
+    return VisitBufferAccess(std::move(node));
+  }
+
+  Stmt VisitStmt_(const BufferStoreNode* op) final {
+    auto node = Downcast<BufferStore>(StmtExprMutator::VisitStmt_(op));
+    return VisitBufferAccess(std::move(node));
+  }
+
+  template <typename Node>
+  Node VisitBufferAccess(Node node) {
+    Buffer new_buf = GetRemappedBuffer(node->buffer);
+
+    if (!new_buf.same_as(node->buffer)) {
+      auto writer = node.CopyOnWrite();
+      writer->buffer = new_buf;
+    }
+
+    return node;
+  }
+
+  Buffer GetRemappedBuffer(Buffer buf) {
+    auto key = buf.get();
+    auto it = buf_remap_.find(key);
+    if (it != buf_remap_.end()) {
+      return it->second;
+    }
+
+    auto new_buffer_var = vmap_base_(buf->data);
+    if (new_buffer_var.defined() && !new_buffer_var.value().same_as(buf->data)) {
+      auto writer = buf.CopyOnWrite();
+      writer->data = Downcast<PrimVar>(new_buffer_var);
+    }
+
+    buf_remap_[key] = buf;
+    return buf;
+  }
+
  private:
   std::function<Optional<BaseExpr>(const BaseExpr&)> vmap_base_;
+
+  /* \brief Generated map to track buffers being remapped.
+   *
+   * If a `PrimVar BufferNode::data` is remapped, then all buffers
+   * containing that data pointer should also be remapped.  This map
+   * is used to track buffer modifications, and ensure all instances
+   * of a buffer are replaced by the same modified buffer object.
+   */
+  std::unordered_map<const BufferNode*, Buffer> buf_remap_;
 };
 
 Stmt Substitute(Stmt stmt, std::function<Optional<PrimExpr>(const PrimVar&)> vmap) {

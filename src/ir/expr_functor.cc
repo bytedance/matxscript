@@ -105,6 +105,10 @@ void ExprVisitor::VisitExpr_(const PrimSelectNode* op) {
 void ExprVisitor::VisitExpr_(const PrimVarNode* op) {
 }
 
+void ExprVisitor::VisitExpr_(const BufferLoadNode* op) {
+  VisitArray(op->indices, [this](const PrimExpr& e) { this->VisitExpr(e); });
+}
+
 void ExprVisitor::VisitExpr_(const PrimCastNode* op) {
   this->VisitExpr(op->value);
 }
@@ -234,6 +238,36 @@ void ExprVisitor::VisitExpr_(const HLOZipNode* op) {
   for (auto value : op->values) {
     this->VisitExpr(value);
   }
+}
+
+void ExprVisitor::VisitStruct_(const ComprehensionNode* op) {
+  this->VisitExpr(op->iter);
+  this->VisitExpr(op->target);
+  for (auto predicate : op->ifs) {
+    this->VisitExpr(predicate);
+  }
+}
+
+void ExprVisitor::VisitExpr_(const ListCompNode* op) {
+  for (auto gen : op->generators) {
+    this->VisitStruct_(gen.get());
+  }
+  this->VisitExpr(op->elt);
+}
+
+void ExprVisitor::VisitExpr_(const SetCompNode* op) {
+  for (auto gen : op->generators) {
+    this->VisitStruct_(gen.get());
+  }
+  this->VisitExpr(op->elt);
+}
+
+void ExprVisitor::VisitExpr_(const DictCompNode* op) {
+  for (auto gen : op->generators) {
+    this->VisitStruct_(gen.get());
+  }
+  this->VisitExpr(op->key);
+  this->VisitExpr(op->value);
 }
 
 // other info
@@ -396,6 +430,16 @@ HLOExpr ExprMutator::VisitExpr_(const HLOVarNode* op) {
   return GetRef<HLOExpr>(op);
 }
 
+PrimExpr ExprMutator::VisitExpr_(const BufferLoadNode* op) {
+  auto fmutate = [this](const PrimExpr& e) { return this->VisitExpr(e); };
+  Array<PrimExpr> indices = op->indices.Map(fmutate);
+  if (indices.same_as(op->indices)) {
+    return GetRef<PrimExpr>(op);
+  } else {
+    return BufferLoad(op->buffer, indices);
+  }
+}
+
 HLOExpr ExprMutator::VisitExpr_(const GlobalVarNode* op) {
   return GetRef<HLOExpr>(op);
 }
@@ -549,6 +593,95 @@ HLOExpr ExprMutator::VisitExpr_(const HLOZipNode* op) {
     return GetRef<HLOExpr>(op);
   } else {
     return HLOZip(std::move(values), op->span);
+  }
+}
+
+Comprehension ExprMutator::VisitStruct_(const ComprehensionNode* op) {
+  bool all_fields_unchanged = true;
+
+  auto new_iter = this->VisitExpr(op->iter);
+  all_fields_unchanged &= new_iter.same_as(op->iter);
+
+  auto new_target = this->VisitExpr(op->target);
+  all_fields_unchanged &= new_target.same_as(op->target);
+
+  Array<BaseExpr> new_ifs;
+  for (auto predicate : op->ifs) {
+    auto new_predicate = this->VisitExpr(predicate);
+    new_ifs.push_back(new_predicate);
+    all_fields_unchanged &= new_predicate.same_as(predicate);
+  }
+  if (all_fields_unchanged) {
+    return GetRef<Comprehension>(op);
+  } else {
+    return Comprehension(std::move(new_target), std::move(new_iter), std::move(new_ifs));
+  }
+}
+
+HLOExpr ExprMutator::VisitExpr_(const ListCompNode* op) {
+  bool all_fields_unchanged = true;
+
+  Array<Comprehension> new_gens;
+  new_gens.reserve(op->generators.size());
+  for (auto gen : op->generators) {
+    Comprehension new_gen = this->VisitStruct_(gen.get());
+    all_fields_unchanged &= new_gen.same_as(gen);
+    new_gens.push_back(std::move(new_gen));
+  }
+
+  auto new_elt = this->VisitExpr(op->elt);
+  all_fields_unchanged &= new_elt.same_as(op->elt);
+
+  if (all_fields_unchanged) {
+    return GetRef<HLOExpr>(op);
+  } else {
+    return ListComp(op->checked_type_, std::move(new_elt), std::move(new_gens));
+  }
+}
+
+HLOExpr ExprMutator::VisitExpr_(const SetCompNode* op) {
+  bool all_fields_unchanged = true;
+
+  Array<Comprehension> new_gens;
+  new_gens.reserve(op->generators.size());
+  for (auto gen : op->generators) {
+    Comprehension new_gen = this->VisitStruct_(gen.get());
+    all_fields_unchanged &= new_gen.same_as(gen);
+    new_gens.push_back(std::move(new_gen));
+  }
+
+  auto new_elt = this->VisitExpr(op->elt);
+  all_fields_unchanged &= new_elt.same_as(op->elt);
+
+  if (all_fields_unchanged) {
+    return GetRef<HLOExpr>(op);
+  } else {
+    return SetComp(op->checked_type_, std::move(new_elt), std::move(new_gens));
+  }
+}
+
+HLOExpr ExprMutator::VisitExpr_(const DictCompNode* op) {
+  bool all_fields_unchanged = true;
+
+  Array<Comprehension> new_gens;
+  new_gens.reserve(op->generators.size());
+  for (auto gen : op->generators) {
+    Comprehension new_gen = this->VisitStruct_(gen.get());
+    all_fields_unchanged &= new_gen.same_as(gen);
+    new_gens.push_back(std::move(new_gen));
+  }
+
+  auto new_key = this->VisitExpr(op->key);
+  all_fields_unchanged &= new_key.same_as(op->key);
+
+  auto new_value = this->VisitExpr(op->value);
+  all_fields_unchanged &= new_value.same_as(op->value);
+
+  if (all_fields_unchanged) {
+    return GetRef<HLOExpr>(op);
+  } else {
+    return DictComp(
+        op->checked_type_, std::move(new_key), std::move(new_value), std::move(new_gens));
   }
 }
 

@@ -32,6 +32,7 @@
 #include <matxscript/ir/expr.h>
 #include <matxscript/ir/function.h>
 #include <matxscript/ir/op_expr.h>
+#include <matxscript/ir/tensor_stmt.h>
 #include <matxscript/runtime/demangle.h>
 #include <matxscript/runtime/functor.h>
 
@@ -160,6 +161,8 @@ class PrimExprFunctor<R(const PrimExpr& n, Args...)> {
   virtual R VisitExpr_(const PrimCastNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const HLOCastPrimNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
 
+  virtual R VisitExpr_(const BufferLoadNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
+
   virtual R VisitExprDefault_(const Object* op, Args...) {
     MXTHROW << "[" << runtime::DemangleType(typeid(*this).name()) << "] Do not have a default for "
             << op->GetTypeKey();
@@ -202,6 +205,8 @@ class PrimExprFunctor<R(const PrimExpr& n, Args...)> {
     IR_EXPR_FUNCTOR_DISPATCH(PrimLetNode);
     IR_EXPR_FUNCTOR_DISPATCH(PrimCastNode);
     IR_EXPR_FUNCTOR_DISPATCH(HLOCastPrimNode);
+
+    IR_EXPR_FUNCTOR_DISPATCH(BufferLoadNode);
 
     return vtable;
   }
@@ -277,6 +282,9 @@ class HLOExprFunctor<R(const HLOExpr& n, Args...)> {
   virtual R VisitExpr_(const HLOMoveNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const HLOEnumerateNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const HLOZipNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
+  virtual R VisitExpr_(const ListCompNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
+  virtual R VisitExpr_(const SetCompNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
+  virtual R VisitExpr_(const DictCompNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
 
   // kernel or script
   virtual R VisitExpr_(const TupleExprNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
@@ -327,6 +335,9 @@ class HLOExprFunctor<R(const HLOExpr& n, Args...)> {
     IR_EXPR_FUNCTOR_DISPATCH(HLOMoveNode);
     IR_EXPR_FUNCTOR_DISPATCH(HLOEnumerateNode);
     IR_EXPR_FUNCTOR_DISPATCH(HLOZipNode);
+    IR_EXPR_FUNCTOR_DISPATCH(ListCompNode);
+    IR_EXPR_FUNCTOR_DISPATCH(SetCompNode);
+    IR_EXPR_FUNCTOR_DISPATCH(DictCompNode);
     // kernel or script
     IR_EXPR_FUNCTOR_DISPATCH(TupleExprNode);
     IR_EXPR_FUNCTOR_DISPATCH(RangeExprNode);
@@ -412,6 +423,8 @@ class MATX_DLL ExprVisitor : public PrimExprFunctor<void(const PrimExpr&)>,
   void VisitExpr_(const PrimCastNode* op) override;
   void VisitExpr_(const HLOCastPrimNode* op) override;
 
+  void VisitExpr_(const BufferLoadNode* op) override;
+
   // HLO expr
   void VisitExpr_(const HLOAddNode* op) override;
   void VisitExpr_(const HLOSubNode* op) override;
@@ -443,6 +456,11 @@ class MATX_DLL ExprVisitor : public PrimExprFunctor<void(const PrimExpr&)>,
   void VisitExpr_(const HLOMoveNode* op) override;
   void VisitExpr_(const HLOEnumerateNode* op) override;
   void VisitExpr_(const HLOZipNode* op) override;
+
+  virtual void VisitStruct_(const ComprehensionNode* op);
+  void VisitExpr_(const ListCompNode* op) override;
+  void VisitExpr_(const SetCompNode* op) override;
+  void VisitExpr_(const DictCompNode* op) override;
 
   // kernel or script
   void VisitExpr_(const TupleExprNode* op) override;
@@ -520,6 +538,8 @@ class MATX_DLL ExprMutator : public PrimExprFunctor<PrimExpr(const PrimExpr&)>,
   PrimExpr VisitExpr_(const PrimCastNode* op) override;
   PrimExpr VisitExpr_(const HLOCastPrimNode* op) override;
 
+  PrimExpr VisitExpr_(const BufferLoadNode* op) override;
+
   // HLO expr
   HLOExpr VisitExpr_(const HLOAddNode* op) override;
   HLOExpr VisitExpr_(const HLOSubNode* op) override;
@@ -553,6 +573,10 @@ class MATX_DLL ExprMutator : public PrimExprFunctor<PrimExpr(const PrimExpr&)>,
   HLOExpr VisitExpr_(const HLOMoveNode* op) override;
   HLOExpr VisitExpr_(const HLOEnumerateNode* op) override;
   HLOExpr VisitExpr_(const HLOZipNode* op) override;
+  virtual Comprehension VisitStruct_(const ComprehensionNode* op);
+  HLOExpr VisitExpr_(const ListCompNode* op) override;
+  HLOExpr VisitExpr_(const SetCompNode* op) override;
+  HLOExpr VisitExpr_(const DictCompNode* op) override;
 
   // kernel or script
   HLOExpr VisitExpr_(const TupleExprNode* op) override;

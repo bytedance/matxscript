@@ -118,6 +118,41 @@ Buffer::Buffer(PrimVar data,
   data_ = std::move(n);
 }
 
+PrimExpr Buffer::vload(Array<PrimExpr> begin, DataType value_dtype) const {
+  // specially handle bool, stored as DataType::Int(8)
+  const BufferNode* n = operator->();
+  MXCHECK(n != nullptr);
+  MXCHECK(value_dtype.element_of() == n->dtype.element_of() &&
+          value_dtype.lanes() % n->dtype.lanes() == 0)
+      << "Cannot load " << value_dtype << " from buffer of " << n->dtype;
+
+  Array<PrimExpr> indices = begin;
+  int factor = value_dtype.lanes() / n->dtype.lanes();
+  if (factor > 1) {
+    MXTHROW << "ramp is not supported!!!";
+    // indices.Set(indices.size() - 1, Ramp(indices[indices.size() - 1], 1, factor));
+  }
+  return BufferLoad(*this, indices);
+}
+
+Stmt Buffer::vstore(Array<PrimExpr> begin, PrimExpr value) const {
+  // specially handle bool, stored as DataType::Int(8)
+  const BufferNode* n = operator->();
+  MXCHECK(n != nullptr);
+  DataType value_dtype = value.dtype();
+  MXCHECK(value_dtype.element_of() == n->dtype.element_of() &&
+          value_dtype.lanes() % n->dtype.lanes() == 0)
+      << "Cannot store " << value_dtype << " to buffer of " << n->dtype;
+
+  Array<PrimExpr> indices = begin;
+  int factor = value_dtype.lanes() / n->dtype.lanes();
+  if (factor > 1) {
+    MXTHROW << "ramp is not supported!!!";
+    // indices.Set(indices.size() - 1, Ramp(indices[indices.size() - 1], 1, factor));
+  }
+  return BufferStore(*this, value, indices);
+}
+
 MATXSCRIPT_REGISTER_NODE_TYPE(BufferNode);
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.Buffer").set_body([](PyArgs args) -> RTValue {
@@ -182,6 +217,81 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.MatchBufferRegion")
     });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(MatchBufferRegionNode);
+
+// BufferLoad
+void BufferLoadNode::LegalizeDType() {
+  for (int i = 0; i < static_cast<int>(indices.size()) - 1; i++) {
+    MXCHECK(indices[i].dtype().is_scalar())
+        << "Only the last index of a buffer access may be a vector type.";
+  }
+
+  int index_lanes = indices.size() ? indices.back().dtype().lanes() : 1;
+  int buffer_lanes = buffer->dtype.lanes();
+
+  this->dtype = buffer->dtype.with_lanes(index_lanes * buffer_lanes);
+}
+
+BufferLoad::BufferLoad(Buffer buffer, Array<PrimExpr> indices, Span span) {
+  MXCHECK_EQ(buffer->shape.size(), indices.size())
+      << "Buffer " << buffer->name << " is " << buffer->shape.size()
+      << "-dimensional, cannot be indexed with the " << indices.size()
+      << "-dimensional indices provided.";
+
+  ObjectPtr<BufferLoadNode> node = runtime::make_object<BufferLoadNode>();
+  node->buffer = std::move(buffer);
+  node->indices = std::move(indices);
+  node->span = std::move(span);
+  node->LegalizeDType();
+  data_ = std::move(node);
+}
+
+MATXSCRIPT_REGISTER_GLOBAL("ir.BufferLoad")
+    .set_body_typed([](Buffer buffer, Array<PrimExpr> indices, Span span) {
+      return BufferLoad(buffer, indices, span);
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(BufferLoadNode);
+
+// BufferStore
+BufferStore::BufferStore(Buffer buffer, PrimExpr value, Array<PrimExpr> indices, Span span) {
+  MXCHECK_EQ(buffer->shape.size(), indices.size())
+      << "Buffer " << buffer->name << " is " << buffer->shape.size()
+      << "-dimensional, cannot be indexed with the " << indices.size()
+      << "-dimensional indices provided.";
+
+  for (int i = 0; i < static_cast<int>(indices.size()) - 1; i++) {
+    MXCHECK(indices[i].dtype().is_scalar())
+        << "Only the last index of a buffer access may be a vector type.";
+  }
+
+  int index_lanes = indices.size() ? indices.back().dtype().lanes() : 1;
+  int buffer_lanes = buffer->dtype.lanes();
+
+  MXCHECK_EQ(index_lanes * buffer_lanes, value.dtype().lanes())
+      << "Cannot store value with " << value.dtype().lanes() << ", expected value with "
+      << index_lanes * buffer_lanes << " (" << index_lanes << " index lanes * " << buffer_lanes
+      << " buffer element lanes)";
+  if (buffer->dtype.with_lanes(buffer_lanes * index_lanes) != value.dtype()) {
+    MXLOG(FATAL) << "TypeError: dtype mismatch on BufferStore: "      //
+                 << "buffer's dtype is `" << buffer->dtype            //
+                 << "`, the lanes of indexing are: `" << index_lanes  //
+                 << "`, but RHS's dtype is `" << value.dtype() << "`";
+  }
+
+  ObjectPtr<BufferStoreNode> node = runtime::make_object<BufferStoreNode>();
+  node->buffer = std::move(buffer);
+  node->value = std::move(value);
+  node->indices = std::move(indices);
+  node->span = std::move(span);
+  data_ = std::move(node);
+}
+
+MATXSCRIPT_REGISTER_GLOBAL("ir.BufferStore")
+    .set_body_typed([](Buffer buffer, PrimExpr value, Array<PrimExpr> indices, Span span) {
+      return BufferStore(buffer, value, indices, span);
+    });
+
+MATXSCRIPT_REGISTER_NODE_TYPE(BufferStoreNode);
 
 // ComputeBlock
 ComputeBlock::ComputeBlock(Array<PrimIterVar> iter_vars,
@@ -498,6 +608,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
         return doc.value();
       }
       MXLOG(FATAL) << "IndexError: Buffer is not defined in the environment: " << buffer;
+      return Doc{nullptr};
     });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
@@ -510,6 +621,34 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
               stmt->buffer, "match_buffer", {src_buffer}, p->Attr("buffer"), d->frames.back(), d);
           return AssignDoc(lhs, rhs, NullOpt);
         });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::BufferLoad>(  //
+        "",
+        [](ir::BufferLoad load, ObjectPath p, IRDocsifier d) -> Doc {
+          ExprDoc buffer = d->AsDoc<ExprDoc>(load->buffer, p->Attr("buffer"));
+          return buffer[BufferIndices(load->indices, p->Attr("indices"), d)];
+        });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::BufferStore>(  //
+        "",
+        [](ir::BufferStore store, ObjectPath p, IRDocsifier d) -> Doc {
+          ExprDoc buffer = d->AsDoc<ExprDoc>(store->buffer, p->Attr("buffer"));
+          return AssignDoc(/*lhs=*/buffer[BufferIndices(store->indices, p->Attr("indices"), d)],
+                           /*rhs=*/d->AsDoc<ExprDoc>(store->value, p->Attr("value")),
+                           NullOpt);
+        });
+
+MATXSCRIPT_REGISTER_GLOBAL("ir.BufferVLoad")
+    .set_body_typed([](const Buffer& buf, Array<PrimExpr> begin, runtime::DataType dtype) {
+      return buf.vload(begin, dtype);
+    });
+
+MATXSCRIPT_REGISTER_GLOBAL("ir.BufferVStore")
+    .set_body_typed([](const Buffer& buf, Array<PrimExpr> begin, PrimExpr value) {
+      return buf.vstore(begin, value);
+    });
 
 Doc PrintBlock(IRDocsifier d,
                ir::ComputeBlock block,
