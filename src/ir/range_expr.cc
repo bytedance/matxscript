@@ -43,11 +43,10 @@ RangeExpr::RangeExpr(PrimExpr start, PrimExpr stop, PrimExpr step, Span span) {
   data_ = std::move(n);
 }
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.RangeExpr").set_body([](PyArgs args) -> RTValue {
-  return RangeExpr(MATXSCRIPT_TYPE_AS(args[0], PrimExpr),
-                   MATXSCRIPT_TYPE_AS(args[1], PrimExpr),
-                   MATXSCRIPT_TYPE_AS(args[2], PrimExpr));
-});
+MATXSCRIPT_REGISTER_GLOBAL("ir.RangeExpr")
+    .set_body_typed([](PrimExpr start, PrimExpr stop, PrimExpr step, Span span) -> RTValue {
+      return RangeExpr(std::move(start), std::move(stop), std::move(step), std::move(span));
+    });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(RangeExprNode);
 

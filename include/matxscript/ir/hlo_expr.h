@@ -890,5 +890,182 @@ class HLOZip : public HLOExpr {
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(HLOZip, HLOExpr, HLOZipNode);
 };
 
+/*!
+ * \brief Representing the comprehension.
+ */
+class ComprehensionNode : public Object {
+ public:
+  BaseExpr target;
+  BaseExpr iter;
+  Array<BaseExpr> ifs;
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("target", &target);
+    v->Visit("iter", &iter);
+    v->Visit("ifs", &ifs);
+  }
+
+  bool SEqualReduce(const ComprehensionNode* other, SEqualReducer equal) const {
+    return equal(target, other->target) && equal(iter, other->iter) && equal(ifs, other->ifs);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    hash_reduce(target);
+    hash_reduce(iter);
+    hash_reduce(ifs);
+  }
+
+  static constexpr const char* _type_key = "ir.Comprehension";
+  static constexpr const bool _type_has_method_sequal_reduce = true;
+  static constexpr const bool _type_has_method_shash_reduce = true;
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(ComprehensionNode, Object);
+};
+
+/*!
+ * \brief Managed reference to ComprehensionNode.
+ * \sa ComprehensionNode
+ */
+class Comprehension : public ObjectRef {
+ public:
+  MATX_DLL Comprehension(BaseExpr target, BaseExpr iter, Array<BaseExpr> ifs);
+
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(Comprehension, ObjectRef, ComprehensionNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(ComprehensionNode);
+};
+
+/*!
+ * \brief Representing the ListComp.
+ */
+class ListCompNode : public HLOExprNode {
+ public:
+  BaseExpr elt;
+  Array<Comprehension> generators;
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("elt", &elt);
+    v->Visit("generators", &generators);
+    v->Visit("span", &span);
+    v->Visit("_checked_type_", &checked_type_);
+  }
+
+  bool SEqualReduce(const ListCompNode* other, SEqualReducer equal) const {
+    return equal(elt, other->elt) && equal(generators, other->generators);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    hash_reduce(elt);
+    hash_reduce(generators);
+  }
+
+  static constexpr const char* _type_key = "ir.ListComp";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(ListCompNode, HLOExprNode);
+};
+
+/*!
+ * \brief Managed reference to ListCompNode.
+ * \sa ListCompNode
+ */
+class ListComp : public HLOExpr {
+ public:
+  MATX_DLL ListComp(Type ann_typed,
+                    BaseExpr elt,
+                    Array<Comprehension> generators,
+                    Span span = Span());
+
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(ListComp, HLOExpr, ListCompNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(ListCompNode);
+};
+
+/*!
+ * \brief Representing the SetComp.
+ */
+class SetCompNode : public HLOExprNode {
+ public:
+  BaseExpr elt;
+  Array<Comprehension> generators;
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("elt", &elt);
+    v->Visit("generators", &generators);
+    v->Visit("span", &span);
+    v->Visit("_checked_type_", &checked_type_);
+  }
+
+  bool SEqualReduce(const SetCompNode* other, SEqualReducer equal) const {
+    return equal(elt, other->elt) && equal(generators, other->generators);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    hash_reduce(elt);
+    hash_reduce(generators);
+  }
+
+  static constexpr const char* _type_key = "ir.SetComp";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(SetCompNode, HLOExprNode);
+};
+
+/*!
+ * \brief Managed reference to SetCompNode.
+ * \sa SetCompNode
+ */
+class SetComp : public HLOExpr {
+ public:
+  MATX_DLL SetComp(Type ann_typed,
+                   BaseExpr elt,
+                   Array<Comprehension> generators,
+                   Span span = Span());
+
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(SetComp, HLOExpr, SetCompNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(SetCompNode);
+};
+
+/*!
+ * \brief Representing the DictComp.
+ */
+class DictCompNode : public HLOExprNode {
+ public:
+  BaseExpr key;
+  BaseExpr value;
+  Array<Comprehension> generators;
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("key", &key);
+    v->Visit("value", &value);
+    v->Visit("generators", &generators);
+    v->Visit("span", &span);
+    v->Visit("_checked_type_", &checked_type_);
+  }
+
+  bool SEqualReduce(const DictCompNode* other, SEqualReducer equal) const {
+    return equal(key, other->key) && equal(value, other->value) &&
+           equal(generators, other->generators);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    hash_reduce(key);
+    hash_reduce(value);
+    hash_reduce(generators);
+  }
+
+  static constexpr const char* _type_key = "ir.DictComp";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(DictCompNode, HLOExprNode);
+};
+
+/*!
+ * \brief Managed reference to DictCompNode.
+ * \sa DictCompNode
+ */
+class DictComp : public HLOExpr {
+ public:
+  MATX_DLL DictComp(Type ann_typed,
+                    BaseExpr key,
+                    BaseExpr value,
+                    Array<Comprehension> generators,
+                    Span span = Span());
+
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(DictComp, HLOExpr, DictCompNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(DictCompNode);
+};
+
 }  // namespace ir
 }  // namespace matxscript

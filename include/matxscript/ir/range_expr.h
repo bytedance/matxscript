@@ -38,6 +38,8 @@ class RangeExprNode : public HLOExprNode {
     v->Visit("start", &start);
     v->Visit("stop", &stop);
     v->Visit("stop", &step);
+    v->Visit("span", &span);
+    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const RangeExprNode* other, SEqualReducer equal) const {
@@ -51,8 +53,6 @@ class RangeExprNode : public HLOExprNode {
   }
 
   static constexpr const char* _type_key = "RangeExpr";
-  static constexpr const bool _type_has_method_sequal_reduce = true;
-  static constexpr const bool _type_has_method_shash_reduce = true;
   MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(RangeExprNode, HLOExprNode);
 };
 
