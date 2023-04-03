@@ -24,11 +24,9 @@ import ast
 from typing import Any, List, Dict, TYPE_CHECKING
 
 from matx import ir as _ir
-from matx.kernel.ops import OpRegistry
 from matx.script import context as script_context
 from .context import *
 from .utils import build_span
-from ...ir.tensor_stmt import BufferRegion
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelParser
@@ -149,7 +147,7 @@ class BaseParser(ast.NodeVisitor):
                                                   build_span(self.root_node, node))
 
             self.var_stack.append(const_scalar_ctx)  # todo none for now
-            return const_scalar_ctx.data.script_var
+            return const_scalar_ctx.script_var
         else:
             raise NotImplementedError(f'Unsupported value {node.value}')
 
@@ -170,35 +168,6 @@ class BaseParser(ast.NodeVisitor):
     # Expressions
     def visit_UnaryOp(self, node: ast.UnaryOp) -> Any:
         raise NotImplementedError("visit_UnaryOp is not Implemented")
-
-    def visit_BinOp(self, node: ast.BinOp) -> Any:
-        # todo deal with other type
-        # todo generate a intermediate dst to hold the data
-        opname = type(node.op).__name__
-        lhs_ir = self.visit(node.left)
-        lhs_ctx = self.var_stack.pop()
-        rhs_ir = self.visit(node.right)
-        rhs_ctx = self.var_stack.pop()
-        if is_ndarray_type(lhs_ctx.kernel_type) and is_ndarray_type(rhs_ctx.kernel_type):
-            op_class = OpRegistry.get_bin_op(
-                lhs_ctx.kernel_type, rhs_ctx.kernel_type, opname)
-            op = op_class(lhs_ctx, rhs_ctx)
-            dst_kernel_type = op.dst_kernel_type()
-            var_info = AbstractNDArrayContext(dst_kernel_type)
-            self.var_stack.append(var_info)
-            if not lhs_ctx.is_abstract_ctx():
-                lhs_ir = lhs_ctx.data.script_var
-                range_ = self._make_range(op.op.lhs_broad_cast_shape)
-                self.reads.append(BufferRegion(lhs_ctx.buffer, range_))
-            if not rhs_ctx.is_abstract_ctx():
-                rhs_ir = rhs_ctx.data.script_var
-                range_ = self._make_range(op.op.rhs_broad_cast_shape)
-                self.reads.append(BufferRegion(rhs_ctx.buffer, range_))
-            return op.ir_class(lhs_ir, rhs_ir)
-        else:
-            raise SyntaxError(
-                f"bin op does not support {lhs_ctx.kernel_type} and {rhs_ctx.kernel_type}")
-        # todo insert to ir
 
     def visit_Slice(self, node: ast.Slice) -> Any:
         raise NotImplementedError("slice is not supported yet")

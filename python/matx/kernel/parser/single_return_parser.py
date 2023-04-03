@@ -22,10 +22,10 @@ import ast
 from typing import Any, Dict, TYPE_CHECKING
 
 import matx.ir as _ir
+from matx.kernel.ops import OpRegistry
 from matx.script import context as script_context
 from .base_parser import BaseParser
 from .context import *
-from ...ir import AssignStmt
 from ...ir.expr import *
 from ...ir.tensor_stmt import ComputeBlock, BufferRegion
 
@@ -50,6 +50,36 @@ class KernelSingleReturnParser(BaseParser):
                  shape_symbol_table: Dict[str, SymbolContext], return_ctx: NDArrayContext,
                  node: script_context.ASTNode):
         super().__init__(kernel_p, ndarray_context_table, shape_symbol_table, return_ctx, node)
+        self.iter_vars_names = []
+
+    def visit_BinOp(self, node: ast.BinOp) -> Any:
+        # todo deal with other type
+        # todo generate a intermediate dst to hold the data
+        opname = type(node.op).__name__
+        lhs_ir = self.visit(node.left)
+        lhs_ctx = self.var_stack.pop()
+        rhs_ir = self.visit(node.right)
+        rhs_ctx = self.var_stack.pop()
+        if is_ndarray_type(lhs_ctx.kernel_type) and is_ndarray_type(rhs_ctx.kernel_type):
+            op_class = OpRegistry.get_bin_op(
+                lhs_ctx.kernel_type, rhs_ctx.kernel_type, opname)
+            op = op_class(lhs_ctx, rhs_ctx)
+            dst_kernel_type = op.dst_kernel_type()
+            var_info = AbstractNDArrayContext(dst_kernel_type)
+            self.var_stack.append(var_info)
+            if not lhs_ctx.is_abstract_ctx():
+                lhs_ir = lhs_ctx.read_at(self.iter_vars_names[-len(lhs_ctx.shape):])
+                range_ = self._make_range(op.op.lhs_broad_cast_shape)
+                self.reads.append(BufferRegion(lhs_ctx.buffer, range_))
+            if not rhs_ctx.is_abstract_ctx():
+                rhs_ir = rhs_ctx.read_at(self.iter_vars_names[-len(rhs_ctx.shape):])
+                range_ = self._make_range(op.op.rhs_broad_cast_shape)
+                self.reads.append(BufferRegion(rhs_ctx.buffer, range_))
+            return op.ir_class(lhs_ir, rhs_ir)
+        else:
+            raise SyntaxError(
+                f"bin op does not support {lhs_ctx.kernel_type} and {rhs_ctx.kernel_type}")
+        # todo insert to ir
 
     def visit_Return(self, node: ast.Return) -> Any:
         # treat return as assign and
@@ -57,28 +87,36 @@ class KernelSingleReturnParser(BaseParser):
         if node.value is None:
             raise SyntaxError("return should not be empty")
 
-        rt_ir = self.visit(node.value)
-        rt_ctx = self.var_stack.pop()
-
         # todo make compute block
-        body = AssignStmt(self.return_ctx.data.script_var, rt_ir)
-        result_shape = rt_ctx.shape
+        result_shape = self.kernel_p.return_types.shape
         if list(result_shape) != list(self.return_ctx.shape):
             raise RuntimeError(f"the marked shape {self.return_ctx.shape} "
                                f"is not equal to {result_shape}")
         return_range = self._make_range(result_shape)
-        iter_vars_names = [f"__iter_{i}" for i in range(len(return_range))]
-        iter_vars = [PrimIterVar(return_range[i], iter_vars_names[i])
+        self.iter_vars_names = [
+            _ir.PrimVar(
+                f"__iter_{i}",
+                "int64") for i in range(
+                len(return_range))]
+        iter_vars = [PrimIterVar(return_range[i], self.iter_vars_names[i])
                      for i in range(len(return_range))]
 
+        rt_ir = self.visit(node.value)
+        rt_ctx = self.var_stack.pop()
+        if list(result_shape) != list(rt_ctx.shape):
+            raise SyntaxError(
+                f"The return shape is annotated as {result_shape} but get {rt_ctx.shape}")
+
         writes = [BufferRegion(self.return_ctx.buffer, return_range)]
+
+        body = self.return_ctx.write_at(self.iter_vars_names, rt_ir)
 
         return ComputeBlock(iter_vars, self.reads, writes, self.kernel_p.func_name, body)
 
     def _make_range(self, shape):
         rng = []
         for dim in shape:
-            start = _ir.const(0)
+            start = _ir.const(0, "int64")
             if is_symbol(dim):
                 symbol_ctx = self.shape_symbol_table[str(dim)]
                 end = symbol_ctx.script_var

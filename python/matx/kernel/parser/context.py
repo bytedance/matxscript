@@ -50,7 +50,6 @@ class AbstractNDArrayContext(AbstractBaseVariableContext):
         assert is_ndarray_type(type_), 'syntax error'
         super().__init__(type_)
         self.shape = type_.shape
-        self.data = AbstractScalarContext(ScalarType(type_.dtype))
 
 
 class AbstractScalarContext(AbstractBaseVariableContext):
@@ -60,7 +59,6 @@ class AbstractScalarContext(AbstractBaseVariableContext):
         assert is_scalar_shape(type_.shape), 'syntax error'
         super().__init__(type_)
         self.shape = type_.shape
-        self.data = None
 
 
 class NDArrayContext(AbstractNDArrayContext):
@@ -71,13 +69,18 @@ class NDArrayContext(AbstractNDArrayContext):
         self.script_var = _ir.PrimVar(f"{name}", self.script_type, span)  # PTR_VAR
         buffer_shape = [dim if not is_symbol(dim) else shape_symbol_table[str(dim)].script_var
                         for dim in self.shape]
-        self.data = ScalarContext(f"{name}_data", ScalarType(type_.dtype), span)
         self.buffer = decl_buffer(
             buffer_shape,
             dtype=type_.dtype_str(),
             name=name,
             data=self.script_var)
         self._abstract_ctx = False
+
+    def read_at(self, idx):
+        return self.buffer.vload(tuple(idx))
+
+    def write_at(self, idx, value):
+        return self.buffer.vstore(tuple(idx), value)
 
 
 class ScalarContext(AbstractScalarContext):
@@ -88,8 +91,13 @@ class ScalarContext(AbstractScalarContext):
         self.name: str = name
         self.script_type = _ir.PrimType(type_.dtype_str())
         self.script_var = _ir.PrimVar(name, self.script_type, span)
-        self.data = None
         self._abstract_ctx = False
+
+    def read_at(self, _):
+        return self.script_var
+
+    def write_at(self, _, value):
+        return _ir.AssignStmt(self.script_var, value)
 
 
 class ConstScalarContext(ScalarContext):
@@ -107,4 +115,3 @@ class SymbolContext(AbstractBaseVariableContext):
         assert is_symbol(symbol), 'syntax error'
         self.name: str = str(symbol)
         self.script_var = _ir.PrimVar(f"symbol_{self.name}", "int64", span)
-        self.data = None
