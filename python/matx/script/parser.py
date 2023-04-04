@@ -1356,7 +1356,7 @@ class MATXScriptParser(ast.NodeVisitor):
                 self.report_error('Unsupported binary operation: {}'.format(ast_op_node.__name__),
                                   NotImplementedError)
             res.append(my_binop(lhs, rhs, span))
-        return _ir.op.all(span, *res)
+        return _ir.op.builtins_all(span, *res)
 
     def visit_BoolOp(self, node):
         """BoolOp visitor

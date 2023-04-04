@@ -594,7 +594,7 @@ PrimExpr abs(PrimExpr x, Span span) {
     if (fx) {
       return FloatImm(x.dtype(), std::fabs(fx->value), span);
     }
-    static auto op = Op::Get("ir.fabs");
+    static auto op = Op::Get("ir.builtins_abs");
     return PrimCall(x.dtype(), op, {x}, span);
   } else if (x.dtype().is_uint()) {
     return x;
@@ -605,9 +605,16 @@ PrimExpr abs(PrimExpr x, Span span) {
   }
 }
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.fabs")
+// TODO(xiandi.ma): fix TGlobalSymbol
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.builtins_abs")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "fabs");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "fabs")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "abs");
+
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_fabs")
+    .set_attr<TVectorizable>("TVectorizable", true)
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "fabs")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.fabs");
 
 // isnan
 PrimExpr isnan(PrimExpr x, Span span) {
@@ -656,11 +663,13 @@ PrimExpr isfinite(PrimExpr x, Span span) {
 PrimExpr fmod(PrimExpr x, PrimExpr y, Span span) {
   BinaryOpMatchTypes(x, y);
   MXCHECK(x.dtype().is_float()) << "fmod only applies to float";
-  static auto op = Op::Get("ir.fmod");
+  static auto op = Op::Get("ir.math_fmod");
   return PrimCall(x.dtype(), op, {x, y}, span);
 }
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.fmod").set_attr<TGlobalSymbol>("TGlobalSymbol", "fmod");
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_fmod")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "fmod")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.fmod");
 
 // floor
 PrimExpr floor(PrimExpr x, Span span) {
@@ -670,16 +679,17 @@ PrimExpr floor(PrimExpr x, Span span) {
   const FloatImmNode* fx = x.as<FloatImmNode>();
   if (fx)
     return FloatImm(x.dtype(), std::floor(fx->value), span);
-  static auto op = Op::Get("ir.floor");
+  static auto op = Op::Get("ir.math_floor");
   PrimExpr result = PrimCall(x.dtype(), op, {x}, span);
 
   result = cast(DataType::Int(64), result);
   return result;
 }
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.floor")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_floor")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "floor");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "floor")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.floor");
 
 // ceil
 PrimExpr ceil(PrimExpr x, Span span) {
@@ -689,16 +699,17 @@ PrimExpr ceil(PrimExpr x, Span span) {
   const FloatImmNode* fx = x.as<FloatImmNode>();
   if (fx)
     return FloatImm(x.dtype(), std::ceil(fx->value), span);
-  static auto op = Op::Get("ir.ceil");
+  static auto op = Op::Get("ir.math_ceil");
   PrimExpr result = PrimCall(x.dtype(), op, {x}, span);
 
   result = cast(DataType::Int(64), result);
   return result;
 }
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.ceil")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_ceil")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "ceil");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "ceil")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.ceil");
 
 // round
 PrimExpr round(PrimExpr x, Span span) {
@@ -708,13 +719,14 @@ PrimExpr round(PrimExpr x, Span span) {
   const FloatImmNode* fx = x.as<FloatImmNode>();
   if (fx)
     return FloatImm(x.dtype(), std::nearbyint(fx->value), span);
-  static auto op = Op::Get("ir.round");
+  static auto op = Op::Get("ir.builtins_round");
   return PrimCall(x.dtype(), op, {x}, span);
 }
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.round")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.builtins_round")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "round");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "round")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "round");
 
 // nearbyint
 PrimExpr nearbyint(PrimExpr x, Span span) {
@@ -724,12 +736,13 @@ PrimExpr nearbyint(PrimExpr x, Span span) {
   const FloatImmNode* fx = x.as<FloatImmNode>();
   if (fx)
     return FloatImm(x.dtype(), std::nearbyint(fx->value), span);
-  static auto op = Op::Get("ir.nearbyint");
+  static auto op = Op::Get("ir.matx_math_nearbyint");
   return PrimCall(x.dtype(), op, {x}, span);
 }
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.nearbyint")
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "nearbyint");
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.matx_math_nearbyint")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "nearbyint")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "matx.math.nearbyint");
 
 // trunc
 PrimExpr trunc(PrimExpr x, Span span) {
@@ -741,104 +754,146 @@ PrimExpr trunc(PrimExpr x, Span span) {
     return FloatImm(
         x.dtype(), (fx->value < 0 ? std::ceil(fx->value) : std::floor(fx->value)), span);
   }
-  static auto op = Op::Get("ir.trunc");
+  static auto op = Op::Get("ir.math_trunc");
   return PrimCall(x.dtype(), op, {x}, span);
 }
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.trunc")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_trunc")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "trunc");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "trunc")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.trunc");
 
 // unary op registration.
-MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.pow")
+MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.math_pow")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "Math<double(double, double)>::check_call<pow>");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "Math<double(double, double)>::check_call<pow>")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.pow");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.exp")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_exp")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "exp");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "exp")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.exp");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.exp2")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.matx_math_exp2")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "exp2");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "exp2")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "matx.math.exp2");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.exp10")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.matx_math_exp10")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "exp10");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "exp10")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "matx.math.exp10");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.erf").set_attr<TGlobalSymbol>("TGlobalSymbol", "erf");
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_erf")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "erf")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.erf");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.tanh")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_tanh")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "tanh");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "tanh")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.tanh");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.sigmoid")
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "sigmoid");
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_sigmoid")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "sigmoid")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.sigmoid");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.sqrt")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_sqrt")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "Math<double(double)>::check_call<sqrt>");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "Math<double(double)>::check_call<sqrt>")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.sqrt");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.rsqrt").set_attr<TGlobalSymbol>("TGlobalSymbol", "rsqrt");
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_rsqrt")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "rsqrt")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "matx.math.rsqrt");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.log")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_log")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "Math<double(double)>::check_call<log>");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "Math<double(double)>::check_call<log>")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.log");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.log2")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_log2")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "Math<double(double)>::check_call<log2>");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "Math<double(double)>::check_call<log2>")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.log2");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.log1p").set_attr<TGlobalSymbol>("TGlobalSymbol", "log1p");
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_log1p")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "log1p")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.log1p");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.log10")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_log10")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "Math<double(double)>::check_call<log10>");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "Math<double(double)>::check_call<log10>")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.log10");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.tan")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_tan")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "tan");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "tan")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.tan");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.cos")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_cos")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "cos");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "cos")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.cos");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.cosh")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_cosh")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "cosh");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "cosh")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.cosh");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.sin")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_sin")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "sin");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "sin")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.sin");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.sinh")
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_sinh")
     .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "sinh");
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "sinh")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.sinh");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.asin").set_attr<TGlobalSymbol>("TGlobalSymbol", "asin");
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_asin")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "asin")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.asin");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.acos").set_attr<TGlobalSymbol>("TGlobalSymbol", "acos");
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_acos")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "acos")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.acos");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.atan").set_attr<TGlobalSymbol>("TGlobalSymbol", "atan");
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_atan")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "atan")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.atan");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.acosh").set_attr<TGlobalSymbol>("TGlobalSymbol", "acosh");
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_acosh")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "acosh")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.acosh");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.asinh").set_attr<TGlobalSymbol>("TGlobalSymbol", "asinh");
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_asinh")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "asinh")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.asinh");
 
-MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.atanh").set_attr<TGlobalSymbol>("TGlobalSymbol", "atanh");
+MATXSCRIPT_IR_REGISTER_PURE_UNARY_OP("ir.math_atanh")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "atanh")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.atanh");
 
 // binary intrinsics
-MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.atan2").set_attr<TGlobalSymbol>("TGlobalSymbol", "atan2");
+MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.math_atan2")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "atan2")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.atan2");
 
-MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.nextafter")
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "nextafter");
+MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.math_nextafter")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "nextafter")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.nextafter");
 
-MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.hypot").set_attr<TGlobalSymbol>("TGlobalSymbol", "hypot");
+MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.math_hypot")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "hypot")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.hypot");
 
-MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.copysign")
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "copysign");
+MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.math_copysign")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "copysign")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.copysign");
 
-MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.ldexp").set_attr<TGlobalSymbol>("TGlobalSymbol", "ldexp");
+MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.math_ldexp")
+    .set_attr<TGlobalSymbol>("TGlobalSymbol", "ldexp")
+    .set_attr<TPrinterGlobalSymbol>("TPrinterGlobalSymbol", "math.ldexp");
 
 // expose basic functions to node namespace
 MATXSCRIPT_REGISTER_GLOBAL("ir._const").set_body([](PyArgs args) -> RTValue {
@@ -870,23 +925,23 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.min_value").set_body_typed(min_value);
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.max_value").set_body_typed(max_value);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.abs").set_body_typed(abs);
+MATXSCRIPT_REGISTER_GLOBAL("ir.builtins_abs").set_body_typed(abs);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.isnan").set_body_typed(isnan);
+MATXSCRIPT_REGISTER_GLOBAL("ir.math_isnan").set_body_typed(isnan);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.isfinite").set_body_typed(isfinite);
+MATXSCRIPT_REGISTER_GLOBAL("ir.math_isfinite").set_body_typed(isfinite);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.isinf").set_body_typed(isinf);
+MATXSCRIPT_REGISTER_GLOBAL("ir.math_isinf").set_body_typed(isinf);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.floor").set_body_typed(floor);
+MATXSCRIPT_REGISTER_GLOBAL("ir.math_floor").set_body_typed(floor);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.ceil").set_body_typed(ceil);
+MATXSCRIPT_REGISTER_GLOBAL("ir.math_ceil").set_body_typed(ceil);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.round").set_body_typed(round);
+MATXSCRIPT_REGISTER_GLOBAL("ir.builtins_round").set_body_typed(round);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.nearbyint").set_body_typed(nearbyint);
+MATXSCRIPT_REGISTER_GLOBAL("ir.matx_math_nearbyint").set_body_typed(nearbyint);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.trunc").set_body_typed(trunc);
+MATXSCRIPT_REGISTER_GLOBAL("ir.math_trunc").set_body_typed(trunc);
 
 MATXSCRIPT_REGISTER_GLOBAL("ir._cast").set_body_typed(cast);
 

@@ -94,7 +94,7 @@ def call_extern(ret_type, func_name, span, *args):
     return Call(ret_type, Op.get("ir.call_extern"), convert((StringImm(func_name),) + args), span)
 
 
-def any(span, *args):
+def builtins_any(span, *args):
     """Create a new expression of the union of all conditions in the arguments
 
     Parameters
@@ -116,7 +116,7 @@ def any(span, *args):
     return op_or(span, *args)
 
 
-def all(span, *args):
+def builtins_all(span, *args):
     """Create a new expression of the intersection of all conditions in the
       arguments
 
@@ -144,6 +144,8 @@ def min_value(span, dtype):
 
     Parameters
     ----------
+    span: Span
+        Source code info
     dtype : str
         The data type.
 
@@ -160,6 +162,8 @@ def max_value(span, dtype):
 
     Parameters
     ----------
+    span: Span
+        Source code info
     dtype : str
         The data type.
 
@@ -171,12 +175,14 @@ def max_value(span, dtype):
     return _ffi_api.max_value(dtype, span)
 
 
-def exp(span, x):
+def math_exp(span, x):
     """Take exponetial of input x.
     http://www.cplusplus.com/reference/cmath/exp/
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -192,14 +198,16 @@ def exp(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.exp", span, x)
+    return call_intrin(x.dtype, "ir.math_exp", span, x)
 
 
-def exp2(span, x):
+def matx_math_exp2(span, x):
     """Calculate 2**x
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -215,14 +223,16 @@ def exp2(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.exp2", span, x)
+    return call_intrin(x.dtype, "ir.matx_math_exp2", span, x)
 
 
-def exp10(span, x):
+def matx_math_exp10(span, x):
     """Calculate 10**x
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -238,14 +248,16 @@ def exp10(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.exp10", span, x)
+    return call_intrin(x.dtype, "ir.matx_math_exp10", span, x)
 
 
-def erf(span, x):
+def math_erf(span, x):
     """Take gauss error function of the input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -254,14 +266,16 @@ def erf(span, x):
     y : PrimExpr
         The result.
     """
-    return call_intrin(x.dtype, "ir.erf", span, x)
+    return call_intrin(x.dtype, "ir.math_erf", span, x)
 
 
-def tanh(span, x):
+def math_tanh(span, x):
     """Take hyperbolic tanh of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -277,14 +291,16 @@ def tanh(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.tanh", span, x)
+    return call_intrin(x.dtype, "ir.math_tanh", span, x)
 
 
-def sigmoid(span, x):
+def matx_math_sigmoid(span, x):
     """Quick function to get sigmoid
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -293,14 +309,16 @@ def sigmoid(span, x):
     y : PrimExpr
         The result.
     """
-    return call_intrin(x.dtype, "ir.sigmoid", span, x)
+    return call_intrin(x.dtype, "ir.matx_math_sigmoid", span, x)
 
 
-def log(span, x):
+def math_log(span, x):
     """Take log of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -316,14 +334,16 @@ def log(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.log", span, x)
+    return call_intrin(x.dtype, "ir.math_log", span, x)
 
 
-def log2(span, x):
+def math_log2(span, x):
     """Take log2 of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -339,14 +359,16 @@ def log2(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.log2", span, x)
+    return call_intrin(x.dtype, "ir.math_log2", span, x)
 
 
-def log10(span, x):
+def math_log10(span, x):
     """Take log10 of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -362,14 +384,16 @@ def log10(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.log10", span, x)
+    return call_intrin(x.dtype, "ir.math_log10", span, x)
 
 
-def log1p(span, x):
+def math_log1p(span, x):
     """Take log(x + 1) with respect to input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -378,14 +402,16 @@ def log1p(span, x):
     y : PrimExpr
         The result.
     """
-    return call_intrin(x.dtype, "ir.log1p", span, x)
+    return call_intrin(x.dtype, "ir.math_log1p", span, x)
 
 
-def tan(span, x):
+def math_tan(span, x):
     """Take tan of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -401,14 +427,16 @@ def tan(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.tan", span, x)
+    return call_intrin(x.dtype, "ir.math_tan", span, x)
 
 
-def cos(span, x):
+def math_cos(span, x):
     """Take cos of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -424,14 +452,16 @@ def cos(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.cos", span, x)
+    return call_intrin(x.dtype, "ir.math_cos", span, x)
 
 
-def cosh(span, x):
+def math_cosh(span, x):
     """Take cosh of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -447,14 +477,16 @@ def cosh(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.cosh", span, x)
+    return call_intrin(x.dtype, "ir.math_cosh", span, x)
 
 
-def acos(span, x):
+def math_acos(span, x):
     """Take acos of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -470,14 +502,16 @@ def acos(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.acos", span, x)
+    return call_intrin(x.dtype, "ir.math_acos", span, x)
 
 
-def acosh(span, x):
+def math_acosh(span, x):
     """Take acos of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -493,14 +527,16 @@ def acosh(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.acosh", span, x)
+    return call_intrin(x.dtype, "ir.math_acosh", span, x)
 
 
-def sin(span, x):
+def math_sin(span, x):
     """Take sin of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -516,14 +552,16 @@ def sin(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.sin", span, x)
+    return call_intrin(x.dtype, "ir.math_sin", span, x)
 
 
-def sinh(span, x):
+def math_sinh(span, x):
     """Take sinh of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -539,14 +577,16 @@ def sinh(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.sinh", span, x)
+    return call_intrin(x.dtype, "ir.math_sinh", span, x)
 
 
-def asin(span, x):
+def math_asin(span, x):
     """Take asin of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -562,14 +602,16 @@ def asin(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.asin", span, x)
+    return call_intrin(x.dtype, "ir.math_asin", span, x)
 
 
-def asinh(span, x):
+def math_asinh(span, x):
     """Take asinh of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -585,14 +627,16 @@ def asinh(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.asinh", span, x)
+    return call_intrin(x.dtype, "ir.math_asinh", span, x)
 
 
-def atan(span, x):
+def math_atan(span, x):
     """Take atan of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -608,14 +652,16 @@ def atan(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.atan", span, x)
+    return call_intrin(x.dtype, "ir.math_atan", span, x)
 
 
-def atanh(span, x):
+def math_atanh(span, x):
     """Take atanh of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -631,14 +677,16 @@ def atanh(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.atanh", span, x)
+    return call_intrin(x.dtype, "ir.math_atanh", span, x)
 
 
-def atan2(span, x1, x2):
+def math_atan2(span, x1, x2):
     """Take arctan2(x1, x2).
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x1 : PrimExpr
         Input argument.
 
@@ -658,14 +706,16 @@ def atan2(span, x1, x2):
                           span,
                           x1,
                           x2)
-    return call_intrin(x1.dtype, "ir.atan2", span, x1, x2)
+    return call_intrin(x1.dtype, "ir.math_atan2", span, x1, x2)
 
 
-def sqrt(span, x):
+def math_sqrt(span, x):
     """Take square root of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -681,14 +731,16 @@ def sqrt(span, x):
                      err_msg,
                      span,
                      x)
-    return call_intrin(x.dtype, "ir.sqrt", span, x)
+    return call_intrin(x.dtype, "ir.math_sqrt", span, x)
 
 
-def rsqrt(span, x):
+def matx_math_rsqrt(span, x):
     """Take reciprocal of square root of input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -697,14 +749,16 @@ def rsqrt(span, x):
     y : PrimExpr
         The result.
     """
-    return call_intrin(x.dtype, "ir.rsqrt", span, x)
+    return call_intrin(x.dtype, "ir.matx_math_rsqrt", span, x)
 
 
-def floor(span, x):
+def math_floor(span, x):
     """Take floor of float input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -720,14 +774,16 @@ def floor(span, x):
                      err_msg,
                      span,
                      x)
-    return _ffi_api.floor(x, span)
+    return _ffi_api.math_floor(x, span)
 
 
-def ceil(span, x):
+def math_ceil(span, x):
     """Take ceil of float input x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -743,10 +799,10 @@ def ceil(span, x):
                      err_msg,
                      span,
                      x)
-    return _ffi_api.ceil(x, span)
+    return _ffi_api.math_ceil(x, span)
 
 
-def trunc(span, x):
+def math_trunc(span, x):
     """Get truncated value of the input.
 
     The truncated value of the scalar x is the
@@ -754,6 +810,8 @@ def trunc(span, x):
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -762,14 +820,16 @@ def trunc(span, x):
     y : PrimExpr
         The result.
     """
-    return _ffi_api.trunc(x, span)
+    return _ffi_api.math_trunc(x, span)
 
 
-def abs(span, x):
+def builtins_abs(span, x):
     """Get absolute value of the input element-wise.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -786,18 +846,20 @@ def abs(span, x):
                          err_msg,
                          span,
                          x)
-        return _ffi_api.abs(x, span)
+        return _ffi_api.builtins_abs(x, span)
     else:
         if not isinstance(x.checked_type, _type.ObjectType):
             handle_error(span, err_msg, TypeError)
         return _ffi_api._HLO_OpAbs(x, span)
 
 
-def round(span, x):
+def builtins_round(span, x):
     """Round elements of the array to the nearest integer.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -806,10 +868,10 @@ def round(span, x):
     y : PrimExpr
         The result.
     """
-    return _ffi_api.round(x, span)
+    return _ffi_api.builtins_round(x, span)
 
 
-def nearbyint(span, x):
+def matx_math_nearbyint(span, x):
     """Round elements of the array to the nearest integer.
     This intrinsic uses llvm.nearbyint instead of llvm.round
     which is faster but will results different from te.round.
@@ -821,6 +883,8 @@ def nearbyint(span, x):
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -829,14 +893,16 @@ def nearbyint(span, x):
     y : PrimExpr
         The result.
     """
-    return _ffi_api.nearbyint(x, span)
+    return _ffi_api.matx_math_nearbyint(x, span)
 
 
-def nextafter(span, x1, x2):
+def math_nextafter(span, x1, x2):
     """Return the next floating-point value after x1 towards x2.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x1 : PrimExpr
         Input argument.
 
@@ -848,14 +914,16 @@ def nextafter(span, x1, x2):
     y : PrimExpr
         The result.
     """
-    return call_intrin(x1.dtype, "ir.nextafter", span, x1, x2)
+    return call_intrin(x1.dtype, "ir.math_nextafter", span, x1, x2)
 
 
-def hypot(span, x1, x2):
+def math_hypot(span, x1, x2):
     """Equivalent to sqrt(x1**2 + x2**2), element-wise.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x1 : PrimExpr
         Input argument.
 
@@ -867,14 +935,16 @@ def hypot(span, x1, x2):
     y : PrimExpr
         The result.
     """
-    return call_intrin(x1.dtype, "ir.hypot", span, x1, x2)
+    return call_intrin(x1.dtype, "ir.math_hypot", span, x1, x2)
 
 
-def copysign(span, x1, x2):
+def math_copysign(span, x1, x2):
     """Change the sign of x1 to that of x2, element-wise.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x1 : PrimExpr
         Input argument.
 
@@ -886,14 +956,16 @@ def copysign(span, x1, x2):
     y : PrimExpr
         The result.
     """
-    return call_intrin(x1.dtype, "ir.copysign", span, x1, x2)
+    return call_intrin(x1.dtype, "ir.math_copysign", span, x1, x2)
 
 
-def ldexp(span, x1, x2):
+def math_ldexp(span, x1, x2):
     """Returns x1 * (2 ** x2).
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x1 : PrimExpr
         Input argument.
 
@@ -905,14 +977,16 @@ def ldexp(span, x1, x2):
     y : PrimExpr
         The result.
     """
-    return call_intrin(x1.dtype, "ir.ldexp", span, x1, x2)
+    return call_intrin(x1.dtype, "ir.math_ldexp", span, x1, x2)
 
 
-def isnan(span, x):
+def math_isnan(span, x):
     """Check if input value is Nan.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -928,14 +1002,16 @@ def isnan(span, x):
                      err_msg,
                      span,
                      x)
-    return _ffi_api.isnan(x, span)
+    return _ffi_api.math_isnan(x, span)
 
 
-def isfinite(span, x):
+def math_isfinite(span, x):
     """Check if input value is finite.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -951,14 +1027,16 @@ def isfinite(span, x):
                      err_msg,
                      span,
                      x)
-    return _ffi_api.isfinite(x, span)
+    return _ffi_api.math_isfinite(x, span)
 
 
-def isinf(span, x):
+def math_isinf(span, x):
     """Check if input value is infinite.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -974,14 +1052,16 @@ def isinf(span, x):
                      err_msg,
                      span,
                      x)
-    return _ffi_api.isinf(x, span)
+    return _ffi_api.math_isinf(x, span)
 
 
-def power(span, x, y):
+def math_pow(span, x, y):
     """x power y
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -1001,7 +1081,7 @@ def power(span, x, y):
                         span,
                         x,
                         y)
-    return call_intrin(x.dtype, "ir.pow", span, x, y)
+    return call_intrin(x.dtype, "ir.math_pow", span, x, y)
 
 
 def popcount(span, x):
@@ -1009,6 +1089,8 @@ def popcount(span, x):
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
 
@@ -1032,6 +1114,8 @@ def q_multiply_shift(span, x, y, q, s):
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         First Q-number
     y : PrimExpr
@@ -1049,11 +1133,13 @@ def q_multiply_shift(span, x, y, q, s):
     return call_intrin("int32", "ir.q_multiply_shift", span, x, y, q, s)
 
 
-def fmod(span, x, y):
+def math_fmod(span, x, y):
     """Return the remainder of x divided by y with the same sign as x.
 
     Parameters
     ----------
+    span: Span
+        Source code info
     x : PrimExpr
         Input argument.
     y : PrimExpr
@@ -1064,7 +1150,7 @@ def fmod(span, x, y):
     z : PrimExpr
         The result.
     """
-    return call_intrin(x.dtype, "ir.fmod", span, x, y)
+    return call_intrin(x.dtype, "ir.math_fmod", span, x, y)
 
 
 def if_then_else(span, cond, t, f):
@@ -1072,6 +1158,8 @@ def if_then_else(span, cond, t, f):
 
     Parameters
     ----------
+    span: Span
+        Source code info
     cond : BaseExpr
         The condition
 
@@ -1107,6 +1195,8 @@ def div(span, a, b):
 
     Parameters
     ----------
+    span: Span
+        Source code info
     a : PrimExpr
         The left hand operand, known to be non-negative.
 
@@ -1129,6 +1219,8 @@ def indexdiv(span, a, b):
 
     Parameters
     ----------
+    span: Span
+        Source code info
     a : PrimExpr
         The left hand operand, known to be non-negative.
 
@@ -1154,6 +1246,9 @@ def indexmod(span, a, b):
 
     Parameters
     ----------
+    span: Span
+        Source code info
+
     a : PrimExpr
         The left hand operand, known to be non-negative.
 
@@ -1179,6 +1274,9 @@ def truncdiv(span, a, b):
 
     Parameters
     ----------
+    span: Span
+        Source code info
+
     a : PrimExpr
         The left hand operand
 
@@ -1202,6 +1300,9 @@ def truncmod(span, a, b):
 
     Parameters
     ----------
+    span: Span
+        Source code info
+
     a : PrimExpr
         The left hand operand
 
@@ -1225,6 +1326,9 @@ def floordiv(span, a, b):
 
     Parameters
     ----------
+    span: Span
+        Source code info
+
     a : PrimExpr
         The left hand operand
 
@@ -1244,6 +1348,9 @@ def floormod(span, a, b):
 
     Parameters
     ----------
+    span: Span
+        Source code info
+
     a : PrimExpr
         The left hand operand
 
@@ -1455,7 +1562,7 @@ def _is_all_type(args, _type):
     return True
 
 
-def min(span, *args):
+def builtins_min(span, *args):
     # TODO: support kwargs
     if len(args) == 1:
         func_name = 'ir.math_iterable_min'
@@ -1471,7 +1578,7 @@ def min(span, *args):
         return hlo_call_intrin(_type.ObjectType(), func_name, span, *args)
 
 
-def max(span, *args):
+def builtins_max(span, *args):
     # TODO: kwargs
     if len(args) == 1:
         func_name = 'ir.math_iterable_max'
@@ -2874,7 +2981,7 @@ def builtins_isinstance(span, container_expr, type_expr):
         for ty in type_expr:
             check_i = builtins_isinstance_1(span, container_expr, ty)
             checked.append(check_i)
-        return any(span, *checked)
+        return builtins_any(span, *checked)
     else:
         return builtins_isinstance_1(span, container_expr, type_expr)
 
