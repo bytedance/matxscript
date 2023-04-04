@@ -19,6 +19,7 @@
 from typing import Any, Dict, TYPE_CHECKING
 
 from .context import *
+from .for_loop_parser import ForLoopParser
 from .single_return_parser import KernelSingleReturnParser
 from .utils import *
 
@@ -97,20 +98,20 @@ class KernelInspector(ast.NodeVisitor):
     def check_body(self, node: ast.FunctionDef) -> None:
         stmts = node.body
         # case 1 one line of return
-        if len(stmts) == 1:
-            if not isinstance(stmts[0], ast.Return):
-                raise SyntaxError(f"For kernel func {self.kernel_p.func}, "
-                                  "if for loop is not involved, "
-                                  "there should be only one line of return.")
+        if len(stmts) == 1 and isinstance(stmts[0], ast.Return):
             self.kernel_parser = KernelSingleReturnParser
             self.visit(stmts[0])
             print(self.ast_nodes)
             for node in self.ast_nodes:
                 if node not in KernelSingleReturnParser.allowed_ast_node:
                     raise SyntaxError(f"{node.__name__} is not allowed for single return")
-        else:  # case 2 for loop
-            raise SyntaxError("right now kernel func only support two patterns."
-                              " 1st is return a single line. 2nd is a simple for loop")
+        # case 2 for loop
+        else:
+            self.kernel_parser = ForLoopParser
+
+        # else:
+        #    raise SyntaxError("right now kernel func only support two patterns."
+        #                      " 1st is return a single line. 2nd is a simple for loop")
 
     def check_return(self, node: ast.FunctionDef) -> Any:
         span = build_span(self.root_node, node)
