@@ -24,15 +24,48 @@ import ast
 from typing import Any, List, Dict, TYPE_CHECKING
 
 from matx import ir as _ir
+from matx.ir import generic as _generic
 from matx.script import context as script_context
 from .context import *
-from .utils import build_span
+from .utils import build_span, annotation_to_kernel_type
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelParser
 
 
 class BaseParser(ast.NodeVisitor):
+    _binop_maker = {
+        ast.Add: lambda lhs, rhs, span: _generic.add(lhs, rhs, span),
+        ast.Sub: lambda lhs, rhs, span: _generic.subtract(lhs, rhs, span),
+        ast.Mult: lambda lhs, rhs, span: _generic.multiply(lhs, rhs, span),
+        ast.Div: lambda lhs, rhs, span: _generic.divide(lhs, rhs, span),
+        ast.FloorDiv: lambda lhs, rhs, span: _generic.floordiv(lhs, rhs, span),
+        ast.Mod: lambda lhs, rhs, span: _generic.floormod(lhs, rhs, span),
+        ast.BitOr: lambda lhs, rhs, span: _generic.bitwise_or(lhs, rhs, span),
+        ast.BitAnd: lambda lhs, rhs, span: _generic.bitwise_and(lhs, rhs, span),
+        ast.BitXor: lambda lhs, rhs, span: _generic.bitwise_xor(lhs, rhs, span),
+        ast.LShift: lambda lhs, rhs, span: _generic.left_shift(lhs, rhs, span),
+        ast.RShift: lambda lhs, rhs, span: _generic.right_shift(lhs, rhs, span),
+        ast.Gt: lambda lhs, rhs, span: _generic.greater_than(lhs, rhs, span),
+        ast.GtE: lambda lhs, rhs, span: _generic.greater_or_equal(lhs, rhs, span),
+        ast.Lt: lambda lhs, rhs, span: _generic.less_than(lhs, rhs, span),
+        ast.LtE: lambda lhs, rhs, span: _generic.less_or_equal(lhs, rhs, span),
+        ast.Eq: lambda lhs, rhs, span: _generic.equal(lhs, rhs, span),
+        ast.NotEq: lambda lhs, rhs, span: _generic.notequal(lhs, rhs, span),
+        ast.Is: lambda lhs, rhs, span: _generic.op_is(lhs, rhs, span),
+        ast.IsNot: lambda lhs, rhs, span: _generic.op_not(_generic.op_is(lhs, rhs, span), span)
+    }
+
+    _unaryop_maker = {
+        ast.USub: lambda operand, span: _generic.multiply(operand, _ir.const(-1), span),
+        ast.Invert: lambda operand, span: _generic.bitwise_not(operand, span),
+        ast.Not: lambda operand, span: _generic.op_not(operand, span)
+    }
+
+    _boolop_marker = {
+        ast.And: lambda span, *args: _generic.op_and(span, *args),
+        ast.Or: lambda span, *args: _generic.op_or(span, *args)
+    }
 
     def __init__(
             self,
@@ -162,6 +195,10 @@ class BaseParser(ast.NodeVisitor):
             ctx = self.ndarray_context_table[name]
             self.var_stack.append(ctx)
             return ctx.script_var
+        if name in self.tmp_scalar_table:
+            ctx = self.tmp_scalar_table[name]
+            self.var_stack.append(ctx)
+            return ctx.script_var
         raise NotImplementedError(f'the type of {name} is not support')
         # return node.id
 
@@ -169,16 +206,51 @@ class BaseParser(ast.NodeVisitor):
     def visit_UnaryOp(self, node: ast.UnaryOp) -> Any:
         raise NotImplementedError("visit_UnaryOp is not Implemented")
 
+    def visit_BinOp(self, node: ast.BinOp) -> Any:
+        opname = type(node.op).__name__
+        lhs_ir = self.visit(node.left)
+        lhs_ctx = self.var_stack.pop()
+        rhs_ir = self.visit(node.right)
+        rhs_ctx = self.var_stack.pop()
+        if is_scalar_type(lhs_ctx.kernel_type) and is_scalar_type(rhs_ctx.kernel_type):
+            if lhs_ctx.kernel_type != rhs_ctx.kernel_type:
+                # todo support different type
+                raise SyntaxError("type is different")
+            self.var_stack.append(AbstractScalarContext(lhs_ctx.kernel_type))
+            return self._binop_maker[node.op](lhs_ir, rhs_ir, self.build_span(node))
+        else:
+            raise SyntaxError(f"{lhs_ctx.name} {opname} {rhs_ctx.name} is not supported "
+                              f"because they are not both scalar")
+
     def visit_Slice(self, node: ast.Slice) -> Any:
         raise NotImplementedError("slice is not supported yet")
+        lower = node.lower
+        upper = node.upper
+        step = node.step
+        if lower is None:
+            lower = _ir.const(0, "int64")
+        else:
+            pass
+
+        if step is None:
+            step = _ir.const(1, "int64")
+        else:
+            step = self.visit(step)
+            self.var_stack.pop()
 
     def visit_Subscript(self, node: ast.Subscript) -> Any:
+        # is load
         value = self.visit(node.value)
-        sls = self._get_slice(node.slice)
+        ctx = self.var_stack.pop()
+        if not isinstance(ctx, AbstractNDArrayContext):
+            raise SyntaxError(f"only support indexing ndarray")
+        if isinstance(node.slice, (ast.Slice,)):
+            raise SyntaxError(
+                f"slicing ndarray {value} is not supported because it doesn't generate a scalar.")
+        sls = self._get_slice(node.slice, ctx)
         raise NotImplementedError("to be finished ")
 
-    def _get_slice(self, sls):
-        # todo update this after save/load is ready
+    def _get_slice(self, sls, ctx: AbstractNDArrayContext):
         pass
 
     def visit_Assign(self, node: ast.Assign) -> Any:
@@ -194,16 +266,15 @@ class BaseParser(ast.NodeVisitor):
             raise NotImplementedError("assigning to ndarray not supported yet")
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
-        if not isinstance(node.target, (ast.Name, ast.Subscript)):
-            raise SyntaxError(f"Assigning to {type(node.target)} is not allowed.")
         span = self.build_span(node)
-        ann = node.annotation
-        target = self.visit(node.target)
+        ann = annotation_to_kernel_type(node.annotation)
         value = self.visit(node.value)
         value_ctx = self.var_stack.pop()
-        # symbol case
+        if not isinstance(node.target, (ast.Name, ast.Subscript)):
+            raise SyntaxError(f"Assigning to {type(node.target)} is not allowed.")
         if isinstance(node.target, ast.Name):
-            return self._allocate_scalar(target, value, value_ctx, ann, span)
+            return self._allocate_scalar(node.target.id, value, value_ctx, ann, span)
+        # symbol case
         elif isinstance(node.target, ast.Subscript):
             raise NotImplementedError("assigning to ndarray not supported yet")
 
@@ -221,6 +292,7 @@ class BaseParser(ast.NodeVisitor):
         if value_ctx != ann:
             raise SyntaxError(f"Assigning {value_ctx.kernel_type} to {ann} is not allowed")
         tmp_scalar_ctx = ScalarContext(target, ann, span)
+        self.tmp_scalar_table[target] = tmp_scalar_ctx
         alloca_stmt = _ir.AllocaVarStmt(
             tmp_scalar_ctx.name, tmp_scalar_ctx.script_type, value, span)
         self.var_stack.append(tmp_scalar_ctx)
