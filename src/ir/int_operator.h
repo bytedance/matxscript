@@ -29,6 +29,8 @@
 #include <limits>
 #include <utility>
 
+#include <matxscript/runtime/generic/generic_hlo_arith_funcs.h>
+
 #include <matxscript/ir/prim_expr.h>
 
 namespace matxscript {
@@ -130,10 +132,7 @@ inline int64_t truncmod(int64_t x, int64_t y) {
  * \return the result.
  */
 inline int64_t floordiv(int64_t x, int64_t y) {
-  int64_t rdiv = x / y;
-  int64_t rmod = x % y;
-  bool is_floor_div = (y >= 0 && rmod >= 0) || (y < 0 && rmod <= 0);
-  return is_floor_div ? rdiv : (rdiv - 1);
+  return runtime::ArithOps::floordiv(x, y);
 }
 
 /*!
@@ -143,9 +142,7 @@ inline int64_t floordiv(int64_t x, int64_t y) {
  * \return the result.
  */
 inline int64_t floormod(int64_t x, int64_t y) {
-  int64_t rmod = x % y;
-  bool is_floor_div = (y >= 0 && rmod >= 0) || (y < 0 && rmod <= 0);
-  return is_floor_div ? rmod : rmod + y;
+  return runtime::ArithOps::floormod(x, y);
 }
 
 /*!

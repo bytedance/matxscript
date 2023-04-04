@@ -294,16 +294,8 @@ PrimExpr div(PrimExpr a, PrimExpr b, Span span) {
   if (ret.defined())
     return ret;
 
-  static auto op = Op::Get("ir.div");
-  a = cast(DataType::Float(64), a);
-  b = cast(DataType::Float(64), b);
-
-  return PrimCall(DataType::Float(64), op, {a, b}, span);
+  return PrimDiv(std::move(a), std::move(b), std::move(span));
 }
-
-MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.div")
-    .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "ArithOps::div");
 
 PrimExpr truncdiv(PrimExpr a, PrimExpr b, Span span) {
   return floordiv(a, b, span);
@@ -337,23 +329,8 @@ PrimExpr floordiv(PrimExpr a, PrimExpr b, Span span) {
   if (ret.defined())
     return ret;
 
-  static auto op = Op::Get("ir.floordiv");
-
-  if (is_both_int) {
-    Array<PrimExpr> args{a, b};
-    return PrimCall(DataType::Int(64), op, std::move(args), span);
-  }
-
-  a = cast(DataType::Float(64), a);
-  b = cast(DataType::Float(64), b);
-
-  PrimExpr result = PrimCall(a.dtype(), op, {a, b}, span);
-  return result;
+  return PrimFloorDiv(std::move(a), std::move(b), std::move(span));
 }
-
-MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.floordiv")
-    .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "ArithOps::floordiv");
 
 PrimExpr floormod(PrimExpr a, PrimExpr b, Span span) {
   bool a_is_int = a.dtype().is_int() || a.dtype().is_uint();
@@ -362,26 +339,11 @@ PrimExpr floormod(PrimExpr a, PrimExpr b, Span span) {
 
   BinaryOpMatchTypes(a, b);
   PrimExpr ret = arith::TryConstFold<PrimFloorMod>(a, b);
-  if (ret.defined())
+  if (ret.defined()) {
     return ret;
-
-  static auto op = Op::Get("ir.floormod");
-
-  if (is_both_int) {
-    Array<PrimExpr> args{a, b};
-    return PrimCall(DataType::Int(64), op, std::move(args), span);
   }
-
-  a = cast(DataType::Float(64), a);
-  b = cast(DataType::Float(64), b);
-
-  PrimExpr result = PrimCall(a.dtype(), op, {a, b}, span);
-  return result;
+  return PrimFloorMod(a, b, span);
 }
-
-MATXSCRIPT_IR_REGISTER_PURE_BINARY_OP("ir.floormod")
-    .set_attr<TVectorizable>("TVectorizable", true)
-    .set_attr<TGlobalSymbol>("TGlobalSymbol", "ArithOps::floormod");
 
 PrimExpr min(PrimExpr a, PrimExpr b, Span span) {
   // inf-aware simplificaiton

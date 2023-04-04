@@ -20,6 +20,7 @@
  * under the License.
  */
 #include <matxscript/runtime/logging.h>
+#include <matxscript/runtime/py_commons/pystrtod.h>
 #include <matxscript/runtime/registry.h>
 #include <matxscript/runtime/str_escape.h>
 
@@ -345,13 +346,8 @@ void PythonDocPrinter::PrintTypedDoc(const LiteralDoc& doc) {
       output_ << int_imm->value;
     }
   } else if (const auto* float_imm = value.as<FloatImmNode>()) {
-    // TODO(yelite): Make float number printing roundtrippable
-    output_.precision(17);
-    if (std::isinf(float_imm->value) || std::isnan(float_imm->value)) {
-      output_ << '"' << float_imm->value << '"';
-    } else {
-      output_ << float_imm->value;
-    }
+    output_ << runtime::py_builtins::PyOS_double_to_string(
+        float_imm->value, 'r', 0, runtime::py_builtins::Py_DTSF_ADD_DOT_0, NULL);
   } else if (const auto* string_obj = value.as<StringNode>()) {
     output_ << "\"" << runtime::BytesEscape(string_obj->data_container) << "\"";
   } else {
