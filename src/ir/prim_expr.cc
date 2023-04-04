@@ -22,6 +22,7 @@
 #include <matxscript/ir/prim_expr.h>
 
 #include <matxscript/ir/_base/reflection.h>
+#include <matxscript/ir/op_attr_types.h>
 #include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/functor.h>
@@ -580,24 +581,73 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimCall")
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimCallNode);
 
+template <typename DocType, typename AST>
+static inline Array<DocType> build_arrays(const Array<AST>& ast_list,
+                                          ObjectPath p,
+                                          IRDocsifier d,
+                                          int start_pos) {
+  Array<DocType> results;
+  int n_args = ast_list.size();
+  results.reserve(n_args);
+  for (int i = start_pos; i < n_args; ++i) {
+    results.push_back(d->AsDoc<DocType>(ast_list[i], p->ArrayIndex(i)));
+  }
+  return results;
+};
+
+static Doc PrimCallFunctionToDoc(StringRef fn_name,
+                                 ir::PrimCall call,
+                                 ObjectPath p,
+                                 IRDocsifier d) {
+  Array<StringRef> kw_keys;
+  Array<ExprDoc> kw_values;
+  runtime::string_view builtins("builtins.");
+  if (runtime::StringHelper::StartsWith(fn_name, builtins)) {
+    fn_name = fn_name.view().substr(builtins.size());
+  }
+  Array<ExprDoc> args = build_arrays<ExprDoc>(call->args, p, d, 0);
+  return IdDoc(fn_name)->Call(args, kw_keys, kw_values);
+}
+
+static Doc PrimCallMethodToDoc(StringRef method_name,
+                               ir::PrimCall call,
+                               ObjectPath p,
+                               IRDocsifier d) {
+  Array<StringRef> kw_keys;
+  Array<ExprDoc> kw_values;
+  MXCHECK(call->args.size() >= 1) << "internal error";
+  auto self = d->AsDoc<ExprDoc>(call->args[0], p->Attr("args")->ArrayIndex(0));
+  int arg_pos = 1;
+  Array<ExprDoc> args = build_arrays<ExprDoc>(call->args, p, d, arg_pos);
+  return self->Attr(method_name)->Call(args, kw_keys, kw_values);
+}
+
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::PrimCall>("", [](ir::PrimCall call, ObjectPath call_p, IRDocsifier d) -> Doc {
       ExprDoc prefix{nullptr};
       if (const auto* op = call->op.as<OpNode>()) {
-        // TODO: fix prim op name
-        StringRef name = op->name;
-        prefix = Dialect(d, name);
+        static OpAttrMap<TPrinterGlobalSymbol> op_global_symbol =
+            Op::GetAttrMap<TPrinterGlobalSymbol>("TPrinterGlobalSymbol");
+        static OpAttrMap<TPrinterMethodSymbol> op_method_symbol =
+            Op::GetAttrMap<TPrinterMethodSymbol>("TPrinterMethodSymbol");
+
+        auto op_ref = GetRef<Op>(op);
+        if (op_global_symbol.count(op_ref)) {
+          StringRef name = op_global_symbol[op_ref];
+          return PrimCallFunctionToDoc(name, call, call_p, d);
+        } else if (op_method_symbol.count(op_ref)) {
+          StringRef name = op_method_symbol[op_ref];
+          return PrimCallMethodToDoc(name, call, call_p, d);
+        } else {
+          StringRef name = op->name;
+          prefix = Dialect(d, name);
+        }
       } else if (const auto* gv = call->op.as<GlobalVarNode>()) {
         prefix = LiteralDoc::Str(gv->name_hint, call_p->Attr("op"));
       } else {
-        MXLOG(FATAL) << "call: " << call;
+        prefix = d->AsDoc<ExprDoc>(call->op, call_p->Attr("op"));
       }
-      Array<ExprDoc> args;
-      int n_args = call->args.size();
-      args.reserve(n_args + 1);
-      for (int i = 0; i < n_args; ++i) {
-        args.push_back(d->AsDoc<ExprDoc>(call->args[i], call_p->Attr("args")->ArrayIndex(i)));
-      }
+      Array<ExprDoc> args = build_arrays<ExprDoc>(call->args, call_p, d, 0);
       return prefix->Call(args);
     });
 

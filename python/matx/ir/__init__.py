@@ -60,14 +60,18 @@ from .class_stmt import ClassStmt
 from .module import IRModule
 
 from .op import call_intrin, call_extern
-from .op import all, any, min_value, max_value
-from .op import exp, exp2, exp10, log, log2, log10, log1p, ldexp
-from .op import sin, sinh, asin, asinh
-from .op import cos, cosh, acos, acosh
-from .op import tan, tanh, atan, atan2, atanh
-from .op import erf, sigmoid, sqrt, rsqrt, floor, ceil, hypot
-from .op import trunc, abs, round, nextafter, nearbyint, power, popcount, fmod, if_then_else
-from .op import isnan, isfinite, isinf, copysign
+from .op import builtins_all, builtins_any, builtins_abs, builtins_round
+from .op import min_value, max_value
+from .op import math_exp, matx_math_exp2, matx_math_exp10
+from .op import math_log, math_log2, math_log10, math_log1p, math_ldexp
+from .op import math_sin, math_sinh, math_asin, math_asinh
+from .op import math_cos, math_cosh, math_acos, math_acosh
+from .op import math_tan, math_tanh, math_atan, math_atan2, math_atanh
+from .op import math_erf, math_sqrt, math_floor, math_ceil, math_hypot
+from .op import matx_math_sigmoid, matx_math_rsqrt, matx_math_nearbyint
+from .op import math_trunc, math_nextafter, math_pow, math_fmod
+from .op import math_isnan, math_isfinite, math_isinf, math_copysign
+from .op import if_then_else, popcount
 from .op import div, indexdiv, indexmod, truncdiv, truncmod, floordiv, floormod
 from .op import q_multiply_shift
 from .op import builtins_unpack
