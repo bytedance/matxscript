@@ -33,6 +33,7 @@
 #include <matxscript/ir/_base/object_path.h>
 #include <matxscript/ir/_base/reflection.h>
 #include <matxscript/ir/_base/string_ref.h>
+#include <matxscript/ir/printer/printer.h>
 
 #include <iostream>
 #include <string>

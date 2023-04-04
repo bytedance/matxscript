@@ -25,7 +25,6 @@
 #include <type_traits>
 #include <vector>
 
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/_base/string_ref.h>
 #include <matxscript/ir/_base/structural_equal.h>
 #include <matxscript/ir/_base/structural_hash.h>

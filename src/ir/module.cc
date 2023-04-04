@@ -157,12 +157,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.Module_AddExportFunction")
       mod->AddExportFunction(export_func);
     });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<IRModuleNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const IRModuleNode*>(ref.get());
-      p->stream << "IRModule(" << node->body << ")";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<IRModule>("", [](IRModule mod, ObjectPath p, IRDocsifier d) -> Doc {
       With<IRFrame> f(d, ObjectRef{nullptr});

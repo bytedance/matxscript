@@ -23,6 +23,8 @@
 
 #include <matxscript/runtime/object.h>
 
+#include <matxscript/ir/printer/printer.h>
+
 #include <matxscript/ir/_base/string_ref.h>
 #include <matxscript/ir/printer/doc.h>
 #include <matxscript/ir/printer/ir_docsifier_functor.h>

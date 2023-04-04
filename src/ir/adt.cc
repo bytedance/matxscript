@@ -62,13 +62,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.Constructor")
               std::move(ret_type), std::move(name_hint), std::move(inputs), std::move(belong_to));
         });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ConstructorNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const ConstructorNode*>(ref.get());
-      p->stream << "ConstructorNode(" << node->name_hint << ", " << node->inputs << ", "
-                << node->belong_to << ")";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
     .set_dispatch<Constructor>("", [](Constructor node, ObjectPath p, IRDocsifier d) -> Doc {
       return IdDoc(node->name_hint);
@@ -213,12 +206,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.ClassType")
                        std::move(func_names),
                        std::move(unbound_func_names),
                        std::move(func_types));
-    });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ClassTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const ClassTypeNode*>(ref.get());
-      p->stream << "ClassType(name: " << node->header->name_hint << ")";
     });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //

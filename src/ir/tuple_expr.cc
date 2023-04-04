@@ -23,7 +23,6 @@
 #include <matxscript/ir/tuple_expr.h>
 
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/printer/doc.h>
 #include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/functor.h>
@@ -47,12 +46,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(TupleExprNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.TupleExpr").set_body_typed([](Array<BaseExpr> fields, Span span) {
   return TupleExpr(std::move(fields), std::move(span));
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<TupleExprNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const TupleExprNode*>(ref.get());
-      p->stream << "TupleExpr(" << node->fields << ")";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
     .set_dispatch<TupleExpr>("", [](TupleExpr t, ObjectPath p, IRDocsifier d) -> Doc {

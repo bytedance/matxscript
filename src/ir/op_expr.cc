@@ -124,12 +124,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(OpNode).set_creator(CreateOp).set_repr_bytes(
       return static_cast<const OpNode*>(n)->name.operator String();
     });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<OpNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const OpNode*>(ref.get());
-      p->stream << "Op(" << node->name << ")";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<Op>("", [](Op op, ObjectPath p, IRDocsifier d) -> Doc {
       return Dialect(d, "Op")->Call({LiteralDoc::Str(op->name, p->Attr("name"))});

@@ -480,7 +480,7 @@ class TupleTypeNode : public TypeNode {
       if (i > 0) {
         ss << ", ";
       }
-      ss << fields[i];
+      ss << fields[i]->GetPythonTypeName();
     }
     ss << "]";
     return runtime::String(ss.str()).decode();

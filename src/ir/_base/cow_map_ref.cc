@@ -26,7 +26,6 @@
 #include <matxscript/ir/_base/string_ref.h>
 
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/_base/structural_equal.h>
 #include <matxscript/ir/_base/structural_hash.h>
 #include <matxscript/ir/printer/doc.h>
@@ -344,25 +343,6 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.MapValues").set_body([](PyArgs args) -> RTVa
   }
   return std::move(values);
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<MapNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const MapNode*>(node.get());
-      p->stream << '{';
-      for (auto it = op->begin(); it != op->end(); ++it) {
-        if (it != op->begin()) {
-          p->stream << ", ";
-        }
-        if (it->first->IsInstance<StringNode>()) {
-          p->stream << '\"' << runtime::Downcast<StringRef>(it->first) << "\": ";
-        } else {
-          p->Print(it->first);
-          p->stream << ": ";
-        }
-        p->Print(it->second);
-      }
-      p->stream << '}';
-    });
 
 MATX_DLL constexpr uint64_t DenseMapNode::kNextProbeLocation[];
 

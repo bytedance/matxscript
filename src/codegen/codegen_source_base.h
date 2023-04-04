@@ -33,6 +33,7 @@
 
 #include <matxscript/ir/expr.h>
 #include <matxscript/ir/prim_ops.h>
+#include <matxscript/ir/printer/printer.h>
 #include <matxscript/runtime/module.h>
 
 namespace matxscript {

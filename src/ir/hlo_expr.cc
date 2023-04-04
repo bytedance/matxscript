@@ -23,7 +23,6 @@
 #include <matxscript/ir/hlo_expr.h>
 
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/adt.h>
 #include <matxscript/ir/hlo_builtin.h>
 #include <matxscript/ir/op_attr_types.h>
@@ -46,12 +45,6 @@ StringImm::StringImm(StringRef value, Span span) {
   data_ = std::move(node);
 }
 MATXSCRIPT_REGISTER_NODE_TYPE(StringImmNode);
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<StringImmNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const StringImmNode*>(node.get());
-      p->stream << op->value;
-    });
-
 MATXSCRIPT_REGISTER_GLOBAL("ir.StringImm").set_body_typed([](StringRef s, Span span) {
   return StringImm(std::move(s), std::move(span));
 });
@@ -70,11 +63,6 @@ UnicodeImm::UnicodeImm(StringRef value, Span span) {
   data_ = std::move(node);
 }
 MATXSCRIPT_REGISTER_NODE_TYPE(UnicodeImmNode);
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<UnicodeImmNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const UnicodeImmNode*>(node.get());
-      p->stream << op->value;
-    });
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.UnicodeImm").set_body_typed([](StringRef s, Span span) {
   return UnicodeImm(std::move(s), std::move(span));
@@ -250,16 +238,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOAdd").set_body_typed([](BaseExpr a, BaseExpr b
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOAddNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOAddNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOAddNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " + ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOAdd, kAdd);
 
 // HLOSub
@@ -344,16 +322,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOSub").set_body_typed([](BaseExpr a, BaseExpr b
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOSubNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOSubNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOSubNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " - ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
 
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOSub, kSub);
 
@@ -469,16 +437,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOMul").set_body_typed([](BaseExpr a, BaseExpr b
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOMulNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOMulNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOMulNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << "*";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOMul, kMult);
 
 // HLOFloorDiv
@@ -543,12 +501,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOFloorDiv").set_body_typed([](BaseExpr a, BaseE
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOFloorDivNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOFloorDivNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOFloorDivNode*>(node.get());
-      p->stream << "floordiv(" << op->a << ", " << op->b << ")";
-    });
 
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOFloorDiv, kFloorDiv);
 
@@ -615,12 +567,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOFloorMod").set_body_typed([](BaseExpr a, BaseE
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOFloorModNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOFloorModNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOFloorModNode*>(node.get());
-      p->stream << "floormod(" << op->a << ", " << op->b << ")";
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOFloorMod, kMod);
 
 // HLOEqual
@@ -640,16 +586,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOEqual").set_body_typed([](BaseExpr a, BaseExpr
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOEqualNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOEqualNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOEqualNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " == ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
 
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOEqual, kEq);
 
@@ -671,16 +607,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLONotEqual").set_body_typed([](BaseExpr a, BaseE
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLONotEqualNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLONotEqualNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLONotEqualNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " != ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLONotEqual, kNotEq);
 
 // HLOLessThan
@@ -701,16 +627,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOLessThan").set_body_typed([](BaseExpr a, BaseE
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOLessThanNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOLessThanNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOLessThanNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " < ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOLessThan, kLt);
 
 // HLOLessEqual
@@ -730,16 +646,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOLessEqual").set_body_typed([](BaseExpr a, Base
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOLessEqualNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOLessEqualNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOLessEqualNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " <= ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
 
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOLessEqual, kLtE);
 
@@ -762,16 +668,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOGreaterThan")
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOGreaterThanNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOGreaterThanNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOGreaterThanNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " > ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOGreaterThan, kGt);
 
 // HLOGreaterEqual
@@ -792,16 +688,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOGreaterEqual")
     });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOGreaterEqualNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOGreaterEqualNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOGreaterEqualNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " >= ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
 
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOGreaterEqual, kGtE);
 
@@ -835,16 +721,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOAnd").set_body_typed([](BaseExpr a, BaseExpr b
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOAndNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOAndNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOAndNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " and ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOAnd, kAnd);
 
 // HLOOr
@@ -870,16 +746,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOOr").set_body_typed([](BaseExpr a, BaseExpr b,
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOOrNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOOrNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOOrNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " or ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY(HLOOr, kOr);
 
 #undef MATXSCRIPT_SCRIPT_PRINTER_DEF_HLO_BINARY
@@ -900,14 +766,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLONot").set_body_typed([](BaseExpr a, Span span)
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLONotNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLONotNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLONotNode*>(node.get());
-      p->stream << "(not ";
-      p->Print(op->a);
-      p->stream << ")";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::HLONot>("", [](ir::HLONot node, ObjectPath p, IRDocsifier d) -> Doc {
@@ -936,13 +794,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.Call").set_body_typed([](Type ret_type,
   return Call(
       std::move(ret_type), std::move(op), std::move(args), std::move(span), std::move(type_args));
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<CallNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const CallNode*>(ref.get());
-      p->stream << "CallNode(" << node->op << ", " << node->args << ", " << node->type_args
-                << ") -> " << node->checked_type_;
-    });
 
 // reformat some ops
 
@@ -1082,12 +933,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOIterator")
           std::move(container), IntImm(runtime::DataType::Int(64), method), std::move(span));
     });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOIteratorNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const HLOIteratorNode*>(ref.get());
-      p->stream << "HLOIterator(" << node->container << "." << node->method << ")";
-    });
-
 // TODO: remove unused HLOIterator
 
 // InitializerList
@@ -1121,12 +966,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(InitializerListNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.InitializerList")
     .set_body_typed([](Array<BaseExpr> fields, Span span) {
       return InitializerList(std::move(fields), std::move(span));
-    });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<InitializerListNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const InitializerListNode*>(ref.get());
-      p->stream << "InitializerList(" << node->fields << ")";
     });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
@@ -1185,12 +1024,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.InitializerDict")
       return InitializerDict(std::move(fields), std::move(span));
     });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<InitializerDictNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const InitializerDictNode*>(ref.get());
-      p->stream << "InitializerDict(" << node->fields << ")";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::InitializerDict>(
         "", [](ir::InitializerDict di, ObjectPath di_p, IRDocsifier d) -> Doc {
@@ -1211,12 +1044,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(EnumAttrNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.EnumAttr").set_body_typed([](StringRef enum_str, Span span) {
   return EnumAttr(std::move(enum_str), std::move(span));
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<EnumAttrNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const EnumAttrNode*>(ref.get());
-      p->stream << "EnumAttr(" << node->enum_str << ")";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::EnumAttr>("", [](ir::EnumAttr en, ObjectPath en_p, IRDocsifier d) -> Doc {
@@ -1244,12 +1071,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(ClassGetItemNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.ClassGetItem")
     .set_body_typed([](HLOExpr self, StringImm attr, Span span) {
       return ClassGetItem(std::move(self), std::move(attr), std::move(span));
-    });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ClassGetItemNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const ClassGetItemNode*>(ref.get());
-      p->stream << "ClassGetItemNode(" << node->self << "." << node->attr << ")";
     });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
@@ -1286,14 +1107,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOCast").set_body_typed([](Type ty, BaseExpr val
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOCastNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOCastNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOCastNode*>(node.get());
-      p->stream << op->checked_type_ << '(';
-      p->Print(op->value);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::HLOCast>("", [](ir::HLOCast e, ObjectPath p, IRDocsifier d) -> Doc {
       ExprDoc value = d->AsDoc<ExprDoc>(e->value, p->Attr("value"));
@@ -1319,14 +1132,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOMove").set_body_typed([](BaseExpr value, Span 
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOMoveNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOMoveNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOMoveNode*>(node.get());
-      p->stream << "move(";
-      p->Print(op->value);
-      p->stream << ")";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::HLOMove>("", [](ir::HLOMove e, ObjectPath p, IRDocsifier d) -> Doc {
@@ -1359,14 +1164,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOEnumerate")
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOEnumerateNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOEnumerateNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOEnumerateNode*>(node.get());
-      p->stream << "enumerate(";
-      p->Print(op->value);
-      p->stream << ")";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::HLOEnumerate>("", [](ir::HLOEnumerate e, ObjectPath p, IRDocsifier d) -> Doc {
       ExprDoc value = d->AsDoc<ExprDoc>(e->value, p->Attr("value"));
@@ -1397,14 +1194,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOZip").set_body_typed([](Array<BaseExpr> value,
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOZipNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOZipNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOZipNode*>(node.get());
-      p->stream << "zip(";
-      p->Print(op->values);
-      p->stream << ")";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::HLOZip>("", [](ir::HLOZip e, ObjectPath p, IRDocsifier d) -> Doc {
@@ -1452,11 +1241,6 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
           return ComprehensionDoc(target, iter, ifs_opt);
         });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ComprehensionNode>([](const ObjectRef& node, ReprPrinter* p) {
-      p->stream << IRTextPrinter::Print(node, NullOpt);
-    });
-
 // ListComp
 ListComp::ListComp(Type ann_typed, BaseExpr elt, Array<Comprehension> generators, Span span) {
   ObjectPtr<ListCompNode> node = make_object<ListCompNode>();
@@ -1490,11 +1274,6 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
       return ListCompDoc(elt, generators);
     });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ListCompNode>([](const ObjectRef& node, ReprPrinter* p) {
-      p->stream << IRTextPrinter::Print(node, NullOpt);
-    });
-
 // SetComp
 SetComp::SetComp(Type ann_typed, BaseExpr elt, Array<Comprehension> generators, Span span) {
   ObjectPtr<SetCompNode> node = make_object<SetCompNode>();
@@ -1526,11 +1305,6 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
         generators.push_back(d->AsDoc<ComprehensionDoc>(e->generators[i], p->ArrayIndex(i)));
       }
       return SetCompDoc(elt, generators);
-    });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<SetCompNode>([](const ObjectRef& node, ReprPrinter* p) {
-      p->stream << IRTextPrinter::Print(node, NullOpt);
     });
 
 // DictComp
@@ -1575,11 +1349,6 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
         generators.push_back(d->AsDoc<ComprehensionDoc>(e->generators[i], p->ArrayIndex(i)));
       }
       return DictCompDoc(key, value, generators);
-    });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<DictCompNode>([](const ObjectRef& node, ReprPrinter* p) {
-      p->stream << IRTextPrinter::Print(node, NullOpt);
     });
 
 }  // namespace ir

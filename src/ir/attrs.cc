@@ -56,12 +56,6 @@ DictAttrs::DictAttrs(Map<StringRef, ObjectRef> dict) {
   data_ = std::move(n);
 }
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<DictAttrsNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const DictAttrsNode*>(node.get());
-      p->stream << op->dict;
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<DictAttrs>("", [](DictAttrs attrs, ObjectPath p, IRDocsifier d) -> Doc {
       return d->AsDoc(attrs->dict, p->Attr("dict"));

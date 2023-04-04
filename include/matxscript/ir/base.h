@@ -22,6 +22,8 @@
  */
 #pragma once
 
+#include <matxscript/ir/printer/printer.h>
+
 #include <matxscript/ir/span.h>
 #include <matxscript/ir/type.h>
 #include <matxscript/runtime/object.h>

@@ -29,7 +29,6 @@
 #include <matxscript/ir/_base/cow_array_ref.h>
 #include <matxscript/ir/_base/cow_map_ref.h>
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/_base/string_ref.h>
 #include <matxscript/ir/_base/with.h>
 #include <matxscript/ir/prim_ops.h>

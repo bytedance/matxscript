@@ -23,7 +23,6 @@
 #include <matxscript/ir/hlo_var.h>
 
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/prim_expr.h>
 #include <matxscript/ir/printer/doc.h>
 #include <matxscript/ir/printer/ir_docsifier.h>
@@ -60,17 +59,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOVar")
       return HLOVar(str, type_annotation, span);
     });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOVarNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const HLOVarNode*>(ref.get());
-      p->stream << "HLOVar(" << node->name_hint();
-      if (node->type_annotation.defined()) {
-        p->stream << ", ty=";
-        p->Print(node->type_annotation);
-      }
-      p->stream << ")";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
     .set_dispatch<HLOVar>("", [](HLOVar var, ObjectPath p, IRDocsifier d) -> Doc {
       return IdDoc(var->name_hint());
@@ -88,12 +76,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(GlobalVarNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.GlobalVar").set_body_typed([](StringRef name, Span span) {
   return GlobalVar(name, span);
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<GlobalVarNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const GlobalVarNode*>(ref.get());
-      p->stream << "GlobalVar(" << node->name_hint << ")";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
     .set_dispatch<GlobalVar>("", [](GlobalVar var, ObjectPath p, IRDocsifier d) -> Doc {

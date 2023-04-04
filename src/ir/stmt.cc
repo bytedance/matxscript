@@ -27,7 +27,6 @@
 #include <matxscript/ir/stmt.h>
 
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/_base/with.h>
 #include <matxscript/ir/hlo_expr.h>
 #include <matxscript/ir/hlo_var.h>
@@ -74,13 +73,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.ExprStmt").set_body_typed([](BaseExpr expr, Span 
 
 MATXSCRIPT_REGISTER_NODE_TYPE(ExprStmtNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ExprStmtNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const ExprStmtNode*>(node.get());
-      p->PrintIndent();
-      p->Print(op->expr);
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ExprStmt>("", [](ExprStmt stmt, ObjectPath p, IRDocsifier d) -> Doc {
       auto expr = d->AsDoc<Doc>(stmt->expr, p->Attr("expr"));
@@ -115,18 +107,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir._GetVarFromAllocaVarStmt").set_body_typed([](Allo
 
 MATXSCRIPT_REGISTER_NODE_TYPE(AllocaVarStmtNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<AllocaVarStmtNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const AllocaVarStmtNode*>(node.get());
-      p->PrintIndent();
-      p->stream << "alloca ";
-      p->Print(op->var);
-      if (op->init_value.defined()) {
-        p->stream << " = ";
-        p->Print(op->init_value);
-      }
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<AllocaVarStmt>("", [](AllocaVarStmt s, ObjectPath p, IRDocsifier d) -> Doc {
       ObjectPath var_p = p->Attr("var");
@@ -159,15 +139,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.AssignStmt")
 
 MATXSCRIPT_REGISTER_NODE_TYPE(AssignStmtNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<AssignStmtNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const AssignStmtNode*>(node.get());
-      p->PrintIndent();
-      p->Print(op->lhs);
-      p->stream << " = ";
-      p->Print(op->rhs);
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<AssignStmt>("", [](AssignStmt stmt, ObjectPath p, IRDocsifier d) -> Doc {
       auto lhs = d->AsDoc<ExprDoc>(stmt->lhs, p->Attr("lhs"));
@@ -188,13 +159,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.ReturnStmt").set_body_typed([](BaseExpr value, Sp
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(ReturnStmtNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ReturnStmtNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const ReturnStmtNode*>(node.get());
-      p->PrintIndent();
-      p->Print(op->value);
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ReturnStmt>("", [](ReturnStmt stmt, ObjectPath p, IRDocsifier d) -> Doc {
@@ -222,18 +186,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(AssertStmtNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.AssertStmt")
     .set_body_typed([](BaseExpr condition, ObjectRef message, Stmt body, Span span = Span()) {
       return AssertStmt(condition, Downcast<BaseExpr>(message), body, span);
-    });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<AssertStmtNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const AssertStmtNode*>(node.get());
-      p->PrintIndent();
-      p->stream << "assert(";
-      p->Print(op->condition);
-      p->stream << ", ";
-      p->Print(op->message);
-      p->stream << ")\n";
-      p->Print(op->body);
     });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
@@ -333,26 +285,6 @@ std::ostream& operator<<(std::ostream& out, ForType type) {  // NOLINT(*)
   }
   return out;
 }
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ForNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const ForNode*>(node.get());
-      p->PrintIndent();
-      p->stream << op->for_type << " (" << op->loop_var << ", ";
-      p->Print(op->min);
-      p->stream << ", ";
-      p->Print(op->max);
-      p->stream << ", ";
-      p->Print(op->step);
-      p->stream << ") {\n";
-
-      p->indent += 2;
-      p->Print(op->body);
-      p->indent -= 2;
-
-      p->PrintIndent();
-      p->stream << "}\n";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::For>("", [](ir::For loop, ObjectPath loop_p, IRDocsifier d) -> Doc {
@@ -516,18 +448,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.AutoFor")
 
 MATXSCRIPT_REGISTER_NODE_TYPE(AutoForNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<AutoForNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const AutoForNode*>(node.get());
-      p->PrintIndent();
-      p->stream << "AutoFor (" << op->loop_vars << " : " << op->raw_container << ") {\n";
-      p->indent += 2;
-      p->Print(op->body);
-      p->indent -= 2;
-      p->PrintIndent();
-      p->stream << "}\n";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::AutoFor>("", [](ir::AutoFor loop, ObjectPath loop_p, IRDocsifier d) -> Doc {
       With<IRFrame> f(d, loop);
@@ -577,20 +497,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.While")
 
 MATXSCRIPT_REGISTER_NODE_TYPE(WhileNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<WhileNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const WhileNode*>(node.get());
-      p->PrintIndent();
-      p->stream << "while (" << op->cond << ") {\n";
-
-      p->indent += 2;
-      p->Print(op->body);
-      p->indent -= 2;
-
-      p->PrintIndent();
-      p->stream << "}\n";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::While>("", [](ir::While loop, ObjectPath loop_p, IRDocsifier d) -> Doc {
       With<IRFrame> f(d, loop);
@@ -607,12 +513,6 @@ Break::Break() {
 MATXSCRIPT_REGISTER_GLOBAL("ir.Break").set_body_typed([]() { return Break(); });
 MATXSCRIPT_REGISTER_NODE_TYPE(BreakNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<BreakNode>([](const ObjectRef& node, ReprPrinter* p) {
-      p->PrintIndent();
-      p->stream << "break\n";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::Break>("", [](ir::Break n, ObjectPath p, IRDocsifier d) -> Doc {
       return BreakDoc();
@@ -625,12 +525,6 @@ Continue::Continue() {
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.Continue").set_body_typed([]() { return Continue(); });
 MATXSCRIPT_REGISTER_NODE_TYPE(ContinueNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ContinueNode>([](const ObjectRef& node, ReprPrinter* p) {
-      p->PrintIndent();
-      p->stream << "continue\n";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::Continue>("", [](ir::Continue n, ObjectPath p, IRDocsifier d) -> Doc {
@@ -650,14 +544,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.SeqStmt").set_body_typed([](Array<Stmt> seq, Span
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(SeqStmtNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<SeqStmtNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const SeqStmtNode*>(node.get());
-      for (Stmt stmt : op->seq) {
-        p->Print(stmt);
-      }
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::SeqStmt>("", [](ir::SeqStmt stmt, ObjectPath p, IRDocsifier d) -> Doc {
@@ -684,37 +570,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(IfThenElseNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.IfThenElse")
     .set_body_typed([](BaseExpr condition, Stmt then_case, Stmt else_case, Span span = Span()) {
       return IfThenElse(condition, then_case, else_case, span);
-    });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<IfThenElseNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const IfThenElseNode*>(node.get());
-      p->PrintIndent();
-      while (true) {
-        p->stream << "if (" << op->condition << ") {\n";
-        p->indent += 2;
-        p->Print(op->then_case);
-        p->indent -= 2;
-
-        if (!op->else_case.defined()) {
-          break;
-        }
-
-        if (const IfThenElseNode* nested_if = op->else_case.as<IfThenElseNode>()) {
-          p->PrintIndent();
-          p->stream << "} else ";
-          op = nested_if;
-        } else {
-          p->PrintIndent();
-          p->stream << "} else {\n";
-          p->indent += 2;
-          p->Print(op->else_case);
-          p->indent -= 2;
-          break;
-        }
-      }
-      p->PrintIndent();
-      p->stream << "}\n";
     });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
@@ -754,18 +609,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.ExceptionHandler")
       return ExceptionHandler(std::move(e), std::move(body), std::move(span));
     });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ExceptionHandlerNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const ExceptionHandlerNode*>(node.get());
-      p->PrintIndent();
-      p->stream << "catch (...) {\n";
-      p->indent += 2;
-      p->Print(op->body);
-      p->indent -= 2;
-      p->PrintIndent();
-      p->stream << "}\n";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::ExceptionHandler>(  //
         "",
@@ -796,22 +639,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(TryExceptNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.TryExcept")
     .set_body_typed([](Stmt body, Array<ExceptionHandler> handlers, Span span = Span()) {
       return TryExcept(std::move(body), std::move(handlers), std::move(span));
-    });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<TryExceptNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const TryExceptNode*>(node.get());
-      p->PrintIndent();
-
-      p->stream << "try {\n";
-      p->indent += 2;
-      p->Print(op->body);
-      p->indent -= 2;
-      p->PrintIndent();
-      p->stream << "}\n";
-      for (auto& handler : op->handlers) {
-        p->Print(handler);
-      }
     });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
@@ -848,18 +675,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.Raise").set_body_typed([](BaseExpr exc, Span span
   return Raise(std::move(exc), std::move(span));
 });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<RaiseNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const RaiseNode*>(node.get());
-      p->PrintIndent();
-      p->stream << "raise";
-      if (op->exc.defined()) {
-        p->stream << " ";
-        p->Print(op->exc);
-      }
-      p->stream << "\n";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::Raise>(  //
         "",
@@ -889,12 +704,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(HLOYieldNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.HLOYield").set_body_typed([](BaseExpr symbol, Span span = Span()) {
   return HLOYield(std::move(symbol), span);
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOYieldNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const HLOYieldNode*>(ref.get());
-      p->stream << "yield " << node->symbol;
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::HLOYield>(  //

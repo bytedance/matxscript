@@ -20,7 +20,6 @@
 #include <matxscript/ir/range_expr.h>
 
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/printer/doc.h>
 #include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/functor.h>
@@ -49,13 +48,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.RangeExpr")
     });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(RangeExprNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<RangeExprNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const RangeExprNode*>(node.get());
-      p->stream << "range(start=" << op->start << ", stop=" << op->stop << ", step=" << op->step
-                << ')';
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
     .set_dispatch<RangeExpr>("", [](RangeExpr r, ObjectPath p, IRDocsifier d) -> Doc {
