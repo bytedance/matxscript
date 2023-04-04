@@ -35,7 +35,7 @@ class TestCacheSo(unittest.TestCase):
 
     def test_cache_hit(self):
 
-        with self.assertLogs(level='INFO') as log:
+        with self.assertLogs(level='MATX_INFO') as log:
             def func(a: int, b: int) -> int:
                 return a + b
 
@@ -58,7 +58,7 @@ class TestCacheSo(unittest.TestCase):
             log.output.clear()
 
     def test_cache_expire(self):
-        with self.assertLogs(level='INFO') as log:
+        with self.assertLogs(level='MATX_INFO') as log:
             rm_files = [
                 matx.toolchain.LIB_PATH +
                 '/libfunc_plugin.so',
@@ -93,7 +93,7 @@ class TestCacheSo(unittest.TestCase):
 
     # issue: #283
     def test_unpack(self):
-        with self.assertLogs(level='INFO') as log:
+        with self.assertLogs(level='MATX_INFO') as log:
             def func(x: int) -> Any:
                 return 1, 2 * x
 
