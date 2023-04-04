@@ -35,6 +35,11 @@ from .pipeline.jit_object import JitOpImpl
 from . import runtime
 from ._ffi.libinfo import find_include_path
 
+# setup logging
+from .utils import addLoggingLevel
+# customized logging level is lower than INFO and higher than DEBUG
+addLoggingLevel('MATX_INFO', logging.INFO - 5)
+
 LIB_PATH = os.environ.get('MATX_DSO_DIR', 'dso')
 
 USE_SO_CACHE = os.environ.get('MATX_USE_SO_CACHE', '').lower() != 'false'
@@ -193,7 +198,7 @@ def make_jit_object_creator(sc_ctx: context.ScriptContext, share=False, bundle_a
                         guess_arguments[init_func_param_name] = init_func_param_value
                 guesser.guess(guess_arguments)
             need_bundle = guesser.need_bundle
-            logging.info('need_bundle: %s', need_bundle)
+            logging.matx_info('need_bundle: %s', need_bundle)
             try:
                 ctor_func_meta, init_args = make_func_meta(cls_ctx.init_fn,
                                                            bound_self=False,
@@ -285,11 +290,11 @@ def toolchain_build(sc_ctx: context.ScriptContext, toolchain: ToolChain):
         # save file
         rt_mod.save(file_path)
         if not hit_cache(so_path):
-            logging.info(
+            logging.matx_info(
                 "matx compile function/class: [{}:{}]".format(main_node_name, so_path))
             toolchain.build(file_path)
         else:
-            logging.info(
+            logging.matx_info(
                 "info matched, skip compiling: [{}:{}]".format(
                     main_node_name, so_path))
 
@@ -317,23 +322,25 @@ def build_dso(sc_ctx: context.ScriptContext, use_toolchain=False):
 
         contrib.cc.check_cc_version(sys_cc_path, False)
         if not hit_cache(sopath):
-            logging.info("matx compile function/class: [{}:{}]".format(main_node_name, sopath))
+            logging.matx_info("matx compile function/class: [{}:{}]".format(main_node_name, sopath))
             rt_mod.export_library(sopath, options=cxx11_no_abi_options, cc=sys_cc_path)
         else:
-            logging.info("info matched, skip compiling: [{}:{}]".format(main_node_name, sopath))
+            logging.matx_info(
+                "info matched, skip compiling: [{}:{}]".format(
+                    main_node_name, sopath))
         if not use_toolchain:
             server_cc_path = contrib.cc.find_server_gcc_path()
             if server_cc_path is not None:
                 contrib.cc.check_cc_version(server_cc_path, True)
                 if not hit_cache(sopath_cxx11):
-                    logging.info(
+                    logging.matx_info(
                         "matx compile function/class: [{}:{}]".format(main_node_name, sopath_cxx11))
                     rt_mod.export_library(
                         sopath_cxx11,
                         options=cxx11_with_abi_options,
                         cc=server_cc_path)
                 else:
-                    logging.info(
+                    logging.matx_info(
                         "info matched, skip compiling: [{}:{}]".format(
                             main_node_name, sopath_cxx11))
             else:
