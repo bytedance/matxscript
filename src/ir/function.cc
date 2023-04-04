@@ -149,21 +149,6 @@ StringRef PrimFuncNode::GetReprName() const {
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimFuncNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimFuncNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      // TODO(tvm-team) redirect to Text printer once we have a good text format.
-      auto* node = static_cast<const PrimFuncNode*>(ref.get());
-      p->stream << "PrimFunc(" << node->params << ") ";
-      if (node->attrs.defined()) {
-        p->stream << "attrs=" << node->attrs;
-      }
-      p->stream << " {\n";
-      p->indent += 2;
-      p->Print(node->body);
-      p->indent -= 2;
-      p->stream << "}\n";
-    });
-
 MATXSCRIPT_REGISTER_GLOBAL("ir.PrimFunc")
     .set_body_typed([](Array<PrimVar> params,
                        Array<PrimExpr> default_params,
@@ -302,13 +287,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.Function")
                       std::move(span));
     });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<FunctionNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const FunctionNode*>(ref.get());
-      p->stream << "FunctionNode(" << node->params << ", " << node->ret_type << ", " << node->body
-                << ", " << node->type_params << ", " << node->attrs << ")";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::Function>("", [](ir::Function func, ObjectPath p, IRDocsifier d) -> Doc {
       With<IRFrame> f(d, func);
@@ -387,13 +365,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.LambdaFunction")
                                 std::move(ret_type),
                                 std::move(span));
         });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<LambdaFunctionNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const LambdaFunctionNode*>(ref.get());
-      p->stream << "LambdaFunctionNode(" << node->params << ", " << node->ret_type << ", "
-                << node->body << ", " << node->captures << ")";
-    });
 
 namespace {
 struct LambdaFunctionToComprehension {

@@ -32,7 +32,6 @@
 
 #include <cmath>
 
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/op_attr_types.h>
 #include <matxscript/ir/prim_builtin.h>
 #include <matxscript/ir/type.h>

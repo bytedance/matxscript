@@ -1,8 +1,5 @@
 // Copyright 2022 ByteDance Ltd. and/or its affiliates.
 /*
- * Acknowledgement:
- * The structure of the expressions is inspired by Halide/TVM IR.
- *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -20,38 +17,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <matxscript/ir/none_expr.h>
+#include <matxscript/ir/printer/printer.h>
 
-#include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/printer/doc.h>
-#include <matxscript/ir/printer/ir_docsifier.h>
-#include <matxscript/runtime/functor.h>
-#include <matxscript/runtime/registry.h>
+#include <matxscript/ir/_base/object_path.h>
+#include <matxscript/ir/_base/string_ref.h>
+#include <matxscript/ir/printer/text_printer.h>
 
 namespace matxscript {
 namespace ir {
 
-using namespace runtime;
-using namespace ::matxscript::ir::printer;
-
-NoneExpr::NoneExpr(Span span) {
-  ObjectPtr<NoneExprNode> n = make_object<NoneExprNode>();
-  n->span = std::move(span);
-  n->checked_type_ = ObjectType();
-  data_ = std::move(n);
+std::ostream& operator<<(std::ostream& os, const runtime::ObjectRef& n) {
+  if (const auto* path_node = n.as<ObjectPathNode>()) {
+    os << path_node->GetRepr();
+  } else {
+    static ir::printer::PrinterConfig config;
+    os << ir::printer::IRTextPrinter::Print(n, config);
+  }
+  return os;
 }
-
-MATXSCRIPT_REGISTER_NODE_TYPE(NoneExprNode);
-
-MATXSCRIPT_REGISTER_GLOBAL("ir.NoneExpr").set_body_typed([]() {
-  static NoneExpr none;
-  return none;
-});
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
-    .set_dispatch<NoneExpr>("", [](NoneExpr t, ObjectPath p, IRDocsifier d) -> Doc {
-      return LiteralDoc::None(p);
-    });
 
 }  // namespace ir
 }  // namespace matxscript

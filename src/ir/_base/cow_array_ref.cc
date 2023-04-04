@@ -26,7 +26,6 @@
 #include <matxscript/ir/_base/string_ref.h>
 
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/_base/structural_equal.h>
 #include <matxscript/ir/_base/structural_hash.h>
 #include <matxscript/ir/printer/doc.h>
@@ -186,19 +185,6 @@ MATXSCRIPT_REGISTER_GLOBAL("runtime.ArrayContains").set_body([](PyArgs args) -> 
 });
 
 // Container printer
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ArrayNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const ArrayNode*>(node.get());
-      p->stream << '[';
-      for (size_t i = 0; i < op->size(); ++i) {
-        if (i != 0) {
-          p->stream << ", ";
-        }
-        p->Print(op->at(i));
-      }
-      p->stream << ']';
-    });
-
 using namespace ::matxscript::ir::printer;
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<Array<ObjectRef>>(  //

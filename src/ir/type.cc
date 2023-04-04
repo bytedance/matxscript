@@ -27,7 +27,6 @@
 #include <matxscript/ir/type.h>
 
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/_base/with.h>
 #include <matxscript/ir/adt.h>
 #include <matxscript/ir/printer/doc.h>
@@ -90,12 +89,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimType_GetDType").set_body_typed([](PrimType pt
   return pt->dtype;
 });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const PrimTypeNode*>(ref.get());
-      p->stream << node->dtype;
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<PrimType>("", [](PrimType ty, ObjectPath p, IRDocsifier d) -> Doc {
       if (ty->dtype == DataType::Int(64) || ty->dtype == DataType::Bool() ||
@@ -121,13 +114,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(PointerTypeNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.PointerType").set_body_typed([](Type element_type) {
   return PointerType(element_type);
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PointerTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const PointerTypeNode*>(ref.get());
-      p->Print(node->element_type);
-      p->stream << '*';
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<PointerType>("", [](PointerType ty, ObjectPath ty_p, IRDocsifier d) -> Doc {
@@ -155,12 +141,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.TypeVar").set_body_typed([](StringRef name, int k
   return TypeVar(name, static_cast<TypeKind>(kind));
 });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<TypeVarNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const TypeVarNode*>(ref.get());
-      p->stream << "TypeVar(" << node->name_hint << ", " << node->kind << ")";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<TypeVar>("", [](TypeVar var, ObjectPath p, IRDocsifier d) -> Doc {
       return Dialect(d, "TypeVar")
@@ -181,12 +161,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(GlobalTypeVarNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.GlobalTypeVar").set_body_typed([](StringRef name, int kind) {
   return GlobalTypeVar(name, static_cast<TypeKind>(kind));
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<GlobalTypeVarNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const GlobalTypeVarNode*>(ref.get());
-      p->stream << "GlobalTypeVar(" << node->name_hint << ", " << node->kind << ")";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<GlobalTypeVar>(  //
@@ -222,13 +196,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.FuncType")
                       std::move(ret_type),
                       std::move(type_params),
                       std::move(type_constraints));
-    });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<FuncTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const FuncTypeNode*>(ref.get());
-      p->stream << "FuncType(" << node->type_params << ", " << node->arg_types << ", "
-                << node->ret_type << ", " << node->type_constraints << ")";
     });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
@@ -267,12 +234,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.TupleType_GetItem").set_body_typed([](TupleType t
   return ty->fields[index];
 });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<TupleTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const TupleTypeNode*>(ref.get());
-      p->stream << "TupleTypeNode(" << node->fields << ")";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<TupleType>("", [](TupleType ty, ObjectPath p, IRDocsifier d) -> Doc {
       if (ty->fields.empty()) {
@@ -302,12 +263,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.RangeType").set_body_typed([]() {
   return range_t;
 });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<RangeTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const RangeTypeNode*>(ref.get());
-      p->stream << "RangeTypeNode";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<RangeType>("", [](RangeType ty, ObjectPath p, IRDocsifier d) -> Doc {
       return IdDoc("range");
@@ -326,12 +281,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(ObjectTypeNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.ObjectType").set_body_typed([](bool is_view) {
   return ObjectType(is_view);
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ObjectTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const ObjectTypeNode*>(ref.get());
-      p->stream << "ObjectTypeNode";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ObjectType>("", [](ObjectType ty, ObjectPath p, IRDocsifier d) -> Doc {
@@ -352,12 +301,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.StringType").set_body_typed([](bool is_view) {
   return StringType(is_view);
 });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<StringTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const StringTypeNode*>(ref.get());
-      p->stream << "StringTypeNode";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<StringType>("", [](StringType ty, ObjectPath p, IRDocsifier d) -> Doc {
       return IdDoc("bytes");
@@ -376,12 +319,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(UnicodeTypeNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.UnicodeType").set_body_typed([](bool is_view) {
   return UnicodeType(is_view);
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<UnicodeTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const UnicodeTypeNode*>(ref.get());
-      p->stream << "UnicodeTypeNode";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<UnicodeType>("", [](UnicodeType ty, ObjectPath p, IRDocsifier d) -> Doc {
@@ -406,12 +343,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.ListTypeGetItemType").set_body_typed([](ListType 
   return t->item_type;
 });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ListTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const ListTypeNode*>(ref.get());
-      p->stream << "ListTypeNode(" << node->item_type << ")";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ListType>("", [](ListType ty, ObjectPath p, IRDocsifier d) -> Doc {
       return IdDoc(GetLiteralRepr(ty));
@@ -434,13 +365,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.DictType")
       return DictType(is_full_typed, std::move(key_type), std::move(value_type));
     });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<DictTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const DictTypeNode*>(ref.get());
-      p->stream << "DictTypeNode(key_type: " << node->key_type
-                << ", value_type: " << node->value_type << ")";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<DictType>("", [](DictType ty, ObjectPath p, IRDocsifier d) -> Doc {
       return IdDoc(GetLiteralRepr(ty));
@@ -460,12 +384,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(SetTypeNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.SetType").set_body_typed([](bool is_full_typed, Type item_type) {
   return SetType(is_full_typed, std::move(item_type));
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<SetTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const SetTypeNode*>(ref.get());
-      p->stream << "SetTypeNode(" << node->item_type << ")";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<SetType>("", [](SetType ty, ObjectPath p, IRDocsifier d) -> Doc {
@@ -497,13 +415,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.IteratorType").set_body_typed([](Type container_t
   return IteratorType(std::move(container_type));
 });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<IteratorTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const IteratorTypeNode*>(ref.get());
-      p->Print(node->container_type);
-      p->stream << "_Iterator";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<IteratorType>("", [](IteratorType ty, ObjectPath p, IRDocsifier d) -> Doc {
       return IdDoc(GetLiteralRepr(ty));
@@ -521,12 +432,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(ExceptionTypeNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.ExceptionType").set_body_typed([](StringRef name) {
   return ExceptionType(std::move(name));
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ExceptionTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const ExceptionTypeNode*>(ref.get());
-      p->Print(node->name);
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ExceptionType>("", [](ExceptionType ty, ObjectPath p, IRDocsifier d) -> Doc {
@@ -547,12 +452,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.FileType").set_body_typed([](bool binary_mode) {
   return FileType(binary_mode);
 });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<FileTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const FileTypeNode*>(ref.get());
-      p->stream << "FileTypeNode(binary_mode=" << node->binary_mode << ")";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<FileType>("", [](FileType ty, ObjectPath p, IRDocsifier d) -> Doc {
       return IdDoc(GetLiteralRepr(ty));
@@ -569,11 +468,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(TrieTypeNode);
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.TrieType").set_body_typed([]() { return TrieType(); });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<TrieTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      p->stream << "TrieType";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<TrieType>("", [](TrieType ty, ObjectPath p, IRDocsifier d) -> Doc {
       return IdDoc(GetLiteralRepr(ty));
@@ -589,11 +483,6 @@ UserDataType::UserDataType(Span span) {
 MATXSCRIPT_REGISTER_NODE_TYPE(UserDataTypeNode);
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.UserDataType").set_body_typed([]() { return UserDataType(); });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<UserDataTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      p->stream << "UserDataType";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<UserDataType>("", [](UserDataType ty, ObjectPath p, IRDocsifier d) -> Doc {
@@ -644,19 +533,9 @@ MATXSCRIPT_REGISTER_NODE_TYPE(RegexTypeNode);
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.RegexType").set_body_typed([]() { return RegexType(); });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<RegexTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      p->stream << "RegexType";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<RegexType>("", [](RegexType ty, ObjectPath p, IRDocsifier d) -> Doc {
       return IdDoc(GetLiteralRepr(ty));
-    });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<NDArrayTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      p->stream << "NDArrayType";
     });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
@@ -689,11 +568,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.OpaqueObjectType").set_body_typed([]() {
   return OpaqueObjectType();
 });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<OpaqueObjectTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      p->stream << "OpaqueObjectType";
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<OpaqueObjectType>("",
                                     [](OpaqueObjectType ty, ObjectPath p, IRDocsifier d) -> Doc {
@@ -713,12 +587,6 @@ MATXSCRIPT_REGISTER_NODE_TYPE(RefTypeNode);
 MATXSCRIPT_REGISTER_GLOBAL("ir.RefType").set_body_typed([](Type value) {
   return RefType(std::move(value));
 });
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<RefTypeNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const RefTypeNode*>(ref.get());
-      p->stream << "RefTypeNode(" << node->value << ")";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<RefType>("", [](RefType ty, ObjectPath p, IRDocsifier d) -> Doc {

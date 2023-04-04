@@ -28,11 +28,15 @@
 #include <algorithm>
 
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/registry.h>
 
 namespace matxscript {
 namespace ir {
+
+using namespace ::matxscript::ir::printer;
+
 ObjectPtr<Object> GetSourceNameNode(const StringRef& name) {
   // always return pointer as the reference can change as map re-allocate.
   // or use another level of indirection by creating a unique_ptr
@@ -66,23 +70,11 @@ Span::Span(StringRef file_name, int64_t lineno, StringRef func_name, StringRef s
   data_ = std::move(node);
 }
 
-// Span Span::Merge(const Span& other) const {
-//   MXCHECK(this->defined() && other.defined()) << "Span::Merge: both spans must be defined";
-
-//   MXCHECK((*this)->source_name == other->source_name);
-//   return Span((*this)->source_name,
-//               std::min((*this)->line, other->line),
-//               std::max((*this)->end_line, other->end_line),
-//               std::min((*this)->column, other->column),
-//               std::max((*this)->end_column, other->end_column));
-// }
-
 MATXSCRIPT_REGISTER_GLOBAL("ir.SourceName").set_body_typed(SourceName::Get);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<SourceNameNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const SourceNameNode*>(ref.get());
-      p->stream << "SourceName(" << node->name << ", " << node << ")";
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<SourceName>("", [](SourceName s, ObjectPath p, IRDocsifier d) -> Doc {
+      return Dialect(d, "SourceName")->Call({LiteralDoc::Str(s->name, p->Attr("name"))});
     });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(SourceNameNode)
@@ -98,12 +90,25 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.Span").set_body_typed(
       return Span(file_name, lineno, func_name, source_code);
     });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<SpanNode>([](const ObjectRef& ref, ReprPrinter* p) {
-      auto* node = static_cast<const SpanNode*>(ref.get());
-      p->stream << "Span(file_name=" << node->file_name << ", lineno=" << node->lineno
-                << ", func_name=" << node->func_name << ", source_code=" << node->source_code
-                << ")";
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<Span>("", [](Span s, ObjectPath p, IRDocsifier d) -> Doc {
+      Array<StringRef> keys;
+      Array<ExprDoc> values;
+
+      keys.push_back("file_name");
+      values.push_back(d->AsDoc<ExprDoc>(s->file_name, p->Attr("file_name")));
+
+      keys.push_back("lineno");
+      values.push_back(LiteralDoc::Int(s->lineno, p->Attr("lineno")));
+
+      keys.push_back("func_name");
+      values.push_back(d->AsDoc<ExprDoc>(s->func_name, p->Attr("func_name")));
+
+      keys.push_back("source_code");
+      values.push_back(d->AsDoc<ExprDoc>(s->source_code, p->Attr("source_code")));
+
+      return Dialect(d, "Span")->Call({}, keys, values);
     });
+
 }  // namespace ir
 }  // namespace matxscript

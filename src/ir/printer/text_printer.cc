@@ -21,7 +21,6 @@
  */
 #include <matxscript/ir/printer/text_printer.h>
 
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/_base/with.h>
 #include <matxscript/ir/hlo_var.h>
 #include <matxscript/ir/prim_expr.h>

@@ -22,7 +22,6 @@
 #include <matxscript/ir/prim_var.h>
 
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
@@ -63,14 +62,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimVar")
     });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimVarNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimVarNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimVarNode*>(node.get());
-      // omit the type
-      // stream << op->name << "." << op->type;
-      p->stream << op->name_hint;
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)  //
     .set_dispatch<PrimVar>("", [](PrimVar var, ObjectPath p, IRDocsifier d) -> Doc {

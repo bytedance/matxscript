@@ -67,14 +67,6 @@ MATXSCRIPT_REGISTER_REFLECTION_VTABLE(StringNode, StringNodeTrait)
       return static_cast<const StringNode*>(n)->data_container;
     });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<StringNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const StringNode*>(node.get());
-      p->stream << "b\'"
-                << runtime::BytesEscape(op->data_container.data(), op->data_container.size())
-                << "\'";
-    });
-
 /******************************************************************************
  * StringRef container
  *****************************************************************************/

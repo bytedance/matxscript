@@ -102,6 +102,9 @@ class ObjectPathNode : public Object {
   /*! \brief Extend this path with access to a missing map entry. */
   ObjectPath MissingMapEntry() const;
 
+  /*! \brief Get repr. */
+  runtime::String GetRepr() const;
+
   static constexpr const char* _type_key = "ObjectPath";
   MATXSCRIPT_DECLARE_BASE_OBJECT_INFO(ObjectPathNode, Object);
 
@@ -109,7 +112,6 @@ class ObjectPathNode : public Object {
   explicit ObjectPathNode(const ObjectPathNode* parent);
 
   friend class ObjectPath;
-  friend runtime::String GetObjectPathRepr(const ObjectPathNode* node);
 
   const ObjectPathNode* ParentNode() const;
 

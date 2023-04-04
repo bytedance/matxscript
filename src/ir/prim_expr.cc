@@ -22,7 +22,6 @@
 #include <matxscript/ir/prim_expr.h>
 
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
 #include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/functor.h>
@@ -56,15 +55,6 @@ IntImm::IntImm(runtime::DataType dtype, int64_t value, Span span) {
 }
 
 MATXSCRIPT_REGISTER_NODE_TYPE(IntImmNode);
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ir::IntImmNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const ir::IntImmNode*>(node.get());
-      if (op->dtype == runtime::DataType::Int(32)) {
-        p->stream << op->value;
-      } else {
-        p->stream << "(" << op->dtype << ")" << op->value;
-      }
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<IntImm>("", [](IntImm s, ObjectPath p, IRDocsifier d) -> Doc {
@@ -82,24 +72,6 @@ FloatImm::FloatImm(runtime::DataType dtype, double value, Span span) {
 }
 
 MATXSCRIPT_REGISTER_NODE_TYPE(FloatImmNode);
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<FloatImmNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const FloatImmNode*>(node.get());
-      auto& stream = p->stream;
-      switch (op->dtype.bits()) {
-        case 64:
-          stream << op->value;
-          break;
-        case 32:
-          stream << op->value << 'f';
-          break;
-        case 16:
-          stream << op->value << 'h';
-          break;
-        default:
-          MXLOG(FATAL) << "Unknown float type bits=" << op->dtype.bits();
-      }
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<FloatImm>("", [](FloatImm s, ObjectPath p, IRDocsifier d) -> Doc {
@@ -125,14 +97,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimCast")
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimCastNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimCastNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimCastNode*>(node.get());
-      p->stream << op->dtype << '(';
-      p->Print(op->value);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<PrimCast>("", [](PrimCast s, ObjectPath p, IRDocsifier d) -> Doc {
       ExprDoc dtype = LiteralDoc::DataType(s->dtype, p->Attr("dtype"));
@@ -157,14 +121,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.HLOCastPrim")
     });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(HLOCastPrimNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<HLOCastPrimNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const HLOCastPrimNode*>(node.get());
-      p->stream << op->dtype << '(';
-      p->Print(op->value);
-      p->stream << ')';
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<HLOCastPrim>("", [](HLOCastPrim s, ObjectPath p, IRDocsifier d) -> Doc {
@@ -232,16 +188,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimAdd").set_body_typed([](PrimExpr a, PrimExpr 
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimAddNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimAddNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimAddNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " + ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimAdd, PrimAddNode, add, "Add", kAdd);
 
 // PrimSub
@@ -252,16 +198,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimSub").set_body_typed([](PrimExpr a, PrimExpr 
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimSubNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimSubNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimSubNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " - ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
 
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimSub, PrimSubNode, sub, "Sub", kSub);
 
@@ -274,16 +210,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimMul").set_body_typed([](PrimExpr a, PrimExpr 
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimMulNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimMulNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimMulNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << "*";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimMul, PrimMulNode, mul, "Mul", kMult);
 
 // PrimDiv
@@ -294,16 +220,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimDiv").set_body_typed([](PrimExpr a, PrimExpr 
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimDivNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimDivNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimDivNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << "/";
-      p->Print(op->b);
-      p->stream << ')';
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<PrimDiv>("", [](PrimDiv node, ObjectPath p, IRDocsifier d) -> Doc {
@@ -329,16 +245,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimMod").set_body_typed([](PrimExpr a, PrimExpr 
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimModNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimModNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimModNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " % ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY(PrimMod, "truncmod");
 
 // PrimFloorDiv
@@ -349,12 +255,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimFloorDiv").set_body_typed([](PrimExpr a, Prim
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimFloorDivNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimFloorDivNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimFloorDivNode*>(node.get());
-      p->stream << "floordiv(" << op->a << ", " << op->b << ")";
-    });
 
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(
     PrimFloorDiv, PrimFloorDivNode, floordiv, "FloorDiv", kFloorDiv);
@@ -368,12 +268,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimFloorMod").set_body_typed([](PrimExpr a, Prim
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimFloorModNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimFloorModNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimFloorModNode*>(node.get());
-      p->stream << "floormod(" << op->a << ", " << op->b << ")";
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(
     PrimFloorMod, PrimFloorModNode, floormod, "FloorMod", kMod);
 
@@ -386,16 +280,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimMin").set_body_typed([](PrimExpr a, PrimExpr 
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimMinNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimMinNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimMinNode*>(node.get());
-      p->stream << "min(";
-      p->Print(op->a);
-      p->stream << ", ";
-      p->Print(op->b);
-      p->stream << ")";
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY(PrimMin, "min");
 
 // PrimMax
@@ -406,16 +290,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimMax").set_body_typed([](PrimExpr a, PrimExpr 
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimMaxNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimMaxNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimMaxNode*>(node.get());
-      p->stream << "max(";
-      p->Print(op->a);
-      p->stream << ", ";
-      p->Print(op->b);
-      p->stream << ")";
-    });
 
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY(PrimMax, "max");
 
@@ -428,16 +302,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimEQ").set_body_typed([](PrimExpr a, PrimExpr b
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimEQNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimEQNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimEQNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " == ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimEQ, PrimEQNode, equal, "EQ", kEq);
 
 // PrimNE
@@ -448,16 +312,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimNE").set_body_typed([](PrimExpr a, PrimExpr b
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimNENode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimNENode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimNENode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " != ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
 
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimNE, PrimNENode, not_equal, "NE", kNotEq);
 
@@ -470,16 +324,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimLT").set_body_typed([](PrimExpr a, PrimExpr b
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimLTNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimLTNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimLTNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " < ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimLT, PrimLTNode, less_than, "LT", kLt);
 
 // PrimLE
@@ -490,16 +334,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimLE").set_body_typed([](PrimExpr a, PrimExpr b
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimLENode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimLENode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimLENode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " <= ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
 
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimLE, PrimLENode, less_or_equal, "LE", kLtE);
 
@@ -512,16 +346,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimGT").set_body_typed([](PrimExpr a, PrimExpr b
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimGTNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimGTNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimGTNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " > ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimGT, PrimGTNode, greater_than, "GT", kGt);
 
 // PrimGE
@@ -532,16 +356,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimGE").set_body_typed([](PrimExpr a, PrimExpr b
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimGENode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimGENode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimGENode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " >= ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
 
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimGE, PrimGENode, greater_or_equal, "GE", kGtE);
 
@@ -567,16 +381,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimAnd").set_body_typed([](PrimExpr a, PrimExpr 
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimAndNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimAndNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimAndNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " && ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimAnd, PrimAndNode, logic_and, "And", kAnd);
 
 // PrimOr
@@ -601,16 +405,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimOr").set_body_typed([](PrimExpr a, PrimExpr b
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimOrNode);
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimOrNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimOrNode*>(node.get());
-      p->stream << '(';
-      p->Print(op->a);
-      p->stream << " || ";
-      p->Print(op->b);
-      p->stream << ')';
-    });
-
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(PrimOr, PrimOrNode, logic_or, "Or", kOr);
 
 #undef MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY
@@ -634,13 +428,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimNot").set_body_typed([](PrimExpr a, Span span
 });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimNotNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimNotNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimNotNode*>(node.get());
-      p->stream << '!';
-      p->Print(op->a);
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::PrimNot>("", [](ir::PrimNot node, ObjectPath p, IRDocsifier d) -> Doc {
@@ -674,18 +461,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimSelect")
     });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimSelectNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimSelectNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimSelectNode*>(node.get());
-      p->stream << "select(";
-      p->Print(op->condition);
-      p->stream << ", ";
-      p->Print(op->true_value);
-      p->stream << ", ";
-      p->Print(op->false_value);
-      p->stream << ")";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::PrimSelect>(
@@ -721,16 +496,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimLet")
     });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimLetNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimLetNode>([](const ObjectRef& node, ReprPrinter* p) {
-      auto* op = static_cast<const PrimLetNode*>(node.get());
-      p->stream << "(let " << op->var << " = ";
-      p->Print(op->value);
-      p->stream << " in ";
-      p->Print(op->body);
-      p->stream << ")";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::PrimLet>("", [](ir::PrimLet let, ObjectPath p, IRDocsifier d) -> Doc {
@@ -768,26 +533,6 @@ MATXSCRIPT_REGISTER_GLOBAL("ir.PrimCall")
     });
 
 MATXSCRIPT_REGISTER_NODE_TYPE(PrimCallNode);
-
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<PrimCallNode>([](const ObjectRef& node, ReprPrinter* p) {
-      MXCHECK(false) << "unimpl";
-      //      auto* op = static_cast<const PrimCallNode*>(node.get());
-      //      if (auto* ptr_op = op->op.as<OpNode>()) {
-      //        p->stream << ptr_op->name << "(";
-      //      } else {
-      //        auto* ptr_gvar = op->op.as<GlobalVarNode>();
-      //        CHECK(ptr_gvar != nullptr);
-      //        p->stream << "@" << ptr_gvar->name_hint << "(";
-      //      }
-      //      for (size_t i = 0; i < op->args.size(); ++i) {
-      //        p->Print(op->args[i]);
-      //        if (i < op->args.size() - 1) {
-      //          p->stream << ", ";
-      //        }
-      //      }
-      //      p->stream << ")";
-    });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<ir::PrimCall>("", [](ir::PrimCall call, ObjectPath call_p, IRDocsifier d) -> Doc {

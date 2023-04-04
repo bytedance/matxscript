@@ -27,7 +27,7 @@
 #include <unordered_map>
 
 #include <matxscript/ir/_base/reflection.h>
-#include <matxscript/ir/_base/repr_printer.h>
+#include <matxscript/ir/printer/printer.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/logging.h>
 #include <matxscript/runtime/registry.h>

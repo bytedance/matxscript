@@ -25,15 +25,18 @@
 #include <algorithm>
 #include <cstring>
 
-#include <matxscript/ir/_base/repr_printer.h>
+#include <matxscript/ir/_base/reflection.h>
+#include <matxscript/ir/printer/doc.h>
+#include <matxscript/ir/printer/ir_docsifier.h>
 #include <matxscript/runtime/memory.h>
 #include <matxscript/runtime/registry.h>
-#include "matxscript/ir/_base/reflection.h"
 
 using namespace matxscript::runtime;
 
 namespace matxscript {
 namespace ir {
+
+using namespace ::matxscript::ir::printer;
 
 // ============== ObjectPathNode ==============
 
@@ -192,8 +195,8 @@ MATXSCRIPT_REGISTER_GLOBAL("node.ObjectPathEqual")
     });
 
 // --- Repr ---
-
-runtime::String GetObjectPathRepr(const ObjectPathNode* node) {
+runtime::String ObjectPathNode::GetRepr() const {
+  const ObjectPathNode* node = this;
   runtime::String ret;
   while (node != nullptr) {
     runtime::String node_str = node->LastNodeString();
@@ -204,12 +207,7 @@ runtime::String GetObjectPathRepr(const ObjectPathNode* node) {
   return ret;
 }
 
-static void PrintObjectPathRepr(const ObjectRef& node, ReprPrinter* p) {
-  p->stream << GetObjectPathRepr(static_cast<const ObjectPathNode*>(node.get()));
-}
-
 MATXSCRIPT_REGISTER_OBJECT_TYPE(ObjectPathNode);
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable).set_dispatch<ObjectPathNode>(PrintObjectPathRepr);
 
 // --- Private/protected methods ---
 
@@ -241,7 +239,6 @@ runtime::String RootPathNode::LastNodeString() const {
 }
 
 MATXSCRIPT_REGISTER_OBJECT_TYPE(RootPathNode);
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable).set_dispatch<RootPathNode>(PrintObjectPathRepr);
 
 // ----- AttributeAccess -----
 
@@ -259,8 +256,6 @@ runtime::String AttributeAccessPathNode::LastNodeString() const {
 }
 
 MATXSCRIPT_REGISTER_OBJECT_TYPE(AttributeAccessPathNode);
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<AttributeAccessPathNode>(PrintObjectPathRepr);
 
 // ----- UnknownAttributeAccess -----
 
@@ -278,8 +273,6 @@ runtime::String UnknownAttributeAccessPathNode::LastNodeString() const {
 }
 
 MATXSCRIPT_REGISTER_OBJECT_TYPE(UnknownAttributeAccessPathNode);
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<UnknownAttributeAccessPathNode>(PrintObjectPathRepr);
 
 // ----- ArrayIndexPath -----
 
@@ -297,8 +290,6 @@ runtime::String ArrayIndexPathNode::LastNodeString() const {
 }
 
 MATXSCRIPT_REGISTER_OBJECT_TYPE(ArrayIndexPathNode);
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ArrayIndexPathNode>(PrintObjectPathRepr);
 
 // ----- MissingArrayElement -----
 
@@ -317,8 +308,6 @@ runtime::String MissingArrayElementPathNode::LastNodeString() const {
 }
 
 MATXSCRIPT_REGISTER_OBJECT_TYPE(MissingArrayElementPathNode);
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<MissingArrayElementPathNode>(PrintObjectPathRepr);
 
 // ----- MapValue -----
 
@@ -338,8 +327,6 @@ runtime::String MapValuePathNode::LastNodeString() const {
 }
 
 MATXSCRIPT_REGISTER_OBJECT_TYPE(MapValuePathNode);
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<MapValuePathNode>(PrintObjectPathRepr);
 
 // ----- MissingMapEntry -----
 
@@ -356,8 +343,6 @@ runtime::String MissingMapEntryPathNode::LastNodeString() const {
 }
 
 MATXSCRIPT_REGISTER_OBJECT_TYPE(MissingMapEntryPathNode);
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<MissingMapEntryPathNode>(PrintObjectPathRepr);
 
 MATXSCRIPT_REGISTER_OBJECT_TYPE(ObjectPathPairNode);
 

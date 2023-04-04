@@ -62,7 +62,7 @@ class Node(Object):
 
 
 @_ffi.register_object("SourceName")
-class SourceName(Object):
+class SourceName(Node):
     """A identifier for a source location.
 
     Parameters
@@ -76,7 +76,7 @@ class SourceName(Object):
 
 
 @_ffi.register_object("Span")
-class Span(Object):
+class Span(Node):
     """Specifies a location in a source program.
 
     Parameters
@@ -288,5 +288,5 @@ class HLOExpr(BaseExpr):
     """Base class of all non-primitive expressions."""
 
 
-class Stmt(Object):
+class Stmt(Node):
     """Base class of all the statements."""

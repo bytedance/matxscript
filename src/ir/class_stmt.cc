@@ -113,11 +113,6 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
           /*body=*/(*f)->stmts);
     });
 
-MATXSCRIPT_STATIC_IR_FUNCTOR(ReprPrinter, vtable)
-    .set_dispatch<ClassStmtNode>([](const ObjectRef& node, ReprPrinter* p) {
-      p->stream << IRTextPrinter::Print(node, NullOpt);
-    });
-
 MATXSCRIPT_REGISTER_GLOBAL("ir.ClassStmt_Attrs").set_body_typed([](ClassStmt cls) {
   return cls->attrs;
 });
