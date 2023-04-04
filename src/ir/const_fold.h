@@ -114,7 +114,7 @@ inline PrimExpr TryConstFold<ir::PrimAdd>(PrimExpr a, PrimExpr b) {
     if (fb && fb->value == 0)
       return a;
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -130,7 +130,7 @@ inline PrimExpr TryConstFold<ir::PrimSub>(PrimExpr a, PrimExpr b) {
     if (fb && fb->value == 0)
       return a;
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -166,7 +166,7 @@ inline PrimExpr TryConstFold<ir::PrimMul>(PrimExpr a, PrimExpr b) {
         return b;
     }
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -199,7 +199,7 @@ inline PrimExpr TryConstFold<ir::PrimDiv>(PrimExpr a, PrimExpr b) {
       MXCHECK_NE(fb->value, 0) << "Divide by zero";
     }
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -220,7 +220,7 @@ inline PrimExpr TryConstFold<ir::PrimMod>(PrimExpr a, PrimExpr b) {
       MXCHECK_NE(pb->value, 0) << "Divide by zero";
     }
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -232,26 +232,40 @@ inline PrimExpr TryConstFold<ir::PrimFloorDiv>(PrimExpr a, PrimExpr b) {
       return ir::IntImm(rtype, arith::floordiv(pa->value, pb->value));
     }
     if (pa) {
-      if (pa->value == 0)
-        return a;
+      if (pa->value == 0) {
+        if (b.dtype().is_int()) {
+          return a;
+        } else {
+          return cast(b.dtype(), a);
+        }
+      }
     }
     if (pb) {
-      if (pb->value == 1)
-        return a;
+      // The sign of variable 'a' needs to be determined
+      // if a constant needs to be evaluated
+      // if (pb->value == 1)
+      //   return a;
       MXCHECK_NE(pb->value, 0) << "Divide by zero";
     }
     if (fa && fb && fb->value != 0) {
-      return ir::FloatImm(rtype, std::floor(fa->value / fb->value));
+      return ir::FloatImm(rtype, runtime::ArithOps::floordiv(fa->value, fb->value));
     }
     if (fa && fa->value == 0)
       return a;
     if (fb) {
-      if (fb->value == 1)
-        return a;
+      // The sign of variable 'a' needs to be determined
+      // if a constant needs to be evaluated
+      /* if (fb->value == 1) {
+        if (a.dtype().is_float()) {
+          return a;
+        } else {
+          return cast(b.dtype(), a);
+        }
+      } */
       MXCHECK_NE(fb->value, 0) << "Divide by zero";
     }
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -263,8 +277,13 @@ inline PrimExpr TryConstFold<ir::PrimFloorMod>(PrimExpr a, PrimExpr b) {
       return ir::IntImm(rtype, floormod(pa->value, pb->value));
     }
     if (pa) {
-      if (pa->value == 0)
-        return a;
+      if (pa->value == 0) {
+        if (b.dtype().is_int()) {
+          return a;
+        } else {
+          return cast(b.dtype(), a);
+        }
+      }
     }
     if (pb) {
       if (pb->value == 1)
@@ -272,7 +291,7 @@ inline PrimExpr TryConstFold<ir::PrimFloorMod>(PrimExpr a, PrimExpr b) {
       MXCHECK_NE(pb->value, 0) << "Divide by zero";
     }
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -286,7 +305,7 @@ inline PrimExpr TryConstFold<ir::PrimMin>(PrimExpr a, PrimExpr b) {
   });
   if (a.same_as(b))
     return a;
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -300,7 +319,7 @@ inline PrimExpr TryConstFold<ir::PrimMax>(PrimExpr a, PrimExpr b) {
   });
   if (a.same_as(b))
     return a;
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -311,7 +330,7 @@ inline PrimExpr TryConstFold<ir::PrimGT>(PrimExpr a, PrimExpr b) {
     if (fa && fb)
       return ir::IntImm(DataType::UInt(1), fa->value > fb->value);
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -322,7 +341,7 @@ inline PrimExpr TryConstFold<ir::PrimGE>(PrimExpr a, PrimExpr b) {
     if (fa && fb)
       return ir::IntImm(DataType::UInt(1), fa->value >= fb->value);
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -333,7 +352,7 @@ inline PrimExpr TryConstFold<ir::PrimLT>(PrimExpr a, PrimExpr b) {
     if (fa && fb)
       return ir::IntImm(DataType::UInt(1), fa->value < fb->value);
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -344,7 +363,7 @@ inline PrimExpr TryConstFold<ir::PrimLE>(PrimExpr a, PrimExpr b) {
     if (fa && fb)
       return ir::IntImm(DataType::UInt(1), fa->value <= fb->value);
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -355,7 +374,7 @@ inline PrimExpr TryConstFold<ir::PrimEQ>(PrimExpr a, PrimExpr b) {
     if (fa && fb)
       return ir::IntImm(DataType::UInt(1), fa->value == fb->value);
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -366,7 +385,7 @@ inline PrimExpr TryConstFold<ir::PrimNE>(PrimExpr a, PrimExpr b) {
     if (fa && fb)
       return ir::IntImm(DataType::UInt(1), fa->value != fb->value);
   });
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -384,7 +403,7 @@ inline PrimExpr TryConstFold<ir::PrimAnd>(PrimExpr a, PrimExpr b) {
     return cast(DataType::Bool(), a);
   if (pb && !pb->value)
     return cast(DataType::Bool(), b);
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -402,7 +421,7 @@ inline PrimExpr TryConstFold<ir::PrimOr>(PrimExpr a, PrimExpr b) {
     return cast(DataType::Bool(), b);
   if (pb && !pb->value)
     return cast(DataType::Bool(), a);
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 template <>
@@ -411,7 +430,7 @@ inline PrimExpr TryConstFold<ir::PrimNot>(PrimExpr a) {
   if (pa) {
     return ir::IntImm(DataType::UInt(1), !(pa->value));
   }
-  return PrimExpr();
+  return PrimExpr{nullptr};
 }
 
 /*! \brief Helper namespace for symbolic value limits */

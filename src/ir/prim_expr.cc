@@ -99,8 +99,16 @@ MATXSCRIPT_REGISTER_NODE_TYPE(PrimCastNode);
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<PrimCast>("", [](PrimCast s, ObjectPath p, IRDocsifier d) -> Doc {
-      ExprDoc dtype = LiteralDoc::DataType(s->dtype, p->Attr("dtype"));
       ExprDoc value = d->AsDoc<ExprDoc>(s->value, p->Attr("value"));
+      if (s->dtype == runtime::DataType::Int(64)) {
+        return IdDoc("int")->Call({value});
+      } else if (s->dtype == runtime::DataType::Float(64)) {
+        return IdDoc("float")->Call({value});
+      }
+      if (d->cfg->ignore_type_cast) {
+        return value;
+      }
+      ExprDoc dtype = LiteralDoc::DataType(s->dtype, p->Attr("dtype"));
       return Dialect(d, "PrimCast")->Call({dtype, value});
     });
 
@@ -248,7 +256,26 @@ MATXSCRIPT_REGISTER_NODE_TYPE(PrimModNode);
 MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY(PrimMod, "truncmod");
 
 // PrimFloorDiv
-MATXSCRIPT_DEFINE_BINOP_CONSTRUCTOR(PrimFloorDiv);
+PrimFloorDiv::PrimFloorDiv(PrimExpr a, PrimExpr b, Span span) {
+  using T = PrimFloorDiv::ContainerType;
+  MXCHECK(a.defined()) << "ValueError: a is undefined\n";
+  MXCHECK(b.defined()) << "ValueError: b is undefined\n";
+
+  bool a_is_int = a.dtype().is_int() || a.dtype().is_uint();
+  bool b_is_int = b.dtype().is_int() || b.dtype().is_uint();
+  bool is_both_int = a_is_int && b_is_int;
+  if (!is_both_int) {
+    a = cast(DataType::Float(64), std::move(a));
+    b = cast(DataType::Float(64), std::move(b));
+  }
+  ObjectPtr<T> node = make_object<T>();
+  node->dtype = a.dtype();
+  node->checked_type_ = PrimType(node->dtype);
+  node->a = std::move(a);
+  node->b = std::move(b);
+  node->span = std::move(span);
+  data_ = std::move(node);
+}
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.PrimFloorDiv").set_body_typed([](PrimExpr a, PrimExpr b, Span span) {
   return PrimFloorDiv(std::move(a), std::move(b), span);
@@ -260,7 +287,26 @@ MATXSCRIPT_SCRIPT_PRINTER_DEF_BINARY_WITH_SUGAR(
     PrimFloorDiv, PrimFloorDivNode, floordiv, "FloorDiv", kFloorDiv);
 
 // PrimFloorMod
-MATXSCRIPT_DEFINE_BINOP_CONSTRUCTOR(PrimFloorMod);
+PrimFloorMod::PrimFloorMod(PrimExpr a, PrimExpr b, Span span) {
+  using T = PrimFloorMod::ContainerType;
+  MXCHECK(a.defined()) << "ValueError: a is undefined\n";
+  MXCHECK(b.defined()) << "ValueError: b is undefined\n";
+
+  bool a_is_int = a.dtype().is_int() || a.dtype().is_uint();
+  bool b_is_int = b.dtype().is_int() || b.dtype().is_uint();
+  bool is_both_int = a_is_int && b_is_int;
+  if (!is_both_int) {
+    a = cast(DataType::Float(64), std::move(a));
+    b = cast(DataType::Float(64), std::move(b));
+  }
+  ObjectPtr<T> node = make_object<T>();
+  node->dtype = a.dtype();
+  node->checked_type_ = PrimType(node->dtype);
+  node->a = std::move(a);
+  node->b = std::move(b);
+  node->span = std::move(span);
+  data_ = std::move(node);
+}
 
 MATXSCRIPT_REGISTER_GLOBAL("ir.PrimFloorMod").set_body_typed([](PrimExpr a, PrimExpr b, Span span) {
   return PrimFloorMod(std::move(a), std::move(b), span);

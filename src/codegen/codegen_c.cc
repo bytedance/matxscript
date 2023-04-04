@@ -985,18 +985,17 @@ void CodeGenC::VisitExpr_(const PrimMulNode* op, std::ostream& os) {  // NOLINT(
   PrintBinaryExpr(op, "*", os, this);
 }
 void CodeGenC::VisitExpr_(const PrimDivNode* op, std::ostream& os) {  // NOLINT(*)
-  PrintBinaryExpr(op, "/", os, this);
+  // PrintBinaryExpr(op, "/", os, this); // no check
+  PrintBinaryExpr(op, "ArithOps::div", os, this);
 }
 void CodeGenC::VisitExpr_(const PrimFloorDivNode* op, std::ostream& os) {  // NOLINT(*)
-  os << "std::floor(";
-  PrintBinaryExpr(op, "/", os, this);
-  os << ")";
+  PrintBinaryExpr(op, "ArithOps::floordiv", os, this);
 }
 void CodeGenC::VisitExpr_(const PrimModNode* op, std::ostream& os) {  // NOLINT(*)
   PrintBinaryExpr(op, "%", os, this);
 }
 void CodeGenC::VisitExpr_(const PrimFloorModNode* op, std::ostream& os) {  // NOLINT(*)
-  PrintBinaryExpr(op, "fmod", os, this);
+  PrintBinaryExpr(op, "ArithOps::floormod", os, this);
 }
 void CodeGenC::VisitExpr_(const PrimMinNode* op, std::ostream& os) {  // NOLINT(*)
   PrintBinaryExpr(op, "min", os, this);
