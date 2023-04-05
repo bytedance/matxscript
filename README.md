@@ -68,3 +68,5 @@ We learned a lot from the following projects when building MatxScript.
 - [abseil-cpp](https://github.com/abseil/abseil-cpp): The string_view structure and ByteHash algorithm originates from abseil
 
 - [rapidjson](https://github.com/Tencent/rapidjson): The json module is implemented based on rapidjson
+
+- [CV-CUDA](https://github.com/CVCUDA/CV-CUDA): The vision CUDA runtime is developed using the operators provided by CV-CUDA. 
