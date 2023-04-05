@@ -186,6 +186,11 @@ class BaseParser(ast.NodeVisitor):
 
     # variables
     def visit_Name(self, node: ast.Name) -> Any:
+        if isinstance(node.ctx, ast.Store):
+            self.var_stack.append(None)
+            return node.id
+        if not isinstance(node.ctx, ast.Load):
+            raise SyntaxError(f"del {node.id} is not allowed")
         name = node.id
         if name in self.shape_symbol_table:
             ctx = self.shape_symbol_table[name]
@@ -217,6 +222,8 @@ class BaseParser(ast.NodeVisitor):
                 # todo support different type
                 raise SyntaxError("type is different")
             self.var_stack.append(AbstractScalarContext(lhs_ctx.kernel_type))
+            lhs_ir = _ir.PrimCast(lhs_ctx.kernel_type.dtype_str(), lhs_ir)
+            rhs_ir = _ir.PrimCast(rhs_ctx.kernel_type.dtype_str(), rhs_ir)
             return self._binop_maker[type(node.op)](lhs_ir, rhs_ir, self.build_span(node))
         else:
             raise SyntaxError(f"{lhs_ctx.name} {opname} {rhs_ctx.name} is not supported "
@@ -240,30 +247,50 @@ class BaseParser(ast.NodeVisitor):
 
     def visit_Subscript(self, node: ast.Subscript) -> Any:
         # is load
-        value = self.visit(node.value)
-        ctx = self.var_stack.pop()
-        if not isinstance(ctx, AbstractNDArrayContext):
+        _ = self.visit(node.value)
+        value_ctx = self.var_stack.pop()
+        if value_ctx.is_abstract_ctx():
             raise SyntaxError(f"only support indexing ndarray")
         if isinstance(node.slice, (ast.Slice,)):
             raise SyntaxError(
-                f"slicing ndarray {value} is not supported because it doesn't generate a scalar.")
-        sls = self._get_slice(node.slice, ctx)
-        raise NotImplementedError("to be finished ")
+                f"slicing ndarray {value_ctx.name} is not supported because it doesn't generate a scalar.")
+        sls = self._get_indexing(node.slice)
+        if isinstance(node.ctx, ast.Load):
+            self.var_stack.append(value_ctx.data_ctx())
+            return value_ctx.read_at(sls)
+        if isinstance(node.ctx, ast.Store):
+            rhs = self.var_stack.pop()
+            rhs = _ir.PrimCast(value_ctx.kernel_type.dtype_str(), rhs)
+            rt_ir = value_ctx.write_at(sls, rhs)
+            self.var_stack.append(value_ctx)
+            return rt_ir
+        raise SyntaxError(f"del {value_ctx.name} is not allowed")
 
-    def _get_slice(self, sls, ctx: AbstractNDArrayContext):
-        pass
+    def _get_indexing(self, sls):
+        if not isinstance(sls, ast.Tuple):
+            return [self.visit(sls)]
+        idx = []
+        for i in sls.elts:
+            rt_ir = self.visit(i)
+            self.var_stack.pop()
+            idx.append(rt_ir)
+        return idx
 
     def visit_Assign(self, node: ast.Assign) -> Any:
-        if not isinstance(node.targets, (ast.Name, ast.Subscript)):
+        if len(node.targets) > 1:
+            raise SyntaxError(f"Assigning multiple is not allowed")
+        if not isinstance(node.targets[0], (ast.Name, ast.Subscript)):
             raise SyntaxError(f"Assigning to {type(node.targets)} is not allowed.")
         span = self.build_span(node)
-        target = self.visit(node.targets)
         value = self.visit(node.value)
         value_ctx = self.var_stack.pop()
-        if isinstance(node.targets, ast.Name):
+        self.var_stack.append(value)
+        target = self.visit(node.targets[0])
+        if isinstance(node.targets[0], ast.Name):
+            self.var_stack.pop()
             return self._assign_scalar(target, value, value_ctx, node, span)
-        elif isinstance(node.targets, ast.Subscript):
-            raise NotImplementedError("assigning to ndarray not supported yet")
+        elif isinstance(node.targets[0], ast.Subscript):
+            return target
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
         span = self.build_span(node)
@@ -310,9 +337,9 @@ class BaseParser(ast.NodeVisitor):
             raise SyntaxError(f"Using annotated assign to assign {target} is not allowed "
                               f"since it has already been defined above")
         previous_ctx = self.tmp_scalar_table[target]
-        if value_ctx.kernel_type == previous_ctx.kernel_type:
+        if value_ctx.kernel_type != previous_ctx.kernel_type:
             raise SyntaxError(f"the value assigned to {target} is not scalar")
-        self.var_stack.pop(value_ctx)
+        self.var_stack.append(value_ctx)
         return _ir.AssignStmt(previous_ctx.script_var, value, span)
 
     def _assign_ndarray(self):
