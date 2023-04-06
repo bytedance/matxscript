@@ -71,17 +71,11 @@ class KernelSingleReturnParser(BaseParser):
             var_info = AbstractNDArrayContext(dst_kernel_type)
             self.var_stack.append(var_info)
             if not lhs_ctx.is_abstract_ctx():
-                #  todo use the 2nd line after generic add supports tensor load
-                lhs_ir = _ir.PrimCast(result_dtype, lhs_ctx.read_at(
-                    self.iter_vars_names[-len(lhs_ctx.shape):]))
-                # lhs_ir = lhs_ctx.read_at(self.iter_vars_names[-len(lhs_ctx.shape):])
+                lhs_ir = lhs_ctx.read_at(self.iter_vars_names[-len(lhs_ctx.shape):])
                 range_ = self._make_range(op.op.lhs_broad_cast_shape)
                 self.reads.append(BufferRegion(lhs_ctx.buffer, range_))
             if not rhs_ctx.is_abstract_ctx():
-                #  todo use the 2nd line after generic add supports tensor load
-                rhs_ir = _ir.PrimCast(result_dtype, rhs_ctx.read_at(
-                    self.iter_vars_names[-len(rhs_ctx.shape):]))
-                # rhs_ir = rhs_ctx.read_at(self.iter_vars_names[-len(rhs_ctx.shape):])
+                rhs_ir = rhs_ctx.read_at(self.iter_vars_names[-len(rhs_ctx.shape):])
                 range_ = self._make_range(op.op.rhs_broad_cast_shape)
                 self.reads.append(BufferRegion(rhs_ctx.buffer, range_))
             # return op.ir_class(lhs_ir, rhs_ir)

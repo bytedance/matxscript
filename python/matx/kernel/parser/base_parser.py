@@ -222,8 +222,6 @@ class BaseParser(ast.NodeVisitor):
                 # todo support different type
                 raise SyntaxError("type is different")
             self.var_stack.append(AbstractScalarContext(lhs_ctx.kernel_type))
-            lhs_ir = _ir.PrimCast(lhs_ctx.kernel_type.dtype_str(), lhs_ir)
-            rhs_ir = _ir.PrimCast(rhs_ctx.kernel_type.dtype_str(), rhs_ir)
             return self._binop_maker[type(node.op)](lhs_ir, rhs_ir, self.build_span(node))
         else:
             raise SyntaxError(f"{lhs_ctx.name} {opname} {rhs_ctx.name} is not supported "
