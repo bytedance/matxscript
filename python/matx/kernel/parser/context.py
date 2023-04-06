@@ -51,6 +51,9 @@ class AbstractNDArrayContext(AbstractBaseVariableContext):
         super().__init__(type_)
         self.shape = type_.shape
 
+    def data_ctx(self):
+        return AbstractScalarContext(ScalarType(self.kernel_type.dtype))
+
 
 class AbstractScalarContext(AbstractBaseVariableContext):
 
