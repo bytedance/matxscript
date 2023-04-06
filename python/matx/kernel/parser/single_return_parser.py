@@ -39,6 +39,8 @@ class KernelSingleReturnParser(BaseParser):
         ast.BinOp,
         ast.Add,
         ast.Div,
+        ast.Sub,
+        ast.Mult,
         ast.UnaryOp,
         ast.BinOp,
         ast.Compare,
@@ -65,17 +67,25 @@ class KernelSingleReturnParser(BaseParser):
                 lhs_ctx.kernel_type, rhs_ctx.kernel_type, opname)
             op = op_class(lhs_ctx, rhs_ctx)
             dst_kernel_type = op.dst_kernel_type()
+            result_dtype = op.op.result_type.dtype_str()
             var_info = AbstractNDArrayContext(dst_kernel_type)
             self.var_stack.append(var_info)
             if not lhs_ctx.is_abstract_ctx():
-                lhs_ir = lhs_ctx.read_at(self.iter_vars_names[-len(lhs_ctx.shape):])
+                #  todo use the 2nd line after generic add supports tensor load
+                lhs_ir = _ir.PrimCast(result_dtype, lhs_ctx.read_at(
+                    self.iter_vars_names[-len(lhs_ctx.shape):]))
+                # lhs_ir = lhs_ctx.read_at(self.iter_vars_names[-len(lhs_ctx.shape):])
                 range_ = self._make_range(op.op.lhs_broad_cast_shape)
                 self.reads.append(BufferRegion(lhs_ctx.buffer, range_))
             if not rhs_ctx.is_abstract_ctx():
-                rhs_ir = rhs_ctx.read_at(self.iter_vars_names[-len(rhs_ctx.shape):])
+                #  todo use the 2nd line after generic add supports tensor load
+                rhs_ir = _ir.PrimCast(result_dtype, rhs_ctx.read_at(
+                    self.iter_vars_names[-len(rhs_ctx.shape):]))
+                # rhs_ir = rhs_ctx.read_at(self.iter_vars_names[-len(rhs_ctx.shape):])
                 range_ = self._make_range(op.op.rhs_broad_cast_shape)
                 self.reads.append(BufferRegion(rhs_ctx.buffer, range_))
-            return op.ir_class(lhs_ir, rhs_ir)
+            # return op.ir_class(lhs_ir, rhs_ir)
+            return self._binop_maker[type(node.op)](lhs_ir, rhs_ir, self.build_span(node))
         else:
             raise SyntaxError(
                 f"bin op does not support {lhs_ctx.kernel_type} and {rhs_ctx.kernel_type}")
@@ -109,6 +119,10 @@ class KernelSingleReturnParser(BaseParser):
 
         writes = [BufferRegion(self.return_ctx.buffer, return_range)]
 
+        if isinstance(node.value, ast.Name):
+            rt_ir = rt_ctx.read_at(self.iter_vars_names)
+        if rt_ctx.kernel_type.dtype != self.return_ctx.kernel_type.dtype:
+            rt_ir = _ir.PrimCast(self.return_ctx.kernel_type.dtype_str(), rt_ir)
         body = self.return_ctx.write_at(self.iter_vars_names, rt_ir)
 
         return ComputeBlock(iter_vars, self.reads, writes, self.kernel_p.func_name, body)
