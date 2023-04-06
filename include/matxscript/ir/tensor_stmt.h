@@ -330,6 +330,7 @@ class BufferLoadNode : public PrimExprNode {
     v->Visit("buffer", &buffer);
     v->Visit("indices", &indices);
     v->Visit("span", &span);
+    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const BufferLoadNode* other, SEqualReducer equal) const {
