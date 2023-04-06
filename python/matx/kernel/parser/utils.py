@@ -22,7 +22,7 @@ import inspect
 
 from matx import ir as _ir
 from matx.script import context as script_context
-from ..typing import is_symbol
+from ..typing import is_symbol, STR_TO_KERNEL_TYPE
 
 
 def build_span(root_node, node):
@@ -60,3 +60,10 @@ def user_function_wrapper(value, resource_handle, span):
     if isinstance(value, script_context.GetClassAttr):
         return value.as_user_function(resource_handle, span)
     return value
+
+
+def annotation_to_kernel_type(ann):
+    if not isinstance(ann, ast.Name):
+        raise SyntaxError("kernel variable can only be marked with kernel scalar type")
+    type_name = ann.id
+    return STR_TO_KERNEL_TYPE[type_name]
