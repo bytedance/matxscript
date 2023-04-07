@@ -73,9 +73,13 @@ class ForLoopParser(BaseParser):
 
         iter_var_ctx = ScalarContext(node.target.id, int64, span)
         self.loop_variable_map[iter_var_ctx.name] = (start, end, step)
+        # the scalar is allocated in the table purely for reference during
+        # the visiting of the loop body
+        # (and for now we do not remove them from the table)
+        # the ComputeBlock will actually allocate it and assign value to it.
         rt = self._allocate_scalar(iter_var_ctx.name, start.script_var,
                                    start, start.kernel_type, span)
-        self.loop_statements.append(rt)
+        # self.loop_statements.append(rt)
 
         rt_ir, rt_ctx = self._visit_for_loop_body(node.body)
         if not is_top_loop:
@@ -88,15 +92,15 @@ class ForLoopParser(BaseParser):
     def _make_for_loop_compute_block(self, rt_ir, rt_ctx, span):
         # todo check shape
         loop_range = self._make_range()
-        iter_vars_names = [_ir.PrimVar(f"__iter_{i}", "int64")
-                           for i in range(len(self.loop_variable_map))]
+        iter_vars_names = [self.tmp_scalar_table[name].script_var
+                           for name in self.loop_variable_map.keys()]
         iter_vars = [PrimIterVar(loop_range[i], iter_vars_names[i]) for i in range(len(loop_range))]
         reads = []
         writes = []
         assign_iter_var = []
-        for lhs_name, rhs in zip(self.loop_variable_map.keys(), iter_vars_names):
-            lhs = self.tmp_scalar_table[lhs_name].script_var
-            assign_iter_var.append(_ir.AssignStmt(lhs, rhs))
+        # for lhs_name, rhs in zip(self.loop_variable_map.keys(), iter_vars_names):
+        #    lhs = self.tmp_scalar_table[lhs_name].script_var
+        #    assign_iter_var.append(_ir.AssignStmt(lhs, rhs))
 
         body = _ir.SeqStmt(self.loop_statements + assign_iter_var + rt_ir)
 
