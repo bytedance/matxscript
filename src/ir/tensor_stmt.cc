@@ -241,6 +241,7 @@ BufferLoad::BufferLoad(Buffer buffer, Array<PrimExpr> indices, Span span) {
   node->indices = std::move(indices);
   node->span = std::move(span);
   node->LegalizeDType();
+  node->checked_type_ = PrimType(node->dtype);
   data_ = std::move(node);
 }
 
