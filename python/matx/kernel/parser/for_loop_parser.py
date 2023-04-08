@@ -26,7 +26,7 @@ from matx.script import context as script_context
 from .base_parser import BaseParser
 from .context import *
 from ...ir.expr import *
-from ...ir.tensor_stmt import ComputeBlock
+from ...ir.tensor_stmt import ComputeBlock, BufferRegion
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelParser
@@ -41,6 +41,31 @@ class ForLoopParser(BaseParser):
         super().__init__(kernel_p, ndarray_context_table, shape_symbol_table, return_ctx, node)
         self.loop_variable_map = {}
         self.loop_statements = []
+        self.writes = []
+        self.reads = []
+        # self.is_in_body = False
+
+    def visit_Subscript(self, node: ast.Subscript) -> Any:
+        rt = super().visit_Subscript(node)
+        ctx = self.var_stack[-1]
+        # if not self.is_in_body:
+        #    return rt
+        if not isinstance(ctx, AbstractNdarrayIndexingContext):
+            return rt
+
+        used_dims = len(ctx.idx)
+        nd_ctx = self.ndarray_context_table[ctx.name]
+        range_expr = self._make_range_with(nd_ctx.shape[-used_dims:])
+
+        buffer_region = BufferRegion(ctx.buffer, range_expr)
+
+        if isinstance(node.ctx, ast.Load):
+            self.reads.append(buffer_region)
+        elif isinstance(node.ctx, ast.Store):
+            self.writes.append(buffer_region)
+        else:
+            raise SyntaxError(f"deleting {ctx.name} is not allowed")
+        return rt
 
     def visit_For(self, node: ast.For) -> Any:
         # top loop built the computeblock
@@ -95,8 +120,7 @@ class ForLoopParser(BaseParser):
         iter_vars_names = [self.tmp_scalar_table[name].script_var
                            for name in self.loop_variable_map.keys()]
         iter_vars = [PrimIterVar(loop_range[i], iter_vars_names[i]) for i in range(len(loop_range))]
-        reads = []
-        writes = []
+
         assign_iter_var = []
         # for lhs_name, rhs in zip(self.loop_variable_map.keys(), iter_vars_names):
         #    lhs = self.tmp_scalar_table[lhs_name].script_var
@@ -104,7 +128,7 @@ class ForLoopParser(BaseParser):
 
         body = _ir.SeqStmt(self.loop_statements + assign_iter_var + rt_ir)
 
-        return ComputeBlock(iter_vars, reads, writes, self.kernel_p.func_name, body)
+        return ComputeBlock(iter_vars, self.reads, self.writes, self.kernel_p.func_name, body)
 
     def _visit_for_loop_body(self, body):
         nested_for = None
@@ -170,4 +194,19 @@ class ForLoopParser(BaseParser):
         rng = []
         for key, r in self.loop_variable_map.items():
             rng.append(RangeExpr(r[0].script_var, r[1].script_var, r[2].script_var))
+        return rng
+
+    def _make_range_with(self, shape):
+        rng = []
+        for dim in shape:
+            start = _ir.const(0, "int64")
+            if is_symbol(dim):
+                symbol_ctx = self.shape_symbol_table[str(dim)]
+                end = symbol_ctx.script_var
+            elif dim is None:
+                continue
+            else:
+                end = _ir.const(dim)
+            rng_expr = RangeExpr(start, end)
+            rng.append(rng_expr)
         return rng

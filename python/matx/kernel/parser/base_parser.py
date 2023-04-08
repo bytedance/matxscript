@@ -254,13 +254,13 @@ class BaseParser(ast.NodeVisitor):
                 f"slicing ndarray {value_ctx.name} is not supported because it doesn't generate a scalar.")
         sls = self._get_indexing(node.slice)
         if isinstance(node.ctx, ast.Load):
-            self.var_stack.append(value_ctx.data_ctx())
+            self.var_stack.append(value_ctx.data_ctx(sls))
             return value_ctx.read_at(sls)
         if isinstance(node.ctx, ast.Store):
             rhs = self.var_stack.pop()
             rhs = _ir.PrimCast(value_ctx.kernel_type.dtype_str(), rhs)
             rt_ir = value_ctx.write_at(sls, rhs)
-            self.var_stack.append(value_ctx)
+            self.var_stack.append(value_ctx.data_ctx(sls))
             return rt_ir
         raise SyntaxError(f"del {value_ctx.name} is not allowed")
 

@@ -54,6 +54,36 @@ class TestSingleReturnParser(unittest.TestCase):
         p.parse()
         # todo check ir structure
 
+    def test_idx_operation1(self):
+        M = sympy.Symbol('M', positive=True)
+        N = sympy.Symbol('N', positive=True)
+
+        def foo(a: int32[M, N]) -> int32[M, N]:
+            k: int32 = 0
+            for i in range(M):
+                for j in range(N):
+                    k = a[(i + 1) / 2, j] + j
+            return a
+
+        p = KernelParser(foo)
+        p.parse()
+        # todo check ir structure
+
+    def test_idx_operation2(self):
+        M = sympy.Symbol('M', positive=True)
+        N = sympy.Symbol('N', positive=True)
+
+        def foo(a: int32[M, N]) -> int32[M, N]:
+            k: int32 = 0
+            for i in range(M):
+                for j in range(N):
+                    a[(i + 1) / 2, j] = i + j
+            return a
+
+        p = KernelParser(foo)
+        p.parse()
+        # todo check ir structure
+
     def test_scalar_rhs_nd1(self):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
