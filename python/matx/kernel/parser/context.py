@@ -38,10 +38,10 @@ class AbstractBaseVariableContext:
             self.script_type = _ir.PrimType("int64")
         else:
             raise SyntaxError(f"unknown type {type_}")
-        self._abstract_ctx = True
+        self._is_abstract_ctx = True
 
     def is_abstract_ctx(self):
-        return self._abstract_ctx
+        return self._is_abstract_ctx
 
 
 class AbstractNDArrayContext(AbstractBaseVariableContext):
@@ -51,9 +51,6 @@ class AbstractNDArrayContext(AbstractBaseVariableContext):
         super().__init__(type_)
         self.shape = type_.shape
 
-    def data_ctx(self):
-        return AbstractScalarContext(ScalarType(self.kernel_type.dtype))
-
 
 class AbstractScalarContext(AbstractBaseVariableContext):
 
@@ -62,6 +59,14 @@ class AbstractScalarContext(AbstractBaseVariableContext):
         assert is_scalar_shape(type_.shape), 'syntax error'
         super().__init__(type_)
         self.shape = type_.shape
+
+
+class AbstractNdarrayIndexingContext(AbstractScalarContext):
+    def __init__(self, type_: kernelNDArrayT, nd_name, buffer, idx):
+        super().__init__(type_)
+        self.name = nd_name
+        self.idx = idx
+        self.buffer = buffer
 
 
 class NDArrayContext(AbstractNDArrayContext):
@@ -77,7 +82,14 @@ class NDArrayContext(AbstractNDArrayContext):
             dtype=type_.dtype_str(),
             name=name,
             data=self.script_var)
-        self._abstract_ctx = False
+        self._is_abstract_ctx = False
+
+    def data_ctx(self, idx=None):
+        data_kernel_t = ScalarType(self.kernel_type.dtype)
+        if idx is None:
+            return AbstractScalarContext(data_kernel_t)
+        else:
+            return AbstractNdarrayIndexingContext(data_kernel_t, self.name, self.buffer, idx)
 
     def read_at(self, idx):
         return self.buffer.vload(tuple(idx))
@@ -92,9 +104,8 @@ class ScalarContext(AbstractScalarContext):
         assert is_scalar_type(type_), 'syntax error'
         assert is_scalar_shape(self.shape), 'sytax error'
         self.name: str = name
-        self.script_type = _ir.PrimType(type_.dtype_str())
         self.script_var = _ir.PrimVar(name, self.script_type, span)
-        self._abstract_ctx = False
+        self._is_abstract_ctx = False
 
     def read_at(self, _):
         return self.script_var
@@ -107,7 +118,6 @@ class ConstScalarContext(ScalarContext):
 
     def __init__(self, value, type_: kernelNDArrayT, span):
         super().__init__("const", type_, span)
-        self.script_type = _ir.PrimType(type_.dtype_str())
         self.script_var = _ir.const(value, type_.dtype_str())
 
 
@@ -118,3 +128,4 @@ class SymbolContext(AbstractBaseVariableContext):
         assert is_symbol(symbol), 'syntax error'
         self.name: str = str(symbol)
         self.script_var = _ir.PrimVar(f"symbol_{self.name}", "int64", span)
+        self._is_abstract_ctx = False
