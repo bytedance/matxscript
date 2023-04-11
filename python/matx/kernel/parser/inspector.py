@@ -22,6 +22,7 @@ from .context import *
 from .for_loop_parser import ForLoopParser
 from .single_return_parser import KernelSingleReturnParser
 from .utils import *
+from ..ir import NDArrayNode, ScalarNode
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelParser
@@ -88,12 +89,16 @@ class KernelInspector(ast.NodeVisitor):
     def init_args(self, node: ast.FunctionDef) -> None:
         span = build_span(self.root_node, node)
         for arg, type_annotation in self.kernel_p.args.items():
-            if not is_ndarray_type(type_annotation):
+            if is_scalar_type(type_annotation):
+                scalar_ctx = ScalarNode(arg, type_annotation, span)
+                self.ndarray_context_table[arg] = scalar_ctx
+            elif is_ndarray_type(type_annotation):
+                self.declare_shape_var(type_annotation, span)
+                nd_ctx = NDArrayNode(arg, type_annotation, self.shape_symbol_table, span)
+                self.ndarray_context_table[arg] = nd_ctx
+            else:
                 raise SyntaxError(f"right now only kernel ndarray are supported, "
                                   f"but get {type_annotation} for {arg}")
-            self.declare_shape_var(type_annotation, span)
-            nd_ctx = NDArrayContext(arg, type_annotation, self.shape_symbol_table, span)
-            self.ndarray_context_table[arg] = nd_ctx
 
     def check_body(self, node: ast.FunctionDef) -> None:
         stmts = node.body
@@ -125,7 +130,7 @@ class KernelInspector(ast.NodeVisitor):
             if is_symbol(dim) and str(dim) not in self.shape_symbol_table:
                 raise SyntaxError(
                     f"{dim} in the return type is not defined in any of the shape in input args")
-        nd_ctx = NDArrayContext(
+        nd_ctx = NDArrayNode(
             self.return_var_name,
             self.kernel_p.return_types,
             self.shape_symbol_table,

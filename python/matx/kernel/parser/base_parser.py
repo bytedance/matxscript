@@ -20,52 +20,19 @@
 
 from __future__ import annotations
 
-import ast
 from typing import Any, List, Dict, TYPE_CHECKING
 
 from matx import ir as _ir
-from matx.ir import generic as _generic
 from matx.script import context as script_context
 from .context import *
 from .utils import build_span, annotation_to_kernel_type
+from ..ir import *
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelParser
 
 
 class BaseParser(ast.NodeVisitor):
-    _binop_maker = {
-        ast.Add: lambda lhs, rhs, span: _generic.add(lhs, rhs, span),
-        ast.Sub: lambda lhs, rhs, span: _generic.subtract(lhs, rhs, span),
-        ast.Mult: lambda lhs, rhs, span: _generic.multiply(lhs, rhs, span),
-        ast.Div: lambda lhs, rhs, span: _generic.divide(lhs, rhs, span),
-        ast.FloorDiv: lambda lhs, rhs, span: _generic.floordiv(lhs, rhs, span),
-        ast.Mod: lambda lhs, rhs, span: _generic.floormod(lhs, rhs, span),
-        ast.BitOr: lambda lhs, rhs, span: _generic.bitwise_or(lhs, rhs, span),
-        ast.BitAnd: lambda lhs, rhs, span: _generic.bitwise_and(lhs, rhs, span),
-        ast.BitXor: lambda lhs, rhs, span: _generic.bitwise_xor(lhs, rhs, span),
-        ast.LShift: lambda lhs, rhs, span: _generic.left_shift(lhs, rhs, span),
-        ast.RShift: lambda lhs, rhs, span: _generic.right_shift(lhs, rhs, span),
-        ast.Gt: lambda lhs, rhs, span: _generic.greater_than(lhs, rhs, span),
-        ast.GtE: lambda lhs, rhs, span: _generic.greater_or_equal(lhs, rhs, span),
-        ast.Lt: lambda lhs, rhs, span: _generic.less_than(lhs, rhs, span),
-        ast.LtE: lambda lhs, rhs, span: _generic.less_or_equal(lhs, rhs, span),
-        ast.Eq: lambda lhs, rhs, span: _generic.equal(lhs, rhs, span),
-        ast.NotEq: lambda lhs, rhs, span: _generic.notequal(lhs, rhs, span),
-        ast.Is: lambda lhs, rhs, span: _generic.op_is(lhs, rhs, span),
-        ast.IsNot: lambda lhs, rhs, span: _generic.op_not(_generic.op_is(lhs, rhs, span), span)
-    }
-
-    _unaryop_maker = {
-        ast.USub: lambda operand, span: _generic.multiply(operand, _ir.const(-1), span),
-        ast.Invert: lambda operand, span: _generic.bitwise_not(operand, span),
-        ast.Not: lambda operand, span: _generic.op_not(operand, span)
-    }
-
-    _boolop_marker = {
-        ast.And: lambda span, *args: _generic.op_and(span, *args),
-        ast.Or: lambda span, *args: _generic.op_or(span, *args)
-    }
 
     def __init__(
             self,
@@ -170,17 +137,14 @@ class BaseParser(ast.NodeVisitor):
 
     def visit_Constant(self, node: ast.Constant) -> Any:
         if node.value is None:
-            self.var_stack.append(None)
-            return _ir.NoneExpr()
+            raise SyntaxError("None is not allowed")
         elif isinstance(node.value, numbers.Number):
             dtype = get_dtype(node.value)
 
-            const_scalar_ctx = ConstScalarContext(node.value,
-                                                  PYTYPE_TO_KERNEL_TYPE[dtype],
-                                                  build_span(self.root_node, node))
-
-            self.var_stack.append(const_scalar_ctx)  # todo none for now
-            return const_scalar_ctx.script_var
+            const_scalar_ctx = ConstScalarNode(node.value,
+                                               PYTYPE_TO_KERNEL_TYPE[dtype],
+                                               build_span(self.root_node, node))
+            return const_scalar_ctx
         else:
             raise NotImplementedError(f'Unsupported value {node.value}')
 
@@ -194,16 +158,13 @@ class BaseParser(ast.NodeVisitor):
         name = node.id
         if name in self.shape_symbol_table:
             ctx = self.shape_symbol_table[name]
-            self.var_stack.append(ctx)
-            return ctx.script_var
+            return ctx
         if name in self.ndarray_context_table:
             ctx = self.ndarray_context_table[name]
-            self.var_stack.append(ctx)
-            return ctx.script_var
+            return ctx
         if name in self.tmp_scalar_table:
             ctx = self.tmp_scalar_table[name]
-            self.var_stack.append(ctx)
-            return ctx.script_var
+            return ctx
         raise NotImplementedError(f'the type of {name} is not support')
         # return node.id
 
