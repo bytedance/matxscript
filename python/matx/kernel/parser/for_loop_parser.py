@@ -18,15 +18,13 @@
 #  under the License.
 from __future__ import annotations
 
-import ast
 from typing import Any, Dict, TYPE_CHECKING
 
 from matx import ir as _ir
 from matx.script import context as script_context
 from .base_parser import BaseParser
-from .context import *
-from ...ir.expr import *
-from ...ir.tensor_stmt import ComputeBlock, BufferRegion
+from ..ir import *
+from ...ir.tensor_stmt import ComputeBlock
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelParser
@@ -35,18 +33,23 @@ if TYPE_CHECKING:
 class ForLoopParser(BaseParser):
     allowed_ast_node = []
 
-    def __init__(self, kernel_p: 'KernelParser', ndarray_context_table: Dict[str, NDArrayContext],
-                 shape_symbol_table: Dict[str, SymbolContext], return_ctx: NDArrayContext,
+    def __init__(self,
+                 kernel_p: 'KernelParser',
+                 ndarray_context_table: Dict[str,
+                 ExpressionBaseNode],
+                 shape_symbol_table: Dict[str,
+                 SymbolNode],
+                 return_ctx: ExpressionBaseNode,
                  node: script_context.ASTNode):
         super().__init__(kernel_p, ndarray_context_table, shape_symbol_table, return_ctx, node)
         self.loop_variable_map = {}
-        self.loop_statements = []
         self.writes = []
         self.reads = []
         # self.is_in_body = False
 
     def visit_Subscript(self, node: ast.Subscript) -> Any:
         rt = super().visit_Subscript(node)
+        """
         ctx = self.var_stack[-1]
         # if not self.is_in_body:
         #    return rt
@@ -64,7 +67,7 @@ class ForLoopParser(BaseParser):
         elif isinstance(node.ctx, ast.Store):
             self.writes.append(buffer_region)
         else:
-            raise SyntaxError(f"deleting {ctx.name} is not allowed")
+            raise SyntaxError(f"deleting {ctx.name} is not allowed")"""
         return rt
 
     def visit_For(self, node: ast.For) -> Any:
@@ -81,52 +84,51 @@ class ForLoopParser(BaseParser):
             raise SyntaxError(f"The else part in for loop is not allowed")
 
         # get the start, end, and step
-        range_args = self._check_range(node.iter)
-        start = ConstScalarContext(0, int64, span)
-        end = range_args[0][1]
-        step = ConstScalarContext(1, int64, span)
+        range_args = self._get_for_loop_range(node.iter)
+        start = ConstScalarNode(0, int64, span)
+        end = range_args[0]
+        step = ConstScalarNode(1, int64, span)
         if len(range_args) == 2:
-            start = range_args[0][1]
-            end = range_args[1][1]
+            start = range_args[0]
+            end = range_args[1]
         elif len(range_args) == 3:
-            start = range_args[0][1]
-            end = range_args[1][1]
-            step = range_args[2][1]
+            start = range_args[0]
+            end = range_args[1]
+            step = range_args[2]
         elif len(range_args) > 3:
             raise SyntaxError(
                 f"the number of args for range should be at most 3, but get {len(range_args)}")
 
-        iter_var_ctx = ScalarContext(node.target.id, int64, span)
+        # initialize loop variable
+        iter_var_ctx = ScalarNode(node.target.id, int64, span)
         self.loop_variable_map[iter_var_ctx.name] = (start, end, step)
         # the scalar is allocated in the table purely for reference during
         # the visiting of the loop body
         # (and for now we do not remove them from the table)
         # the ComputeBlock will actually allocate it and assign value to it.
-        rt = self._allocate_scalar(iter_var_ctx.name, start.script_var,
-                                   start, start.kernel_type, span)
-        # self.loop_statements.append(rt)
+        rt = self._allocate_scalar(iter_var_ctx.name, start, start.kernel_type, span)
 
-        rt_ir, rt_ctx = self._visit_for_loop_body(node.body)
+        # visit body
+        body_ir = self._visit_for_loop_body(node.body)
+
         if not is_top_loop:
-            self.var_stack.append(rt_ctx)
-            return rt_ir
-        compute_block = self._make_for_loop_compute_block(rt_ir, rt_ctx, span)
+            return body_ir
+        compute_block = self._make_for_loop_compute_block(body_ir, span)
         self.loop_variable_map.clear()
         return compute_block
 
-    def _make_for_loop_compute_block(self, rt_ir, rt_ctx, span):
+    def _make_for_loop_compute_block(self, rt_ir, span):
         # todo check shape
         loop_range = self._make_range()
         iter_vars_names = [self.tmp_scalar_table[name].script_var
                            for name in self.loop_variable_map.keys()]
         iter_vars = [PrimIterVar(loop_range[i], iter_vars_names[i]) for i in range(len(loop_range))]
 
-        assign_iter_var = []
         # for lhs_name, rhs in zip(self.loop_variable_map.keys(), iter_vars_names):
         #    lhs = self.tmp_scalar_table[lhs_name].script_var
         #    assign_iter_var.append(_ir.AssignStmt(lhs, rhs))
 
-        body = _ir.SeqStmt(self.loop_statements + assign_iter_var + rt_ir)
+        body = _ir.SeqStmt([i.to_matx_ir() for i in rt_ir])
 
         return ComputeBlock(iter_vars, self.reads, self.writes, self.kernel_p.func_name, body)
 
@@ -151,16 +153,13 @@ class ForLoopParser(BaseParser):
 
         if nested_for is not None:
             rt_ir = self.visit(nested_for)
-            rt_ctx = self.var_stack.pop()
         else:
             rt_ir = []
-            rt_ctx = []
             for node in body:
                 rt_ir.append(self.visit(node))
-                rt_ctx.append(self.var_stack.pop())
-        return rt_ir, rt_ctx
+        return rt_ir
 
-    def _check_range(self, rng):
+    def _get_for_loop_range(self, rng):
         # the range can only be the builtin range
         if not isinstance(rng, ast.Call):
             raise SyntaxError(
@@ -182,11 +181,10 @@ class ForLoopParser(BaseParser):
                 raise SyntaxError(
                     f"Args in range function should be constant, scalar, or symbol but get {type(a)}")
             a_ir = self.visit(a)
-            a_ctx = self.var_stack.pop()
-            if not isinstance(a_ctx, (ScalarContext, SymbolContext)):
+            if not isinstance(a_ir, (ScalarNode, SymbolNode)):
                 raise SyntaxError(
                     f"Args in range function should be constant, scalar, or symbol but get {type(a)}")
-            args.append((a_ir, a_ctx))
+            args.append(a_ir)
 
         return args
 
@@ -194,19 +192,4 @@ class ForLoopParser(BaseParser):
         rng = []
         for key, r in self.loop_variable_map.items():
             rng.append(RangeExpr(r[0].script_var, r[1].script_var, r[2].script_var))
-        return rng
-
-    def _make_range_with(self, shape):
-        rng = []
-        for dim in shape:
-            start = _ir.const(0, "int64")
-            if is_symbol(dim):
-                symbol_ctx = self.shape_symbol_table[str(dim)]
-                end = symbol_ctx.script_var
-            elif dim is None:
-                continue
-            else:
-                end = _ir.const(dim)
-            rng_expr = RangeExpr(start, end)
-            rng.append(rng_expr)
         return rng

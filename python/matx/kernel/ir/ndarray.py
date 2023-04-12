@@ -64,3 +64,24 @@ class NDArrayNode(ExpressionBaseNode):
 
     def ndarrays(self):
         return [self]
+
+
+class NDArrayIndexingNode(ExpressionBaseNode):
+    def __init__(self, ndarray: NDArrayNode, index, span):
+        super().__init__(ndarray.kernel_type.data_type())
+        self.ndarray = ndarray
+        self.index = index
+        self.span = span
+
+    def to_matx_ir(self, value=None, **kwargs):
+        if value is None:
+            return self.read()
+        return self.write(value)
+
+    def read(self):
+        return self.ndarray.buffer.vload(tuple(i.to_matx_ir() for i in self.index))
+
+    def write(self, value):
+        value = _ir.PrimCast(self.ndarray.kernel_type.dtype_str(), value.to_matx_ir())
+        return self.ndarray.buffer.vstore(tuple(i.to_matx_ir() for i in self.index),
+                                          value)

@@ -24,7 +24,6 @@ from typing import Any, List, Dict, TYPE_CHECKING
 
 from matx import ir as _ir
 from matx.script import context as script_context
-from .context import *
 from .utils import build_span, annotation_to_kernel_type
 from ..ir import *
 
@@ -37,9 +36,9 @@ class BaseParser(ast.NodeVisitor):
     def __init__(
             self,
             kernel_p: 'KernelParser',
-            ndarray_context_table: Dict[str, NDArrayContext],
-            shape_symbol_table: Dict[str, SymbolContext],
-            return_ctx: NDArrayContext,
+            ndarray_context_table: Dict[str, ExpressionBaseNode],
+            shape_symbol_table: Dict[str, SymbolNode],
+            return_ctx: ExpressionBaseNode,
             node: script_context.ASTNode):
         self.kernel_p = kernel_p
 
@@ -53,7 +52,6 @@ class BaseParser(ast.NodeVisitor):
         self.tmp_scalar_table = {}
         self.return_ctx = return_ctx
 
-        self.var_stack = []
         self.reads = []
 
     def generic_visit(self, node):
@@ -77,6 +75,8 @@ class BaseParser(ast.NodeVisitor):
             last_ast = self.context.node_stack[-1].pop()
             res = self.visit(last_ast)
             if res is not None:
+                if isinstance(res, StatementBaseNode):
+                    res = res.to_matx_ir()
                 if not isinstance(res, _ir.Stmt):
                     raise SyntaxError('Every IR node here should be a stmt!')
                 body.append(res)
@@ -103,6 +103,8 @@ class BaseParser(ast.NodeVisitor):
         span = build_span(self.root_node, node)
         # add parameters of function
         for arg, ctx in self.ndarray_context_table.items():
+            if not (isinstance(ctx, NDArrayNode) or isinstance(ctx, ScalarNode)):
+                continue
             self.context.update_symbol(arg, ctx.script_var)
             self.context.func_params.append(ctx.script_var)
 
@@ -150,10 +152,7 @@ class BaseParser(ast.NodeVisitor):
 
     # variables
     def visit_Name(self, node: ast.Name) -> Any:
-        if isinstance(node.ctx, ast.Store):
-            self.var_stack.append(None)
-            return node.id
-        if not isinstance(node.ctx, ast.Load):
+        if isinstance(node.ctx, ast.Del):
             raise SyntaxError(f"del {node.id} is not allowed")
         name = node.id
         if name in self.shape_symbol_table:
@@ -175,17 +174,11 @@ class BaseParser(ast.NodeVisitor):
     def visit_BinOp(self, node: ast.BinOp) -> Any:
         opname = type(node.op).__name__
         lhs_ir = self.visit(node.left)
-        lhs_ctx = self.var_stack.pop()
         rhs_ir = self.visit(node.right)
-        rhs_ctx = self.var_stack.pop()
-        if is_scalar_type(lhs_ctx.kernel_type) and is_scalar_type(rhs_ctx.kernel_type):
-            if lhs_ctx.kernel_type != rhs_ctx.kernel_type:
-                # todo support different type
-                raise SyntaxError("type is different")
-            self.var_stack.append(AbstractScalarContext(lhs_ctx.kernel_type))
-            return self._binop_maker[type(node.op)](lhs_ir, rhs_ir, self.build_span(node))
+        if is_scalar_type(lhs_ir.kernel_type) and is_scalar_type(rhs_ir.kernel_type):
+            return ArithmeticBinaryOp(lhs_ir, rhs_ir, type(node.op), self.build_span(node))
         else:
-            raise SyntaxError(f"{lhs_ctx.name} {opname} {rhs_ctx.name} is not supported "
+            raise SyntaxError(f"{lhs_ir} {opname} {rhs_ir} is not supported "
                               f"because they are not both scalar")
 
     def visit_Slice(self, node: ast.Slice) -> Any:
@@ -206,24 +199,14 @@ class BaseParser(ast.NodeVisitor):
 
     def visit_Subscript(self, node: ast.Subscript) -> Any:
         # is load
-        _ = self.visit(node.value)
-        value_ctx = self.var_stack.pop()
-        if value_ctx.is_abstract_ctx():
-            raise SyntaxError(f"only support indexing ndarray")
+        value_ctx = self.visit(node.value)
         if isinstance(node.slice, (ast.Slice,)):
             raise SyntaxError(
                 f"slicing ndarray {value_ctx.name} is not supported because it doesn't generate a scalar.")
         sls = self._get_indexing(node.slice)
-        if isinstance(node.ctx, ast.Load):
-            self.var_stack.append(value_ctx.data_ctx(sls))
-            return value_ctx.read_at(sls)
-        if isinstance(node.ctx, ast.Store):
-            rhs = self.var_stack.pop()
-            rhs = _ir.PrimCast(value_ctx.kernel_type.dtype_str(), rhs)
-            rt_ir = value_ctx.write_at(sls, rhs)
-            self.var_stack.append(value_ctx.data_ctx(sls))
-            return rt_ir
-        raise SyntaxError(f"del {value_ctx.name} is not allowed")
+        if isinstance(node.ctx, ast.Del):
+            raise SyntaxError(f"del {value_ctx.name} is not allowed")
+        return NDArrayIndexingNode(value_ctx, sls, self.build_span(node))
 
     def _get_indexing(self, sls):
         if not isinstance(sls, ast.Tuple):
@@ -231,7 +214,6 @@ class BaseParser(ast.NodeVisitor):
         idx = []
         for i in sls.elts:
             rt_ir = self.visit(i)
-            self.var_stack.pop()
             idx.append(rt_ir)
         return idx
 
@@ -242,71 +224,71 @@ class BaseParser(ast.NodeVisitor):
             raise SyntaxError(f"Assigning to {type(node.targets)} is not allowed.")
         span = self.build_span(node)
         value = self.visit(node.value)
-        value_ctx = self.var_stack.pop()
-        self.var_stack.append(value)
         target = self.visit(node.targets[0])
         if isinstance(node.targets[0], ast.Name):
-            self.var_stack.pop()
-            return self._assign_scalar(target, value, value_ctx, node, span)
+            return self._assign_scalar(target.name, value, node, span)
         elif isinstance(node.targets[0], ast.Subscript):
-            return target
+            return AssignScalarNode(target, value, span)
+        else:
+            raise SyntaxError(f"not supported node type {type(node.target)}")
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
         span = self.build_span(node)
         ann = annotation_to_kernel_type(node.annotation)
         value = self.visit(node.value)
-        value_ctx = self.var_stack.pop()
         if not isinstance(node.target, (ast.Name, ast.Subscript)):
             raise SyntaxError(f"Assigning to {type(node.target)} is not allowed.")
         if isinstance(node.target, ast.Name):
-            return self._allocate_scalar(node.target.id, value, value_ctx, ann, span)
+            return self._allocate_scalar(node.target.id, value, ann, span)
         # symbol case
         elif isinstance(node.target, ast.Subscript):
             raise NotImplementedError("assigning to ndarray not supported yet")
+        else:
+            raise SyntaxError(f"not supported node type {type(node.target)}")
 
-    def _allocate_scalar(self, target, value, value_ctx, ann, span):
+    def _allocate_scalar(self, target_name, value, ann, span):
         # the name is conflict with args
-        if target in self.ndarray_context_table:
-            raise SyntaxError(f"Reassigning scalars {target} defined in arguments is not allowed")
+        if target_name in self.ndarray_context_table:
+            raise SyntaxError(
+                f"Reassigning scalars {target_name} defined in arguments is not allowed")
         # the name is conflict with previous defined scalar
-        if target in self.tmp_scalar_table:
-            raise SyntaxError(f"Reallocating scalars {target} defined previous is not allowed")
+        if target_name in self.tmp_scalar_table:
+            raise SyntaxError(f"Reallocating scalars {target_name} defined previous is not allowed")
         # make sure it is annotated as scalar
         if not is_scalar_type(ann):
-            raise SyntaxError(f"Annotating {target} with type {ann} is not allowed.")
+            raise SyntaxError(f"Annotating {target_name} with type {ann} is not allowed.")
         # make sure the annotated type is the same as rhs value
-        if value_ctx != ann:
-            raise SyntaxError(f"Assigning {value_ctx.kernel_type} to {ann} is not allowed")
-        tmp_scalar_ctx = ScalarContext(target, ann, span)
-        self.tmp_scalar_table[target] = tmp_scalar_ctx
-        alloca_stmt = _ir.AllocaVarStmt(
-            tmp_scalar_ctx.name, tmp_scalar_ctx.script_type, value, span)
-        self.var_stack.append(tmp_scalar_ctx)
-        return alloca_stmt
+        if value != ann:
+            raise SyntaxError(f"Assigning {value.kernel_type} to {ann} is not allowed")
+        tmp_scalar_ctx = ScalarNode(target_name, ann, span)
+        self.tmp_scalar_table[target_name] = tmp_scalar_ctx
+        return AllocationScalarNode(tmp_scalar_ctx, value, span)
 
-    def _assign_scalar(self, target, value, value_ctx, node, span):
+    def _assign_scalar(self, target_name, value, node, span):
         # the name is conflict with args
-        if target in self.ndarray_context_table:
-            raise SyntaxError(f"Reassigning scalars {target} defined in arguments is not allowed")
+        if target_name in self.ndarray_context_table:
+            raise SyntaxError(
+                f"Reassigning scalars {target_name} defined in arguments is not allowed")
         # it has not been defined
-        if target not in self.tmp_scalar_table:
-            raise SyntaxError(f"Assigning scalars {target} is not allowed because it not defined")
+        if target_name not in self.tmp_scalar_table:
+            raise SyntaxError(
+                f"Assigning scalars {target_name} is not allowed because it not defined")
         # node cannot be annotated assign or other (unlikely to be other)
         if not isinstance(node, ast.Assign):
-            raise SyntaxError(f"Using annotated assign to assign {target} is not allowed "
+            raise SyntaxError(f"Using annotated assign to assign {target_name} is not allowed "
                               f"since it has already been defined above")
-        previous_ctx = self.tmp_scalar_table[target]
-        if value_ctx.kernel_type != previous_ctx.kernel_type:
-            raise SyntaxError(f"the value assigned to {target} is not scalar")
-        self.var_stack.append(value_ctx)
-        return _ir.AssignStmt(previous_ctx.script_var, value, span)
+        previous_ctx = self.tmp_scalar_table[target_name]
+        if value.kernel_type != previous_ctx.kernel_type:
+            raise SyntaxError(f"the value assigned to {target_name} is not scalar")
+        return AssignScalarNode(previous_ctx, value, span)
 
     def _assign_ndarray(self):
         raise SyntaxError("Assigning to ndarray is not allowed")
 
     def visit_Pass(self, node: ast.Pass) -> Any:
-        self.var_stack.append(AbstractBaseVariableContext(int32))
-        return _ir.NoneExpr()
+        lhs = ConstScalarNode(1, kernelNDArrayT((1, 1), np.int32), self.build_span(node))
+        rhs = ConstScalarNode(2, kernelNDArrayT((1, 1), np.int32), self.build_span(node))
+        return ArithmeticBinaryOp(lhs, rhs, ast.Add, self.build_span(node))
 
     def visit_BoolOp(self, node: ast.BoolOp) -> Any:
         raise NotImplementedError("visit_BoolOp is not Implemented")

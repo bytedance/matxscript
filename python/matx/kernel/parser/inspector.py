@@ -18,11 +18,10 @@
 #  under the License.
 from typing import Any, Dict, TYPE_CHECKING
 
-from .context import *
 from .for_loop_parser import ForLoopParser
 from .single_return_parser import KernelSingleReturnParser
 from .utils import *
-from ..ir import NDArrayNode, ScalarNode
+from ..ir import *
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelParser
@@ -43,8 +42,8 @@ class KernelInspector(ast.NodeVisitor):
         self.kernel_parser = None
 
         # for kernel use
-        self.ndarray_context_table: Dict[str, NDArrayContext] = {}
-        self.shape_symbol_table: Dict[str, SymbolContext] = {}
+        self.ndarray_context_table: Dict[str, ExpressionBaseNode] = {}
+        self.shape_symbol_table: Dict[str, SymbolNode] = {}
         self.return_ctx = None
 
         # for checking
@@ -81,7 +80,7 @@ class KernelInspector(ast.NodeVisitor):
                 continue
             if str(dim) in self.shape_symbol_table:
                 continue
-            sym_ctx = SymbolContext(dim, span)
+            sym_ctx = SymbolNode(dim, span)
             self.shape_symbol_table[str(dim)] = sym_ctx
             shape_symbols.append(sym_ctx)
         return shape_symbols
@@ -119,6 +118,7 @@ class KernelInspector(ast.NodeVisitor):
         #                      " 1st is return a single line. 2nd is a simple for loop")
 
     def check_return(self, node: ast.FunctionDef) -> Any:
+        # todo return scalar
         span = build_span(self.root_node, node)
         if self.kernel_p.return_types is None:
             raise SyntaxError("annotating return type is required for kernel functions")

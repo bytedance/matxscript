@@ -18,15 +18,13 @@
 #  under the License.
 from __future__ import annotations
 
-import ast
 from typing import Any, Dict, TYPE_CHECKING
 
 import matx.ir as _ir
 import matx.kernel.ir as kernel_ir
 from matx.script import context as script_context
 from .base_parser import BaseParser
-from .context import *
-from ...ir.expr import *
+from ..ir import *
 from ...ir.tensor_stmt import ComputeBlock
 
 if TYPE_CHECKING:
@@ -48,8 +46,13 @@ class KernelSingleReturnParser(BaseParser):
         ast.Load,
         ast.Constant]
 
-    def __init__(self, kernel_p: 'KernelParser', ndarray_context_table: Dict[str, NDArrayContext],
-                 shape_symbol_table: Dict[str, SymbolContext], return_ctx: NDArrayContext,
+    def __init__(self,
+                 kernel_p: 'KernelParser',
+                 ndarray_context_table: Dict[str,
+                 ExpressionBaseNode],
+                 shape_symbol_table: Dict[str,
+                 SymbolNode],
+                 return_ctx: ExpressionBaseNode,
                  node: script_context.ASTNode):
         super().__init__(kernel_p, ndarray_context_table, shape_symbol_table, return_ctx, node)
         self.iter_vars_names = []
