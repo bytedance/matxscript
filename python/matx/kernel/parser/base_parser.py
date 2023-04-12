@@ -175,7 +175,8 @@ class BaseParser(ast.NodeVisitor):
         opname = type(node.op).__name__
         lhs_ir = self.visit(node.left)
         rhs_ir = self.visit(node.right)
-        if is_scalar_type(lhs_ir.kernel_type) and is_scalar_type(rhs_ir.kernel_type):
+        if (is_scalar_type(lhs_ir.kernel_type) or is_symbol_type(lhs_ir.kernel_type))\
+                and (is_scalar_type(rhs_ir.kernel_type) or is_symbol_type(rhs_ir.kernel_type)):
             return ArithmeticBinaryOp(lhs_ir, rhs_ir, type(node.op), self.build_span(node))
         else:
             raise SyntaxError(f"{lhs_ir} {opname} {rhs_ir} is not supported "

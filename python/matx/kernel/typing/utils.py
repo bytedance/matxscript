@@ -54,6 +54,6 @@ def get_dtype(x):
     if isinstance(x, bool):
         return bool
     if isinstance(x, int):
-        return np.int32
+        return np.int64
     if isinstance(x, float):
         return np.float32
