@@ -24,7 +24,7 @@ from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.typing import int32, float32
 
 
-class TestSingleReturnParser(unittest.TestCase):
+class TestForLoopParser(unittest.TestCase):
     def test_scalar_op1(self):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
