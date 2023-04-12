@@ -59,7 +59,7 @@ class NDArrayNode(ExpressionBaseNode):
         idx = iter_var[-len(self.shape):]
         return self.buffer.vload(tuple(idx))
 
-    def buffer_regions(self, rng, **kwargs):
+    def buffer_regions(self, rng=None, **kwargs):
         return [_ir.BufferRegion(self.buffer, rng[-len(self.shape):])]
 
     def ndarrays(self):
@@ -75,13 +75,24 @@ class NDArrayIndexingNode(ExpressionBaseNode):
 
     def to_matx_ir(self, value=None, **kwargs):
         if value is None:
-            return self.read()
-        return self.write(value)
+            return self._read_from()
+        return self._write_to(value)
 
-    def read(self):
+    def _read_from(self):
         return self.ndarray.buffer.vload(tuple(i.to_matx_ir() for i in self.index))
 
-    def write(self, value):
+    def _write_to(self, value):
         value = _ir.PrimCast(self.ndarray.kernel_type.dtype_str(), value.to_matx_ir())
         return self.ndarray.buffer.vstore(tuple(i.to_matx_ir() for i in self.index),
                                           value)
+
+    def buffer_regions(self, rng=None, **kwargs):
+        if rng is not None:
+            return self.ndarray.buffer_regions(rng=rng, **kwargs)
+        rng = []
+        for idx in self.index:
+            start = idx.to_matx_ir(key="start")
+            end = idx.to_matx_ir(key="end")
+            step = idx.to_matx_ir(key="step")
+            rng.append(_ir.RangeExpr(start, end, step))
+        return self.ndarray.buffer_regions(rng=rng, **kwargs)

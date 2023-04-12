@@ -82,8 +82,8 @@ class ArithmeticBinaryOp(ExpressionBaseNode):
     def to_matx_ir(self, **kwargs):
         return self.op(self.lhs.to_matx_ir(**kwargs), self.rhs.to_matx_ir(**kwargs), self.span)
 
-    def buffer_regions(self, rng, **kwargs):
-        return self.lhs.buffer_regions(rng=rng) + self.rhs.buffer_regions(rng=rng)
+    def buffer_regions(self, **kwargs):
+        return self.lhs.buffer_regions(**kwargs) + self.rhs.buffer_regions(**kwargs)
 
     def ndarrays(self):
         return [*self.lhs.ndarrays(), *self.rhs.ndarrays()]

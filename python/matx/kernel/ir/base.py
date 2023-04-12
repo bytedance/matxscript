@@ -35,3 +35,9 @@ class ExpressionBaseNode:
 class StatementBaseNode:
     def to_matx_ir(self, **kwargs):
         raise NotImplementedError("to_matx_ir is not implemented")
+
+    def reads(self):
+        raise NotImplementedError("reads is not implemented")
+
+    def writes(self):
+        raise NotImplementedError("writes is not implemented")

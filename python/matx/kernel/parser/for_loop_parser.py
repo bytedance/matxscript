@@ -100,13 +100,14 @@ class ForLoopParser(BaseParser):
                 f"the number of args for range should be at most 3, but get {len(range_args)}")
 
         # initialize loop variable
-        iter_var_ctx = ScalarNode(node.target.id, int64, span)
+        iter_var_ctx = IterScalarNode(node.target.id, int64, start, end, step, span)
         self.loop_variable_map[iter_var_ctx.name] = (start, end, step)
         # the scalar is allocated in the table purely for reference during
         # the visiting of the loop body
         # (and for now we do not remove them from the table)
         # the ComputeBlock will actually allocate it and assign value to it.
         rt = self._allocate_scalar(iter_var_ctx.name, start, start.kernel_type, span)
+        self.tmp_scalar_table[iter_var_ctx.name] = iter_var_ctx
 
         # visit body
         body_ir = self._visit_for_loop_body(node.body)
@@ -123,6 +124,8 @@ class ForLoopParser(BaseParser):
         iter_vars_names = [self.tmp_scalar_table[name].script_var
                            for name in self.loop_variable_map.keys()]
         iter_vars = [PrimIterVar(loop_range[i], iter_vars_names[i]) for i in range(len(loop_range))]
+        reads = [i.reads() for i in rt_ir]
+        writes = [i.writes() for i in rt_ir]
 
         # for lhs_name, rhs in zip(self.loop_variable_map.keys(), iter_vars_names):
         #    lhs = self.tmp_scalar_table[lhs_name].script_var
@@ -130,7 +133,7 @@ class ForLoopParser(BaseParser):
 
         body = _ir.SeqStmt([i.to_matx_ir() for i in rt_ir])
 
-        return ComputeBlock(iter_vars, self.reads, self.writes, self.kernel_p.func_name, body)
+        return ComputeBlock(iter_vars, reads, writes, self.kernel_p.func_name, body)
 
     def _visit_for_loop_body(self, body):
         nested_for = None

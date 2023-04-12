@@ -41,3 +41,20 @@ class ConstScalarNode(ScalarNode):
     def __init__(self, value, type_: kernelNDArrayT, span):
         super().__init__("const", type_, span)
         self.script_var = _ir.const(value, type_.dtype_str())
+
+
+class IterScalarNode(ScalarNode):
+    def __init__(self, name: str, type_: kernelNDArrayT, start, end, step, span):
+        super().__init__(name, type_, span)
+        self.start = start
+        self.end = end
+        self.step = step
+
+    def to_matx_ir(self, key=None, **kwargs):
+        if key == "start":
+            return self.start.to_matx_ir()
+        if key == "end":
+            return self.end.to_matx_ir()
+        if key == "step":
+            return self.step.to_matx_ir()
+        return super().to_matx_ir(**kwargs)
