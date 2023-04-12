@@ -36,9 +36,9 @@ class ForLoopParser(BaseParser):
     def __init__(self,
                  kernel_p: 'KernelParser',
                  ndarray_context_table: Dict[str,
-                 ExpressionBaseNode],
+                                             ExpressionBaseNode],
                  shape_symbol_table: Dict[str,
-                 SymbolNode],
+                                          SymbolNode],
                  return_ctx: ExpressionBaseNode,
                  node: script_context.ASTNode):
         super().__init__(kernel_p, ndarray_context_table, shape_symbol_table, return_ctx, node)
