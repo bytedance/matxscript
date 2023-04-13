@@ -17,10 +17,27 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from .bin_op import *
-from .registry.registry import OpRegistry
+class ExpressionBaseNode:
+    def __init__(self, kernel_type):
+        self.kernel_type = kernel_type
+        self.range = None
 
-make_bin_op(AddOp)
-make_bin_op(SubOp)
-make_bin_op(MultOp)
-make_bin_op(DivOp)
+    def to_matx_ir(self, **kwargs):
+        raise NotImplementedError("to_matx_ir is not implemented")
+
+    def ndarrays(self):
+        return []
+
+    def buffer_regions(self, **kwargs):
+        return []
+
+
+class StatementBaseNode:
+    def to_matx_ir(self, **kwargs):
+        raise NotImplementedError("to_matx_ir is not implemented")
+
+    def reads(self):
+        raise NotImplementedError("reads is not implemented")
+
+    def writes(self):
+        raise NotImplementedError("writes is not implemented")

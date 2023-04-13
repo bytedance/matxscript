@@ -54,6 +54,9 @@ class NDArrayType:
     def dtype_str(self):
         return NPDTYPE_TO_STR[self.dtype]
 
+    def data_type(self):
+        return ScalarType(self.dtype)
+
     def __eq__(self, other):
         return self.shape == other.shape and self.dtype == self.dtype
 
@@ -78,3 +81,6 @@ class ScalarType(NDArrayType):
 
     def __repr__(self) -> str:
         return f'ScalarType (dtype={self.dtype}, storage={self.storage})'
+
+    def data_type(self):
+        return self

@@ -45,6 +45,8 @@ def is_ndarray_type(t):
 
 
 def is_scalar_type(t):
+    if is_ndarray_type(t):
+        return is_scalar_shape(t.shape)
     return t is ScalarType or isinstance(t, ScalarType)
 
 

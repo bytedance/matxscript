@@ -18,16 +18,14 @@
 #  under the License.
 from __future__ import annotations
 
-import ast
 from typing import Any, Dict, TYPE_CHECKING
 
 import matx.ir as _ir
-from matx.kernel.ops import OpRegistry
+import matx.kernel.ir as kernel_ir
 from matx.script import context as script_context
 from .base_parser import BaseParser
-from .context import *
-from ...ir.expr import *
-from ...ir.tensor_stmt import ComputeBlock, BufferRegion
+from ..ir import *
+from ...ir.tensor_stmt import ComputeBlock
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelParser
@@ -48,8 +46,13 @@ class KernelSingleReturnParser(BaseParser):
         ast.Load,
         ast.Constant]
 
-    def __init__(self, kernel_p: 'KernelParser', ndarray_context_table: Dict[str, NDArrayContext],
-                 shape_symbol_table: Dict[str, SymbolContext], return_ctx: NDArrayContext,
+    def __init__(self,
+                 kernel_p: 'KernelParser',
+                 ndarray_context_table: Dict[str,
+                                             ExpressionBaseNode],
+                 shape_symbol_table: Dict[str,
+                                          SymbolNode],
+                 return_ctx: ExpressionBaseNode,
                  node: script_context.ASTNode):
         super().__init__(kernel_p, ndarray_context_table, shape_symbol_table, return_ctx, node)
         self.iter_vars_names = []
@@ -59,31 +62,31 @@ class KernelSingleReturnParser(BaseParser):
         # todo generate a intermediate dst to hold the data
         opname = type(node.op).__name__
         lhs_ir = self.visit(node.left)
-        lhs_ctx = self.var_stack.pop()
         rhs_ir = self.visit(node.right)
-        rhs_ctx = self.var_stack.pop()
-        if is_ndarray_type(lhs_ctx.kernel_type) and is_ndarray_type(rhs_ctx.kernel_type):
-            op_class = OpRegistry.get_bin_op(
-                lhs_ctx.kernel_type, rhs_ctx.kernel_type, opname)
-            op = op_class(lhs_ctx, rhs_ctx)
-            dst_kernel_type = op.dst_kernel_type()
-            result_dtype = op.op.result_type.dtype_str()
-            var_info = AbstractNDArrayContext(dst_kernel_type)
-            self.var_stack.append(var_info)
-            if not lhs_ctx.is_abstract_ctx():
-                lhs_ir = lhs_ctx.read_at(self.iter_vars_names[-len(lhs_ctx.shape):])
-                range_ = self._make_range(op.op.lhs_broad_cast_shape)
-                self.reads.append(BufferRegion(lhs_ctx.buffer, range_))
-            if not rhs_ctx.is_abstract_ctx():
-                rhs_ir = rhs_ctx.read_at(self.iter_vars_names[-len(rhs_ctx.shape):])
-                range_ = self._make_range(op.op.rhs_broad_cast_shape)
-                self.reads.append(BufferRegion(rhs_ctx.buffer, range_))
-            # return op.ir_class(lhs_ir, rhs_ir)
-            return self._binop_maker[type(node.op)](lhs_ir, rhs_ir, self.build_span(node))
-        else:
-            raise SyntaxError(
-                f"bin op does not support {lhs_ctx.kernel_type} and {rhs_ctx.kernel_type}")
-        # todo insert to ir
+        op = kernel_ir.ArithmeticBinaryOp(lhs_ir, rhs_ir, type(node.op), self.build_span(node))
+        # todo update iter var names
+        # todo update BufferRegion to reads
+
+        """
+                op_class = OpRegistry.get_bin_op(lhs_ctx.kernel_type, rhs_ctx.kernel_type, opname)
+                op = op_class(lhs_ctx, rhs_ctx)
+                dst_kernel_type = op.dst_kernel_type()
+                result_dtype = op.op.result_type.dtype_str()
+                var_info = AbstractNDArrayContext(dst_kernel_type)
+                self.var_stack.append(var_info)
+                if not lhs_ctx.is_abstract_ctx():
+                    lhs_ir = lhs_ctx.read_at(self.iter_vars_names[-len(lhs_ctx.shape):])
+                    range_ = self._make_range(op.op.lhs_broad_cast_shape)
+                    self.reads.append(BufferRegion(lhs_ctx.buffer, range_))
+                if not rhs_ctx.is_abstract_ctx():
+                    rhs_ir = rhs_ctx.read_at(self.iter_vars_names[-len(rhs_ctx.shape):])
+                    range_ = self._make_range(op.op.rhs_broad_cast_shape)
+                    self.reads.append(BufferRegion(rhs_ctx.buffer, range_))
+                # return op.ir_class(lhs_ir, rhs_ir)
+                return self._binop_maker[type(node.op)](lhs_ir, rhs_ir, self.build_span(node))
+                # todo insert to ir
+        """
+        return op
 
     def visit_Return(self, node: ast.Return) -> Any:
         # treat return as assign and
@@ -96,6 +99,7 @@ class KernelSingleReturnParser(BaseParser):
         if list(result_shape) != list(self.return_ctx.shape):
             raise RuntimeError(f"the marked shape {self.return_ctx.shape} "
                                f"is not equal to {result_shape}")
+        """
         return_range = self._make_range(result_shape)
         self.iter_vars_names = [
             _ir.PrimVar(
@@ -104,22 +108,25 @@ class KernelSingleReturnParser(BaseParser):
                 len(return_range))]
         iter_vars = [PrimIterVar(return_range[i], self.iter_vars_names[i])
                      for i in range(len(return_range))]
-
+"""
         rt_ir = self.visit(node.value)
-        rt_ctx = self.var_stack.pop()
-        if list(result_shape) != list(rt_ctx.shape):
+        if list(result_shape) != list(rt_ir.shape):
             raise SyntaxError(
-                f"The return shape is annotated as {result_shape} but get {rt_ctx.shape}")
+                f"The return shape is annotated as {result_shape} but get {rt_ir.shape}")
 
-        writes = [BufferRegion(self.return_ctx.buffer, return_range)]
+        assign_op = kernel_ir.AssignNDArrayNode(self.return_ctx, rt_ir)
 
-        if isinstance(node.value, ast.Name):
-            rt_ir = rt_ctx.read_at(self.iter_vars_names)
-        if rt_ctx.kernel_type.dtype != self.return_ctx.kernel_type.dtype:
-            rt_ir = _ir.PrimCast(self.return_ctx.kernel_type.dtype_str(), rt_ir)
-        body = self.return_ctx.write_at(self.iter_vars_names, rt_ir)
+        writes = assign_op.writes()
+        reads = assign_op.reads()
 
-        return ComputeBlock(iter_vars, self.reads, writes, self.kernel_p.func_name, body)
+        # if isinstance(node.value, ast.Name):
+        #    rt_ir = rt_ctx.read_at(self.iter_vars_names)
+        # if rt_ctx.kernel_type.dtype != self.return_ctx.kernel_type.dtype:
+        #    rt_ir = _ir.PrimCast(self.return_ctx.kernel_type.dtype_str(), rt_ir)
+        # body = self.return_ctx.write_at(self.iter_vars_names, rt_ir)
+        body = assign_op.to_matx_ir()
+
+        return ComputeBlock(assign_op.iter_vars, reads, writes, self.kernel_p.func_name, body)
 
     def _make_range(self, shape):
         rng = []

@@ -104,3 +104,14 @@ class TestSingleReturnParser(unittest.TestCase):
         p = KernelParser(foo)
         p.parse()
         # todo check ir structure
+
+    def test_multiple_bin_op_with_scalar_and_const(self):
+        M = sympy.Symbol('M', positive=True)
+        N = sympy.Symbol('N', positive=True)
+
+        def foo(a: int32[M, N], b: int64[M, N], c: float32) -> float32[M, N]:
+            return ((a + b) * c) + 1
+
+        p = KernelParser(foo)
+        p.parse()
+        # todo check ir structure

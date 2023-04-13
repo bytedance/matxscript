@@ -16,15 +16,19 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
+from matx import ir as _ir
+from .base import *
+from ..symbol import *
 
-class KernelBaseOp:
-    opname = None
-    operator = None
-    ir_class = None
 
-    def __init__(self):
-        if self.opname is None or self.operator is None or self.ir_class is None:
-            raise SyntaxError("opname and/or operator has to be defined")
-        self.result_dtype = None
-        self.result_shape = None
-        self.result_type = None
+class SymbolNode(ExpressionBaseNode):
+
+    def __init__(self, symbol, span) -> None:
+        super().__init__(sympy.Basic)
+        assert is_symbol(symbol), 'syntax error'
+        self.name: str = str(symbol)
+        self.script_type = _ir.PrimType("int64")
+        self.script_var = _ir.PrimVar(f"symbol_{self.name}", "int64", span)
+
+    def to_matx_ir(self, **kwargs):
+        return self.script_var
