@@ -60,7 +60,7 @@ class BaseParser(ast.NodeVisitor):
         """
         raise NotImplementedError(f'This node is not supported now: {node}')
 
-    def visit(self, node: ast.AST) -> Any:
+    def visit(self, node: Any) -> Any:
         """Override method in ast.NodeVisitor"""
         method = "visit_" + node.__class__.__name__
         print(method)
@@ -100,7 +100,7 @@ class BaseParser(ast.NodeVisitor):
     def visit_FunctionDef(self, node: ast.FunctionDef):
         self.context = script_context.ScopeContext()
         self.context.new_scope(nodes=node.body)
-        span = build_span(self.root_node, node)
+        span_ = build_span(self.root_node, node)
         # add parameters of function
         for arg, ctx in self.ndarray_context_table.items():
             if not (isinstance(ctx, NDArrayNode) or isinstance(ctx, ScalarNode)):
@@ -128,10 +128,10 @@ class BaseParser(ast.NodeVisitor):
             self.context.func_params,
             # [HLOVar(x, ty=ObjectTypeNode), HLOVar(y, ty=ObjectTypeNode), handle_2_71828182846]
             [],  # [_ir.PrimCast("handle", _ir.const(0))],
-            self.to_seq_stmt(body_stmts, span),
+            self.to_seq_stmt(body_stmts, span_),
             # [CallNode(Op(ir.nd_module_add), [HLOVar(x, ty=ObjectTypeNode), HLOVar(y, ty=ObjectTypeNode)], []) -> NDArrayType]
             ret_type=None,
-            span=span
+            span=span_
         )
         func = func.with_attr(_ir.FuncAttr.kGlobalSymbol, node.name)
         self.context.pop_scope()
@@ -175,9 +175,9 @@ class BaseParser(ast.NodeVisitor):
         opname = type(node.op).__name__
         lhs_ir = self.visit(node.left)
         rhs_ir = self.visit(node.right)
-        if (is_scalar_type(lhs_ir.kernel_type) or is_symbol_type(lhs_ir.kernel_type))\
+        if (is_scalar_type(lhs_ir.kernel_type) or is_symbol_type(lhs_ir.kernel_type)) \
                 and (is_scalar_type(rhs_ir.kernel_type) or is_symbol_type(rhs_ir.kernel_type)):
-            return ArithmeticBinaryOp(lhs_ir, rhs_ir, type(node.op), self.build_span(node))
+            return BinaryOp(lhs_ir, rhs_ir, type(node.op), self.build_span(node))
         else:
             raise SyntaxError(f"{lhs_ir} {opname} {rhs_ir} is not supported "
                               f"because they are not both scalar")
@@ -253,7 +253,7 @@ class BaseParser(ast.NodeVisitor):
             raise SyntaxError(
                 f"Reassigning scalars {target_name} defined in arguments is not allowed")
         # the name is conflict with previous defined scalar
-        if target_name in self.tmp_scalar_table:
+        if target_name in self.tmp_scalar_table and self.tmp_scalar_table[target_name].kernel_type != ann:
             raise SyntaxError(f"Reallocating scalars {target_name} defined previous is not allowed")
         # make sure it is annotated as scalar
         if not is_scalar_type(ann):
@@ -286,16 +286,46 @@ class BaseParser(ast.NodeVisitor):
     def _assign_ndarray(self):
         raise SyntaxError("Assigning to ndarray is not allowed")
 
+    def visit_If(self, node: ast.If) -> Any:
+        test = self.visit(node.test)
+        body = [self.visit(s) for s in node.body]
+        orelse = [self.visit(s) for s in node.orelse]
+        return IfNode(test, body, orelse, self.build_span(node))
+
     def visit_Pass(self, node: ast.Pass) -> Any:
         lhs = ConstScalarNode(1, kernelNDArrayT((1, 1), np.int32), self.build_span(node))
         rhs = ConstScalarNode(2, kernelNDArrayT((1, 1), np.int32), self.build_span(node))
-        return ArithmeticBinaryOp(lhs, rhs, ast.Add, self.build_span(node))
+        return BinaryOp(lhs, rhs, ast.Add, self.build_span(node))
 
     def visit_BoolOp(self, node: ast.BoolOp) -> Any:
-        raise NotImplementedError("visit_BoolOp is not Implemented")
+        opname = type(node.op).__name__
+        values = [self.visit(v) for v in node.values]
+        for i in range(len(values) - 1):
+            lhs = values[i]
+            rhs = values[i + 1]
+            if (is_scalar_type(lhs.kernel_type) or is_symbol_type(lhs.kernel_type)) \
+                    and (is_scalar_type(rhs.kernel_type) or is_symbol_type(rhs.kernel_type)):
+                t = BinaryOp(lhs, rhs, type(node.op), self.build_span(node))
+                values[i + 1] = t
+            else:
+                raise SyntaxError(f"{lhs} {opname} {rhs} is not supported "
+                                  f"because they are not both scalar")
+        return values[-1]
 
     def visit_Compare(self, node: ast.Compare) -> Any:
-        raise NotImplementedError("visit_Compare is not Implemented")
+        lhs = self.visit(node.left)
+        comparators = [self.visit(c) for c in node.comparators]
+        for i in range(len(comparators)):
+            op = node.ops[i]
+            opname = type(op).__name__
+            rhs = comparators[i]
+            if (is_scalar_type(lhs.kernel_type) or is_symbol_type(lhs.kernel_type)) \
+                    and (is_scalar_type(rhs.kernel_type) or is_symbol_type(rhs.kernel_type)):
+                lhs = BinaryOp(lhs, rhs, type(op), self.build_span(node))
+            else:
+                raise SyntaxError(f"{lhs} {opname} {rhs} is not supported "
+                                  f"because they are not both scalar")
+        return lhs
 
     def visit_Call(self, node: ast.Call) -> Any:
         raise NotImplementedError("visit_Call is not Implemented")

@@ -23,7 +23,7 @@ from .base import *
 from .utils import *
 from ... import ir as _ir
 
-_binop_maker = {
+_arithmetic_binop_maker = {
     ast.Add: lambda lhs, rhs, span: _generic.add(lhs, rhs, span),
     ast.Sub: lambda lhs, rhs, span: _generic.subtract(lhs, rhs, span),
     ast.Mult: lambda lhs, rhs, span: _generic.multiply(lhs, rhs, span),
@@ -33,16 +33,8 @@ _binop_maker = {
     ast.BitOr: lambda lhs, rhs, span: _generic.bitwise_or(lhs, rhs, span),
     ast.BitAnd: lambda lhs, rhs, span: _generic.bitwise_and(lhs, rhs, span),
     ast.BitXor: lambda lhs, rhs, span: _generic.bitwise_xor(lhs, rhs, span),
-    ast.LShift: lambda lhs, rhs, span: _generic.left_shift(lhs, rhs, span),
-    ast.RShift: lambda lhs, rhs, span: _generic.right_shift(lhs, rhs, span),
-    ast.Gt: lambda lhs, rhs, span: _generic.greater_than(lhs, rhs, span),
-    ast.GtE: lambda lhs, rhs, span: _generic.greater_or_equal(lhs, rhs, span),
-    ast.Lt: lambda lhs, rhs, span: _generic.less_than(lhs, rhs, span),
-    ast.LtE: lambda lhs, rhs, span: _generic.less_or_equal(lhs, rhs, span),
-    ast.Eq: lambda lhs, rhs, span: _generic.equal(lhs, rhs, span),
-    ast.NotEq: lambda lhs, rhs, span: _generic.notequal(lhs, rhs, span),
-    ast.Is: lambda lhs, rhs, span: _generic.op_is(lhs, rhs, span),
-    ast.IsNot: lambda lhs, rhs, span: _generic.op_not(_generic.op_is(lhs, rhs, span), span)
+    # ast.LShift: lambda lhs, rhs, span: _generic.left_shift(lhs, rhs, span),
+    # ast.RShift: lambda lhs, rhs, span: _generic.right_shift(lhs, rhs, span),
 }
 
 _unaryop_maker = {
@@ -52,15 +44,29 @@ _unaryop_maker = {
 }
 
 _boolop_marker = {
+    ast.Gt: lambda lhs, rhs, span: _generic.greater_than(lhs, rhs, span),
+    ast.GtE: lambda lhs, rhs, span: _generic.greater_or_equal(lhs, rhs, span),
+    ast.Lt: lambda lhs, rhs, span: _generic.less_than(lhs, rhs, span),
+    ast.LtE: lambda lhs, rhs, span: _generic.less_or_equal(lhs, rhs, span),
+    ast.Eq: lambda lhs, rhs, span: _generic.equal(lhs, rhs, span),
+    ast.NotEq: lambda lhs, rhs, span: _generic.notequal(lhs, rhs, span),
+    ast.Is: lambda lhs, rhs, span: _generic.op_is(lhs, rhs, span),
+    ast.IsNot: lambda lhs, rhs, span: _generic.op_not(_generic.op_is(lhs, rhs, span), span),
+
+
     ast.And: lambda span, *args: _generic.op_and(span, *args),
     ast.Or: lambda span, *args: _generic.op_or(span, *args)
 }
 
 
-class ArithmeticBinaryOp(ExpressionBaseNode):
+class BinaryOp(ExpressionBaseNode):
 
     def __init__(self, lhs: ExpressionBaseNode, rhs: ExpressionBaseNode, op_type, span):
-        self.op = _binop_maker[op_type]
+        self.is_boolean_op = op_type in _boolop_marker
+        if self.is_boolean_op:
+            self.op = _boolop_marker[op_type]
+        else:
+            self.op = _arithmetic_binop_maker[op_type]
         self.lhs = lhs
         self.rhs = rhs
         self.span = span
@@ -70,7 +76,10 @@ class ArithmeticBinaryOp(ExpressionBaseNode):
         self.rhs_dtype = get_dtype(self.rhs_type)
         self.lhs_shape = get_shape(self.lhs_type)
         self.rhs_shape = get_shape(self.rhs_type)
-        self.result_dtype = np_result_dtype([self.lhs_dtype, self.rhs_dtype])
+        if self.is_boolean_op:
+            self.result_dtype = bool_
+        else:
+            self.result_dtype = np_result_dtype([self.lhs_dtype, self.rhs_dtype])
         result_shape, lhs_new_shape, rhs_new_shape = broadcast(self.lhs_shape, self.rhs_shape)
         self.result_shape = result_shape
         self.result_type = NDArrayType(self.result_shape, self.result_dtype)
@@ -84,6 +93,3 @@ class ArithmeticBinaryOp(ExpressionBaseNode):
 
     def buffer_regions(self, **kwargs):
         return self.lhs.buffer_regions(**kwargs) + self.rhs.buffer_regions(**kwargs)
-
-    def ndarrays(self):
-        return [*self.lhs.ndarrays(), *self.rhs.ndarrays()]
