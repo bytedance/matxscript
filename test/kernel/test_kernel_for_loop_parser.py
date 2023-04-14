@@ -62,7 +62,7 @@ class TestForLoopParser(unittest.TestCase):
             k: int32 = 0
             for i in range(M):
                 for j in range(N):
-                    k = a[(i + 1) / 2, j] + j
+                    k = a[(i + 1) // 2, j] + j
             return a
 
         p = KernelParser(foo)
@@ -78,6 +78,22 @@ class TestForLoopParser(unittest.TestCase):
             for i in range(M):
                 for j in range(N):
                     a[(i + 1) / 2, j] = i + j
+            return a
+
+        p = KernelParser(foo)
+        p.parse()
+        # todo check ir structure
+
+    def test_idx_operation3(self):
+        M = sympy.Symbol('M', positive=True)
+        N = sympy.Symbol('N', positive=True)
+
+        def foo(a: int32[M, N]) -> int32[M, N]:
+            k: int32 = 0
+            for i in range(M):
+                for j in range(N):
+                    m: int32 = i * j
+                    k = a[m // (i + j + 1), j] + j
             return a
 
         p = KernelParser(foo)
@@ -162,6 +178,20 @@ class TestForLoopParser(unittest.TestCase):
         def foo(a: int32[M, N], b: float32[2 * M, N], c: int32[N], d: float32[M]) -> int32[M, N]:
             for i in range(M):
                 for j in range(N):
+                    b[i + 1, j] = (a[i, j] + c[j]) / (b[i, j] * d[i])
+            return b
+
+        p = KernelParser(foo)
+        p.parse()
+        # todo check ir structure
+
+    def test_symbol_expression_range(self):
+        M = sympy.Symbol('M', positive=True)
+        N = sympy.Symbol('N', positive=True)
+
+        def foo(a: int32[M, N], b: float32[2 * M, N], c: int32[N], d: float32[M]) -> int32[M, N]:
+            for i in range(2, M // 2, 2):
+                for j in range(N - 10, N - 1, 1):
                     b[i + 1, j] = (a[i, j] + c[j]) / (b[i, j] * d[i])
             return b
 

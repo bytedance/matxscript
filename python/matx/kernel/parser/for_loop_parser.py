@@ -180,11 +180,11 @@ class ForLoopParser(BaseParser):
         args = []
         for a in rng.args:
             # todo support symbolic expression
-            if not isinstance(a, (ast.Constant, ast.Name)):
+            if not isinstance(a, (ast.Constant, ast.Name, ast.BinOp)):
                 raise SyntaxError(
                     f"Args in range function should be constant, scalar, or symbol but get {type(a)}")
             a_ir = self.visit(a)
-            if not isinstance(a_ir, (ScalarNode, SymbolNode)):
+            if not isinstance(a_ir, (ScalarNode, SymbolNode, ArithmeticBinaryOp)):
                 raise SyntaxError(
                     f"Args in range function should be constant, scalar, or symbol but get {type(a)}")
             args.append(a_ir)
@@ -194,5 +194,5 @@ class ForLoopParser(BaseParser):
     def _make_range(self):
         rng = []
         for key, r in self.loop_variable_map.items():
-            rng.append(RangeExpr(r[0].script_var, r[1].script_var, r[2].script_var))
+            rng.append(RangeExpr(r[0].to_matx_ir(), r[1].to_matx_ir(), r[2].to_matx_ir()))
         return rng

@@ -20,6 +20,8 @@
 
 from numbers import Number
 
+import sympy
+
 from matx.ir.tensor_stmt import BufferRegion
 from matx.kernel.typing import *
 
@@ -29,6 +31,8 @@ def get_dtype(t):
         return t.dtype
     elif isinstance(t, (Number, np.bool_)):
         return PYTYPE_TO_KERNEL_TYPE[type(t)]
+    elif t is sympy.Basic:
+        return "int64"
     else:
         raise TypeError(f"Type {type(t)} of argument {t} is not supported")
 
@@ -38,6 +42,8 @@ def get_shape(t):
         return t.shape
     elif isinstance(t, (Number, np.bool_)):
         return None
+    elif t is sympy.Basic:
+        return (1,)
     else:
         raise TypeError(f"Shape {type(t)} of argument {t} is not supported")
 

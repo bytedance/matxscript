@@ -175,7 +175,8 @@ class BaseParser(ast.NodeVisitor):
         opname = type(node.op).__name__
         lhs_ir = self.visit(node.left)
         rhs_ir = self.visit(node.right)
-        if is_scalar_type(lhs_ir.kernel_type) and is_scalar_type(rhs_ir.kernel_type):
+        if (is_scalar_type(lhs_ir.kernel_type) or is_symbol_type(lhs_ir.kernel_type))\
+                and (is_scalar_type(rhs_ir.kernel_type) or is_symbol_type(rhs_ir.kernel_type)):
             return ArithmeticBinaryOp(lhs_ir, rhs_ir, type(node.op), self.build_span(node))
         else:
             raise SyntaxError(f"{lhs_ir} {opname} {rhs_ir} is not supported "
@@ -258,7 +259,7 @@ class BaseParser(ast.NodeVisitor):
         if not is_scalar_type(ann):
             raise SyntaxError(f"Annotating {target_name} with type {ann} is not allowed.")
         # make sure the annotated type is the same as rhs value
-        if value != ann:
+        if value.kernel_type != ann:
             raise SyntaxError(f"Assigning {value.kernel_type} to {ann} is not allowed")
         tmp_scalar_ctx = ScalarNode(target_name, ann, span)
         self.tmp_scalar_table[target_name] = tmp_scalar_ctx
