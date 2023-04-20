@@ -23,7 +23,13 @@
  * \brief Printer to print out the unified IR text format
  *        that can be parsed by a parser.
  */
+#include <ostream>
 #include <sstream>
+#include "matxscript/ir/prim_ops.h"
+#include "matxscript/ir/prim_var.h"
+#include "matxscript/ir/tensor_stmt.h"
+#include "matxscript/runtime/dlpack.h"
+#include "matxscript/runtime/object.h"
 
 #include <matxscript/ir/expr_functor.h>
 #include <matxscript/ir/function.h>
@@ -90,10 +96,16 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   void VisitStmt_(const PrimFuncNode* op, std::ostream& os) override;
   void VisitStmtDefault_(const Object* op, std::ostream& os) override;
 
+  // void VisitStmt_(const BufferStoreNode* op, std::ostream &os) override;
+  // void VisitStmt_(const ComputeBlockNode* op, std::ostream &os) override;
+  // void VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream &os) override;
+
   template <typename T>
   void GenLinalgArithStatement(const std::string& arith_type,
                                const PrimBinaryOpNode<T>* op,
                                std::ostream& os);
+
+  std::string ConvertDataType(const runtime::DataType type);
 
   std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op);
 
@@ -134,30 +146,56 @@ void LinalgTextPrinter::VisitExpr_(const IntImmNode* op, std::ostream& os) {
 void LinalgTextPrinter::VisitExpr_(const FloatImmNode* op, std::ostream& os) {
 }
 
+std::string LinalgTextPrinter::ConvertDataType(const runtime::DataType type) {
+  std::string data_type;
+  auto const bits = type.bits();
+  auto const type_code = type.code();
+
+  switch (type_code) {
+    case DataType::TypeCode::kInt: {
+      data_type = "i" + std::to_string(bits);
+      break;
+    }
+    case DataType::TypeCode::kUInt: {
+      data_type = "ui" + std::to_string(bits);
+      break;
+    }
+    case DataType::TypeCode::kFloat: {
+      data_type = "f" + std::to_string(bits);
+      break;
+    }
+    case DataType::TypeCode::kHandle: {
+      data_type = "memref<?xi32>";
+      break;
+    }
+    default: {
+      MXCHECK(false) << "data type not supported, type: " << type_code << " bits: " << bits;
+    }
+  }
+  return data_type;
+}
+
 std::pair<std::string, std::string> LinalgTextPrinter::GetNodeDataType(const PrimExprNode* op) {
   auto val_type_iter = val_type_map_.find(op);
   if (val_type_iter != val_type_map_.end()) {
     return val_type_iter->second;
   }
   std::string arith_suffix = "";
-  std::string data_type = "";
+  std::string data_type = ConvertDataType(op->dtype);
   MXCHECK(op->dtype.lanes() == 1) << " lanes must be 1, but receive " << op->dtype.lanes();
   auto op_dtype = op->dtype.code();
   auto bits = op->dtype.bits();
   switch (op->dtype.code()) {
-    case kDLInt: {
+    case kDLInt:
       arith_suffix = "i";
-      if (bits == 8 || bits == 16 || bits == 32 || bits == 64) {
-        data_type = "i" + std::to_string(bits);
-      }
-      case kDLFloat: {
-        arith_suffix = "f";
-        if (bits == 16 || bits == 32 || bits == 64) {
-          data_type = "f" + std::to_string(bits);
-        }
-      }
-    }
+      break;
+    case kDLFloat:
+      arith_suffix = "f";
+      break;
+    default:
+      MXCHECK(false) << "data type not supported, type: " << op->dtype.code() << " bits: " << bits;
   }
+
   if (arith_suffix == "" || data_type == "") {
     MXCHECK(false) << "data type not supported, type: " << op->dtype.code()
                    << " bits: " << op->dtype.bits();
@@ -275,12 +313,11 @@ void LinalgTextPrinter::VisitStmt_(const AssignStmtNode* op, std::ostream& os) {
 }
 
 void LinalgTextPrinter::VisitStmt_(const ReturnStmtNode* op, std::ostream& os) {
-  if (op->value->IsInstance<HLOExprNode>()) {
-    HLOExprFunctor::VisitExpr(runtime::Downcast<HLOExpr>(op->value), os);
-    os << "return %" << expr_index_map_[op->value.get()];
-  } else if (op->value->IsInstance<PrimExprNode>()) {
-    PrimExprFunctor::VisitExpr(runtime::Downcast<PrimExpr>(op->value), os);
-    os << "return %" << expr_index_map_[op->value.get()];
+  if (op->value->IsInstance<PrimExprNode>()) {
+    auto node = runtime::Downcast<PrimExpr>(op->value);
+    PrimExprFunctor::VisitExpr(node, os);
+    os << "func.return %" << expr_index_map_[op->value.get()];
+    os << " :" << ConvertDataType(node->dtype) << std::endl;
   } else {
     MXCHECK(false) << "[linalg] not support expr node: " << op->value;
   }
@@ -303,7 +340,33 @@ void LinalgTextPrinter::VisitStmt_(const ExprStmtNode* op, std::ostream& os) {
 
 void LinalgTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
   // TODO, add func name and params
+  os << "func.func @" << op->GetGlobalName();
+  os << "(";
+  auto func_params = op->GetParams();
+  for (int i = 0; i < func_params.size(); i++) {
+    auto& param = func_params[i];
+    if (param->IsInstance<PrimVarNode>()) {
+      auto node = runtime::Downcast<PrimVar>(param);
+      // todo arg name and type
+      os << "%" << node->name_hint << ": " << ConvertDataType(node->dtype);
+    } else {
+      MXCHECK(false) << "[linalg] not support arg node: " << param->checked_type();
+    }
+    if (i != func_params.size() - 1) {
+      os << ", ";
+    }
+  }
+  os << ")";
+  auto rt_type = op->GetReturnType();
+  if (!IsVoidType(rt_type)) {
+    os << "->" << ConvertDataType(GetRuntimeDataType(rt_type));
+  }
+  // check if none
+  // if so skip
+  // otherwise ->retype
+  os << "{" << std::endl;
   VisitStmt(op->body, os);
+  os << "}" << std::endl;
 }
 
 // Begin Type
