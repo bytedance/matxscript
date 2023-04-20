@@ -40,9 +40,14 @@ class TestLinalgStatementPrint(unittest.TestCase):
         func_name = "basic_arith_op"
         prim_func = prim_func.with_attr("global_symbol", func_name)
         linalg_statement = _ffi_node_api.as_linalg_text(prim_func).decode()
-        expected_statement = "%0 = arith.addf %a, %b : f32\n" + "%1 = arith.subf %c, %d : f32\n" + \
-            "%2 = arith.mulf %0, %1 : f32\n" + "%3 = arith.divf %2, %e : f32\n" + "func.return %3"
-        self.assertEqual(expected_statement, linalg_statement)
+        expected_statement = """func.func @basic_arith_op(%a: f32, %b: f32, %c: f32, %d: f32, %e: f32)->f32{
+%0 = arith.addf %a, %b : f32
+%1 = arith.subf %c, %d : f32
+%2 = arith.mulf %0, %1 : f32
+%3 = arith.divf %2, %e : f32
+func.return %3 :f32
+}"""
+        self.assertEqual(expected_statement.strip(), linalg_statement.strip())
 
 
 if __name__ == "__main__":
