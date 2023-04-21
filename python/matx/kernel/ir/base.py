@@ -25,10 +25,13 @@ class ExpressionBaseNode:
     def to_matx_ir(self, **kwargs):
         raise NotImplementedError("to_matx_ir is not implemented")
 
-    def ndarrays(self):
+    def buffer_regions(self, **kwargs):
         return []
 
-    def buffer_regions(self, **kwargs):
+    def reads(self):
+        return self.buffer_regions()
+
+    def writes(self):
         return []
 
 

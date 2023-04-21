@@ -184,7 +184,7 @@ class ForLoopParser(BaseParser):
                 raise SyntaxError(
                     f"Args in range function should be constant, scalar, or symbol but get {type(a)}")
             a_ir = self.visit(a)
-            if not isinstance(a_ir, (ScalarNode, SymbolNode, ArithmeticBinaryOp)):
+            if not isinstance(a_ir, (ScalarNode, SymbolNode, BinaryOp)):
                 raise SyntaxError(
                     f"Args in range function should be constant, scalar, or symbol but get {type(a)}")
             args.append(a_ir)

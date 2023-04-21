@@ -63,7 +63,7 @@ class KernelSingleReturnParser(BaseParser):
         opname = type(node.op).__name__
         lhs_ir = self.visit(node.left)
         rhs_ir = self.visit(node.right)
-        op = kernel_ir.ArithmeticBinaryOp(lhs_ir, rhs_ir, type(node.op), self.build_span(node))
+        op = kernel_ir.BinaryOp(lhs_ir, rhs_ir, type(node.op), self.build_span(node))
         # todo update iter var names
         # todo update BufferRegion to reads
 
