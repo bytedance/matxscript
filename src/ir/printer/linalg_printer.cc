@@ -111,7 +111,7 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
 
   std::string ConvertTypeToMLIR(const runtime::DataType& type);
   std::string ConvertTypeToMLIR(const Type& type);
-  std::string GetNodeName(const BaseExpr& ptr);
+  void PrintNodeName(const BaseExpr& ptr, std::ostream& os);
 
   std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op);
 
@@ -130,7 +130,7 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   /*! \brief the stream to be printed */
   std::ostringstream stream_;
 
-  std::unordered_map<const Object*, std::string> expr_index_map_;
+  std::unordered_map<const Object*, std::string> expr_name_map_;
   std::unordered_map<const Object*, std::pair<std::string, std::string>> val_type_map_;
   std::atomic<uint32_t> cur_index_{0};
 };
@@ -174,7 +174,7 @@ std::string LinalgTextPrinter::ConvertTypeToMLIR(const runtime::DataType& type) 
       break;
     }
     default: {
-      MXCHECK(false) << "data type not supported, type: " << type_code << " bits: " << bits;
+      MXTHROW << "data type not supported, type: " << type_code << " bits: " << bits;
     }
   }
   return data_type;
@@ -187,19 +187,23 @@ std::string LinalgTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Type& typ
     auto dtype = ConvertTypeToMLIR(n->element_type);
     return "memref<?x" + dtype + ">";
   } else {
-    MXLOG(FATAL) << "Type " << type << " does not have a corresponding runtime::DataType";
+    MXTHROW << "Type " << type << " does not have a corresponding runtime::DataType";
     return "";
   }
 }
 
-std::string LinalgTextPrinter::GetNodeName(const BaseExpr& ptr) {
-  if (ptr->IsInstance<PrimVarNode>()) {
-    std::stringstream ss;
-    ss << ptr;
-    return ss.str();
-  } else {
-    return expr_index_map_.at(ptr.get());
+void LinalgTextPrinter::PrintNodeName(const BaseExpr& ptr, std::ostream& os) {
+  if (expr_name_map_.find(ptr.get()) != expr_name_map_.end()) {
+    os << expr_name_map_.at(ptr.get());
+    return;
   }
+  if (ptr->IsInstance<PrimVarNode>()) {
+    auto node = runtime::Downcast<PrimVar>(ptr);
+    expr_name_map_.emplace(ptr.get(), node->name_hint.c_str());
+    os << node->name_hint;
+    return;
+  }
+  MXTHROW << "Expr: " << ptr << " has no corrresponding ssa value";
 }
 
 std::pair<std::string, std::string> LinalgTextPrinter::GetNodeDataType(const PrimExprNode* op) {
@@ -220,12 +224,12 @@ std::pair<std::string, std::string> LinalgTextPrinter::GetNodeDataType(const Pri
       arith_suffix = "f";
       break;
     default:
-      MXCHECK(false) << "data type not supported, type: " << op->dtype.code() << " bits: " << bits;
+      MXTHROW << "data type not supported, type: " << op->dtype.code() << " bits: " << bits;
   }
 
   if (arith_suffix == "" || data_type == "") {
-    MXCHECK(false) << "data type not supported, type: " << op->dtype.code()
-                   << " bits: " << op->dtype.bits();
+    MXTHROW << "data type not supported, type: " << op->dtype.code()
+            << " bits: " << op->dtype.bits();
   }
 
   auto node_data_type =
@@ -245,12 +249,14 @@ void LinalgTextPrinter::GenLinalgArithStatement(const std::string& arith_type,
   std::string arith_total_type = arith_type + data_arith_suffix_type.second;
 
   os << "%" << cur_index_ << " = arith." << arith_total_type << " %";
-  os << GetNodeName(op->a) << ", %";
-  os << GetNodeName(op->b) << " : " << data_type << "\n";
-  if (expr_index_map_.find(op) != expr_index_map_.end()) {
-    MXCHECK(false) << "[linalg] op is already in expr_index_map_";
+  PrintNodeName(op->a, os);
+  os << ", %";
+  PrintNodeName(op->b, os);
+  os << " : " << data_type << "\n";
+  if (expr_name_map_.find(op) != expr_name_map_.end()) {
+    MXTHROW << "[linalg] op is already in expr_index_map_";
   }
-  expr_index_map_.emplace(op, std::to_string(cur_index_));
+  expr_name_map_.emplace(op, std::to_string(cur_index_));
   cur_index_ += 1;
 }
 
@@ -316,6 +322,7 @@ void LinalgTextPrinter::VisitExpr_(const PrimSelectNode* op, std::ostream& os) {
 }
 
 void LinalgTextPrinter::VisitExpr_(const PrimVarNode* op, std::ostream& os) {
+  // print nothing here
 }
 
 void LinalgTextPrinter::VisitExpr_(const PrimLetNode* op, std::ostream& os) {
@@ -338,25 +345,33 @@ void LinalgTextPrinter::VisitStmt_(const ReturnStmtNode* op, std::ostream& os) {
   if (op->value->IsInstance<PrimExprNode>()) {
     auto node = runtime::Downcast<PrimExpr>(op->value);
     PrimExprFunctor::VisitExpr(node, os);
-    os << "func.return %" << GetNodeName(op->value);
+    os << "func.return %";
+    PrintNodeName(op->value, os);
     os << " :";
     VisitType(node->checked_type(), os);
     os << std::endl;
   } else {
-    MXCHECK(false) << "[linalg] not support expr node: " << op->value;
+    MXTHROW << "[linalg] not support expr node: " << op->value;
   }
 }
 
 void LinalgTextPrinter::VisitStmt_(const AssertStmtNode* op, std::ostream& os) {
+  // linalg does not support assert
+  VisitStmtDefault_(op, os);
 }
 
 void LinalgTextPrinter::VisitStmt_(const IfThenElseNode* op, std::ostream& os) {
 }
 
 void LinalgTextPrinter::VisitStmt_(const SeqStmtNode* op, std::ostream& os) {
+  for (auto& stmt : op->seq) {
+    VisitStmt(stmt, os);
+  }
 }
 
 void LinalgTextPrinter::VisitStmt_(const ForNode* op, std::ostream& os) {
+  // for is a parallel scope.
+  VisitStmtDefault_(op, os);
 }
 
 void LinalgTextPrinter::VisitStmt_(const ExprStmtNode* op, std::ostream& os) {
@@ -373,8 +388,9 @@ void LinalgTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
       auto node = runtime::Downcast<PrimVar>(param);
       os << "%" << node->name_hint << ": ";
       VisitType(node->checked_type(), os);
+      expr_name_map_.emplace(param.get(), node->name_hint.c_str());
     } else {
-      MXCHECK(false) << "[linalg] not support arg node: " << param->checked_type();
+      MXTHROW << "[linalg] not support arg node: " << param->checked_type();
     }
     if (i != func_params.size() - 1) {
       os << ", ";
