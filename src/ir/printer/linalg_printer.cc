@@ -100,9 +100,9 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   void VisitStmt_(const PrimFuncNode* op, std::ostream& os) override;
   void VisitStmtDefault_(const Object* op, std::ostream& os) override;
 
-  void VisitStmt_(const BufferStoreNode* op, std::ostream &os) override;
-  void VisitStmt_(const ComputeBlockNode* op, std::ostream &os) override;
-  void VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream &os) override;
+  void VisitStmt_(const BufferStoreNode* op, std::ostream& os) override;
+  void VisitStmt_(const ComputeBlockNode* op, std::ostream& os) override;
+  void VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream& os) override;
 
   template <typename T>
   void GenLinalgArithStatement(const std::string& arith_type,
@@ -115,7 +115,7 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
 
   std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op);
 
-  void ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream &os);
+  void ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream& os);
   void LibraryNodeToLinalgGeneric();
 
   // Begin Type
@@ -339,7 +339,9 @@ void LinalgTextPrinter::VisitStmt_(const ReturnStmtNode* op, std::ostream& os) {
     auto node = runtime::Downcast<PrimExpr>(op->value);
     PrimExprFunctor::VisitExpr(node, os);
     os << "func.return %" << GetNodeName(op->value);
-    os << " :" << ConvertTypeToMLIR(node->checked_type()) << std::endl;
+    os << " :";
+    VisitType(node->checked_type(), os);
+    os << std::endl;
   } else {
     MXCHECK(false) << "[linalg] not support expr node: " << op->value;
   }
@@ -369,7 +371,8 @@ void LinalgTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
     auto& param = func_params[i];
     if (param->IsInstance<PrimVarNode>()) {
       auto node = runtime::Downcast<PrimVar>(param);
-      os << "%" << node->name_hint << ": " << ConvertTypeToMLIR(node->checked_type());
+      os << "%" << node->name_hint << ": ";
+      VisitType(node->checked_type(), os);
     } else {
       MXCHECK(false) << "[linalg] not support arg node: " << param->checked_type();
     }
@@ -380,7 +383,8 @@ void LinalgTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
   os << ")";
   auto rt_type = op->GetReturnType();
   if (!IsVoidType(rt_type)) {
-    os << "->" << ConvertTypeToMLIR(rt_type);
+    os << "->";
+    VisitType(rt_type, os);
   }
   // check if none
   // if so skip
@@ -390,28 +394,30 @@ void LinalgTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
   os << "}" << std::endl;
 }
 
-void LinalgTextPrinter::VisitStmt_(const BufferStoreNode* op, std::ostream &os){
-
+void LinalgTextPrinter::VisitStmt_(const BufferStoreNode* op, std::ostream& os) {
 }
-void LinalgTextPrinter::VisitStmt_(const ComputeBlockNode* op, std::ostream &os){
-
+void LinalgTextPrinter::VisitStmt_(const ComputeBlockNode* op, std::ostream& os) {
 }
-void LinalgTextPrinter::VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream &os){
-
+void LinalgTextPrinter::VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream& os) {
 }
 
-void LinalgTextPrinter::ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream &os){}
-void LinalgTextPrinter::LibraryNodeToLinalgGeneric(){}
-
+void LinalgTextPrinter::ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream& os) {
+}
+void LinalgTextPrinter::LibraryNodeToLinalgGeneric() {
+}
 
 // Begin Type
 void LinalgTextPrinter::VisitType_(const PrimTypeNode* node, std::ostream& os) {
+  os << ConvertTypeToMLIR(node->dtype);
 }
 
 void LinalgTextPrinter::VisitType_(const PointerTypeNode* node, std::ostream& os) {
+  auto dtype = ConvertTypeToMLIR(node->element_type);
+  os << "memref<?x" + dtype + ">";
 }
 
 void LinalgTextPrinter::VisitType_(const NDArrayTypeNode* node, std::ostream& os) {
+  VisitTypeDefault_(node, os);
 }
 
 // Global Linalg TextPrint
