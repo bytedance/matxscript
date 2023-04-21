@@ -23,11 +23,15 @@
  * \brief Printer to print out the unified IR text format
  *        that can be parsed by a parser.
  */
+#include <iostream>
 #include <ostream>
 #include <sstream>
+#include <string>
+#include "matxscript/ir/base.h"
 #include "matxscript/ir/prim_ops.h"
 #include "matxscript/ir/prim_var.h"
 #include "matxscript/ir/tensor_stmt.h"
+#include "matxscript/ir/type.h"
 #include "matxscript/runtime/dlpack.h"
 #include "matxscript/runtime/object.h"
 
@@ -105,7 +109,9 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
                                const PrimBinaryOpNode<T>* op,
                                std::ostream& os);
 
-  std::string ConvertDataType(const runtime::DataType type);
+  std::string ConvertTypeToMLIR(const runtime::DataType& type);
+  std::string ConvertTypeToMLIR(const Type& type);
+  std::string GetNodeName(const BaseExpr& ptr);
 
   std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op);
 
@@ -121,7 +127,7 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   /*! \brief the stream to be printed */
   std::ostringstream stream_;
 
-  std::unordered_map<const Object*, uint32_t> expr_index_map_;
+  std::unordered_map<const Object*, std::string> expr_index_map_;
   std::unordered_map<const Object*, std::pair<std::string, std::string>> val_type_map_;
   std::atomic<uint32_t> cur_index_{0};
 };
@@ -146,7 +152,7 @@ void LinalgTextPrinter::VisitExpr_(const IntImmNode* op, std::ostream& os) {
 void LinalgTextPrinter::VisitExpr_(const FloatImmNode* op, std::ostream& os) {
 }
 
-std::string LinalgTextPrinter::ConvertDataType(const runtime::DataType type) {
+std::string LinalgTextPrinter::ConvertTypeToMLIR(const runtime::DataType& type) {
   std::string data_type;
   auto const bits = type.bits();
   auto const type_code = type.code();
@@ -164,15 +170,33 @@ std::string LinalgTextPrinter::ConvertDataType(const runtime::DataType type) {
       data_type = "f" + std::to_string(bits);
       break;
     }
-    case DataType::TypeCode::kHandle: {
-      data_type = "memref<?xi32>";
-      break;
-    }
     default: {
       MXCHECK(false) << "data type not supported, type: " << type_code << " bits: " << bits;
     }
   }
   return data_type;
+}
+
+std::string LinalgTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Type& type) {
+  if (auto* n = type.as<PrimTypeNode>()) {
+    return ConvertTypeToMLIR(n->dtype);
+  } else if (auto* n = type.as<PointerTypeNode>()) {
+    auto dtype = ConvertTypeToMLIR(n->element_type);
+    return "memref<?x" + dtype + ">";
+  } else {
+    MXLOG(FATAL) << "Type " << type << " does not have a corresponding runtime::DataType";
+    return "";
+  }
+}
+
+std::string LinalgTextPrinter::GetNodeName(const BaseExpr& ptr) {
+  if (ptr->IsInstance<PrimVarNode>()) {
+    std::stringstream ss;
+    ss << ptr;
+    return ss.str();
+  } else {
+    return expr_index_map_.at(ptr.get());
+  }
 }
 
 std::pair<std::string, std::string> LinalgTextPrinter::GetNodeDataType(const PrimExprNode* op) {
@@ -181,7 +205,7 @@ std::pair<std::string, std::string> LinalgTextPrinter::GetNodeDataType(const Pri
     return val_type_iter->second;
   }
   std::string arith_suffix = "";
-  std::string data_type = ConvertDataType(op->dtype);
+  std::string data_type = ConvertTypeToMLIR(op->checked_type());
   MXCHECK(op->dtype.lanes() == 1) << " lanes must be 1, but receive " << op->dtype.lanes();
   auto op_dtype = op->dtype.code();
   auto bits = op->dtype.bits();
@@ -218,17 +242,12 @@ void LinalgTextPrinter::GenLinalgArithStatement(const std::string& arith_type,
   std::string arith_total_type = arith_type + data_arith_suffix_type.second;
 
   os << "%" << cur_index_ << " = arith." << arith_total_type << " %";
-  if (op->a->template IsInstance<PrimVarNode>()) {
-    os << op->a << ", %";
-  } else {
-    os << expr_index_map_[op->a.get()] << ", %";
+  os << GetNodeName(op->a) << ", %";
+  os << GetNodeName(op->b) << " : " << data_type << "\n";
+  if (expr_index_map_.find(op) != expr_index_map_.end()) {
+    MXCHECK(false) << "[linalg] op is already in expr_index_map_";
   }
-  if (op->b->template IsInstance<PrimVarNode>()) {
-    os << op->b << " : " << data_type << "\n";
-  } else {
-    os << expr_index_map_[op->b.get()] << " : " << data_type << "\n";
-  }
-  expr_index_map_[op] = cur_index_;
+  expr_index_map_.emplace(op, std::to_string(cur_index_));
   cur_index_ += 1;
 }
 
@@ -316,8 +335,8 @@ void LinalgTextPrinter::VisitStmt_(const ReturnStmtNode* op, std::ostream& os) {
   if (op->value->IsInstance<PrimExprNode>()) {
     auto node = runtime::Downcast<PrimExpr>(op->value);
     PrimExprFunctor::VisitExpr(node, os);
-    os << "func.return %" << expr_index_map_[op->value.get()];
-    os << " :" << ConvertDataType(node->dtype) << std::endl;
+    os << "func.return %" << GetNodeName(op->value);
+    os << " :" << ConvertTypeToMLIR(node->checked_type()) << std::endl;
   } else {
     MXCHECK(false) << "[linalg] not support expr node: " << op->value;
   }
@@ -347,8 +366,7 @@ void LinalgTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
     auto& param = func_params[i];
     if (param->IsInstance<PrimVarNode>()) {
       auto node = runtime::Downcast<PrimVar>(param);
-      // todo arg name and type
-      os << "%" << node->name_hint << ": " << ConvertDataType(node->dtype);
+      os << "%" << node->name_hint << ": " << ConvertTypeToMLIR(node->checked_type());
     } else {
       MXCHECK(false) << "[linalg] not support arg node: " << param->checked_type();
     }
@@ -359,7 +377,7 @@ void LinalgTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
   os << ")";
   auto rt_type = op->GetReturnType();
   if (!IsVoidType(rt_type)) {
-    os << "->" << ConvertDataType(GetRuntimeDataType(rt_type));
+    os << "->" << ConvertTypeToMLIR(rt_type);
   }
   // check if none
   // if so skip

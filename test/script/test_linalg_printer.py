@@ -76,6 +76,21 @@ func.return %3 :i32
 }"""
         self.assertEqual(expected_statement.strip(), linalg_statement.strip())
 
+    def test_pointer_op(self):
+        ptr_type = matx.ir.PointerType(matx.ir.PrimType("int32"))
+        a = matx.ir.PrimVar("a", ptr_type)
+        ib = matx.ir.ir_builder.create()
+        ib.emit(matx.ir.ReturnStmt(a))
+        prim_func = matx.ir.PrimFunc([a], [], ib.get(), ptr_type)
+        func_name = "basic_arith_op"
+        prim_func = prim_func.with_attr("global_symbol", func_name)
+        linalg_statement = _ffi_node_api.as_linalg_text(prim_func).decode()
+        expected_statement = """
+func.func @basic_arith_op(%a: memref<?xi32>)->memref<?xi32>{
+func.return %a :memref<?xi32>
+} """
+        self.assertEqual(expected_statement.strip(), linalg_statement.strip())
+
 
 if __name__ == "__main__":
     import logging
