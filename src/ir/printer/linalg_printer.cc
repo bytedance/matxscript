@@ -100,9 +100,9 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   void VisitStmt_(const PrimFuncNode* op, std::ostream& os) override;
   void VisitStmtDefault_(const Object* op, std::ostream& os) override;
 
-  // void VisitStmt_(const BufferStoreNode* op, std::ostream &os) override;
-  // void VisitStmt_(const ComputeBlockNode* op, std::ostream &os) override;
-  // void VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream &os) override;
+  void VisitStmt_(const BufferStoreNode* op, std::ostream &os) override;
+  void VisitStmt_(const ComputeBlockNode* op, std::ostream &os) override;
+  void VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream &os) override;
 
   template <typename T>
   void GenLinalgArithStatement(const std::string& arith_type,
@@ -114,6 +114,9 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   std::string GetNodeName(const BaseExpr& ptr);
 
   std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op);
+
+  void ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream &os);
+  void LibraryNodeToLinalgGeneric();
 
   // Begin Type
   // Overload of Type printing functions
@@ -386,6 +389,20 @@ void LinalgTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
   VisitStmt(op->body, os);
   os << "}" << std::endl;
 }
+
+void LinalgTextPrinter::VisitStmt_(const BufferStoreNode* op, std::ostream &os){
+
+}
+void LinalgTextPrinter::VisitStmt_(const ComputeBlockNode* op, std::ostream &os){
+
+}
+void LinalgTextPrinter::VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream &os){
+
+}
+
+void LinalgTextPrinter::ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream &os){}
+void LinalgTextPrinter::LibraryNodeToLinalgGeneric(){}
+
 
 // Begin Type
 void LinalgTextPrinter::VisitType_(const PrimTypeNode* node, std::ostream& os) {
