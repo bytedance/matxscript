@@ -27,7 +27,9 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include "matxscript/ir/base.h"
+#include "matxscript/ir/prim_expr.h"
 #include "matxscript/ir/prim_ops.h"
 #include "matxscript/ir/prim_var.h"
 #include "matxscript/ir/tensor_stmt.h"
@@ -111,9 +113,13 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
 
   std::string ConvertTypeToMLIR(const runtime::DataType& type);
   std::string ConvertTypeToMLIR(const Type& type);
+  std::string ConvertTypeToMLIR(const Buffer& buffer);
   void PrintNodeName(const BaseExpr& ptr, std::ostream& os);
 
   std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op);
+
+  void VisitBufferRegionArray_(const Array<BufferRegion> &reads, std::ostream& os);
+  void VisitComputBlockBody_(const Stmt &body, std::ostream& os);
 
   void ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream& os);
   void LibraryNodeToLinalgGeneric();
@@ -190,6 +196,30 @@ std::string LinalgTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Type& typ
     MXTHROW << "Type " << type << " does not have a corresponding runtime::DataType";
     return "";
   }
+}
+
+std::string LinalgTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Buffer &buffer) {
+  std::stringstream ss;
+  ss << "memref<";
+  for(auto dim : buffer->shape){
+    if (dim->IsInstance<PrimVarNode>()){
+      auto node = runtime::Downcast<PrimVar>(dim);
+      if (expr_name_map_.find(dim.get())==expr_name_map_.end()){
+        MXTHROW << "Buffer("<<buffer->name<<") is annotated with "<<node->name_hint
+                <<", but for now linalg printer only supports constant or predefined symbols";
+      }
+      ss<<"?x";
+    }else if (dim->IsInstance<IntImmNode>()){
+      auto node = runtime::Downcast<IntImm>(dim);
+      ss<<node->value<<'x';
+    }else{
+      MXTHROW << "Buffer("<<buffer->name<<") is annotated with "<<dim->checked_type()
+              <<", but for now linalg printer only supports constant or predefined symbols";
+    }
+  }
+  ss << ConvertTypeToMLIR(buffer->dtype);
+  ss << ">";
+  return ss.str();
 }
 
 void LinalgTextPrinter::PrintNodeName(const BaseExpr& ptr, std::ostream& os) {
@@ -417,7 +447,45 @@ void LinalgTextPrinter::VisitStmt_(const ComputeBlockNode* op, std::ostream& os)
 void LinalgTextPrinter::VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream& os) {
 }
 
+void LinalgTextPrinter::VisitBufferRegionArray_(const Array<matxscript::ir::BufferRegion> &arr_, std::ostream &os) {
+  // region is ignored for now, and IMHO it should be ignored in this stage.
+  std::stringstream types;
+  for(int i=0; i<arr_.size(); i++){
+    const auto & buffer = arr_[i]->buffer;
+    const auto & region = arr_[i]->region;
+    os<< buffer->data;
+    types << ConvertTypeToMLIR(buffer);
+    if (i!=arr_.size()){
+      types << ", ";
+    }
+  }
+  os << ", " <<types.rdbuf();
+  return;
+}
+
+
 void LinalgTextPrinter::ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream& os) {
+  /**
+   *   Array<PrimIterVar> iter_vars;
+   *   Array<BufferRegion> reads;
+   *   Array<BufferRegion> writes;
+   *   StringRef name_hint;
+   *   Stmt body;
+   */
+  os<<"linalg.generic {";
+  //visit iter_var (affine_map&iterator_types)
+  os<<"}"<<std::endl;
+  //visit ins
+  os<<"                    ins(";
+  VisitBufferRegionArray_(op->reads, os);
+  os<<')'<<std::endl;
+  //visit outs
+  os<<"                    outs(";
+  VisitBufferRegionArray_(op->writes, os);
+  os<<')'<<std::endl;
+  os << "{"<<std::endl;
+  // visit computblock
+  os << "}"<<std::endl;
 }
 void LinalgTextPrinter::LibraryNodeToLinalgGeneric() {
 }
