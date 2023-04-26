@@ -118,6 +118,8 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
 
   std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op);
 
+  void VisitRangeExpr_(const BufferRegion &buffer, const RangeExpr &rng, std::ostream &os);
+  void GenAffineMap_(const Array<PrimIterVar>&iter_vars, const Array<BufferRegion> &reads, const Array<BufferRegion> &writes, std::ostream &os);
   void VisitBufferRegionArray_(const Array<BufferRegion> &reads, std::ostream& os);
   void VisitComputBlockBody_(const Stmt &body, std::ostream& os);
 
@@ -443,6 +445,7 @@ void LinalgTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
 void LinalgTextPrinter::VisitStmt_(const BufferStoreNode* op, std::ostream& os) {
 }
 void LinalgTextPrinter::VisitStmt_(const ComputeBlockNode* op, std::ostream& os) {
+  ComputeBlockToLinalgGeneric(op, os);
 }
 void LinalgTextPrinter::VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream& os) {
 }
@@ -455,14 +458,129 @@ void LinalgTextPrinter::VisitBufferRegionArray_(const Array<matxscript::ir::Buff
     const auto & region = arr_[i]->region;
     os<< buffer->data;
     types << ConvertTypeToMLIR(buffer);
-    if (i!=arr_.size()){
+    if (i!=arr_.size()-1){
+      os << ", ";
       types << ", ";
     }
   }
-  os << ", " <<types.rdbuf();
+  if(arr_.size()>0){
+    os << ": " <<types.str();
+  }
   return;
 }
 
+
+bool isInt(const matxscript::ir::PrimExpr &expr, const int expect){
+  if (expr->IsInstance<IntImmNode>()){
+    const auto &node = runtime::Downcast<IntImm>(expr);
+    return node->value == expect;
+  }
+  return false;
+}
+
+
+void LinalgTextPrinter::VisitRangeExpr_(const matxscript::ir::BufferRegion &buffer, const matxscript::ir::RangeExpr &rng, std::ostream &os){
+  const auto &start = rng->start;
+  const auto &end = rng->stop;
+  const auto &step = rng->step;
+  // start has to be 0
+  MXCHECK(isInt(step, 0))<<"The start ("<<start<< ") of range ("<<rng<<") of buffer ("<<buffer<<") is not 0";
+  // step has to be 1
+  MXCHECK(isInt(step, 1))<<"The step ("<<step<< ") of range ("<<rng<<") of buffer ("<<buffer<<") is not 1";
+  // end
+  if (end->IsInstance<PrimVarNode>()){
+    const auto &node = runtime::Downcast<PrimVar>(end);
+    // todo check if it is iter var
+    os << node->name_hint;
+  }else{
+    MXTHROW<<"The end ("<<end<< ") of range ("<<rng<<") of buffer ("<<buffer<<") is not a iter var";
+  }
+}
+
+
+void LinalgTextPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar> &iter_vars, const Array<matxscript::ir::BufferRegion> &reads, const Array<matxscript::ir::BufferRegion> &writes, std::ostream &os) {
+  os <<"indexing_maps = [";
+
+  // collect all iter vars and format them to affine_map<(i,j,k) -> (
+  std::stringstream perfix;
+  perfix << "affine_map<(";
+
+  for (int i=0; i<iter_vars.size(); i++) {
+    if(iter_vars[i]->dom->start->IsInstance<IntImmNode>()){
+      const auto &node = runtime::Downcast<IntImm>(iter_vars[i]->dom->start);
+      if(node->value!=0){
+        MXTHROW<<"The start ("<<iter_vars[i]->dom->start<< ") of iter_var ("<<iter_vars[i]<<") is not 0";
+      }
+    }else{
+      MXTHROW<<"The start ("<<iter_vars[i]->dom->start<< ") of iter_var ("<<iter_vars[i]<<")  is not 0";
+    }
+    if (!iter_vars[i]->dom->stop->IsInstance<PrimVarNode>()){
+      MXTHROW<<"The end ("<<iter_vars[i]->dom->stop<< ") of iter_var ("<<iter_vars[i]<<") is not a pre defined symbol";
+    }
+
+    if (iter_vars[i]->dom->step->IsInstance<IntImmNode>()){
+      const auto &node = runtime::Downcast<IntImm>(iter_vars[i]->dom->step);
+      if(node->value!=1){
+        MXTHROW<<"The step ("<<iter_vars[i]->dom->step<< ") of iter_var ("<<iter_vars[i]<<") is not 1";
+      }
+    }else{
+      MXTHROW<<"The step ("<<iter_vars[i]->dom->step<< ") of iter_var ("<<iter_vars[i]<<")  is not 1";
+    }
+    perfix << iter_vars[i]->dom->stop;
+    if (i!=reads.size()-1){
+      perfix<<", ";
+    }
+  }
+  perfix << ") -> (";
+  auto perfix_str = perfix.str();
+
+  // format for each ndarray
+  for (const auto & read_buffer : reads) {
+    os<<perfix_str;
+    const auto &buffer = read_buffer->buffer;
+    const auto &region = read_buffer->region;
+    for(int i=0;i<region.size(); i++){
+      const auto &range = region[i];
+      VisitRangeExpr_(read_buffer, range, os);
+      if (i!=region.size()-1){
+        os<<", ";
+      }
+    }
+    if (writes.empty()){
+      os << ")>";
+    }else {
+      os << ")>, ";
+
+    }
+  }
+
+  for (const auto & write_buffer : writes) {
+    os<<perfix_str;
+    const auto &buffer = write_buffer->buffer;
+    const auto &region = write_buffer->region;
+    for(int i=0;i<region.size(); i++){
+      const auto &range = region[i];
+      VisitRangeExpr_(write_buffer, range, os);
+      if (i!=region.size()-1){
+        os<<", ";
+      }
+    }
+  }
+
+  os << "], iterator_types = [";
+  // todo for now just assume they are parallel, deal with reduction later
+  for (int i=0; i<reads.size(); i++){
+    os<<"parallel";
+    if (i!=reads.size()-1){
+      os<<", ";
+    }
+  }
+  os << "]";
+}
+
+void LinalgTextPrinter::VisitComputBlockBody_(const matxscript::ir::Stmt &body, std::ostream &os) {
+
+}
 
 void LinalgTextPrinter::ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream& os) {
   /**
@@ -474,6 +592,7 @@ void LinalgTextPrinter::ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, 
    */
   os<<"linalg.generic {";
   //visit iter_var (affine_map&iterator_types)
+  GenAffineMap_(op->iter_vars, op->reads, op->writes, os);
   os<<"}"<<std::endl;
   //visit ins
   os<<"                    ins(";
@@ -485,6 +604,7 @@ void LinalgTextPrinter::ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, 
   os<<')'<<std::endl;
   os << "{"<<std::endl;
   // visit computblock
+  VisitComputBlockBody_(op->body, os);
   os << "}"<<std::endl;
 }
 void LinalgTextPrinter::LibraryNodeToLinalgGeneric() {
