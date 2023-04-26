@@ -484,7 +484,7 @@ void LinalgTextPrinter::VisitRangeExpr_(const matxscript::ir::BufferRegion &buff
   const auto &end = rng->stop;
   const auto &step = rng->step;
   // start has to be 0
-  MXCHECK(isInt(step, 0))<<"The start ("<<start<< ") of range ("<<rng<<") of buffer ("<<buffer<<") is not 0";
+  MXCHECK(isInt(start, 0))<<"The start ("<<start<< ") of range ("<<rng<<") of buffer ("<<buffer<<") is not 0";
   // step has to be 1
   MXCHECK(isInt(step, 1))<<"The step ("<<step<< ") of range ("<<rng<<") of buffer ("<<buffer<<") is not 1";
   // end
@@ -506,27 +506,18 @@ void LinalgTextPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar> &
   perfix << "affine_map<(";
 
   for (int i=0; i<iter_vars.size(); i++) {
-    if(iter_vars[i]->dom->start->IsInstance<IntImmNode>()){
-      const auto &node = runtime::Downcast<IntImm>(iter_vars[i]->dom->start);
-      if(node->value!=0){
-        MXTHROW<<"The start ("<<iter_vars[i]->dom->start<< ") of iter_var ("<<iter_vars[i]<<") is not 0";
-      }
-    }else{
-      MXTHROW<<"The start ("<<iter_vars[i]->dom->start<< ") of iter_var ("<<iter_vars[i]<<")  is not 0";
+    const auto & start = iter_vars[i]->dom->start;
+    const auto & stop = iter_vars[i]->dom->stop;
+    const auto & step = iter_vars[i]->dom->step;
+    // start has to be 0
+    MXCHECK(isInt(start, 0))<<"The start ("<<start<< ") of iter_var ("<<iter_vars[i]<<") is not 0";
+    // step has to be 1
+    MXCHECK(isInt(step, 1))<<"The step ("<<step<< ") of iter_var ("<<iter_vars[i]<<")  is not 1";
+    // stop has to be predefined symbol.
+    if (!stop->IsInstance<PrimVarNode>()){
+      MXTHROW<<"The end ("<<stop<< ") of iter_var ("<<iter_vars[i]<<") is not a pre defined symbol";
     }
-    if (!iter_vars[i]->dom->stop->IsInstance<PrimVarNode>()){
-      MXTHROW<<"The end ("<<iter_vars[i]->dom->stop<< ") of iter_var ("<<iter_vars[i]<<") is not a pre defined symbol";
-    }
-
-    if (iter_vars[i]->dom->step->IsInstance<IntImmNode>()){
-      const auto &node = runtime::Downcast<IntImm>(iter_vars[i]->dom->step);
-      if(node->value!=1){
-        MXTHROW<<"The step ("<<iter_vars[i]->dom->step<< ") of iter_var ("<<iter_vars[i]<<") is not 1";
-      }
-    }else{
-      MXTHROW<<"The step ("<<iter_vars[i]->dom->step<< ") of iter_var ("<<iter_vars[i]<<")  is not 1";
-    }
-    perfix << iter_vars[i]->dom->stop;
+    perfix << stop;
     if (i!=reads.size()-1){
       perfix<<", ";
     }
@@ -534,7 +525,7 @@ void LinalgTextPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar> &
   perfix << ") -> (";
   auto perfix_str = perfix.str();
 
-  // format for each ndarray
+  // format for each input
   for (const auto & read_buffer : reads) {
     os<<perfix_str;
     const auto &buffer = read_buffer->buffer;
@@ -550,10 +541,10 @@ void LinalgTextPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar> &
       os << ")>";
     }else {
       os << ")>, ";
-
     }
   }
 
+  // format for each output
   for (const auto & write_buffer : writes) {
     os<<perfix_str;
     const auto &buffer = write_buffer->buffer;
