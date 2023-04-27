@@ -117,7 +117,7 @@ func.return %a :memref<?xf64>
         ib = matx.ir.ir_builder.create()
         ib.emit(computeblock)
         ib.emit(matx.ir.ReturnStmt(a))
-        prim_func = matx.ir.PrimFunc([a], [],  ib.get(), ptr_type)
+        prim_func = matx.ir.PrimFunc([a], [], ib.get(), ptr_type)
         func_name = "basic_arith_op"
         prim_func = prim_func.with_attr("global_symbol", func_name)
         linalg_statement = _ffi_node_api.as_linalg_text(prim_func).decode()
@@ -128,6 +128,7 @@ linalg.generic {indexing_maps = [], iterator_types = []}
                     ins()
                     outs()
 {
+^bb0():
 }
 func.return %a :memref<?xf64>
 }
@@ -144,19 +145,20 @@ func.return %a :memref<?xf64>
         ranges = [matx.ir.RangeExpr(0, i), matx.ir.RangeExpr(0, j)]
         iter_var_names = [matx.ir.PrimVar(f"_{i}", "int64") for i in range(2)]
         iter_vars = [matx.ir.expr.PrimIterVar(r, i) for r, i in zip(ranges, iter_var_names)]
-        A = matx.ir.decl_buffer( [i, j], dtype="float64", name="A", data=A_script_var)
-        B = matx.ir.decl_buffer( [i, j], dtype="float64", name="B", data=B_script_var)
-        C = matx.ir.decl_buffer( [i, j], dtype="float64", name="C", data=C_script_var)
+        A = matx.ir.decl_buffer([i, j], dtype="float64", name="A", data=A_script_var)
+        B = matx.ir.decl_buffer([i, j], dtype="float64", name="B", data=B_script_var)
+        C = matx.ir.decl_buffer([i, j], dtype="float64", name="C", data=C_script_var)
         A_region = matx.ir.BufferRegion(A, ranges)
         B_region = matx.ir.BufferRegion(B, ranges)
         C_region = matx.ir.BufferRegion(C, ranges)
-        computeblock = matx.ir.ComputeBlock(iter_vars, [A_region, B_region], [C_region], "test", matx.ir.SeqStmt([]))
+        computeblock = matx.ir.ComputeBlock(iter_vars, [A_region, B_region], [C_region], "test", matx.ir.SeqStmt([
+                                            C.vstore(tuple(iter_var_names), A.vload(tuple(iter_var_names)))]))
         ptr_type = matx.ir.PointerType(matx.ir.PrimType("float64"))
         a = matx.ir.PrimVar("a", ptr_type)
         ib = matx.ir.ir_builder.create()
         ib.emit(computeblock)
         ib.emit(matx.ir.ReturnStmt(a))
-        prim_func = matx.ir.PrimFunc([i,j], [],  ib.get(), ptr_type)
+        prim_func = matx.ir.PrimFunc([i, j], [], ib.get(), ptr_type)
         func_name = "basic_arith_op"
         prim_func = prim_func.with_attr("global_symbol", func_name)
         linalg_statement = _ffi_node_api.as_linalg_text(prim_func).decode()
