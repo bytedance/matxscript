@@ -28,6 +28,7 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <vector>
 #include "matxscript/ir/base.h"
 #include "matxscript/ir/prim_expr.h"
 #include "matxscript/ir/prim_ops.h"
@@ -54,10 +55,13 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
                           public PrimExprFunctor<void(const PrimExpr&, std::ostream&)>,
                           public HLOExprFunctor<void(const HLOExpr&, std::ostream&)>,
                           public TypeFunctor<void(const Type&, std::ostream&)> {
-  friend class LinalgGenericTextPrinter;
+  using var_name_map = std::unordered_map<const Object*, std::string>;
+  using var_type_map = std::unordered_map<const Object*, std::pair<std::string, std::string>>;
 
  public:
-  explicit LinalgTextPrinter() {
+  explicit LinalgTextPrinter() : var_name_scope(1), var_type_scope(1) {
+    expr_name_map_ = &(var_name_scope.back());
+    val_type_map_ = &(var_type_scope.back());
   }
 
   void AddFunction(const PrimFunc& fn);
@@ -90,6 +94,7 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   void VisitExpr_(const PrimLetNode* op, std::ostream& os) override;
   void VisitExpr_(const PrimCallNode* op, std::ostream& os) override;
   void VisitExpr_(const PrimCastNode* op, std::ostream& os) override;
+  void VisitExpr_(const BufferLoadNode* op, std::ostream& os) override;
   void VisitExprDefault_(const Object* op, std::ostream& os) override;
 
   // Begin Stmt
@@ -118,6 +123,20 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   std::string ConvertTypeToMLIR(const Buffer& buffer) const;
   void PrintNodeName(const BaseExpr& ptr, std::ostream& os);
 
+  void ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream& os);
+
+  void VisitRangeExpr_(const BufferRegion& buffer, const RangeExpr& rng, std::ostream& os);
+  void GenAffineMap_(const Array<PrimIterVar>& iter_vars,
+                     const Array<BufferRegion>& reads,
+                     const Array<BufferRegion>& writes,
+                     std::ostream& os);
+  void VisitBufferRegionArray_(const Array<BufferRegion>& reads,
+                               std::ostream& os,
+                               std::vector<const Buffer*>& bufferOrder);
+  void VisitComputBlockBody_(const Stmt& body,
+                             std::ostream& os,
+                             const std::vector<const Buffer*> bufferOrder);
+
   std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op);
 
   void LibraryNodeToLinalgGeneric();
@@ -130,37 +149,33 @@ class LinalgTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   void VisitType_(const NDArrayTypeNode* node, std::ostream& os) override;
   void VisitTypeDefault_(const Object* op, std::ostream& os) override;
 
+  void NewScope();
+  void PopScope();
+
  private:
   /*! \brief the stream to be printed */
   std::ostringstream stream_;
 
-  std::unordered_map<const Object*, std::string> expr_name_map_;
-  std::unordered_map<const Object*, std::pair<std::string, std::string>> val_type_map_;
+  std::vector<var_name_map> var_name_scope;
+  std::vector<var_type_map> var_type_scope;
+  var_name_map* expr_name_map_;
+  var_type_map* val_type_map_;
   std::atomic<uint32_t> cur_index_{0};
 };
 
-class LinalgGenericTextPrinter {
-  friend class LinalgTextPrinter;
+void LinalgTextPrinter::NewScope() {
+  var_name_scope.emplace_back(expr_name_map_->begin(), expr_name_map_->end());
+  expr_name_map_ = &(var_name_scope.back());
+  var_type_scope.emplace_back(val_type_map_->begin(), val_type_map_->end());
+  val_type_map_ = &(var_type_scope.back());
+}
 
- public:
-  explicit LinalgGenericTextPrinter(const std::string& indent, const LinalgTextPrinter* printer)
-      : indent_(indent), printer_(printer) {
-  }
-  void ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream& os);
-
- private:
-  void VisitRangeExpr_(const BufferRegion& buffer, const RangeExpr& rng, std::ostream& os);
-  void GenAffineMap_(const Array<PrimIterVar>& iter_vars,
-                     const Array<BufferRegion>& reads,
-                     const Array<BufferRegion>& writes,
-                     std::ostream& os);
-  void VisitBufferRegionArray_(const Array<BufferRegion>& reads, std::ostream& os);
-  void VisitComputBlockBody_(const Stmt& body, std::ostream& os);
-
- private:
-  const std::string indent_;
-  const LinalgTextPrinter* printer_;
-};
+void LinalgTextPrinter::PopScope() {
+  var_name_scope.pop_back();
+  expr_name_map_ = &(var_name_scope.back());
+  var_type_scope.pop_back();
+  val_type_map_ = &(var_type_scope.back());
+}
 
 // Error Handlers
 void LinalgTextPrinter::VisitExprDefault_(const Object* op, std::ostream& os) {
@@ -225,7 +240,7 @@ std::string LinalgTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Buffer& b
   for (auto dim : buffer->shape) {
     if (dim->IsInstance<PrimVarNode>()) {
       auto node = runtime::Downcast<PrimVar>(dim);
-      if (expr_name_map_.find(dim.get()) == expr_name_map_.end()) {
+      if (expr_name_map_->find(dim.get()) == expr_name_map_->end()) {
         MXTHROW << "Buffer(" << buffer->name << ") is annotated with " << node->name_hint
                 << ", but for now linalg printer only supports constant or predefined symbols";
       }
@@ -244,13 +259,13 @@ std::string LinalgTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Buffer& b
 }
 
 void LinalgTextPrinter::PrintNodeName(const BaseExpr& ptr, std::ostream& os) {
-  if (expr_name_map_.find(ptr.get()) != expr_name_map_.end()) {
-    os << expr_name_map_.at(ptr.get());
+  if (expr_name_map_->find(ptr.get()) != expr_name_map_->end()) {
+    os << expr_name_map_->at(ptr.get());
     return;
   }
   if (ptr->IsInstance<PrimVarNode>()) {
     auto node = runtime::Downcast<PrimVar>(ptr);
-    expr_name_map_.emplace(ptr.get(), node->name_hint.c_str());
+    expr_name_map_->emplace(ptr.get(), node->name_hint.c_str());
     os << node->name_hint;
     return;
   }
@@ -258,8 +273,8 @@ void LinalgTextPrinter::PrintNodeName(const BaseExpr& ptr, std::ostream& os) {
 }
 
 std::pair<std::string, std::string> LinalgTextPrinter::GetNodeDataType(const PrimExprNode* op) {
-  auto val_type_iter = val_type_map_.find(op);
-  if (val_type_iter != val_type_map_.end()) {
+  auto val_type_iter = val_type_map_->find(op);
+  if (val_type_iter != val_type_map_->end()) {
     return val_type_iter->second;
   }
   std::string arith_suffix = "";
@@ -285,7 +300,7 @@ std::pair<std::string, std::string> LinalgTextPrinter::GetNodeDataType(const Pri
 
   auto node_data_type =
       std::make_pair<std::string, std::string>(std::move(data_type), std::move(arith_suffix));
-  val_type_map_[op] = node_data_type;
+  val_type_map_->emplace(op, node_data_type);
   return node_data_type;
 }
 
@@ -304,10 +319,10 @@ void LinalgTextPrinter::GenLinalgArithStatement(const std::string& arith_type,
   os << ", %";
   PrintNodeName(op->b, os);
   os << " : " << data_type << "\n";
-  if (expr_name_map_.find(op) != expr_name_map_.end()) {
+  if (expr_name_map_->find(op) != expr_name_map_->end()) {
     MXTHROW << "[linalg] op is already in expr_index_map_";
   }
-  expr_name_map_.emplace(op, std::to_string(cur_index_));
+  expr_name_map_->emplace(op, std::to_string(cur_index_));
   cur_index_ += 1;
 }
 
@@ -439,7 +454,7 @@ void LinalgTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
       auto node = runtime::Downcast<PrimVar>(param);
       os << "%" << node->name_hint << ": ";
       VisitType(node->checked_type(), os);
-      expr_name_map_.emplace(param.get(), node->name_hint.c_str());
+      expr_name_map_->emplace(param.get(), node->name_hint.c_str());
     } else {
       MXTHROW << "[linalg] not support arg node: " << param->checked_type();
     }
@@ -460,25 +475,36 @@ void LinalgTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
   VisitStmt(op->body, os);
   os << "}" << std::endl;
 }
+void LinalgTextPrinter::VisitExpr_(const BufferLoadNode* op, std::ostream& os) {
+  expr_name_map_->emplace(op, expr_name_map_->at(op->buffer->data.get()));
+}
 
 void LinalgTextPrinter::VisitStmt_(const BufferStoreNode* op, std::ostream& os) {
+  PrimExprFunctor::VisitExpr(op->value, os);
+  std::string result = '%' + std::to_string(cur_index_);
+  cur_index_++;
+  os << result << " = " << '%' << expr_name_map_->at(op->value.get()) << ": "
+     << ConvertTypeToMLIR(op->buffer->dtype) << std::endl;
+  os << "linalg.yield " << result << " : " << ConvertTypeToMLIR(op->buffer->dtype) << std::endl;
 }
+
 void LinalgTextPrinter::VisitStmt_(const ComputeBlockNode* op, std::ostream& os) {
-  LinalgGenericTextPrinter genericPrinter("", this);
-  genericPrinter.ComputeBlockToLinalgGeneric(op, os);
+  ComputeBlockToLinalgGeneric(op, os);
 }
 void LinalgTextPrinter::VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream& os) {
 }
 
-void LinalgGenericTextPrinter::VisitBufferRegionArray_(
-    const Array<matxscript::ir::BufferRegion>& arr_, std::ostream& os) {
+void LinalgTextPrinter::VisitBufferRegionArray_(const Array<matxscript::ir::BufferRegion>& arr_,
+                                                std::ostream& os,
+                                                std::vector<const Buffer*>& bufferOrder) {
   // region is ignored for now, and IMHO it should be ignored in this stage.
   std::stringstream types;
   for (int i = 0; i < arr_.size(); i++) {
     const auto& buffer = arr_[i]->buffer;
     const auto& region = arr_[i]->region;
+    bufferOrder.emplace_back(&(arr_[i]->buffer));
     os << buffer->data;
-    types << printer_->ConvertTypeToMLIR(buffer);
+    types << ConvertTypeToMLIR(buffer);
     if (i != arr_.size() - 1) {
       os << ", ";
       types << ", ";
@@ -498,9 +524,9 @@ bool isInt(const matxscript::ir::PrimExpr& expr, const int expect) {
   return false;
 }
 
-void LinalgGenericTextPrinter::VisitRangeExpr_(const matxscript::ir::BufferRegion& buffer,
-                                               const matxscript::ir::RangeExpr& rng,
-                                               std::ostream& os) {
+void LinalgTextPrinter::VisitRangeExpr_(const matxscript::ir::BufferRegion& buffer,
+                                        const matxscript::ir::RangeExpr& rng,
+                                        std::ostream& os) {
   const auto& start = rng->start;
   const auto& end = rng->stop;
   const auto& step = rng->step;
@@ -521,10 +547,10 @@ void LinalgGenericTextPrinter::VisitRangeExpr_(const matxscript::ir::BufferRegio
   }
 }
 
-void LinalgGenericTextPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar>& iter_vars,
-                                             const Array<matxscript::ir::BufferRegion>& reads,
-                                             const Array<matxscript::ir::BufferRegion>& writes,
-                                             std::ostream& os) {
+void LinalgTextPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar>& iter_vars,
+                                      const Array<matxscript::ir::BufferRegion>& reads,
+                                      const Array<matxscript::ir::BufferRegion>& writes,
+                                      std::ostream& os) {
   os << "indexing_maps = [";
 
   // collect all iter vars and format them to affine_map<(i,j,k) -> (
@@ -598,16 +624,26 @@ void LinalgGenericTextPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIte
   os << "]";
 }
 
-void LinalgGenericTextPrinter::VisitComputBlockBody_(const matxscript::ir::Stmt& body,
-                                                     std::ostream& os) {
+void LinalgTextPrinter::VisitComputBlockBody_(const matxscript::ir::Stmt& body,
+                                              std::ostream& os,
+                                              const std::vector<const Buffer*> bufferOrder) {
   os << "^bb0(";
+  for (int i = 0; i < bufferOrder.size(); i++) {
+    auto& buffer = *(bufferOrder.at(i));
+    std::string element_name = buffer->name.c_str();
+    element_name = '_' + element_name;
+    expr_name_map_->emplace(buffer->data.get(), element_name);
+    os << '%' << element_name << ": " << ConvertTypeToMLIR(buffer->dtype);
+    if (i != bufferOrder.size() - 1) {
+      os << ", ";
+    }
+  }
   // "%a: f32, %b: f32, %c: f32"
-  os << "): " << std::endl;
-  // VisitStmt(body, os);
+  os << "):" << std::endl;
+  VisitStmt(body, os);
 }
 
-void LinalgGenericTextPrinter::ComputeBlockToLinalgGeneric(const ComputeBlockNode* op,
-                                                           std::ostream& os) {
+void LinalgTextPrinter::ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream& os) {
   /**
    *   Array<PrimIterVar> iter_vars;
    *   Array<BufferRegion> reads;
@@ -615,22 +651,25 @@ void LinalgGenericTextPrinter::ComputeBlockToLinalgGeneric(const ComputeBlockNod
    *   StringRef name_hint;
    *   Stmt body;
    */
+  NewScope();
   os << "linalg.generic {";
   // visit iter_var (affine_map&iterator_types)
   GenAffineMap_(op->iter_vars, op->reads, op->writes, os);
   os << "}" << std::endl;
-  // visit ins
+  // visit inputs
   os << "                    ins(";
-  VisitBufferRegionArray_(op->reads, os);
+  std::vector<const Buffer*> bufferOrder;
+  VisitBufferRegionArray_(op->reads, os, bufferOrder);
   os << ')' << std::endl;
-  // visit outs
+  // visit outputs
   os << "                    outs(";
-  VisitBufferRegionArray_(op->writes, os);
+  VisitBufferRegionArray_(op->writes, os, bufferOrder);
   os << ')' << std::endl;
   os << "{" << std::endl;
   // visit computblock
-  VisitComputBlockBody_(op->body, os);
+  VisitComputBlockBody_(op->body, os, bufferOrder);
   os << "}" << std::endl;
+  PopScope();
 }
 void LinalgTextPrinter::LibraryNodeToLinalgGeneric() {
 }
