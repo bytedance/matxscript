@@ -169,7 +169,7 @@ linalg.generic {indexing_maps = [affine_map<(i, j) -> (i, j)>, affine_map<(i, j)
                     outs(C: memref<?x?xf64>)
 {
 ^bb0(%_A: f64, %_B: f64, %_C: f64):
-%0 = _A: f64
+%0 = %_A: f64
 linalg.yield %0 : f64
 }
 }
