@@ -35,18 +35,18 @@ class RangeExprNode : public HLOExprNode {
   PrimExpr step;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("start", &start);
     v->Visit("stop", &stop);
     v->Visit("stop", &step);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const RangeExprNode* other, SEqualReducer equal) const {
-    return equal(start, other->start) && equal(stop, other->stop) && equal(step, other->step);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(start, other->start) && equal(stop, other->stop) && equal(step, other->step);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(start);
     hash_reduce(stop);
     hash_reduce(step);

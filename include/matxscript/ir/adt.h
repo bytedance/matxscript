@@ -64,21 +64,22 @@ class ConstructorNode : public HLOExprNode {
   }
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("name_hint", &name_hint);
     v->Visit("inputs", &inputs);
     v->Visit("belong_to", &belong_to);
     v->Visit("tag", &tag);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const ConstructorNode* other, SEqualReducer equal) const {
     // Use namehint for now to be consistent with the legacy relay impl
     // TODO(tvm-team) revisit, need to check the type var.
-    return equal(name_hint, other->name_hint) && equal(inputs, other->inputs);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(name_hint, other->name_hint) &&
+           equal(inputs, other->inputs);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(name_hint);
     hash_reduce(inputs);
   }

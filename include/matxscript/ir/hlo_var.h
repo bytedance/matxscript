@@ -112,19 +112,19 @@ class HLOVarNode : public HLOExprNode {
   }
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("vid", &vid);
     v->Visit("type_annotation", &type_annotation);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const HLOVarNode* other, SEqualReducer equal) const {
     equal->MarkGraphNode();
-    return equal(type_annotation, other->type_annotation) && equal(vid, other->vid);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(type_annotation, other->type_annotation) && equal(vid, other->vid);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
     hash_reduce->MarkGraphNode();
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(type_annotation);
     hash_reduce(vid);
   }
@@ -174,17 +174,17 @@ class GlobalVarNode : public HLOExprNode {
   StringRef name_hint;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("name_hint", &name_hint);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const GlobalVarNode* other, SEqualReducer equal) const {
     // name matters for global var.
-    return equal(name_hint, other->name_hint) && equal.FreeVarEqualImpl(this, other);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(name_hint, other->name_hint) && equal.FreeVarEqualImpl(this, other);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(name_hint);
     hash_reduce.FreeVarHashImpl(this);
   }
