@@ -42,7 +42,8 @@ class RangeExprNode : public HLOExprNode {
   }
 
   bool SEqualReduce(const RangeExprNode* other, SEqualReducer equal) const {
-    return HLOExprNode::SEqualReduce(other, equal) && equal(start, other->start) && equal(stop, other->stop) && equal(step, other->step);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(start, other->start) &&
+           equal(stop, other->stop) && equal(step, other->step);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
