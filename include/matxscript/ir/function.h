@@ -430,22 +430,24 @@ class LambdaFunctionNode : public HLOExprNode {
   Type ret_type;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("params", &params);
     v->Visit("captures", &captures);
     v->Visit("body", &body);
     v->Visit("ret_type", &ret_type);
-    v->Visit("span", &span);
   }
 
   bool SEqualReduce(const LambdaFunctionNode* other, SEqualReducer equal) const {
     // Important to make def equal first.
     equal->MarkGraphNode();
-    return equal.DefEqual(params, other->params) && equal.DefEqual(captures, other->captures) &&
-           equal(ret_type, other->ret_type) && equal(body, other->body);
+    return HLOExprNode::SEqualReduce(other, equal) && equal.DefEqual(params, other->params) &&
+           equal.DefEqual(captures, other->captures) && equal(ret_type, other->ret_type) &&
+           equal(body, other->body);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
     hash_reduce->MarkGraphNode();
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce.DefHash(params);
     hash_reduce.DefHash(captures);
     hash_reduce(ret_type);

@@ -30,15 +30,15 @@ namespace ir {
 class NoneExprNode : public HLOExprNode {
  public:
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
+    HLOExprNode::VisitAttrs(v);
   }
 
   bool SEqualReduce(const NoneExprNode* other, SEqualReducer equal) const {
-    return true;
+    return HLOExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
   }
 
   static constexpr const char* _type_key = "ir.NoneExpr";

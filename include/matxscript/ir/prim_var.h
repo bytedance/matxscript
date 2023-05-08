@@ -64,15 +64,13 @@ class PrimVarNode : public PrimExprNode {
   Type type_annotation;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &dtype);
+    PrimExprNode::VisitAttrs(v);
     v->Visit("name", &name_hint);
     v->Visit("type_annotation", &type_annotation);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const PrimVarNode* other, SEqualReducer equal) const {
-    if (!equal(dtype, other->dtype))
+    if (!PrimExprNode::SEqualReduce(other, equal))
       return false;
     if (!equal(type_annotation, other->type_annotation))
       return false;
@@ -80,7 +78,7 @@ class PrimVarNode : public PrimExprNode {
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(type_annotation);
     hash_reduce.FreeVarHashImpl(this);
   }

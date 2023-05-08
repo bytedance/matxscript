@@ -43,16 +43,16 @@ class StringImmNode : public HLOExprNode {
   StringRef value;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("value", &value);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const StringImmNode* other, SEqualReducer equal) const {
-    return equal(value, other->value);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(value, other->value);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(value);
   }
 
@@ -72,16 +72,16 @@ class UnicodeImmNode : public HLOExprNode {
   StringRef value;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("value", &value);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const UnicodeImmNode* other, SEqualReducer equal) const {
-    return equal(value, other->value);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(value, other->value);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(value);
   }
 
@@ -108,17 +108,17 @@ class HLOBinaryOpNode : public HLOExprNode {
   BaseExpr b;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("a", &a);
     v->Visit("b", &b);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const T* other, SEqualReducer equal) const {
-    return equal(a, other->a) && equal(b, other->b);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(a, other->a) && equal(b, other->b);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(a);
     hash_reduce(b);
   }
@@ -219,17 +219,17 @@ class HLOCmpOpNode : public HLOExprNode {
   BaseExpr b;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("a", &a);
     v->Visit("b", &b);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const T* other, SEqualReducer equal) const {
-    return equal(a, other->a) && equal(b, other->b);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(a, other->a) && equal(b, other->b);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(a);
     hash_reduce(b);
   }
@@ -342,17 +342,17 @@ class HLOAndNode : public HLOExprNode {
   BaseExpr b;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("a", &a);
     v->Visit("b", &b);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const HLOAndNode* other, SEqualReducer equal) const {
-    return equal(a, other->a) && equal(b, other->b);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(a, other->a) && equal(b, other->b);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(a);
     hash_reduce(b);
   }
@@ -380,17 +380,17 @@ class HLOOrNode : public HLOExprNode {
   BaseExpr b;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("a", &a);
     v->Visit("b", &b);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const HLOOrNode* other, SEqualReducer equal) const {
-    return equal(a, other->a) && equal(b, other->b);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(a, other->a) && equal(b, other->b);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(a);
     hash_reduce(b);
   }
@@ -416,16 +416,16 @@ class HLONotNode : public HLOExprNode {
   BaseExpr a;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("a", &a);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const HLONotNode* other, SEqualReducer equal) const {
-    return equal(a, other->a);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(a, other->a);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(a);
   }
 
@@ -483,21 +483,22 @@ class CallNode : public HLOExprNode {
   Array<ObjectRef> type_args;  // type or IntImm
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("op", &op);
     v->Visit("args", &args);
     v->Visit("type_args", &type_args);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const CallNode* other, SEqualReducer equal) const {
     // skip type_args check for primitive ops.
     equal->MarkGraphNode();
-    return equal(op, other->op) && equal(args, other->args) && equal(type_args, other->type_args);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(op, other->op) &&
+           equal(args, other->args) && equal(type_args, other->type_args);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
     hash_reduce->MarkGraphNode();
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(op);
     hash_reduce(args);
     hash_reduce(type_args);
@@ -535,20 +536,20 @@ class HLOIteratorNode : public HLOExprNode {
   IntImm method;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("container", &container);
     v->Visit("method", &method);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const HLOIteratorNode* other, SEqualReducer equal) const {
     // specially handle empty HLOIterator as a constant is not a graph node.
     equal->MarkGraphNode();
-    return equal(container, other->container);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(container, other->container);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
     hash_reduce->MarkGraphNode();
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(container);
   }
 
@@ -576,12 +577,14 @@ class InitializerListNode : public HLOExprNode {
   Array<BaseExpr> fields;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("fields", &fields);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const InitializerListNode* other, SEqualReducer equal) const {
+    if (!HLOExprNode::SEqualReduce(other, equal)) {
+      return false;
+    }
     // specially handle empty InitializerList as a constant is not a graph node.
     if (fields.size() == other->fields.size() && fields.size() == 0) {
       return true;
@@ -592,6 +595,7 @@ class InitializerListNode : public HLOExprNode {
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     if (fields.size() != 0) {
       hash_reduce->MarkGraphNode();
       hash_reduce(fields);
@@ -621,12 +625,14 @@ class InitializerDictNode : public HLOExprNode {
   Map<BaseExpr, BaseExpr> fields;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("fields", &fields);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const InitializerDictNode* other, SEqualReducer equal) const {
+    if (!HLOExprNode::SEqualReduce(other, equal)) {
+      return false;
+    }
     // specially handle empty InitializerDict as a constant is not a graph node.
     if (fields.size() == other->fields.size() && fields.size() == 0) {
       return true;
@@ -637,6 +643,7 @@ class InitializerDictNode : public HLOExprNode {
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     if (fields.size() != 0) {
       hash_reduce->MarkGraphNode();
       hash_reduce(fields);
@@ -666,16 +673,16 @@ class EnumAttrNode : public HLOExprNode {
   StringRef enum_str;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("enum_str", &enum_str);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const EnumAttrNode* other, SEqualReducer equal) const {
-    return enum_str == other->enum_str;
+    return HLOExprNode::SEqualReduce(other, equal) && enum_str == other->enum_str;
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(enum_str);
   }
 
@@ -705,17 +712,18 @@ class ClassGetItemNode : public HLOExprNode {
   StringImm attr;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("self", &self);
     v->Visit("attr", &attr);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const ClassGetItemNode* other, SEqualReducer equal) const {
-    return equal(self, other->self) && equal(attr, other->attr);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(self, other->self) &&
+           equal(attr, other->attr);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(self);
     hash_reduce(attr);
   }
@@ -746,17 +754,16 @@ class HLOCastNode : public HLOExprNode {
   BaseExpr value;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("value", &value);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const HLOCastNode* other, SEqualReducer equal) const {
-    return equal(checked_type_, other->checked_type_) && equal(value, other->value);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(value, other->value);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(checked_type_);
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(value);
   }
 
@@ -783,17 +790,16 @@ class HLOMoveNode : public HLOExprNode {
   BaseExpr value;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("value", &value);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const HLOMoveNode* other, SEqualReducer equal) const {
-    return equal(checked_type_, other->checked_type_) && equal(value, other->value);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(value, other->value);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(checked_type_);
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(value);
   }
 
@@ -822,19 +828,18 @@ class HLOEnumerateNode : public HLOExprNode {
   PrimExpr start;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("value", &value);
     v->Visit("start", &start);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const HLOEnumerateNode* other, SEqualReducer equal) const {
-    return equal(checked_type_, other->checked_type_) && equal(value, other->value) &&
+    return HLOExprNode::SEqualReduce(other, equal) && equal(value, other->value) &&
            equal(start, other->start);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(checked_type_);
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(value);
     hash_reduce(start);
   }
@@ -862,17 +867,16 @@ class HLOZipNode : public HLOExprNode {
   Array<BaseExpr> values;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("values", &values);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const HLOZipNode* other, SEqualReducer equal) const {
-    return equal(checked_type_, other->checked_type_) && equal(values, other->values);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(values, other->values);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(checked_type_);
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(values);
   }
 
@@ -942,17 +946,18 @@ class ListCompNode : public HLOExprNode {
   Array<Comprehension> generators;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("elt", &elt);
     v->Visit("generators", &generators);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const ListCompNode* other, SEqualReducer equal) const {
-    return equal(elt, other->elt) && equal(generators, other->generators);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(elt, other->elt) &&
+           equal(generators, other->generators);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(elt);
     hash_reduce(generators);
   }
@@ -985,17 +990,18 @@ class SetCompNode : public HLOExprNode {
   Array<Comprehension> generators;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("elt", &elt);
     v->Visit("generators", &generators);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const SetCompNode* other, SEqualReducer equal) const {
-    return equal(elt, other->elt) && equal(generators, other->generators);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(elt, other->elt) &&
+           equal(generators, other->generators);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(elt);
     hash_reduce(generators);
   }
@@ -1029,19 +1035,19 @@ class DictCompNode : public HLOExprNode {
   Array<Comprehension> generators;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("key", &key);
     v->Visit("value", &value);
     v->Visit("generators", &generators);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const DictCompNode* other, SEqualReducer equal) const {
-    return equal(key, other->key) && equal(value, other->value) &&
-           equal(generators, other->generators);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(key, other->key) &&
+           equal(value, other->value) && equal(generators, other->generators);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     hash_reduce(key);
     hash_reduce(value);
     hash_reduce(generators);

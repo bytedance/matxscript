@@ -37,12 +37,14 @@ class TupleExprNode : public HLOExprNode {
   Array<BaseExpr> fields;
 
   void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
     v->Visit("fields", &fields);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const TupleExprNode* other, SEqualReducer equal) const {
+    if (!HLOExprNode::SEqualReduce(other, equal)) {
+      return false;
+    }
     // specially handle empty tuple as a constant is not a graph node.
     if (fields.size() == other->fields.size() && fields.size() == 0) {
       return true;
@@ -53,6 +55,7 @@ class TupleExprNode : public HLOExprNode {
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
     if (fields.size() != 0) {
       hash_reduce->MarkGraphNode();
       hash_reduce(fields);

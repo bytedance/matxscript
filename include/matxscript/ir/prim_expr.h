@@ -48,18 +48,16 @@ class IntImmNode : public PrimExprNode {
   int64_t value;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &dtype);
+    PrimExprNode::VisitAttrs(v);
     v->Visit("value", &value);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const IntImmNode* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal(value, other->value);
+    return equal(value, other->value) && PrimExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(value);
   }
 
@@ -94,18 +92,16 @@ class FloatImmNode : public PrimExprNode {
   double value;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &dtype);
+    PrimExprNode::VisitAttrs(v);
     v->Visit("value", &value);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const FloatImmNode* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal(value, other->value);
+    return equal(value, other->value) && PrimExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(value);
   }
 
@@ -252,18 +248,16 @@ class PrimCastNode : public PrimExprNode {
   PrimExpr value;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &dtype);
+    PrimExprNode::VisitAttrs(v);
     v->Visit("value", &value);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const PrimCastNode* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal(value, other->value);
+    return equal(value, other->value) && PrimExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(value);
   }
 
@@ -291,18 +285,16 @@ class HLOCastPrimNode : public PrimExprNode {
   BaseExpr value;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &dtype);
+    PrimExprNode::VisitAttrs(v);
     v->Visit("value", &value);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const HLOCastPrimNode* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal(value, other->value);
+    return equal(value, other->value) && PrimExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(value);
   }
 
@@ -333,19 +325,17 @@ class PrimBinaryOpNode : public PrimExprNode {
   PrimExpr b;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &(this->dtype));
+    PrimExprNode::VisitAttrs(v);
     v->Visit("a", &a);
     v->Visit("b", &b);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const T* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal(a, other->a) && equal(b, other->b);
+    return equal(a, other->a) && equal(b, other->b) && PrimExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(a);
     hash_reduce(b);
   }
@@ -516,19 +506,17 @@ class PrimCmpOpNode : public PrimExprNode {
   PrimExpr b;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &(this->dtype));
+    PrimExprNode::VisitAttrs(v);
     v->Visit("a", &a);
     v->Visit("b", &b);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const T* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal(a, other->a) && equal(b, other->b);
+    return equal(a, other->a) && equal(b, other->b) && PrimExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(a);
     hash_reduce(b);
   }
@@ -641,19 +629,17 @@ class PrimAndNode : public PrimExprNode {
   PrimExpr b;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &(this->dtype));
+    PrimExprNode::VisitAttrs(v);
     v->Visit("a", &a);
     v->Visit("b", &b);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const PrimAndNode* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal(a, other->a) && equal(b, other->b);
+    return equal(a, other->a) && equal(b, other->b) && PrimExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(a);
     hash_reduce(b);
   }
@@ -681,19 +667,17 @@ class PrimOrNode : public PrimExprNode {
   PrimExpr b;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &dtype);
+    PrimExprNode::VisitAttrs(v);
     v->Visit("a", &a);
     v->Visit("b", &b);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const PrimOrNode* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal(a, other->a) && equal(b, other->b);
+    return equal(a, other->a) && equal(b, other->b) && PrimExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(a);
     hash_reduce(b);
   }
@@ -719,18 +703,16 @@ class PrimNotNode : public PrimExprNode {
   PrimExpr a;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &dtype);
+    PrimExprNode::VisitAttrs(v);
     v->Visit("a", &a);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const PrimNotNode* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal(a, other->a);
+    return equal(a, other->a) && PrimExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(a);
   }
 
@@ -765,21 +747,19 @@ class PrimSelectNode : public PrimExprNode {
   PrimExpr false_value;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &dtype);
+    PrimExprNode::VisitAttrs(v);
     v->Visit("condition", &condition);
     v->Visit("true_value", &true_value);
     v->Visit("false_value", &false_value);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const PrimSelectNode* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal(condition, other->condition) &&
-           equal(true_value, other->true_value) && equal(false_value, other->false_value);
+    return equal(condition, other->condition) && equal(true_value, other->true_value) &&
+           equal(false_value, other->false_value) && PrimExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(condition);
     hash_reduce(true_value);
     hash_reduce(false_value);
@@ -816,21 +796,19 @@ class PrimLetNode : public PrimExprNode {
   PrimExpr body;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &dtype);
+    PrimExprNode::VisitAttrs(v);
     v->Visit("var", &var);
     v->Visit("value", &value);
     v->Visit("body", &body);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const PrimLetNode* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal.DefEqual(var, other->var) &&
-           equal(value, other->value) && equal(body, other->body);
+    return equal.DefEqual(var, other->var) && equal(value, other->value) &&
+           equal(body, other->body) && PrimExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce.DefHash(var);
     hash_reduce(value);
     hash_reduce(body);
@@ -866,19 +844,18 @@ class PrimCallNode : public PrimExprNode {
   /*! \brief The arguments. */
   Array<PrimExpr> args;
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &dtype);
+    PrimExprNode::VisitAttrs(v);
     v->Visit("op", &op);
     v->Visit("args", &args);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const PrimCallNode* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal(op, other->op) && equal(args, other->args);
+    return equal(op, other->op) && equal(args, other->args) &&
+           PrimExprNode::SEqualReduce(other, equal);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(op);
     hash_reduce(args);
   }

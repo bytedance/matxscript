@@ -326,20 +326,18 @@ class BufferLoadNode : public PrimExprNode {
   Array<PrimExpr> indices;
 
   void VisitAttrs(AttrVisitor* v) {
-    v->Visit("dtype", &(this->dtype));
+    PrimExprNode::VisitAttrs(v);
     v->Visit("buffer", &buffer);
     v->Visit("indices", &indices);
-    v->Visit("span", &span);
-    v->Visit("_checked_type_", &checked_type_);
   }
 
   bool SEqualReduce(const BufferLoadNode* other, SEqualReducer equal) const {
-    return equal(dtype, other->dtype) && equal(buffer, other->buffer) &&
+    return PrimExprNode::SEqualReduce(other, equal) && equal(buffer, other->buffer) &&
            equal(indices, other->indices);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
-    hash_reduce(dtype);
+    PrimExprNode::SHashReduce(hash_reduce);
     hash_reduce(buffer);
     hash_reduce(indices);
   }

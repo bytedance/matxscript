@@ -71,6 +71,19 @@ class BaseExprNode : public Object {
   template <typename TTypeNode>
   inline const TTypeNode* type_as() const;
 
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("span", &span);
+    v->Visit("_checked_type_", &checked_type_);
+  }
+
+  bool SEqualReduce(const BaseExprNode* other, SEqualReducer equal) const {
+    return equal(checked_type_, other->checked_type_);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    hash_reduce(checked_type_);
+  }
+
   static constexpr const char* _type_key = "BaseExpr";
   static constexpr const bool _type_has_method_sequal_reduce = true;
   static constexpr const bool _type_has_method_shash_reduce = true;
@@ -117,6 +130,20 @@ class PrimExprNode : public BaseExprNode {
    */
   runtime::DataType dtype;
 
+  void VisitAttrs(AttrVisitor* v) {
+    BaseExprNode::VisitAttrs(v);
+    v->Visit("dtype", &dtype);
+  }
+
+  bool SEqualReduce(const PrimExprNode* other, SEqualReducer equal) const {
+    return equal(dtype, other->dtype) && BaseExprNode::SEqualReduce(other, equal);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    BaseExprNode::SHashReduce(hash_reduce);
+    hash_reduce(dtype);
+  }
+
   static constexpr const char* _type_key = "PrimExpr";
   static constexpr const uint32_t _type_child_slots = 34;
   MATXSCRIPT_DECLARE_BASE_OBJECT_INFO(PrimExprNode, BaseExprNode);
@@ -158,6 +185,18 @@ class PrimExpr : public BaseExpr {
  */
 class HLOExprNode : public BaseExprNode {
  public:
+  void VisitAttrs(AttrVisitor* v) {
+    BaseExprNode::VisitAttrs(v);
+  }
+
+  bool SEqualReduce(const HLOExprNode* other, SEqualReducer equal) const {
+    return BaseExprNode::SEqualReduce(other, equal);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    BaseExprNode::SHashReduce(hash_reduce);
+  }
+
   static constexpr const char* _type_key = "HLOExpr";
   static constexpr const uint32_t _type_child_slots = 22;
   MATXSCRIPT_DECLARE_BASE_OBJECT_INFO(HLOExprNode, BaseExprNode);
