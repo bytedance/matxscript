@@ -119,7 +119,8 @@ class HLOVarNode : public HLOExprNode {
 
   bool SEqualReduce(const HLOVarNode* other, SEqualReducer equal) const {
     equal->MarkGraphNode();
-    return HLOExprNode::SEqualReduce(other, equal) && equal(type_annotation, other->type_annotation) && equal(vid, other->vid);
+    return HLOExprNode::SEqualReduce(other, equal) &&
+           equal(type_annotation, other->type_annotation) && equal(vid, other->vid);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
@@ -180,7 +181,8 @@ class GlobalVarNode : public HLOExprNode {
 
   bool SEqualReduce(const GlobalVarNode* other, SEqualReducer equal) const {
     // name matters for global var.
-    return HLOExprNode::SEqualReduce(other, equal) && equal(name_hint, other->name_hint) && equal.FreeVarEqualImpl(this, other);
+    return HLOExprNode::SEqualReduce(other, equal) && equal(name_hint, other->name_hint) &&
+           equal.FreeVarEqualImpl(this, other);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
