@@ -380,10 +380,10 @@ class UserDataType(Type):
         self.__init_handle_by_constructor__(_ffi_api.UserDataType)
 
 
-@_ffi.register_object("NDArrayType")
-class NDArrayType(Type):
+@_ffi.register_object("DynTensorType")
+class DynTensorType(Type):
     def __init__(self, ndim=-1, dtype=None):
-        self.__init_handle_by_constructor__(_ffi_api.NDArrayType, ndim, dtype)
+        self.__init_handle_by_constructor__(_ffi_api.DynTensorType, ndim, dtype)
 
 
 @_ffi.register_object("RegexType")

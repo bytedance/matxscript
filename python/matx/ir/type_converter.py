@@ -67,7 +67,7 @@ class _AnnTypeConvert(ast.NodeVisitor):
             "{}.NativeData".format(_MODULE_NAME_): lambda: _ty.UserDataType(),
             "{}.NativeOp".format(_MODULE_NAME_): lambda: _ty.UserDataType(),
             "{}.NativeObject".format(_MODULE_NAME_): lambda: _ty.UserDataType(),
-            "{}.NDArray".format(_MODULE_NAME_): lambda: _ty.NDArrayType(),
+            "{}.NDArray".format(_MODULE_NAME_): lambda: _ty.DynTensorType(),
             "{}.Regex".format(_MODULE_NAME_): lambda: _ty.RegexType(),
             "{}.OpaqueObject".format(_MODULE_NAME_): lambda: _ty.OpaqueObjectType(),
             "bytes": lambda: _ty.StringType(),

@@ -95,6 +95,85 @@ class UnicodeImm : public HLOExpr {
 
   MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(UnicodeImm, HLOExpr, UnicodeImmNode);
 };
+
+/*!
+ * \brief Represent a data type constant.
+ */
+class DataTypeImmNode : public HLOExprNode {
+ public:
+  /*! \brief The data value. */
+  runtime::DataType value;
+
+  void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
+    v->Visit("value", &value);
+  }
+
+  bool SEqualReduce(const DataTypeImmNode* other, SEqualReducer equal) const {
+    // struct info can be deterministically derived from data.
+    return equal(value, other->value);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    hash_reduce(value);
+  }
+
+  static constexpr const char* _type_key = "ir.DataTypeImm";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(DataTypeImmNode, HLOExprNode);
+};
+
+/*!
+ * \brief Managed reference to DataTypeImm
+ * \sa DataTypeImmNode
+ */
+class DataTypeImm : public HLOExpr {
+ public:
+  /*!
+   * \brief The constructor
+   * \param value The value input.
+   * \param span The source span of the expression.
+   */
+  MATX_DLL explicit DataTypeImm(runtime::DataType value, Span span = Span());
+
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(DataTypeImm, HLOExpr, DataTypeImmNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(DataTypeImmNode);
+};
+
+/*! \brief A shape expression which allows users to construct a shape containing PrimExpr.
+ */
+class ShapeExprNode : public HLOExprNode {
+ public:
+  /*! The values of the shape expression. */
+  Array<PrimExpr> values;
+
+  void VisitAttrs(AttrVisitor* v) {
+    HLOExprNode::VisitAttrs(v);
+    v->Visit("values", &values);
+  }
+
+  bool SEqualReduce(const ShapeExprNode* other, SEqualReducer equal) const {
+    // struct info can be deterministically derived from values.
+    return HLOExprNode::SEqualReduce(other, equal) && equal(values, other->values);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    HLOExprNode::SHashReduce(hash_reduce);
+    hash_reduce(values);
+  }
+
+  static constexpr const char* _type_key = "ir.ShapeExpr";
+  static constexpr const bool _type_has_method_sequal_reduce = true;
+  static constexpr const bool _type_has_method_shash_reduce = true;
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(ShapeExprNode, HLOExprNode);
+};
+
+class ShapeExpr : public HLOExpr {
+ public:
+  MATX_DLL explicit ShapeExpr(Array<PrimExpr> values, Span span = Span());
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(ShapeExpr, HLOExpr, ShapeExprNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(ShapeExprNode);
+};
+
 /*!
  * \brief Base template to implement binary ops.
  * \tparam T The type of the child class.

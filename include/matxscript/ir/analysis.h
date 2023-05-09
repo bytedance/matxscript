@@ -1,6 +1,7 @@
 // Copyright 2022 ByteDance Ltd. and/or its affiliates.
 /*
  * Taken from https://github.com/apache/tvm/blob/v0.7/include/tvm/tir/analysis.h
+ * Taken from https://github.com/apache/tvm/blob/unity/include/tvm/relax/analysis.h
  * with fixes applied:
  * - add namespace matx::ir for fix conflict with tvm
  * - remove unused code
@@ -56,6 +57,23 @@ struct ExprDeepEqual {
  public:
   MATX_DLL bool operator()(const PrimExpr& lhs, const PrimExpr& rhs) const;
 };
+
+//-----------------------------------
+// Foundational StructInfo analysis
+//-----------------------------------
+/*!
+ * \brief Get the corresponding static type from a given struct info.
+ * \param info The struct info.
+ * \return the corresponding static type.
+ */
+MATX_DLL Type GetStaticType(const StructInfo& info);
+
+/*!
+ * \brief Get the corresponding struct info from static type.
+ * \param type The input type
+ * \return the corresponding struct info.
+ */
+MATX_DLL StructInfo StructInfoFromType(const Type& type);
 
 }  // namespace ir
 }  // namespace matxscript

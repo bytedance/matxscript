@@ -29,7 +29,7 @@ from .type import FuncType
 from .type import ObjectType, StringType, UnicodeType, ListType, DictType, SetType
 from .type import IteratorType, FileType, VoidType, UserDataType
 from .type import OpaqueObjectType
-from .type import NDArrayType
+from .type import DynTensorType
 from .type_relation import type_inference
 from .op_expr import Op
 from .function import CallingConv, BaseFunc

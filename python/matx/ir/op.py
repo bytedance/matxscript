@@ -1487,7 +1487,7 @@ def _container_type_name(container_expr):
         _type.TupleType: 'tuple',
         _type.UserDataType: 'user_data',
         _type.TrieType: 'trie',
-        _type.NDArrayType: 'ndarray',
+        _type.DynTensorType: 'ndarray',
         _type.RegexType: 'regex'
     }
     name = name_map.get(type(container_expr.checked_type), 'object')
@@ -2058,7 +2058,7 @@ def object_capacity(span, container_expr, *args, **kwargs):
 def object_to_list(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "to_list")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(kwargs) == 0, f"{ty}.to_list() takes no keyword arguments"
         ret_type = _type.ListType()
@@ -2068,7 +2068,7 @@ def object_to_list(span, container_expr, *args, **kwargs):
 def object_tolist(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "tolist")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(kwargs) == 0, f"{ty}.tolist() takes no keyword arguments"
         ret_type = _type.ListType()
@@ -2078,7 +2078,7 @@ def object_tolist(span, container_expr, *args, **kwargs):
 def object_is_contiguous(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "is_contiguous")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(kwargs) == 0, f"{ty}.is_contiguous() takes no keyword arguments"
         ret_type = _type.PrimType("int64")
@@ -2088,7 +2088,7 @@ def object_is_contiguous(span, container_expr, *args, **kwargs):
 def object_contiguous(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "contiguous")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(kwargs) == 0, f"{ty}.contiguous() takes no keyword arguments"
         ret_type = container_expr.checked_type
@@ -2098,7 +2098,7 @@ def object_contiguous(span, container_expr, *args, **kwargs):
 def object_reshape(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "reshape")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(kwargs) == 0, f"{ty}.reshape() takes no keyword arguments"
         ret_type = container_expr.checked_type
@@ -2108,7 +2108,7 @@ def object_reshape(span, container_expr, *args, **kwargs):
 def object_squeeze(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "squeeze")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(kwargs) == 0, f"{ty}.squeeze() takes no keyword arguments"
         ret_type = container_expr.checked_type
@@ -2118,7 +2118,7 @@ def object_squeeze(span, container_expr, *args, **kwargs):
 def object_unsqueeze(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "unsqueeze")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(kwargs) == 0, f"{ty}.unsqueeze() takes no keyword arguments"
         ret_type = container_expr.checked_type
@@ -2128,7 +2128,7 @@ def object_unsqueeze(span, container_expr, *args, **kwargs):
 def object_shape(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "shape")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(kwargs) == 0, f"{ty}.shape() takes no keyword arguments"
         ret_type = _type.ListType()
@@ -2138,7 +2138,7 @@ def object_shape(span, container_expr, *args, **kwargs):
 def object_dtype(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "dtype")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(kwargs) == 0, f"{ty}.dtype() takes no keyword arguments"
         ret_type = _type.UnicodeType()
@@ -2148,7 +2148,7 @@ def object_dtype(span, container_expr, *args, **kwargs):
 def object_dim(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "dim")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(args) == 0, f"{ty}.dim() takes no arguments ({len(args)} given)"
         assert len(kwargs) == 0, f"{ty}.dim() takes no keyword arguments"
@@ -2159,27 +2159,27 @@ def object_dim(span, container_expr, *args, **kwargs):
 def object_transpose(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "transpose")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(kwargs) == 0, f"{ty}.transpose() takes no keyword arguments"
-        ret_type = _type.NDArrayType()
+        ret_type = _type.DynTensorType()
     return hlo_call_intrin(ret_type, func_name, span, container_expr, *args, **kwargs)
 
 
 def object_as_type(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "as_type")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(kwargs) == 0, f"{ty}.as_type() takes no keyword arguments"
-        ret_type = _type.NDArrayType()
+        ret_type = _type.DynTensorType()
     return hlo_call_intrin(ret_type, func_name, span, container_expr, *args, **kwargs)
 
 
 def object_device(span, container_expr, *args, **kwargs):
     ret_type = _type.ObjectType()
     func_name = _builtin_func_name(container_expr, "device")
-    if _type_rel.is_type_of(container_expr, _type.NDArrayType):
+    if _type_rel.is_type_of(container_expr, _type.DynTensorType):
         ty = container_expr.py_type_name()
         assert len(kwargs) == 0, f"{ty}.device() takes no keyword arguments"
         ret_type = _type.UnicodeType()
@@ -2994,37 +2994,37 @@ def builtins_exception(span, exc_cls_name, *args, **kwargs):
 
 def nd_module_add(span, lhs, rhs):
     func_name = "ir.nd_module_add"
-    return hlo_call_intrin(_type.NDArrayType(), func_name, span, lhs, rhs)
+    return hlo_call_intrin(_type.DynTensorType(), func_name, span, lhs, rhs)
 
 
 def nd_module_sub(span, lhs, rhs):
     func_name = "ir.nd_module_sub"
-    return hlo_call_intrin(_type.NDArrayType(), func_name, span, lhs, rhs)
+    return hlo_call_intrin(_type.DynTensorType(), func_name, span, lhs, rhs)
 
 
 def nd_module_div(span, lhs, rhs):
     func_name = "ir.nd_module_div"
-    return hlo_call_intrin(_type.NDArrayType(), func_name, span, lhs, rhs)
+    return hlo_call_intrin(_type.DynTensorType(), func_name, span, lhs, rhs)
 
 
 def nd_module_mul(span, lhs, rhs):
     func_name = "ir.nd_module_mul"
-    return hlo_call_intrin(_type.NDArrayType(), func_name, span, lhs, rhs)
+    return hlo_call_intrin(_type.DynTensorType(), func_name, span, lhs, rhs)
 
 
 def nd_module_rand(span, shape):
     func_name = "ir.nd_module_rand"
-    return hlo_call_intrin(_type.NDArrayType(), func_name, span, shape)
+    return hlo_call_intrin(_type.DynTensorType(), func_name, span, shape)
 
 
 def nd_module_concatenate(span, seq, *args):
     func_name = "ir.nd_module_concatenate"
-    return hlo_call_intrin(_type.NDArrayType(), func_name, span, seq, *args)
+    return hlo_call_intrin(_type.DynTensorType(), func_name, span, seq, *args)
 
 
 def nd_module_stack(span, seq, *args):
     func_name = "ir.nd_module_stack"
-    return hlo_call_intrin(_type.NDArrayType(), func_name, span, seq, *args)
+    return hlo_call_intrin(_type.DynTensorType(), func_name, span, seq, *args)
 
 
 def list_module_sort(span, seq, *args):

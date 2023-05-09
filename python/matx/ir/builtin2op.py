@@ -472,8 +472,8 @@ def _register_nd_array_construct():
         # checked_dtype = None
         # if isinstance(dtype, (_expr.StringImm, _expr.UnicodeImm)):
         #     checked_dtype = _type.PrimType(dtype.value)
-        # ret_ty = _type.NDArrayType(ndim=ndim, dtype=checked_dtype)
-        ret_ty = _type.NDArrayType()
+        # ret_ty = _type.DynTensorType(ndim=ndim, dtype=checked_dtype)
+        ret_ty = _type.DynTensorType()
         if isinstance(shape.checked_type, _type.ListType):
             pass
         elif isinstance(shape.checked_type, _type.ObjectType):
@@ -494,7 +494,7 @@ def _register_nd_array_construct():
             device
         )
 
-    nd_array_construct.checked_type = _type.NDArrayType()
+    nd_array_construct.checked_type = _type.DynTensorType()
     nd_array_construct.is_constructor = True
     Builtin2Op.registrations["matx.runtime.ndarray.NDArray"] = nd_array_construct
 

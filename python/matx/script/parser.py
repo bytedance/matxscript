@@ -944,7 +944,7 @@ class MATXScriptParser(ast.NodeVisitor):
                 symbol = self.context.lookup_symbol(node.target.id)
                 if symbol is not None:
                     self.report_error("name '%s' is redefined in AutoFor" % node.target.id)
-                if isinstance(iter_expr_type, _ir.NDArrayType):
+                if isinstance(iter_expr_type, _ir.DynTensorType):
                     # eval iter expr
                     alloca_iter_expr_var = None
                     if not isinstance(node.iter, ast.Name):
@@ -952,7 +952,7 @@ class MATXScriptParser(ast.NodeVisitor):
                             self.gen_random()
                         )
                         alloca_iter_expr_var = _ir.AllocaVarStmt(
-                            iter_expr_var_name, _ir.NDArrayType(), iter_expr, span
+                            iter_expr_var_name, _ir.DynTensorType(), iter_expr, span
                         )
                         iter_expr = alloca_iter_expr_var.var
                     iter_var_hash = abs(hash(node.target.id))
@@ -977,9 +977,9 @@ class MATXScriptParser(ast.NodeVisitor):
                     )
                     pos_var_nd = _ir.PrimVar(pos_var_name_nd, _ir.PrimType('int64'))
                     inline_expr_nd = _ir.op.object_get_item(span, iter_expr, pos_var_nd)
-                    nd_init_expr = _ir.HLOCast(_ir.NDArrayType(), inline_expr_nd, span)
+                    nd_init_expr = _ir.HLOCast(_ir.DynTensorType(), inline_expr_nd, span)
                     alloca_nd_var = _ir.AllocaVarStmt(
-                        node.target.id, _ir.NDArrayType(), nd_init_expr, span
+                        node.target.id, _ir.DynTensorType(), nd_init_expr, span
                     )
                     self.context.new_scope(nodes=node.body)
                     self.context.update_symbol(node.target.id, alloca_nd_var.var)
@@ -1457,7 +1457,7 @@ class MATXScriptParser(ast.NodeVisitor):
                         allowed_types = (
                             _ir.type.ListType,
                             _ir.type.DictType,
-                            _ir.type.NDArrayType,
+                            _ir.type.DynTensorType,
                             _ir.type.UserDataType,
                             _ir.type.ObjectType)
                         if not _type_rel.is_type_of(symbol_s, allowed_types):

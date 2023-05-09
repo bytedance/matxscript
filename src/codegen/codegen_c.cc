@@ -774,7 +774,7 @@ void CodeGenC::PrintType(const Type& type, std::ostream& os) {  // NOLINT(*)
     os << "Trie";
   } else if (auto* ptr = type.as<UserDataTypeNode>()) {
     os << "UserDataRef";
-  } else if (auto* ptr = type.as<NDArrayTypeNode>()) {
+  } else if (auto* ptr = type.as<DynTensorTypeNode>()) {
     os << "NDArray";
   } else if (auto* ptr = type.as<RegexTypeNode>()) {
     os << "Regex";

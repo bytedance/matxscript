@@ -109,10 +109,10 @@ void TypeVisitor::VisitType_(const ExceptionTypeNode* op) {
 void TypeVisitor::VisitType_(const FileTypeNode* op) {
 }
 
-void TypeVisitor::VisitType_(const NDArrayTypeNode* op) {
-  if (op->dtype.defined()) {
-    this->VisitType(op->dtype);
-  }
+void TypeVisitor::VisitType_(const ShapeTypeNode* op) {
+}
+
+void TypeVisitor::VisitType_(const DynTensorTypeNode* op) {
 }
 
 void TypeVisitor::VisitType_(const ClassTypeNode* op) {
@@ -284,13 +284,11 @@ Type TypeMutator::VisitType_(const FileTypeNode* op) {
   return GetRef<Type>(op);
 }
 
-Type TypeMutator::VisitType_(const NDArrayTypeNode* op) {
-  if (op->dtype.defined()) {
-    auto dtype = this->VisitType(op->dtype);
-    if (!op->dtype.same_as(dtype)) {
-      return NDArrayType(op->ndim, op->dtype, op->span);
-    }
-  }
+Type TypeMutator::VisitType_(const ShapeTypeNode* op) {
+  return GetRef<Type>(op);
+}
+
+Type TypeMutator::VisitType_(const DynTensorTypeNode* op) {
   return GetRef<Type>(op);
 }
 

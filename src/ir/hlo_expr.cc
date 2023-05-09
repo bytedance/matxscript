@@ -26,7 +26,9 @@
 #include <matxscript/ir/adt.h>
 #include <matxscript/ir/hlo_builtin.h>
 #include <matxscript/ir/op_attr_types.h>
+#include <matxscript/ir/prim_ops.h>
 #include <matxscript/ir/printer/ir_docsifier.h>
+#include <matxscript/ir/struct_info.h>
 #include <matxscript/runtime/container.h>
 #include <matxscript/runtime/functor.h>
 #include <matxscript/runtime/registry.h>
@@ -72,6 +74,60 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     .set_dispatch<UnicodeImm>("", [](UnicodeImm s, ObjectPath p, IRDocsifier d) -> Doc {
       // TODO: fix unicode
       return LiteralDoc::Str(s->value, p->Attr("value"));
+    });
+
+DataTypeImm::DataTypeImm(DataType value, Span span) {
+  ObjectPtr<DataTypeImmNode> n = make_object<DataTypeImmNode>();
+  n->value = std::move(value);
+  n->span = std::move(span);
+  // use the base structinfo for now
+  // we can choose to introduce more fine-grained struct info later if necessary.
+  n->checked_type_ = ObjectType();
+  n->struct_info_ = ObjectStructInfo();
+  data_ = std::move(n);
+}
+
+MATXSCRIPT_REGISTER_NODE_TYPE(DataTypeImmNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.DataTypeImm").set_body_typed([](DataType value, Span span) {
+  return DataTypeImm(value, span);
+});
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<DataTypeImm>("", [](DataTypeImm n, ObjectPath p, IRDocsifier d) -> Doc {
+      return Dialect(d, "dtype")->Call({LiteralDoc::DataType(n->value, p->Attr("value"))});
+    });
+
+ShapeExpr::ShapeExpr(Array<PrimExpr> values, Span span) {
+  ObjectPtr<ShapeExprNode> n = make_object<ShapeExprNode>();
+
+  n->values = std::move(values).Map([](PrimExpr value) -> PrimExpr {
+    if (value->IsInstance<IntImmNode>()) {
+      return cast(DataType::Int(64), value);
+    }
+    MXCHECK(value.dtype() == DataType::Int(64))
+        << "the value in ShapeStructInfo can only have dtype of int64";
+    return value;
+  });
+  n->span = span;
+  n->checked_type_ = ShapeType(values.size());
+  n->struct_info_ = ShapeStructInfo(values, span);
+  data_ = std::move(n);
+}
+
+MATXSCRIPT_REGISTER_NODE_TYPE(ShapeExprNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.ShapeExpr").set_body_typed([](Array<PrimExpr> values, Span span) {
+  return ShapeExpr(values, span);
+});
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ShapeExpr>("", [](ShapeExpr n, ObjectPath p, IRDocsifier d) -> Doc {
+      Array<ExprDoc> values_doc;
+      ObjectPath values_p = p->Attr("values");
+      for (int i = 0, l = n->values.size(); i < l; ++i) {
+        values_doc.push_back(d->AsDoc<ExprDoc>(n->values[i], values_p->ArrayIndex(i)));
+        // values_doc.push_back(PrintShapeVar(n->values[i], values_p->ArrayIndex(i), d));
+      }
+      return Dialect(d, "shape")->Call({ListDoc(values_doc)});
     });
 
 #define MATXSCRIPT_DEFINE_CMPOP_CONSTRUCTOR(Name)                       \
