@@ -397,7 +397,7 @@ void MLIRTextPrinter::VisitType_(const PointerTypeNode* node, std::ostream& os) 
   os << "memref<?x" + dtype + ">";
 }
 
-void MLIRTextPrinter::VisitType_(const NDArrayTypeNode* node, std::ostream& os) {
+void MLIRTextPrinter::VisitType_(const DynTensorTypeNode* node, std::ostream& os) {
   VisitTypeDefault_(node, os);
 }
 

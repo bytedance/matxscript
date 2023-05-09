@@ -154,6 +154,15 @@ void ExprVisitor::VisitExpr_(const TupleExprNode* op) {
   }
 }
 
+void ExprVisitor::VisitExpr_(const DataTypeImmNode* op) {
+  this->VisitSpan(op->span);
+}
+
+void ExprVisitor::VisitExpr_(const ShapeExprNode* op) {
+  this->VisitSpan(op->span);
+  VisitArray(op->values, [this](const PrimExpr& e) { this->VisitExpr(e); });
+}
+
 void ExprVisitor::VisitExpr_(const CallNode* op) {
   this->VisitSpan(op->span);
   this->VisitExpr(op->op);
@@ -718,6 +727,26 @@ HLOExpr ExprMutator::VisitExpr_(const RangeExprNode* op) {
     return GetRef<HLOExpr>(op);
   } else {
     return RangeExpr(std::move(start), std::move(stop), std::move(step), op->span);
+  }
+}
+
+HLOExpr ExprMutator::VisitExpr_(const DataTypeImmNode* op) {
+  return GetRef<HLOExpr>(op);
+}
+
+HLOExpr ExprMutator::VisitExpr_(const ShapeExprNode* op) {
+  bool all_fields_unchanged = true;
+  Array<PrimExpr> values;
+  values.reserve(op->values.size());
+  for (auto value : op->values) {
+    auto new_value = this->VisitExpr(value);
+    all_fields_unchanged &= new_value.same_as(value);
+    values.push_back(std::move(new_value));
+  }
+  if (all_fields_unchanged) {
+    return GetRef<HLOExpr>(op);
+  } else {
+    return ShapeExpr(std::move(values), op->span);
   }
 }
 

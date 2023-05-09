@@ -799,7 +799,7 @@ class Array : public ObjectRef {
         // no other shared copies of the array.
         auto arr = static_cast<ArrayNode*>(data.get());
         for (auto it = arr->MutableBegin(); it != arr->MutableEnd(); it++) {
-          T mapped = fmap(DowncastNoCheck<T>(std::move(*it)));
+          U mapped = fmap(DowncastNoCheck<T>(std::move(*it)));
           *it = std::move(mapped);
         }
         return data;

@@ -131,7 +131,7 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   //------------------------------------
   void VisitType_(const PrimTypeNode* node, std::ostream& os) override;
   void VisitType_(const PointerTypeNode* node, std::ostream& os) override;
-  void VisitType_(const NDArrayTypeNode* node, std::ostream& os) override;
+  void VisitType_(const DynTensorTypeNode* node, std::ostream& os) override;
   void VisitTypeDefault_(const Object* op, std::ostream& os) override;
 
   void NewScope();

@@ -489,8 +489,29 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
       return IdDoc(GetLiteralRepr(ty));
     });
 
-// NDArrayType
-runtime::Unicode NDArrayTypeNode::GetPythonTypeName() const {
+// ShapeType
+ShapeType::ShapeType(int ndim, Span span) {
+  ObjectPtr<ShapeTypeNode> n = make_object<ShapeTypeNode>();
+  n->ndim = ndim;
+  n->span = std::move(span);
+  data_ = std::move(n);
+}
+
+MATXSCRIPT_REGISTER_NODE_TYPE(ShapeTypeNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.ShapeType").set_body_typed([](int ndim, Span span) {
+  return ShapeType(ndim, span);
+});
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ShapeType>(  //
+        "",
+        [](ShapeType n, ObjectPath n_p, IRDocsifier d) -> Doc {
+          return Dialect(d, "Shape")
+              ->Call({}, {"ndim"}, {LiteralDoc::Int(n->ndim, n_p->Attr("ndim"))});
+        });
+
+// DynTensorType
+runtime::Unicode DynTensorTypeNode::GetPythonTypeName() const {
   std::stringstream os;
   os << "NDArray[ndim=";
   if (ndim < 0) {
@@ -499,28 +520,36 @@ runtime::Unicode NDArrayTypeNode::GetPythonTypeName() const {
     os << ndim;
   }
   os << ", dtype=";
-  if (dtype.defined()) {
-    os << dtype->dtype;
-  } else {
+  if (dtype.is_void()) {
     os << "?";
+  } else {
+    os << dtype;
   }
   os << "]";
   auto s = os.str();
   return runtime::String(s.data(), s.size()).decode();
 }
 
-NDArrayType::NDArrayType(int64_t ndim, PrimType dtype, Span span) {
-  ObjectPtr<NDArrayTypeNode> n = make_object<NDArrayTypeNode>();
+DynTensorType::DynTensorType(int64_t ndim, runtime::DataType dtype, Span span) {
+  ObjectPtr<DynTensorTypeNode> n = make_object<DynTensorTypeNode>();
   n->ndim = ndim;
   n->dtype = std::move(dtype);
   n->span = std::move(span);
   data_ = std::move(n);
 }
 
-MATXSCRIPT_REGISTER_NODE_TYPE(NDArrayTypeNode);
+MATXSCRIPT_REGISTER_NODE_TYPE(DynTensorTypeNode);
 
-MATXSCRIPT_REGISTER_GLOBAL("ir.NDArrayType").set_body_typed([](int64_t ndim, PrimType dtype) {
-  return NDArrayType(ndim, std::move(dtype));
+MATXSCRIPT_REGISTER_GLOBAL("ir.DynTensorType").set_body_typed([](int64_t ndim, const Any& dtype) {
+  runtime::DataType pod_dtype = DataType::Void();
+  if (!dtype.is_nullptr()) {
+    if (dtype.IsObjectRef<PrimType>()) {
+      pod_dtype = dtype.ptr<PrimTypeNode>()->dtype;
+    } else {
+      pod_dtype = dtype.As<runtime::DataType>();
+    }
+  }
+  return DynTensorType(ndim, pod_dtype);
 });
 
 RegexType::RegexType(Span span) {
@@ -539,7 +568,7 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
     });
 
 MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
-    .set_dispatch<NDArrayType>("", [](NDArrayType ty, ObjectPath p, IRDocsifier d) -> Doc {
+    .set_dispatch<DynTensorType>("", [](DynTensorType ty, ObjectPath p, IRDocsifier d) -> Doc {
       return IdDoc(GetLiteralRepr(ty));
     });
 
@@ -676,12 +705,12 @@ bool IsTypeConvertible(const Type& from, const Type& to) {
   }
   {
     // NDArray type check
-    const auto* from_pt = from.as<NDArrayTypeNode>();
-    const auto* to_pt = to.as<NDArrayTypeNode>();
+    const auto* from_pt = from.as<DynTensorTypeNode>();
+    const auto* to_pt = to.as<DynTensorTypeNode>();
     if (from_pt && to_pt) {
-      const auto* from_dtype = from_pt->dtype.as<PrimTypeNode>();
-      const auto* to_dtype = to_pt->dtype.as<PrimTypeNode>();
-      if (from_dtype && to_dtype && (from_dtype->dtype != to_dtype->dtype)) {
+      bool from_dtype_is_known = !(from_pt->dtype.is_void());
+      bool to_dtype_is_known = !(to_pt->dtype.is_void());
+      if (from_dtype_is_known && to_dtype_is_known && (from_pt->dtype != to_pt->dtype)) {
         return false;
       }
       if (from_pt->ndim >= 0 && to_pt->ndim >= 0 && (from_pt->ndim != to_pt->ndim)) {

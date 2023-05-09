@@ -64,6 +64,9 @@ using runtime::Object;
 using runtime::ObjectPtr;
 using runtime::ObjectRef;
 
+/*! \brief Indicates the number of dimensions of a tensor is unknown at compile time. */
+static constexpr int kUnknownNDim = -1;
+
 /*!
  * \brief Type is the base type of all types.
  *
@@ -1160,18 +1163,46 @@ class UserDataType : public Type {
   MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(UserDataType, Type, UserDataTypeNode);
 };
 
-class NDArrayTypeNode : public TypeNode {
+class ShapeTypeNode : public TypeNode {
  public:
-  int64_t ndim = -1;  // -1 means unknown
-  PrimType dtype;     // unknown if not defined
-  NDArrayTypeNode() {
+  /*! \brief size of the shape. */
+  int ndim;
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("ndim", &ndim);
+    v->Visit("span", &span);
   }
+
+  bool SEqualReduce(const ShapeTypeNode* other, SEqualReducer equal) const {
+    return equal(ndim, other->ndim);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    hash_reduce(ndim);
+  }
+
+  static constexpr const char* _type_key = "ir.ShapeType";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(ShapeTypeNode, TypeNode);
+};
+
+class ShapeType : public Type {
+ public:
+  MATX_DLL ShapeType(int ndim, Span span = Span());
+
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(ShapeType, Type, ShapeTypeNode);
+};
+
+class DynTensorTypeNode : public TypeNode {
+ public:
+  int64_t ndim = kUnknownNDim;
+  runtime::DataType dtype;  // unknown if not defined
+
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("ndim", &ndim);
     v->Visit("dtype", &dtype);
     v->Visit("span", &span);
   }
-  bool SEqualReduce(const NDArrayTypeNode* other, SEqualReducer equal) const {
+  bool SEqualReduce(const DynTensorTypeNode* other, SEqualReducer equal) const {
     return (ndim == other->ndim) && (equal(dtype, other->dtype));
   }
   void SHashReduce(SHashReducer hash_reduce) const {
@@ -1185,15 +1216,14 @@ class NDArrayTypeNode : public TypeNode {
 
   runtime::Unicode GetPythonTypeName() const override;
 
-  static constexpr const char* _type_key = "NDArrayType";
-  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(NDArrayTypeNode, TypeNode);
+  static constexpr const char* _type_key = "DynTensorType";
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(DynTensorTypeNode, TypeNode);
 };
 
-class NDArrayType : public Type {
+class DynTensorType : public Type {
  public:
-  MATX_DLL explicit NDArrayType(int64_t ndim, PrimType dtype, Span span = Span());
-
-  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(NDArrayType, Type, NDArrayTypeNode);
+  MATX_DLL explicit DynTensorType(int64_t ndim, runtime::DataType dtype, Span span = Span());
+  MATXSCRIPT_DEFINE_NOTNULLABLE_OBJECT_REF_METHODS(DynTensorType, Type, DynTensorTypeNode);
 };
 
 class RegexTypeNode : public TypeNode {
@@ -1360,8 +1390,8 @@ inline bool IsUserDataType(const Type& t) {
   return t->IsInstance<UserDataTypeNode>();
 }
 
-inline bool IsNDArrayType(const Type& t) {
-  return t->IsInstance<NDArrayTypeNode>();
+inline bool IsDynTensorType(const Type& t) {
+  return t->IsInstance<DynTensorTypeNode>();
 }
 
 inline bool IsOpaqueObjectType(const Type& t) {

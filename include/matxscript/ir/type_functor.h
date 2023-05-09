@@ -104,7 +104,8 @@ class TypeFunctor<R(const Type& n, Args...)> {
   virtual R VisitType_(const IteratorTypeNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
   virtual R VisitType_(const ExceptionTypeNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
   virtual R VisitType_(const FileTypeNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
-  virtual R VisitType_(const NDArrayTypeNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
+  virtual R VisitType_(const ShapeTypeNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
+  virtual R VisitType_(const DynTensorTypeNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
   virtual R VisitType_(const ClassTypeNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
   virtual R VisitType_(const UserDataTypeNode* op, Args... args) MATXSCRIPT_TYPE_FUNCTOR_DEFAULT;
   virtual R VisitType_(const OpaqueObjectTypeNode* op,
@@ -138,7 +139,8 @@ class TypeFunctor<R(const Type& n, Args...)> {
     MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(IteratorTypeNode);
     MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(ExceptionTypeNode);
     MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(FileTypeNode);
-    MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(NDArrayTypeNode);
+    MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(ShapeTypeNode);
+    MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(DynTensorTypeNode);
     MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(ClassTypeNode);
     MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(UserDataTypeNode);
     MATXSCRIPT_TYPE_FUNCTOR_DISPATCH(OpaqueObjectTypeNode);
@@ -171,7 +173,8 @@ class MATX_DLL TypeVisitor : public TypeFunctor<void(const Type& n)> {
   void VisitType_(const ExceptionTypeNode* op) override;
   void VisitType_(const IteratorTypeNode* op) override;
   void VisitType_(const FileTypeNode* op) override;
-  void VisitType_(const NDArrayTypeNode* op) override;
+  void VisitType_(const ShapeTypeNode* op) override;
+  void VisitType_(const DynTensorTypeNode* op) override;
   void VisitType_(const ClassTypeNode* op) override;
   void VisitType_(const UserDataTypeNode* op) override;
   void VisitType_(const OpaqueObjectTypeNode* op) override;
@@ -201,7 +204,8 @@ class MATX_DLL TypeMutator : public TypeFunctor<Type(const Type& n)> {
   Type VisitType_(const ExceptionTypeNode* op) override;
   Type VisitType_(const IteratorTypeNode* op) override;
   Type VisitType_(const FileTypeNode* op) override;
-  Type VisitType_(const NDArrayTypeNode* op) override;
+  Type VisitType_(const ShapeTypeNode* op) override;
+  Type VisitType_(const DynTensorTypeNode* op) override;
   Type VisitType_(const ClassTypeNode* op) override;
   Type VisitType_(const UserDataTypeNode* op) override;
   Type VisitType_(const OpaqueObjectTypeNode* op) override;

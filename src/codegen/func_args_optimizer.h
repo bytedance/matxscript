@@ -60,7 +60,7 @@ class FuncArgsOptimizerFilter : public StmtExprVisitor {
       if (IsPrimType(f_arg->checked_type())) {
         continue;
       }
-      if (IsNDArrayType(f_arg->checked_type())) {
+      if (IsDynTensorType(f_arg->checked_type())) {
         // TODO: fix ndarray const method
         continue;
       }

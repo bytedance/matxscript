@@ -289,6 +289,8 @@ class HLOExprFunctor<R(const HLOExpr& n, Args...)> {
   // kernel or script
   virtual R VisitExpr_(const TupleExprNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
   virtual R VisitExpr_(const RangeExprNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
+  virtual R VisitExpr_(const DataTypeImmNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
+  virtual R VisitExpr_(const ShapeExprNode* op, Args... args) EXPR_FUNCTOR_DEFAULT;
 
   virtual R VisitExprDefault_(const Object* op, Args...) {
     MXTHROW << "[" << runtime::DemangleType(typeid(*this).name()) << "] Do not have a default for "
@@ -341,6 +343,8 @@ class HLOExprFunctor<R(const HLOExpr& n, Args...)> {
     // kernel or script
     IR_EXPR_FUNCTOR_DISPATCH(TupleExprNode);
     IR_EXPR_FUNCTOR_DISPATCH(RangeExprNode);
+    IR_EXPR_FUNCTOR_DISPATCH(DataTypeImmNode);
+    IR_EXPR_FUNCTOR_DISPATCH(ShapeExprNode);
 
     return vtable;
   }
@@ -465,6 +469,8 @@ class MATX_DLL ExprVisitor : public PrimExprFunctor<void(const PrimExpr&)>,
   // kernel or script
   void VisitExpr_(const TupleExprNode* op) override;
   void VisitExpr_(const RangeExprNode* op) override;
+  void VisitExpr_(const DataTypeImmNode* op) override;
+  void VisitExpr_(const ShapeExprNode* op) override;
 };
 
 /*!
@@ -581,6 +587,8 @@ class MATX_DLL ExprMutator : public PrimExprFunctor<PrimExpr(const PrimExpr&)>,
   // kernel or script
   HLOExpr VisitExpr_(const TupleExprNode* op) override;
   HLOExpr VisitExpr_(const RangeExprNode* op) override;
+  HLOExpr VisitExpr_(const DataTypeImmNode* op) override;
+  HLOExpr VisitExpr_(const ShapeExprNode* op) override;
 
  public:
   /*!

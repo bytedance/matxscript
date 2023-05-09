@@ -36,6 +36,59 @@ using runtime::ObjectPtr;
 using runtime::ObjectRef;
 
 /*!
+ * \brief Base type of all structure information.
+ *
+ * StructInfo stores possible structure information
+ * deduced during compile-time. It encapsulates
+ * both static type and runtime information such
+ * as shape.
+ *
+ * StructInfo of each non-primitive Expr can be
+ * deduced during compilation in a "best-effort" manner.
+ *
+ * When struct_info appears in function parameter and return
+ * signatures. They will imply a runtime check that matches
+ * the structure information with the value.
+ *
+ * When it appears in Expr, they follow "assume-semantics",
+ * which means the compiler will take the deduced information as it is
+ * and only do best effort prove and checks.
+ *
+ * Each struct info can be uniquely erased to a static-type.
+ * The compiler will still compile the code(with less information)
+ * when we erase to the static type.
+ *
+ * If an StructInfo contains an Expr field, then that field
+ * must be normalized already through NormalizeArg.
+ * This invariant will be checked in constructors
+ * and help us to simplify our assumption
+ * during struct info deduction.
+ */
+class StructInfoNode : public Object {
+ public:
+  /*!
+   * \brief Span that points to the original source code.
+   *        Reserved debug information.
+   */
+  mutable Span span;
+
+  static constexpr const char* _type_key = "StructInfo";
+  static constexpr const bool _type_has_method_sequal_reduce = true;
+  static constexpr const bool _type_has_method_shash_reduce = true;
+  static constexpr const uint32_t _type_child_slots = 5;
+  MATXSCRIPT_DECLARE_BASE_OBJECT_INFO(StructInfoNode, Object);
+};
+
+/*!
+ * \brief Managed reference to StructInfoNode.
+ * \sa StructInfoNode
+ */
+class StructInfo : public ObjectRef {
+ public:
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(StructInfo, ObjectRef, StructInfoNode);
+};
+
+/*!
  * \brief Base type of all the expressions.
  * \sa Expr
  */
@@ -185,16 +238,25 @@ class PrimExpr : public BaseExpr {
  */
 class HLOExprNode : public BaseExprNode {
  public:
+  /*!
+   * \brief Stores the result of structure information of the
+   *        expression that encapsulate both static shape and
+   *        runtime information such as shape.
+   */
+  mutable Optional<ObjectRef> struct_info_{nullptr};
+
   void VisitAttrs(AttrVisitor* v) {
     BaseExprNode::VisitAttrs(v);
+    v->Visit("struct_info_", &struct_info_);
   }
 
   bool SEqualReduce(const HLOExprNode* other, SEqualReducer equal) const {
-    return BaseExprNode::SEqualReduce(other, equal);
+    return BaseExprNode::SEqualReduce(other, equal) && equal(struct_info_, other->struct_info_);
   }
 
   void SHashReduce(SHashReducer hash_reduce) const {
     BaseExprNode::SHashReduce(hash_reduce);
+    hash_reduce(struct_info_);
   }
 
   static constexpr const char* _type_key = "HLOExpr";
