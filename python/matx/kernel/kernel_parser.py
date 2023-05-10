@@ -83,7 +83,7 @@ class KernelParser:
             parser = KernelInspector(self, node).check_and_dispatch(node.ast)
             node.ir = parser.visit(node.ast)
             print(_ffi_node_api.IRTextPrinter_Print(node.ir, None).decode())
-            print("-"*100)
+            print("-" * 100)
             linalg_statement = _ffi_node_api.as_linalg_text(node.ir).decode()
             print(linalg_statement)
 

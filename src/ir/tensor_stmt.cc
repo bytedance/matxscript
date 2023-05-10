@@ -84,8 +84,8 @@ Buffer::Buffer(PrimVar data,
       << "Variable " << data->name_hint << " is missing a type annotation.";
   MXCHECK(data->type_annotation.as<PointerTypeNode>())
       << "Variable " << data->name_hint << " is not a pointer.";
-  //MXCHECK(data->type_annotation.as<PointerTypeNode>()->element_type.as<PrimTypeNode>())
-  //    << "Variable " << data->name_hint << " does not point to a primitive.";
+  // MXCHECK(data->type_annotation.as<PointerTypeNode>()->element_type.as<PrimTypeNode>())
+  //     << "Variable " << data->name_hint << " does not point to a primitive.";
 
   auto n = runtime::make_object<BufferNode>();
   n->data = std::move(data);
