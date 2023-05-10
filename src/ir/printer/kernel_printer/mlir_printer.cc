@@ -81,9 +81,11 @@ void MLIRTextPrinter::VisitTypeDefault_(const Object* op, std::ostream& os) {
 
 // Begin Expr
 void MLIRTextPrinter::VisitExpr_(const IntImmNode* op, std::ostream& os) {
+  expr_name_map_->emplace(op, std::to_string(op->value));
 }
 
 void MLIRTextPrinter::VisitExpr_(const FloatImmNode* op, std::ostream& os) {
+  expr_name_map_->emplace(op, std::to_string(op->value));
 }
 
 std::string MLIRTextPrinter::ConvertTypeToMLIR(const runtime::DataType& type) const {
@@ -111,12 +113,30 @@ std::string MLIRTextPrinter::ConvertTypeToMLIR(const runtime::DataType& type) co
   return data_type;
 }
 
+std::string MLIRTextPrinter::ConvertTypeToMLIR(const matxscript::ir::PointerTypeNode* node) const {
+  std::stringstream ss;
+  ss<<"memref<?x";
+  while (auto *e = node->element_type.as<PointerTypeNode>()){
+    node = e;
+    ss<<"?x";
+  }
+  ss << ConvertTypeToMLIR(node->element_type) << '>';
+  return ss.str();
+}
+
 std::string MLIRTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Type& type) const {
   if (auto* n = type.as<PrimTypeNode>()) {
     return ConvertTypeToMLIR(n->dtype);
   } else if (auto* n = type.as<PointerTypeNode>()) {
+    std::stringstream ss;
+    ss<<"memref<?x";
+    while (auto *e = n->element_type.as<PointerTypeNode>()){
+      n = e;
+      ss<<"?x";
+    }
     auto dtype = ConvertTypeToMLIR(n->element_type);
-    return "memref<?x" + dtype + ">";
+    ss << dtype << '>';
+    return ss.str();
   } else {
     MXTHROW << "Type " << type << " does not have a corresponding runtime::DataType";
     return "";
@@ -203,15 +223,15 @@ void MLIRTextPrinter::GenMLIRArithStatement(const std::string& arith_type,
   std::string data_type = data_arith_suffix_type.first;
   std::string arith_total_type = arith_type + data_arith_suffix_type.second;
 
-  os << "%" << cur_index_ << " = arith." << arith_total_type << " %";
+  os << '%' << cur_index_ << " = arith." << arith_total_type << " ";
   PrintNodeName(op->a, os);
-  os << ", %";
+  os << ", ";
   PrintNodeName(op->b, os);
   os << " : " << data_type << "\n";
   if (expr_name_map_->find(op) != expr_name_map_->end()) {
     MXTHROW << "[linalg] op is already in expr_index_map_";
   }
-  expr_name_map_->emplace(op, std::to_string(cur_index_));
+  expr_name_map_->emplace(op, '%'+std::to_string(cur_index_));
   cur_index_ += 1;
 }
 
@@ -287,6 +307,17 @@ void MLIRTextPrinter::VisitExpr_(const PrimCallNode* op, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimCastNode* op, std::ostream& os) {
+  auto & v = op->value;
+  PrimExprFunctor::VisitExpr(v, os);
+  os<<'%'<<cur_index_<<" = unrealized_conversion_cast ";
+  PrintNodeName(v, os);
+  os<<" : ";
+  os<<ConvertTypeToMLIR( v->checked_type())<<" to "<< ConvertTypeToMLIR(op->checked_type());
+  if (expr_name_map_->find(op) != expr_name_map_->end()) {
+    MXTHROW << "[linalg] op is already in expr_index_map_";
+  }
+  expr_name_map_->emplace(op, '%'+std::to_string(cur_index_));
+  cur_index_ += 1;
 }
 
 void MLIRTextPrinter::VisitExpr_(const BufferLoadNode* op, std::ostream& os) {
@@ -299,7 +330,7 @@ void MLIRTextPrinter::VisitStmt_(const BufferStoreNode* op, std::ostream& os) {
   PrimExprFunctor::VisitExpr(op->value, os);
   std::string result = '%' + std::to_string(cur_index_);
   cur_index_++;
-  os << result << " = " << '%' << expr_name_map_->at(op->value.get()) << ": "
+  os << result << " = " << expr_name_map_->at(op->value.get()) << ": "
      << MLIRTextPrinter::ConvertTypeToMLIR(op->buffer->dtype) << std::endl;
   os << "linalg.yield " << result << " : " << MLIRTextPrinter::ConvertTypeToMLIR(op->buffer->dtype)
      << std::endl;
@@ -315,7 +346,7 @@ void MLIRTextPrinter::VisitStmt_(const ReturnStmtNode* op, std::ostream& os) {
   if (op->value->IsInstance<PrimExprNode>()) {
     auto node = runtime::Downcast<PrimExpr>(op->value);
     PrimExprFunctor::VisitExpr(node, os);
-    os << "func.return %";
+    os << "func.return ";
     PrintNodeName(op->value, os);
     os << " :";
     VisitType(node->checked_type(), os);
@@ -356,9 +387,9 @@ void MLIRTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
     auto& param = func_params[i];
     if (param->IsInstance<PrimVarNode>()) {
       auto node = runtime::Downcast<PrimVar>(param);
-      os << "%" << node->name_hint << ": ";
+      os << '%' << node->name_hint << ": ";
       VisitType(node->checked_type(), os);
-      expr_name_map_->emplace(param.get(), node->name_hint.c_str());
+      expr_name_map_->emplace(param.get(), '%'+ std::string(node->name_hint.data()));
     } else {
       MXTHROW << "[linalg] not support arg node: " << param->checked_type();
     }
@@ -393,8 +424,7 @@ void MLIRTextPrinter::VisitType_(const PrimTypeNode* node, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitType_(const PointerTypeNode* node, std::ostream& os) {
-  auto dtype = ConvertTypeToMLIR(node->element_type);
-  os << "memref<?x" + dtype + ">";
+  os << ConvertTypeToMLIR(node);
 }
 
 void MLIRTextPrinter::VisitType_(const DynTensorTypeNode* node, std::ostream& os) {

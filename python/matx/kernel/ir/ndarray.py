@@ -30,10 +30,12 @@ class NDArrayNode(ExpressionBaseNode):
         super().__init__(type_)
         self.name: str = name
         self.shape = type_.shape
-        self.script_type = _ir.PointerType(_ir.PrimType(type_.dtype_str()))
+        self.script_type = _ir.PrimType(type_.dtype_str())
+        for _ in range(len(self.shape)):
+            self.script_type = _ir.PointerType(self.script_type)
         self.script_var = _ir.PrimVar(f"{name}", self.script_type, span)  # PTR_VAR
-        buffer_shape = [dim if not is_symbol(dim) else shape_symbol_table[str(dim)].script_var
-                        for dim in self.shape]
+        buffer_shape = tuple(dim if not is_symbol(dim) else shape_symbol_table[str(dim)].script_var
+                             for dim in self.shape)
         self.idx = [_ir.const(0) for _ in range(len(self.shape))]
         self.buffer = decl_buffer(
             buffer_shape,

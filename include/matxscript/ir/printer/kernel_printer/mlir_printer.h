@@ -122,6 +122,7 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   std::string ConvertTypeToMLIR(const runtime::DataType& type) const;
   std::string ConvertTypeToMLIR(const Type& type) const;
   std::string ConvertTypeToMLIR(const Buffer& buffer) const;
+  std::string ConvertTypeToMLIR(const PointerTypeNode* node) const;
   void PrintNodeName(const BaseExpr& ptr, std::ostream& os);
 
   std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op);

@@ -60,7 +60,7 @@ void LinalgGenericPrinter::VisitBufferRegionArray_(const Array<matxscript::ir::B
     const auto& buffer = arr_[i]->buffer;
     const auto& region = arr_[i]->region;
     bufferOrder.emplace_back(&(arr_[i]->buffer));
-    os << buffer->data;
+    mlir_printer_->PrintNodeName(buffer->data, os);
     types << mlir_printer_->ConvertTypeToMLIR(buffer);
     if (i != arr_.size() - 1) {
       os << ", ";
@@ -130,7 +130,7 @@ void LinalgGenericPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar
               << ") is not a pre defined symbol";
     }
     perfix << stop;
-    if (i != reads.size() - 1) {
+    if (i != iter_vars.size() - 1) {
       perfix << ", ";
     }
   }
@@ -170,11 +170,11 @@ void LinalgGenericPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar
     }
   }
 
-  os << "], iterator_types = [";
+  os << ")], iterator_types = [";
   // todo for now just assume they are parallel, deal with reduction later
-  for (int i = 0; i < reads.size(); i++) {
+  for (int i = 0; i < iter_vars.size(); i++) {
     os << "parallel";
-    if (i != reads.size() - 1) {
+    if (i != iter_vars.size() - 1) {
       os << ", ";
     }
   }
