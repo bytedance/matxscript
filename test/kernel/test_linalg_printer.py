@@ -164,7 +164,7 @@ func.return %a :memref<?xf64>
         print(linalg_statement)
         expected_statement = """
 func.func @basic_arith_op(%i: i64, %j: i64)->memref<?xf64>{
-linalg.generic {indexing_maps = [affine_map<(i, j) -> (i, j)>, affine_map<(i, j) -> (i, j)>, affine_map<(i, j) -> (i, j], iterator_types = [parallel, parallel]}
+linalg.generic {indexing_maps = [affine_map<(i, j) -> (i, j)>, affine_map<(i, j) -> (i, j)>, affine_map<(i, j) -> (i, j)], iterator_types = [parallel, parallel]}
                     ins(A, B: memref<?x?xf64>, memref<?x?xf64>)
                     outs(C: memref<?x?xf64>)
 {
@@ -205,7 +205,7 @@ linalg.yield %0 : f64
         print(linalg_statement)
         expected_statement = """
 func.func @basic_arith_op(%i: i64, %j: i64)->memref<?xf64>{
-linalg.generic {indexing_maps = [affine_map<(i, j) -> (i, j)>, affine_map<(i, j) -> (i, j)>, affine_map<(i, j) -> (i, j], iterator_types = [parallel, parallel]}
+linalg.generic {indexing_maps = [affine_map<(i, j) -> (i, j)>, affine_map<(i, j) -> (i, j)>, affine_map<(i, j) -> (i, j)], iterator_types = [parallel, parallel]}
                     ins(A, B: memref<?x?xf64>, memref<?x?xf64>)
                     outs(C: memref<?x?xf64>)
 {
