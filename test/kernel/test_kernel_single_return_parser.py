@@ -37,7 +37,7 @@ class TestSingleReturnParser(unittest.TestCase):
         p = KernelParser(foo)
         p.parse()
         print()
-        print("="*100)
+        print("=" * 100)
         print()
         print(p.linalg_code())
         # todo check ir structure
@@ -52,7 +52,7 @@ class TestSingleReturnParser(unittest.TestCase):
         p = KernelParser(foo)
         p.parse()
         print()
-        print("="*100)
+        print("=" * 100)
         print()
         print(p.linalg_code())
         # todo check ir structure
@@ -67,7 +67,7 @@ class TestSingleReturnParser(unittest.TestCase):
         p = KernelParser(foo)
         p.parse()
         print()
-        print("="*100)
+        print("=" * 100)
         print()
         print(p.linalg_code())
         # todo check ir structure
@@ -82,7 +82,7 @@ class TestSingleReturnParser(unittest.TestCase):
         p = KernelParser(foo)
         p.parse()
         print()
-        print("="*100)
+        print("=" * 100)
         print()
         print(p.linalg_code())
         # todo check ir structure
@@ -97,7 +97,7 @@ class TestSingleReturnParser(unittest.TestCase):
         p = KernelParser(foo)
         p.parse()
         print()
-        print("="*100)
+        print("=" * 100)
         print()
         print(p.linalg_code())
         # todo check ir structure
@@ -113,7 +113,7 @@ class TestSingleReturnParser(unittest.TestCase):
         p = KernelParser(foo)
         p.parse()
         print()
-        print("="*100)
+        print("=" * 100)
         print()
         print(p.linalg_code())
         # todo check ir structure
@@ -128,7 +128,7 @@ class TestSingleReturnParser(unittest.TestCase):
         p = KernelParser(foo)
         p.parse()
         print()
-        print("="*100)
+        print("=" * 100)
         print()
         print(p.linalg_code())
         # todo check ir structure
@@ -143,7 +143,7 @@ class TestSingleReturnParser(unittest.TestCase):
         p = KernelParser(foo)
         p.parse()
         print()
-        print("="*100)
+        print("=" * 100)
         print()
         print(p.linalg_code())
         # todo check ir structure
