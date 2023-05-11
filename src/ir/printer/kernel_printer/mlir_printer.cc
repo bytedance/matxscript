@@ -81,7 +81,8 @@ void MLIRTextPrinter::VisitTypeDefault_(const Object* op, std::ostream& os) {
 
 // Begin Expr
 void MLIRTextPrinter::VisitExpr_(const IntImmNode* op, std::ostream& os) {
-  os << '%' << cur_index_ << " = arith.constant " << std::to_string(op->value) << " : "<<ConvertTypeToMLIR(op->checked_type())<<std::endl;;
+  os << '%' << cur_index_ << " = arith.constant " << std::to_string(op->value)
+     << " : "<<ConvertTypeToMLIR(op->checked_type())<<std::endl;;
   if (expr_name_map_->find(op) != expr_name_map_->end()) {
     MXTHROW << "[linalg] op is already in expr_index_map_";
   }
@@ -90,7 +91,8 @@ void MLIRTextPrinter::VisitExpr_(const IntImmNode* op, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitExpr_(const FloatImmNode* op, std::ostream& os) {
-  os << '%' << cur_index_ << " = arith.constant " << std::to_string(op->value) << " : "<<ConvertTypeToMLIR(op->checked_type())<<std::endl;;
+  os << '%' << cur_index_ << " = arith.constant " << std::to_string(op->value)
+     << " : "<<ConvertTypeToMLIR(op->checked_type())<<std::endl;;
   if (expr_name_map_->find(op) != expr_name_map_->end()) {
     MXTHROW << "[linalg] op is already in expr_index_map_";
   }
@@ -322,7 +324,8 @@ void MLIRTextPrinter::VisitExpr_(const PrimCastNode* op, std::ostream& os) {
   os << '%' << cur_index_ << " = unrealized_conversion_cast ";
   PrintNodeName(v, os);
   os << " : ";
-  os << ConvertTypeToMLIR(v->checked_type()) << " to " << ConvertTypeToMLIR(op->checked_type()) << std::endl;
+  os << ConvertTypeToMLIR(v->checked_type()) << " to "
+     << ConvertTypeToMLIR(op->checked_type()) << std::endl;
   if (expr_name_map_->find(op) != expr_name_map_->end()) {
     MXTHROW << "[linalg] op is already in expr_index_map_";
   }
