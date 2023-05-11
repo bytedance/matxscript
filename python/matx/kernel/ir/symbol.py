@@ -28,7 +28,7 @@ class SymbolNode(ExpressionBaseNode):
         assert is_symbol(symbol), 'syntax error'
         self.name: str = str(symbol)
         self.script_type = _ir.PrimType("int64")
-        self.script_var = _ir.PrimVar(f"symbol_{self.name}", "int64", span)
+        self.script_var = _ir.PrimVar(f"symbol_{self.name}", self.script_type, span)
 
     def to_matx_ir(self, **kwargs):
         return self.script_var

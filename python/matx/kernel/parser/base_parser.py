@@ -114,24 +114,23 @@ class BaseParser(ast.NodeVisitor):
             self.context.func_params.append(dim_var.script_var)
 
         # append session_pointer_var
-        pointer_var_name = "handle_2_71828182846"
-        pointer_var = _ir.PrimVar(
-            pointer_var_name,
-            _ir.PrimType("handle")
-        )
-        self.context.update_symbol(pointer_var_name, pointer_var)
-        self.context.func_params.append(pointer_var)
+        # pointer_var_name = "handle_2_71828182846"
+        # pointer_var = _ir.PrimVar(
+        #    pointer_var_name,
+        #    _ir.PrimType("handle")
+        # )
+        # self.context.update_symbol(pointer_var_name, pointer_var)
+        # self.context.func_params.append(pointer_var)
 
         body_stmts = self.parse_body(True)
 
-        func = _ir.Function(
+        func = _ir.PrimFunc(
             self.context.func_params,
             # [HLOVar(x, ty=ObjectTypeNode), HLOVar(y, ty=ObjectTypeNode), handle_2_71828182846]
             [],  # [_ir.PrimCast("handle", _ir.const(0))],
             self.to_seq_stmt(body_stmts, span_),
             # [CallNode(Op(ir.nd_module_add), [HLOVar(x, ty=ObjectTypeNode), HLOVar(y, ty=ObjectTypeNode)], []) -> NDArrayType]
-            ret_type=None,
-            span=span_
+            ret_type=None
         )
         func = func.with_attr(_ir.FuncAttr.kGlobalSymbol, node.name)
         self.context.pop_scope()

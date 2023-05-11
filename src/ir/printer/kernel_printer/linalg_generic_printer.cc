@@ -60,7 +60,7 @@ void LinalgGenericPrinter::VisitBufferRegionArray_(const Array<matxscript::ir::B
     const auto& buffer = arr_[i]->buffer;
     const auto& region = arr_[i]->region;
     bufferOrder.emplace_back(&(arr_[i]->buffer));
-    os << buffer->data;
+    mlir_printer_->PrintNodeName(buffer->data, os);
     types << mlir_printer_->ConvertTypeToMLIR(buffer);
     if (i != arr_.size() - 1) {
       os << ", ";
@@ -130,7 +130,7 @@ void LinalgGenericPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar
               << ") is not a pre defined symbol";
     }
     perfix << stop;
-    if (i != reads.size() - 1) {
+    if (i != iter_vars.size() - 1) {
       perfix << ", ";
     }
   }
@@ -166,15 +166,17 @@ void LinalgGenericPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar
       VisitRangeExpr_(write_buffer, range, os);
       if (i != region.size() - 1) {
         os << ", ";
+      } else {
+        os << ")";
       }
     }
   }
 
   os << "], iterator_types = [";
   // todo for now just assume they are parallel, deal with reduction later
-  for (int i = 0; i < reads.size(); i++) {
+  for (int i = 0; i < iter_vars.size(); i++) {
     os << "parallel";
-    if (i != reads.size() - 1) {
+    if (i != iter_vars.size() - 1) {
       os << ", ";
     }
   }
@@ -187,9 +189,9 @@ void LinalgGenericPrinter::VisitComputBlockBody_(const matxscript::ir::Stmt& bod
   for (int i = 0; i < bufferOrder.size(); i++) {
     auto& buffer = *(bufferOrder.at(i));
     std::string element_name = buffer->name.c_str();
-    element_name = '_' + element_name;
-    mlir_printer_->expr_name_map_->emplace(buffer->data.get(), element_name);
-    os << '%' << element_name << ": " << mlir_printer_->ConvertTypeToMLIR(buffer->dtype);
+    element_name = "%_" + element_name;
+    mlir_printer_->insert_or_assign_expr_name_map_(buffer->data.get(), element_name);
+    os << element_name << ": " << mlir_printer_->ConvertTypeToMLIR(buffer->dtype);
     if (i != bufferOrder.size() - 1) {
       os << ", ";
     }

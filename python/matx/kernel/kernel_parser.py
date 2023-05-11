@@ -42,6 +42,7 @@ class KernelParser:
         for arg_type in self.args.values():
             shape_symbol = extract_symbol_from_type(arg_type)
             self.symbols.update(shape_symbol)
+        self.main_node_ir = None
 
     def passes(self, sc_ctx):
         dep_anls = analysis.DepsAnalysis()
@@ -83,5 +84,9 @@ class KernelParser:
             parser = KernelInspector(self, node).check_and_dispatch(node.ast)
             node.ir = parser.visit(node.ast)
             print(_ffi_node_api.IRTextPrinter_Print(node.ir, None).decode())
+            return node.ir
 
-        parser_node(sc_ctx.main_node)
+        self.main_node_ir = parser_node(sc_ctx.main_node)
+
+    def linalg_code(self):
+        return _ffi_node_api.as_linalg_text(self.main_node_ir).decode()
