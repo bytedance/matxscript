@@ -114,12 +114,12 @@ class BaseParser(ast.NodeVisitor):
             self.context.func_params.append(dim_var.script_var)
 
         # append session_pointer_var
-        #pointer_var_name = "handle_2_71828182846"
+        # pointer_var_name = "handle_2_71828182846"
         # pointer_var = _ir.PrimVar(
         #    pointer_var_name,
         #    _ir.PrimType("handle")
         # )
-        #self.context.update_symbol(pointer_var_name, pointer_var)
+        # self.context.update_symbol(pointer_var_name, pointer_var)
         # self.context.func_params.append(pointer_var)
 
         body_stmts = self.parse_body(True)
