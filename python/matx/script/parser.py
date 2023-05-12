@@ -600,7 +600,7 @@ class MATXScriptParser(ast.NodeVisitor):
         symbol, level = self.context.lookup_symbol_with_level(name_hint)
         if ann_ty is not None:
             ann_ty_name = ann_ty.py_type_name()
-            if symbol is not None and symbol.py_type_name() != ann_ty_name:
+            if symbol is not None and not live_out and symbol.py_type_name() != ann_ty_name:
                 self.report_error(
                     "redeclare '{}' type from '{}' to '{}' is not supported".format(
                         name_hint,
