@@ -25,20 +25,20 @@
  */
 #pragma once
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
 #include <tuple>
 #include <type_traits>
 #include <vector>
-#include <memory>
 #include "matxscript/ir/base.h"
 #include "matxscript/ir/prim_expr.h"
 #include "matxscript/ir/prim_ops.h"
 #include "matxscript/ir/prim_var.h"
+#include "matxscript/ir/printer/kernel_printer/linalg_generic_printer.h"
 #include "matxscript/ir/tensor_stmt.h"
 #include "matxscript/ir/type.h"
-#include "matxscript/ir/printer/kernel_printer/linalg_generic_printer.h"
 #include "matxscript/runtime/dlpack.h"
 #include "matxscript/runtime/object.h"
 
@@ -158,7 +158,7 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   var_name_map* expr_name_map_;
   var_type_map* val_type_map_;
   std::atomic<uint32_t> cur_index_{0};
-  std::unique_ptr<LinalgGenericPrinter> computeBlockPrinter=nullptr;
+  std::unique_ptr<LinalgGenericPrinter> computeBlockPrinter = nullptr;
 };
 
 }  // namespace printer

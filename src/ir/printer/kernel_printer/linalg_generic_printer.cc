@@ -60,11 +60,11 @@ void LinalgGenericPrinter::VisitBufferRegionArray_(const Array<matxscript::ir::B
     const auto& buffer = arr_[i]->buffer;
     const auto& region = arr_[i]->region;
     bufferRegionOrder.emplace_back(arr_[i].get());
-    if(regionMap.find(buffer.get()) == regionMap.end()){
+    if (regionMap.find(buffer.get()) == regionMap.end()) {
       regionMap.emplace(buffer.get(), std::vector<const BufferRegionNode*>());
     }
     regionMap[buffer.get()].push_back(arr_[i].get());
-    if(visitCounter.find(buffer.get()) == visitCounter.end()){
+    if (visitCounter.find(buffer.get()) == visitCounter.end()) {
       visitCounter.emplace(buffer.get(), 0);
     }
     mlir_printer_->PrintNodeName(buffer->data, os);
@@ -187,17 +187,16 @@ void LinalgGenericPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar
   os << "]";
 }
 
-
-std::string LinalgGenericPrinter::GetPrimVarName(const BufferLoadNode* op){
-  const auto *bufferPtr = op->buffer.get();
-  if (regionMap.find(bufferPtr)!= regionMap.end() && visitCounter.find(bufferPtr)!= visitCounter.end()){
+std::string LinalgGenericPrinter::GetPrimVarName(const BufferLoadNode* op) {
+  const auto* bufferPtr = op->buffer.get();
+  if (regionMap.find(bufferPtr) != regionMap.end() &&
+      visitCounter.find(bufferPtr) != visitCounter.end()) {
     std::string element_name = bufferPtr->name.c_str() + std::to_string(visitCounter[bufferPtr]);
     visitCounter[bufferPtr]++;
     return "%_" + element_name;
   }
   MXTHROW << "[Linalg.generic] the corresponding buffer has not been recroded.";
 }
-
 
 void LinalgGenericPrinter::VisitComputBlockBody_(const matxscript::ir::Stmt& body,
                                                  std::ostream& os) {
@@ -207,10 +206,11 @@ void LinalgGenericPrinter::VisitComputBlockBody_(const matxscript::ir::Stmt& bod
     const auto bufferRegionPtr = bufferRegionOrder.at(i);
     // bufferregion maybe over the same buffer.
 
-    const auto & buffer = bufferRegionPtr->buffer;
+    const auto& buffer = bufferRegionPtr->buffer;
     std::string element_name = buffer->name.c_str();
-    const auto & regionArray = regionMap[buffer.get()];
-    const int idx = std::find(regionArray.begin(), regionArray.end(), bufferRegionPtr)-regionArray.begin();
+    const auto& regionArray = regionMap[buffer.get()];
+    const int idx =
+        std::find(regionArray.begin(), regionArray.end(), bufferRegionPtr) - regionArray.begin();
     element_name = "%_" + element_name + std::to_string(idx);
     mlir_printer_->insert_or_assign_expr_name_map_(bufferRegionPtr, element_name);
     os << element_name << ": " << mlir_printer_->ConvertTypeToMLIR(buffer->dtype);
