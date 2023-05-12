@@ -30,6 +30,7 @@
 #include <type_traits>
 #include <vector>
 #include "matxscript/ir/base.h"
+#include "matxscript/ir/none_expr.h"
 #include "matxscript/ir/prim_expr.h"
 #include "matxscript/ir/prim_ops.h"
 #include "matxscript/ir/prim_var.h"
@@ -140,15 +141,7 @@ std::string MLIRTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Type& type)
   if (auto* n = type.as<PrimTypeNode>()) {
     return ConvertTypeToMLIR(n->dtype);
   } else if (auto* n = type.as<PointerTypeNode>()) {
-    std::stringstream ss;
-    ss << "memref<?x";
-    while (auto* e = n->element_type.as<PointerTypeNode>()) {
-      n = e;
-      ss << "?x";
-    }
-    auto dtype = ConvertTypeToMLIR(n->element_type);
-    ss << dtype << '>';
-    return ss.str();
+    return ConvertTypeToMLIR(n);
   } else {
     MXTHROW << "Type " << type << " does not have a corresponding runtime::DataType";
     return "";
@@ -341,12 +334,8 @@ void MLIRTextPrinter::VisitExpr_(const BufferLoadNode* op, std::ostream& os) {
 
 void MLIRTextPrinter::VisitStmt_(const BufferStoreNode* op, std::ostream& os) {
   PrimExprFunctor::VisitExpr(op->value, os);
-  std::string result = '%' + std::to_string(cur_index_);
-  cur_index_++;
-  os << result << " = " << expr_name_map_->at(op->value.get()) << ": "
+  os << "linalg.yield " << expr_name_map_->at(op->value.get()) << " : "
      << MLIRTextPrinter::ConvertTypeToMLIR(op->buffer->dtype) << std::endl;
-  os << "linalg.yield " << result << " : " << MLIRTextPrinter::ConvertTypeToMLIR(op->buffer->dtype)
-     << std::endl;
 }
 
 void MLIRTextPrinter::VisitStmt_(const AllocaVarStmtNode* op, std::ostream& os) {
@@ -364,6 +353,8 @@ void MLIRTextPrinter::VisitStmt_(const ReturnStmtNode* op, std::ostream& os) {
     os << " :";
     VisitType(node->checked_type(), os);
     os << std::endl;
+  } else if (op->value->IsInstance<NoneExprNode>()){
+    os << "func.return " <<std::endl;
   } else {
     MXTHROW << "[linalg] not support expr node: " << op->value;
   }
