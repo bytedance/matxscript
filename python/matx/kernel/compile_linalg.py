@@ -18,10 +18,11 @@
 #  under the License.
 
 from matx.ir import _ffi_node_api
-import subprocess, os
+import subprocess
+import os
 
 
-def compile_linalg(matx_ir, file_name = "tmp.mlir"):
+def compile_linalg(matx_ir, file_name="tmp.mlir"):
     code = _ffi_node_api.as_linalg_text(matx_ir).decode()
     with open(file_name, "w+") as f:
         f.write(code)
@@ -39,12 +40,12 @@ def compile_linalg(matx_ir, file_name = "tmp.mlir"):
                                 '--reconcile-unrealized-casts',
                                 file_name,
                                 '-o',
-                                'llvm_'+file_name],
-                               env = env,
-                               stdout=subprocess.PIPE, 
+                                'llvm_' + file_name],
+                               env=env,
+                               stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
     print(stdout.decode())
     err = stderr.decode()
     if len(err) != 0:
-        raise RuntimeError("\n"+err)
+        raise RuntimeError("\n" + err)

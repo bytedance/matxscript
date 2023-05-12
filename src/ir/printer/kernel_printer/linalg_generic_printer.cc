@@ -105,8 +105,9 @@ void LinalgGenericPrinter::VisitRangeExpr_(const matxscript::ir::BufferRegion& b
 }
 
 void LinalgGenericPrinter::PrintBufferArray(const Array<matxscript::ir::BufferRegion>& bufferArray,
-                                            const std::string &perfix_str, std::ostream& os){
-  for (int i=0; i<bufferArray.size(); i++) {
+                                            const std::string& perfix_str,
+                                            std::ostream& os) {
+  for (int i = 0; i < bufferArray.size(); i++) {
     const auto& read_buffer = bufferArray[i];
     os << perfix_str;
     const auto& buffer = read_buffer->buffer;
@@ -119,12 +120,11 @@ void LinalgGenericPrinter::PrintBufferArray(const Array<matxscript::ir::BufferRe
       }
     }
     os << ")>";
-    if (i!=bufferArray.size()-1) {
+    if (i != bufferArray.size() - 1) {
       os << ", ";
     }
   }
 }
-
 
 void LinalgGenericPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar>& iter_vars,
                                          const Array<matxscript::ir::BufferRegion>& reads,
@@ -163,7 +163,7 @@ void LinalgGenericPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar
   PrintBufferArray(reads, perfix_str, os);
 
   if (!writes.empty()) {
-    os <<", ";
+    os << ", ";
   }
 
   // format for each output
