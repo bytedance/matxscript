@@ -798,35 +798,35 @@ String CodeGenC::PrintTypeCast(const Type& from_type,
   if (IsBaseTypeOf(to_type0, from_type0, false)) {
     return String::Concat(
         {"CAST_TO_CLASS_VIEW_NOCHECK<", from_type_repr, ", ", to_type_repr, ">(", value, ")"});
-  } else if (IsBaseTypeOf(from_type, to_type, false)) {
+  } else if (IsBaseTypeOf(from_type0, to_type0, false)) {
     return String::Concat(
         {"CAST_TO_CLASS_VIEW<", from_type_repr, ", ", to_type_repr, ">(", value, ")"});
   } else {
-    if (to_type.as<ClassTypeNode>()) {
+    if (to_type0.as<ClassTypeNode>()) {
       // other to ClassType
-      if (IsObjectType(from_type)) {
+      if (IsObjectType(from_type0)) {
         // Any to ClassType
         return String::Concat({to_type_repr, "(static_cast<const Any&>(", value, "))"});
-      } else if (IsUserDataType(from_type) || from_type.as<ClassTypeNode>()) {
+      } else if (IsUserDataType(from_type0) || from_type0.as<ClassTypeNode>()) {
         // UserData to ClassType
         return String::Concat({to_type_repr, "(", value, ")"});
       } else {
-        MXTHROW << "Internal Error: can not convert '" << from_type->GetPythonTypeName() << "' to '"
-                << to_type->GetPythonTypeName() << "'";
+        MXTHROW << "Internal Error: can not convert '" << from_type0->GetPythonTypeName()
+                << "' to '" << to_type0->GetPythonTypeName() << "'";
         return String{};
       }
-    } else if (from_type.as<ClassTypeNode>()) {
+    } else if (from_type0.as<ClassTypeNode>()) {
       // ClassType to other
-      if (IsUserDataType(to_type) || IsObjectType(to_type)) {
+      if (IsUserDataType(to_type0) || IsObjectType(to_type0)) {
         return String::Concat({"(", value, ").operator ", to_type_repr, "()"});
       } else {
-        MXTHROW << "Internal Error: can not convert '" << from_type->GetPythonTypeName() << "' to '"
-                << to_type->GetPythonTypeName() << "'";
+        MXTHROW << "Internal Error: can not convert '" << from_type0->GetPythonTypeName()
+                << "' to '" << to_type0->GetPythonTypeName() << "'";
         return String{};
       }
-    } else if (auto* from_node = from_type.as<ObjectTypeNode>()) {
+    } else if (auto* from_node = from_type0.as<ObjectTypeNode>()) {
       // Any to other
-      auto* to_node = to_type.as<ObjectTypeNode>();
+      auto* to_node = to_type0.as<ObjectTypeNode>();
       if (to_node && to_node->is_view == from_node->is_view) {
         return String::Concat({"(", value, ")"});
       } else {
@@ -851,7 +851,7 @@ String CodeGenC::PrintTypeCast(const Type& from_type,
                                "' type\")"});
       }
     } else {
-      if (IsObjectType(to_type)) {
+      if (IsObjectType(to_type0)) {
         return String::Concat({to_type_repr, "(", value, ")"});
       } else {
         return String::Concat({"GenericValueConverter<", to_type_repr, ">{}(", value, ")"});
@@ -859,8 +859,8 @@ String CodeGenC::PrintTypeCast(const Type& from_type,
     }
   }
   // should be unreachable
-  MXTHROW << "Internal Error: can not convert '" << from_type->GetPythonTypeName() << "' to '"
-          << to_type->GetPythonTypeName() << "'";
+  MXTHROW << "Internal Error: can not convert '" << from_type0->GetPythonTypeName() << "' to '"
+          << to_type0->GetPythonTypeName() << "'";
   return String{};
 }
 
