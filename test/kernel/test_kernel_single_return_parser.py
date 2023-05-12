@@ -22,6 +22,7 @@ import unittest
 import sympy
 
 from matx.kernel.kernel_parser import KernelParser
+from matx.kernel.compile_linalg import compile_linalg
 from matx.kernel.typing import int32, int64, float32
 
 
@@ -40,6 +41,7 @@ class TestSingleReturnParser(unittest.TestCase):
         print("=" * 100)
         print()
         print(p.linalg_code())
+        compile_linalg(p.main_node_ir)
         # todo check ir structure
 
     def test_one_bin_op(self):
@@ -55,6 +57,7 @@ class TestSingleReturnParser(unittest.TestCase):
         print("=" * 100)
         print()
         print(p.linalg_code())
+        compile_linalg(p.main_node_ir)
         # todo check ir structure
 
     def test_multiple_bin_op(self):
@@ -70,6 +73,7 @@ class TestSingleReturnParser(unittest.TestCase):
         print("=" * 100)
         print()
         print(p.linalg_code())
+        compile_linalg(p.main_node_ir)
         # todo check ir structure
 
     def test_multiple_bin_op_with_parentheses(self):
@@ -85,6 +89,7 @@ class TestSingleReturnParser(unittest.TestCase):
         print("=" * 100)
         print()
         print(p.linalg_code())
+        compile_linalg(p.main_node_ir)
         # todo check ir structure
 
     def test_multiple_bin_op_with_broadcast(self):
@@ -100,6 +105,7 @@ class TestSingleReturnParser(unittest.TestCase):
         print("=" * 100)
         print()
         print(p.linalg_code())
+        compile_linalg(p.main_node_ir)
         # todo check ir structure
 
     def test_multiple_bin_op_with_more_dimension(self):
@@ -116,6 +122,7 @@ class TestSingleReturnParser(unittest.TestCase):
         print("=" * 100)
         print()
         print(p.linalg_code())
+        compile_linalg(p.main_node_ir)
         # todo check ir structure
 
     def test_multiple_bin_op_with_different_type(self):
@@ -131,6 +138,7 @@ class TestSingleReturnParser(unittest.TestCase):
         print("=" * 100)
         print()
         print(p.linalg_code())
+        compile_linalg(p.main_node_ir)
         # todo check ir structure
 
     def test_multiple_bin_op_with_scalar_and_const(self):
@@ -146,4 +154,5 @@ class TestSingleReturnParser(unittest.TestCase):
         print("=" * 100)
         print()
         print(p.linalg_code())
+        compile_linalg(p.main_node_ir)
         # todo check ir structure
