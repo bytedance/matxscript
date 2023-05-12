@@ -38,6 +38,23 @@ class TestTypeConverter(unittest.TestCase):
         f()
         matx.script(f)()
 
+    def test_container_of_user_type(self):
+        class MyData:
+            def __init__(self, query: str) -> None:
+                self.query: str = query
+
+        def foo() -> None:
+            l: List[MyData] = [MyData("haha")]
+            for a in l:
+                print(a.query)
+
+            l: Tuple[MyData] = (MyData("haha"), )
+            for a in l:
+                print(a.query)
+
+        foo()
+        matx.script(foo)()
+
     def test_container_pop(self):
         class MyDoc:
             def __init__(self, query: str) -> None:

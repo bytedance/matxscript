@@ -273,6 +273,8 @@ void CodeGenC::PrintPackedFunctionMacro(const String& global_symbol,
     --num_default_args;
   }
   auto echo_fn_call = [&](int dynamic_num_args, const String& args_repr, bool fill_default) {
+    ObjectType any_view_type(true, span);
+    UserDataType user_data_type(span);
     this->PrintIndent(stream);
     if (IsVoidType(ret_ty)) {
       stream << global_symbol << "(";
@@ -307,22 +309,7 @@ void CodeGenC::PrintPackedFunctionMacro(const String& global_symbol,
           args_repr_i.append(" argument");
         }
       }
-      if (i == 0 && first_arg_is_self) {
-        stream << PrintTypeAs(args_value_i, "UserDataRef", py_info, args_repr_i);
-      } else {
-        if (arg_i_ty.as<ClassTypeNode>()) {
-          stream << PrintTypeAs(args_value_i, "UserDataRef", py_info, args_repr_i);
-        } else {
-          auto arg_i_tn = arg_i_ty.as<ObjectTypeNode>();
-          std::stringstream os_arg_i_type;
-          this->PrintType(arg_i_ty, os_arg_i_type);
-          if (arg_i_tn && arg_i_tn->is_view) {
-            stream << args_value_i;
-          } else {
-            stream << PrintTypeAs(args_value_i, os_arg_i_type.str(), py_info, args_repr_i);
-          }
-        }
-      }
+      stream << PrintTypeCast(any_view_type, arg_i_ty, args_value_i, args_value_i, py_info);
     }
     if (fill_default) {
       int64_t default_begin_pos = num_args - num_default_args;
@@ -792,27 +779,89 @@ void CodeGenC::PrintType(const Type& type, std::ostream& os) {  // NOLINT(*)
   }
 }
 
-String CodeGenC::PrintTypeAs(const String& value,
-                             const String& type,
-                             const String& py_info,
-                             const String& value_repr) {
-  String new_type = type;
-  if (new_type == "unicode_view" || new_type == "Unicode") {
-    new_type = "py::str";
-  } else if (new_type == "string_view" || new_type == "String") {
-    new_type = "py::bytes";
+String CodeGenC::PrintTypeCast(const Type& from_type,
+                               const Type& to_type,
+                               const string_view& value,
+                               const string_view& value_repr,
+                               const string_view& py_info) {
+  const auto& from_type0 = RemoveReference(from_type);
+  const auto& to_type0 = RemoveReference(to_type);
+
+  std::ostringstream from_type_os;
+  this->PrintType(from_type0, from_type_os);
+  auto from_type_repr = from_type_os.str();
+
+  std::ostringstream to_type_os;
+  this->PrintType(to_type0, to_type_os);
+  auto to_type_repr = to_type_os.str();
+
+  if (IsBaseTypeOf(to_type0, from_type0, false)) {
+    return String::Concat(
+        {"CAST_TO_CLASS_VIEW_NOCHECK<", from_type_repr, ", ", to_type_repr, ">(", value, ")"});
+  } else if (IsBaseTypeOf(from_type, to_type, false)) {
+    return String::Concat(
+        {"CAST_TO_CLASS_VIEW<", from_type_repr, ", ", to_type_repr, ">(", value, ")"});
+  } else {
+    if (to_type.as<ClassTypeNode>()) {
+      // other to ClassType
+      if (IsObjectType(from_type)) {
+        // Any to ClassType
+        return String::Concat({to_type_repr, "(static_cast<const Any&>(", value, "))"});
+      } else if (IsUserDataType(from_type) || from_type.as<ClassTypeNode>()) {
+        // UserData to ClassType
+        return String::Concat({to_type_repr, "(", value, ")"});
+      } else {
+        MXTHROW << "Internal Error: can not convert '" << from_type->GetPythonTypeName() << "' to '"
+                << to_type->GetPythonTypeName() << "'";
+        return String{};
+      }
+    } else if (from_type.as<ClassTypeNode>()) {
+      // ClassType to other
+      if (IsUserDataType(to_type) || IsObjectType(to_type)) {
+        return String::Concat({"(", value, ").operator ", to_type_repr, "()"});
+      } else {
+        MXTHROW << "Internal Error: can not convert '" << from_type->GetPythonTypeName() << "' to '"
+                << to_type->GetPythonTypeName() << "'";
+        return String{};
+      }
+    } else if (auto* from_node = from_type.as<ObjectTypeNode>()) {
+      // Any to other
+      auto* to_node = to_type.as<ObjectTypeNode>();
+      if (to_node && to_node->is_view == from_node->is_view) {
+        return String::Concat({"(", value, ")"});
+      } else {
+        string_view new_to_type_repr;
+        if (IsUnicodeType(to_type0)) {
+          new_to_type_repr = "py::str";
+        } else if (IsStringType(to_type0)) {
+          new_to_type_repr = "py::bytes";
+        } else {
+          new_to_type_repr = to_type_repr;
+        }
+        return String::Concat({"internal::TypeAsHelper<",
+                               to_type_repr,
+                               ">::run((",
+                               value,
+                               "), __FILE__, __LINE__, ",
+                               py_info,
+                               ", \"expect '",
+                               BytesEscape(value_repr),
+                               "' is '",
+                               new_to_type_repr,
+                               "' type\")"});
+      }
+    } else {
+      if (IsObjectType(to_type)) {
+        return String::Concat({to_type_repr, "(", value, ")"});
+      } else {
+        return String::Concat({"GenericValueConverter<", to_type_repr, ">{}(", value, ")"});
+      }
+    }
   }
-  return String::Concat({"internal::TypeAsHelper<",
-                         type,
-                         ">::run((",
-                         value,
-                         "), __FILE__, __LINE__, ",
-                         py_info,
-                         ", \"expect '",
-                         BytesEscape(value_repr),
-                         "' is '",
-                         new_type,
-                         "' type\")"});
+  // should be unreachable
+  MXTHROW << "Internal Error: can not convert '" << from_type->GetPythonTypeName() << "' to '"
+          << to_type->GetPythonTypeName() << "'";
+  return String{};
 }
 
 inline void PrintConst(const IntImmNode* op, std::ostream& os, CodeGenC* p) {  // NOLINT(*)
@@ -953,17 +1002,16 @@ void CodeGenC::VisitExpr_(const HLOCastPrimNode* op, std::ostream& os) {  // NOL
   std::stringstream value_os;
   this->PrintExpr(op->value, value_os);
   auto value_expr = value_os.str();
-  std::stringstream type_os;
-  this->PrintType(op->dtype, type_os);
-  auto type_expr = type_os.str();
   auto& from_type = op->value->checked_type();
 
-  if (from_type == PrimType(op->dtype)) {
+  PrimType to_type(op->dtype);
+
+  if (from_type == to_type) {
     os << value_expr;
   } else {
     auto py_info = this->GenPythonStyleSpanMessage(op->span, this->current_py_func_name_);
     if (IsObjectType(RemoveReference(from_type))) {
-      os << PrintTypeAs(value_expr, type_expr, py_info);
+      os << PrintTypeCast(from_type, to_type, value_expr, value_expr, py_info);
     } else {
       // TODO(mxd) : fix object cast
       os << "((";
@@ -1627,6 +1675,8 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
 
   // step4: make loop var
   {
+    ObjectType any_view_type(true, op->span);
+    ObjectType any_value_type(false, op->span);
     auto IsItemNeedCast = [](bool from_is_view, const Type& target) {
       auto target_ty_node = RemoveReference(target).as<ObjectTypeNode>();
       return !(target_ty_node && (target_ty_node->is_view == from_is_view));
@@ -1671,10 +1721,11 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
             if (IsListType(cons_ty) || IsTupleType(cons_ty) || IsSetType(cons_ty)) {
               os << loop_var_reprs[li].name << " = ";
               if (need_cast) {
-                os << PrintTypeAs("*" + iter_var_reprs[iter_idx].name,
-                                  loop_var_reprs[li].type,
-                                  py_info,
-                                  "the element in " + raw_container + "")
+                os << PrintTypeCast(any_value_type,
+                                    loop_var_reprs[li].ir_type,
+                                    "*" + iter_var_reprs[iter_idx].name,
+                                    "the element in " + raw_container,
+                                    py_info)
                    << ";";
               } else {
                 os << "*" << iter_var_reprs[iter_idx].name << ";";
@@ -1682,10 +1733,11 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
             } else if (IsDictType(cons_ty)) {
               os << loop_var_reprs[li].name << " = ";
               if (need_cast) {
-                os << PrintTypeAs("(" + iter_var_reprs[iter_idx].name + ")->first",
-                                  loop_var_reprs[li].type,
-                                  py_info,
-                                  "the key of " + raw_container + "")
+                os << PrintTypeCast(any_value_type,
+                                    loop_var_reprs[li].ir_type,
+                                    "(" + iter_var_reprs[iter_idx].name + ")->first",
+                                    "the key of " + raw_container,
+                                    py_info)
                    << ";";
               } else {
                 os << "(" << iter_var_reprs[iter_idx].name << ")->first;";
@@ -1714,10 +1766,11 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
             rhs_value << iter_var_reprs[iter_idx].name << ".NextView(&" << vid_iter_has_next
                       << ", &" << vid_iter_next_holder << ")";
             if (need_cast) {
-              os << this->PrintTypeAs(rhs_value.str(),
-                                      loop_var_reprs[li].type,
-                                      py_info,
-                                      "the next element in " + raw_container + "");
+              os << PrintTypeCast(any_view_type,
+                                  loop_var_reprs[li].ir_type,
+                                  rhs_value.str(),
+                                  "the next element in " + raw_container,
+                                  py_info);
             } else {
               os << rhs_value.str();
             }
@@ -1752,10 +1805,11 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
           if (IsListType(cons_ty) || IsTupleType(cons_ty) || IsSetType(cons_ty)) {
             if (need_cast) {
               os << vid_value << " = "
-                 << this->PrintTypeAs("*" + iter_var_reprs[0].name,
-                                      vid_type,
-                                      py_info,
-                                      "the element in " + raw_container + "")
+                 << PrintTypeCast(any_value_type,
+                                  vid_ir_type,
+                                  "*" + iter_var_reprs[0].name,
+                                  "the element in " + raw_container,
+                                  py_info)
                  << ";";
             } else {
               os << vid_value << " = *(" << iter_var_reprs[0].name << ");";
@@ -1763,10 +1817,11 @@ void CodeGenC::VisitStmt_(const AutoForNode* op, std::ostream& os) {
           } else if (IsDictType(cons_ty)) {
             if (need_cast) {
               os << vid_value << " = "
-                 << this->PrintTypeAs("(" + iter_var_reprs[0].name + ")->first",
-                                      vid_type,
-                                      py_info,
-                                      "the key of " + raw_container + "")
+                 << PrintTypeCast(any_value_type,
+                                  vid_ir_type,
+                                  "(" + iter_var_reprs[0].name + ")->first",
+                                  "the key of " + raw_container,
+                                  py_info)
                  << ";";
             } else {
               os << vid_value << " = (" << iter_var_reprs[0].name << ")->first;";
@@ -2289,66 +2344,9 @@ void CodeGenC::VisitExpr_(const HLOCastNode* op, std::ostream& os) {  // NOLINT(
   auto py_info = this->GenPythonStyleSpanMessage(op->span, this->current_py_func_name_);
   std::stringstream value;
   this->PrintExpr(op->value, value);
-  auto& from_type = RemoveReference(op->value->checked_type_);
-  auto& to_type = RemoveReference(op->checked_type_);
+  auto value_repr = value.str();
 
-  std::ostringstream from_type_os;
-  this->PrintType(from_type, from_type_os);
-  auto from_type_str = from_type_os.str();
-
-  std::ostringstream to_type_os;
-  this->PrintType(to_type, to_type_os);
-  auto to_type_str = to_type_os.str();
-
-  // TODO: fixme
-  /*if (from_type.same_as(to_type)) {
-    // maybe something wrong
-    os << value.str();
-    MXTHROW << "Internal Error";
-  }*/
-  if (IsBaseTypeOf(to_type, from_type, false)) {
-    os << "CAST_TO_CLASS_VIEW_NOCHECK<" << from_type_str << ", " << to_type_str << ">("
-       << value.str() << ")";
-  } else if (IsBaseTypeOf(from_type, to_type, false)) {
-    os << "CAST_TO_CLASS_VIEW<" << from_type_str << ", " << to_type_str << ">(" << value.str()
-       << ")";
-  } else {
-    if (to_type.as<ClassTypeNode>()) {
-      // other to ClassType
-      if (IsObjectType(from_type)) {
-        // Any to ClassType
-        os << to_type_str << "(static_cast<const Any&>(" << value.str() << "))";
-      } else if (IsUserDataType(from_type) || from_type.as<ClassTypeNode>()) {
-        // UserData to ClassType
-        os << to_type_str << "(" << value.str() << ")";
-      } else {
-        MXTHROW << "Internal Error: can not convert '" << from_type->GetPythonTypeName() << "' to '"
-                << to_type->GetPythonTypeName() << "'";
-      }
-    } else if (from_type.as<ClassTypeNode>()) {
-      // ClassType to other
-      if (IsUserDataType(to_type) || IsObjectType(to_type)) {
-        os << "(" << value.str() << ").operator " << to_type_str << "()";
-      } else {
-        MXTHROW << "Internal Error: can not convert '" << from_type->GetPythonTypeName() << "' to '"
-                << to_type->GetPythonTypeName() << "'";
-      }
-    } else if (auto* from_node = from_type.as<ObjectTypeNode>()) {
-      // Any to other
-      auto* to_node = to_type.as<ObjectTypeNode>();
-      if (to_node && to_node->is_view == from_node->is_view) {
-        os << "(" << value.str() << ")";
-      } else {
-        os << this->PrintTypeAs(value.str(), to_type_str, py_info);
-      }
-    } else {
-      if (IsObjectType(to_type)) {
-        os << to_type_str << "(" << value.str() << ")";
-      } else {
-        os << "GenericValueConverter<" << to_type_str << ">{}(" << value.str() << ")";
-      }
-    }
-  }
+  os << PrintTypeCast(op->value->checked_type_, op->checked_type_, value_repr, value_repr, py_info);
 }
 
 void CodeGenC::VisitExpr_(const HLOMoveNode* op, std::ostream& os) {  // NOLINT(*)

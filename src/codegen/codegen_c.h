@@ -270,14 +270,11 @@ class CodeGenC : public PrimExprFunctor<void(const PrimExpr&, std::ostream&)>,
    */
   virtual void PrintType(const Type& type, std::ostream& os);  // NOLINT(*)
 
-  virtual String PrintTypeAs(const String& value,
-                             const String& type,
-                             const String& py_info,
-                             const String& value_repr);
-
-  String PrintTypeAs(const String& value, const String& type, const String& py_info) {
-    return PrintTypeAs(value, type, py_info, value);
-  }
+  virtual String PrintTypeCast(const Type& from_type,
+                               const Type& to_type,
+                               const string_view& value,
+                               const string_view& value_repr,
+                               const string_view& py_info);
   /*!
    * \brief Print expr representing the thread tag
    * \param IterVar iv The thread index to be binded;

@@ -108,6 +108,10 @@ struct TypeAsHelper {
   ::matxscript::runtime::internal::TypeAsHelper<TYPE>::run( \
       (o), __FILE__, __LINE__, nullptr, "expect '" #o "' is '" #TYPE "' type")
 
+#define MATXSCRIPT_TYPE_AS_V2(o, TYPE, TYPE_REPR)           \
+  ::matxscript::runtime::internal::TypeAsHelper<TYPE>::run( \
+      (o), __FILE__, __LINE__, nullptr, "expect '" #o "' is '" TYPE_REPR "' type")
+
 // this is for python only
 #define MATXSCRIPT_TYPE_AS_WITH_PY_INFO(o, TYPE, PY_INFO)   \
   ::matxscript::runtime::internal::TypeAsHelper<TYPE>::run( \

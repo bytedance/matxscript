@@ -317,10 +317,12 @@ void CodeGenCHost::DefineUserStruct(const ClassStmt& cls_stmt,
       auto var_cls_name = var_t_node->header->name_hint;
       this->stream << "case " << i << ": { this->" << virtual_var_name_tables[i]
                    << " = static_cast<" << ss.str()
-                   << ">(MATXSCRIPT_TYPE_AS(val, UserDataRef)); } break;\n";
+                   << ">(MATXSCRIPT_TYPE_AS_V2(val, UserDataRef, \"" << var_cls_name
+                   << "\")); } break;\n";
     } else {
       this->stream << "case " << i << ": { this->" << virtual_var_name_tables[i] << " = "
-                   << this->PrintTypeAs("val", ss.str(), "nullptr") << "; } break;\n";
+                   << this->PrintTypeCast(ObjectType(), var_type, "val", "val", "nullptr")
+                   << "; } break;\n";
     }
   }
   this->PrintIndent(this->stream);
@@ -421,7 +423,7 @@ void CodeGenCHost::DefineUserStruct(const ClassStmt& cls_stmt,
   this->stream << class_view_name << "() : ptr(nullptr) {}\n";
   this->PrintIndent(this->stream);
   this->stream << class_view_name << "(const matxscript::runtime::Any& ref) : " << class_view_name
-               << "(MATXSCRIPT_TYPE_AS(ref, UserDataRef)) {}\n";
+               << "(MATXSCRIPT_TYPE_AS_V2(ref, UserDataRef, \"" << class_name << "\")) {}\n";
 
   this->PrintIndent(this->stream);
   this->stream << "// UserDataRef\n";
