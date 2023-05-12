@@ -104,6 +104,28 @@ void LinalgGenericPrinter::VisitRangeExpr_(const matxscript::ir::BufferRegion& b
   }
 }
 
+void LinalgGenericPrinter::PrintBufferArray(const Array<matxscript::ir::BufferRegion>& bufferArray,
+                                            const std::string &perfix_str, std::ostream& os){
+  for (int i=0; i<bufferArray.size(); i++) {
+    const auto& read_buffer = bufferArray[i];
+    os << perfix_str;
+    const auto& buffer = read_buffer->buffer;
+    const auto& region = read_buffer->region;
+    for (int i = 0; i < region.size(); i++) {
+      const auto& range = region[i];
+      VisitRangeExpr_(read_buffer, range, os);
+      if (i != region.size() - 1) {
+        os << ", ";
+      }
+    }
+    os << ")>";
+    if (i!=bufferArray.size()-1) {
+      os << ", ";
+    }
+  }
+}
+
+
 void LinalgGenericPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar>& iter_vars,
                                          const Array<matxscript::ir::BufferRegion>& reads,
                                          const Array<matxscript::ir::BufferRegion>& writes,
@@ -138,44 +160,19 @@ void LinalgGenericPrinter::GenAffineMap_(const Array<matxscript::ir::PrimIterVar
   auto perfix_str = perfix.str();
 
   // format for each input
-  for (const auto& read_buffer : reads) {
-    os << perfix_str;
-    const auto& buffer = read_buffer->buffer;
-    const auto& region = read_buffer->region;
-    for (int i = 0; i < region.size(); i++) {
-      const auto& range = region[i];
-      VisitRangeExpr_(read_buffer, range, os);
-      if (i != region.size() - 1) {
-        os << ", ";
-      }
-    }
-    if (writes.empty()) {
-      os << ")>";
-    } else {
-      os << ")>, ";
-    }
+  PrintBufferArray(reads, perfix_str, os);
+
+  if (!writes.empty()) {
+    os <<", ";
   }
 
   // format for each output
-  for (const auto& write_buffer : writes) {
-    os << perfix_str;
-    const auto& buffer = write_buffer->buffer;
-    const auto& region = write_buffer->region;
-    for (int i = 0; i < region.size(); i++) {
-      const auto& range = region[i];
-      VisitRangeExpr_(write_buffer, range, os);
-      if (i != region.size() - 1) {
-        os << ", ";
-      } else {
-        os << ")";
-      }
-    }
-  }
+  PrintBufferArray(writes, perfix_str, os);
 
   os << "], iterator_types = [";
   // todo for now just assume they are parallel, deal with reduction later
   for (int i = 0; i < iter_vars.size(); i++) {
-    os << "parallel";
+    os << "\"parallel\"";
     if (i != iter_vars.size() - 1) {
       os << ", ";
     }
