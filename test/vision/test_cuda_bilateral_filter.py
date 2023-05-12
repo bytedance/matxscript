@@ -23,7 +23,7 @@ import unittest
 import cv2
 import numpy as np
 import matx
-import byted_vision
+from matx import vision as byted_vision
 
 script_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
 
