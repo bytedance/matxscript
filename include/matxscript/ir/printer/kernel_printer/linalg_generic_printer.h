@@ -49,7 +49,7 @@
 namespace matxscript {
 namespace ir {
 namespace printer {
-
+class MLIRTextPrinter;
 class LinalgGenericPrinter {
   friend class MLIRTextPrinter;
 
@@ -72,7 +72,11 @@ class LinalgGenericPrinter {
   void VisitBufferRegionArray_(const Array<BufferRegion>& reads, std::ostream& os);
   void VisitComputBlockBody_(const Stmt& body, std::ostream& os);
 
-  std::vector<const Buffer*> bufferOrder;
+  std::string GetPrimVarName(const BufferLoadNode* op);
+
+  std::vector<const BufferRegionNode*> bufferRegionOrder;
+  std::unordered_map<const BufferNode*, std::vector<const BufferRegionNode*>> regionMap;
+  std::unordered_map<const BufferNode*, int> visitCounter;
   MLIRTextPrinter* mlir_printer_;
 };
 }  // namespace printer
