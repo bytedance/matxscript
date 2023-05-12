@@ -125,8 +125,8 @@ class KernelSingleReturnParser(BaseParser):
         #    rt_ir = _ir.PrimCast(self.return_ctx.kernel_type.dtype_str(), rt_ir)
         # body = self.return_ctx.write_at(self.iter_vars_names, rt_ir)
         body = assign_op.to_matx_ir()
-
-        return ComputeBlock(assign_op.iter_vars, reads, writes, self.kernel_p.func_name, body)
+        cmptblk = ComputeBlock(assign_op.iter_vars, reads, writes, self.kernel_p.func_name, body)
+        return _ir.SeqStmt([cmptblk, _ir.ReturnStmt(NoneExpr())])
 
     def _make_range(self, shape):
         rng = []

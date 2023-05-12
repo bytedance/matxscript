@@ -30,6 +30,7 @@
 #include <type_traits>
 #include <vector>
 #include "matxscript/ir/base.h"
+#include "matxscript/ir/none_expr.h"
 #include "matxscript/ir/prim_expr.h"
 #include "matxscript/ir/prim_ops.h"
 #include "matxscript/ir/prim_var.h"
@@ -140,15 +141,7 @@ std::string MLIRTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Type& type)
   if (auto* n = type.as<PrimTypeNode>()) {
     return ConvertTypeToMLIR(n->dtype);
   } else if (auto* n = type.as<PointerTypeNode>()) {
-    std::stringstream ss;
-    ss << "memref<?x";
-    while (auto* e = n->element_type.as<PointerTypeNode>()) {
-      n = e;
-      ss << "?x";
-    }
-    auto dtype = ConvertTypeToMLIR(n->element_type);
-    ss << dtype << '>';
-    return ss.str();
+    return ConvertTypeToMLIR(n);
   } else {
     MXTHROW << "Type " << type << " does not have a corresponding runtime::DataType";
     return "";
@@ -205,6 +198,7 @@ std::pair<std::string, std::string> MLIRTextPrinter::GetNodeDataType(const PrimE
   auto bits = op->dtype.bits();
   switch (op->dtype.code()) {
     case kDLInt:
+    case kDLUInt:
       arith_suffix = "i";
       break;
     case kDLFloat:
@@ -318,10 +312,75 @@ void MLIRTextPrinter::VisitExpr_(const PrimLetNode* op, std::ostream& os) {
 void MLIRTextPrinter::VisitExpr_(const PrimCallNode* op, std::ostream& os) {
 }
 
+void printCastOp(const Type& origin, const Type& target, std::ostream& os) {
+  /**
+   * arith.extf - cast from floating-point to wider floating-point
+   * arith.extsi - integer sign extension operation
+   * arith.extui - integer zero extension operation
+   * arith.fptosi - cast from floating-point type to signed integer type
+   * arith.fptoui - cast from floating-point type to unsigned integer type
+   * arith.sitofp - cast from signed integer type to floating-point
+   * arith.truncf - cast from floating-point to narrower floating-point
+   * arith.trunci - integer truncation operation
+   * arith.uitofp - cast from unsigned integer type to floating-point
+   */
+  auto* origin_t = origin.as<PrimTypeNode>();
+  auto* target_t = target.as<PrimTypeNode>();
+  if (origin_t == nullptr || target_t == nullptr) {
+    MXTHROW << "[MLIR] casting between non prim type node is not allowed";
+  }
+  auto const origin_t_bits = origin_t->dtype.bits();
+  auto const origin_t_code = origin_t->dtype.code();
+  auto const target_t_bits = target_t->dtype.bits();
+  auto const target_t_code = target_t->dtype.code();
+  if (origin_t_code != kDLInt && origin_t_code != kDLUInt && origin_t_code != kDLFloat) {
+    MXTHROW << "[MLIR] the type being casted from is neither int nor float";
+  }
+  if (target_t_code != kDLInt && target_t_code != kDLUInt && target_t_code != kDLFloat) {
+    MXTHROW << "[MLIR] the type being casted to is neither int nor float";
+  }
+  if (origin_t_code == target_t_code && origin_t_bits == target_t_bits) {
+    MXTHROW << "[MLIR] casting between the same type is not allowed";
+  }
+  int compare = 0;
+  if (target_t_bits < origin_t_bits) {
+    compare = 0;
+  } else if (target_t_bits == origin_t_bits) {
+    compare = 1;
+  } else {
+    compare = 2;
+  }
+  /**
+   *  {{{"i i t<o",  "i i t=o",  "i i t>o"},
+   *    {"i ui t<o", "i ui t=o", "i ui t>o"},
+   *    {"i f t<o",  "i f t=o",  "i f t>o"}},
+   *
+   *   {{"ui i t<o",  "ui i t=o",  "ui i t>o"},
+   *    {"ui ui t<o", "ui ui t=o", "ui ui t>o"},
+   *    {"ui f t<o",  "ui f t=o",  "ui f t>o"}},
+   *
+   *   {{"f i t<o",  "f i t=o",  "f i t>o"},
+   *    {"f ui t<o", "f ui t=o", "f ui t>o"},
+   *    {"f f t<o",  "f f t=o",  "f f t>o"}}}
+   */
+
+  static const std::string op_map[3][3][3] = {{{"arith.trunci", "arith.bitcast", "arith.extsi"},
+                                               {"arith.trunci", "arith.bitcast", "arith.extui"},
+                                               {"arith.sitofp", "arith.sitofp", "arith.sitofp"}},
+                                              {{"arith.trunci", "arith.bitcast", "arith.extui"},
+                                               {"arith.trunci", "arith.bitcast", "arith.extui"},
+                                               {"arith.uitofp", "arith.uitofp", "arith.uitofp"}},
+                                              {{"arith.fptosi", "arith.fptosi", "arith.fptosi"},
+                                               {"arith.fptoui", "arith.fptoui", "arith.fptoui"},
+                                               {"arith.truncf", "arith.bitcast", "arith.extf"}}};
+  os << op_map[origin_t_code][target_t_code][compare] << ' ';
+}
+
 void MLIRTextPrinter::VisitExpr_(const PrimCastNode* op, std::ostream& os) {
   auto& v = op->value;
   PrimExprFunctor::VisitExpr(v, os);
-  os << '%' << cur_index_ << " = unrealized_conversion_cast ";
+  os << '%' << cur_index_ << " = ";
+  printCastOp(v->checked_type(), op->checked_type(), os);
   PrintNodeName(v, os);
   os << " : ";
   os << ConvertTypeToMLIR(v->checked_type()) << " to " << ConvertTypeToMLIR(op->checked_type())
@@ -341,12 +400,8 @@ void MLIRTextPrinter::VisitExpr_(const BufferLoadNode* op, std::ostream& os) {
 
 void MLIRTextPrinter::VisitStmt_(const BufferStoreNode* op, std::ostream& os) {
   PrimExprFunctor::VisitExpr(op->value, os);
-  std::string result = '%' + std::to_string(cur_index_);
-  cur_index_++;
-  os << result << " = " << expr_name_map_->at(op->value.get()) << ": "
+  os << "linalg.yield " << expr_name_map_->at(op->value.get()) << " : "
      << MLIRTextPrinter::ConvertTypeToMLIR(op->buffer->dtype) << std::endl;
-  os << "linalg.yield " << result << " : " << MLIRTextPrinter::ConvertTypeToMLIR(op->buffer->dtype)
-     << std::endl;
 }
 
 void MLIRTextPrinter::VisitStmt_(const AllocaVarStmtNode* op, std::ostream& os) {
@@ -364,6 +419,8 @@ void MLIRTextPrinter::VisitStmt_(const ReturnStmtNode* op, std::ostream& os) {
     os << " :";
     VisitType(node->checked_type(), os);
     os << std::endl;
+  } else if (op->value->IsInstance<NoneExprNode>()) {
+    os << "func.return " << std::endl;
   } else {
     MXTHROW << "[linalg] not support expr node: " << op->value;
   }

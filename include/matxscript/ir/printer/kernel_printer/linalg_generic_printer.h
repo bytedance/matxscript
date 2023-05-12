@@ -61,6 +61,9 @@ class LinalgGenericPrinter {
 
   void ComputeBlockToLinalgGeneric(const ComputeBlockNode* op, std::ostream& os);
 
+  void PrintBufferArray(const Array<matxscript::ir::BufferRegion>& bufferArray,
+                        const std::string& perfix_str,
+                        std::ostream& os);
   void VisitRangeExpr_(const BufferRegion& buffer, const RangeExpr& rng, std::ostream& os);
   void GenAffineMap_(const Array<PrimIterVar>& iter_vars,
                      const Array<BufferRegion>& reads,
