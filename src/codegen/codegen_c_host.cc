@@ -312,16 +312,17 @@ void CodeGenCHost::DefineUserStruct(const ClassStmt& cls_stmt,
     std::stringstream ss;
     auto var_type = virtual_var_types_tables[i];
     this->PrintType(var_type, ss);
+    auto var_type_s = ss.str();
 
     if (auto var_t_node = var_type.as<ClassTypeNode>()) {
       auto var_cls_name = var_t_node->header->name_hint;
       this->stream << "case " << i << ": { this->" << virtual_var_name_tables[i]
-                   << " = static_cast<" << ss.str()
+                   << " = static_cast<" << var_type_s
                    << ">(MATXSCRIPT_TYPE_AS_V2(val, UserDataRef, \"" << var_cls_name
                    << "\")); } break;\n";
     } else {
-      this->stream << "case " << i << ": { this->" << virtual_var_name_tables[i] << " = "
-                   << this->PrintTypeCast(ObjectType(), var_type, "val", "val", "nullptr")
+      this->stream << "case " << i << ": { this->" << virtual_var_name_tables[i]
+                   << " = MATXSCRIPT_TYPE_AS(val, " << var_type_s << ")"
                    << "; } break;\n";
     }
   }
