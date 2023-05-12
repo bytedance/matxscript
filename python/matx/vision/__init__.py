@@ -25,7 +25,7 @@ from .base import VISION_CUDA_LIB, VISION_CPU_LIB
 
 from .auto_contrast_op import AutoContrastOp
 from .average_blur_op import AverageBlurOp
-# from .bilateral_filter import BilateralFilterOp
+from .bilateral_filter import BilateralFilterOp
 from .cast_op import CastOp
 from .channel_reorder_op import ChannelReorderOp
 from .color_linear_adjust_op import ColorLinearAdjustOp
