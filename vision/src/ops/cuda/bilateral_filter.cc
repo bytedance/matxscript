@@ -58,13 +58,13 @@ RTValue VisionBilateralFilterOpGPU::process(const List& arg_images,
                                             int sync) {
   // TODO: check if necessary
   check_and_set_device(device_id_);
-  auto images = check_copy(arg_images, ctx_, h2d_stream_);
+  auto images = check_copy(arg_images, ctx_, getStream());
 
   // parse input
   int batch_size = images.size();
   int cv_border_type = UnicodePadTypesToCVBorderTypes(borderType);
 
-  cudaStream_t cu_stream = stream_;
+  cudaStream_t cu_stream = getStream();
   cudaEvent_t finish_event;
   CHECK_CUDA_CALL(cudaEventCreate(&finish_event));
 
@@ -174,7 +174,7 @@ RTValue VisionBilateralFilterOpGPU::process(const List& arg_images,
   if (sync != VISION_SYNC_MODE::ASYNC) {
     CHECK_CUDA_CALL(cudaEventSynchronize(finish_event));
     if (sync == VISION_SYNC_MODE::SYNC_CPU) {
-      return to_cpu(res, d2h_stream_);
+      return to_cpu(res, getStream());
     } else {
       return res;
     }
