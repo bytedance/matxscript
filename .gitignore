@@ -43,3 +43,8 @@ build
 !/vision/src
 !/vision/README.md
 
+# for kernel
+/test/kernel/*.o
+/test/kernel/*.mlir
+/test/kernel/*.so
+/test/kernel/*.ll
