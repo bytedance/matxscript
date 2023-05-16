@@ -18,11 +18,11 @@
 #  under the License.
 
 import unittest
-
+import numpy as np
 import sympy
 
 from matx.kernel.kernel_parser import KernelParser
-from matx.kernel.compile_linalg import compile_linalg
+from matx.kernel.compile_linalg import compile_linalg, run
 from matx.kernel.typing import int32, int64, float32
 
 
@@ -41,7 +41,7 @@ class TestSingleReturnParser(unittest.TestCase):
         print("=" * 100)
         print()
         print(p.linalg_code())
-        compile_linalg(p.main_node_ir)
+        run(p, np.array([[1, 2], [3, 4]], dtype=np.int32), rt=np.array([[0, 0], [0, 0]], dtype=np.int32))
         # todo check ir structure
 
     def test_one_bin_op(self):

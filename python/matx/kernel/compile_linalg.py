@@ -18,34 +18,152 @@
 #  under the License.
 
 from matx.ir import _ffi_node_api
+from .kernel_parser import KernelParser
+from ctypes import *
+from .typing import *
+from collections import OrderedDict
+from itertools import chain
 import subprocess
 import os
+import time
 
 
-def compile_linalg(matx_ir, file_name="tmp.mlir"):
+def compile_linalg(matx_ir, file_name="tmp"):
     code = _ffi_node_api.as_linalg_text(matx_ir).decode()
-    with open(file_name, "w+") as f:
+    with open(file_name + ".mlir", "w+") as f:
         f.write(code)
     env = os.environ.copy()
-    process = subprocess.Popen(['mlir-opt',
-                                '--convert-linalg-to-loops',
-                                '--lower-affine',
-                                '--convert-scf-to-cf',
-                                '--convert-linalg-to-llvm',
-                                '--convert-func-to-llvm',
-                                '--convert-index-to-llvm',
-                                '--convert-arith-to-llvm',
-                                '--convert-memref-to-llvm',
-                                '--convert-cf-to-llvm',
-                                '--reconcile-unrealized-casts',
-                                file_name,
-                                '-o',
-                                'llvm_' + file_name],
-                               env=env,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
+    lower = subprocess.Popen(['mlir-opt',
+                              '--convert-linalg-to-loops',
+                              '--lower-affine',
+                              '--convert-scf-to-cf',
+                              '--convert-linalg-to-llvm',
+                              '--convert-func-to-llvm',
+                              '--convert-index-to-llvm',
+                              '--convert-arith-to-llvm',
+                              '--convert-memref-to-llvm',
+                              '--convert-cf-to-llvm',
+                              '--reconcile-unrealized-casts',
+                              file_name + ".mlir",
+                              '-o',
+                              'llvm_' + file_name + ".mlir"],
+                             env=env,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+    stdout, stderr = lower.communicate()
     print(stdout.decode())
     err = stderr.decode()
     if len(err) != 0:
         raise RuntimeError("\n" + err)
+    to_llvm = subprocess.Popen(['mlir-translate',
+                                '--mlir-to-llvmir',
+                                'llvm_' + file_name + ".mlir",
+                                '-o',
+                                'llvm_' + file_name + ".ll"],
+                               env=env,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    stdout, stderr = to_llvm.communicate()
+    print(stdout.decode())
+    err = stderr.decode()
+    if len(err) != 0:
+        raise RuntimeError("\n" + err)
+    compile_llvm = subprocess.Popen(["llc",
+                                     "-filetype=obj",
+                                     'llvm_' + file_name + ".ll",
+                                     "-o",
+                                     file_name + ".o"],
+                                    env=env,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+    stdout, stderr = compile_llvm.communicate()
+    print(stdout.decode())
+    err = stderr.decode()
+    if len(err) != 0:
+        raise RuntimeError("\n" + err)
+
+    compile_llvm = subprocess.Popen(["g++",
+                                     "-shared",
+                                     "-fPIC",
+                                     "-o",
+                                     file_name + ".so",
+                                     file_name + ".o"],
+                                    env=env,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+    stdout, stderr = compile_llvm.communicate()
+    print(stdout.decode())
+    err = stderr.decode()
+    if len(err) != 0:
+        raise RuntimeError("\n" + err)
+
+
+def nd_to_c(nd, nd_t):
+    allocated_ptr = nd.ctypes.data_as(POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
+    aligned_ptr = nd.ctypes.data_as(POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
+    offset = c_int64(0)
+    shape = list(nd.ctypes.shape_as(c_int64))
+    print(f"shape[0] = {shape[0]}, shape[1] = {shape[1]}")
+    print(nd.strides)
+    strides = [c_int64(s//nd.dtype.itemsize) for s in nd.strides]
+    print(f"strides[0] = {strides[0]}, strides[1] = {strides[1]}")
+    return [allocated_ptr, aligned_ptr, offset, *shape, *strides]
+
+
+def symbol_to_c(value):
+    print(f"symbol = {value}")
+    return c_int64(value)
+
+
+def bind_data_to_type(ins, types, returns, return_types):
+    args = []
+    symbols = OrderedDict()
+    for i, t in chain(zip(ins, types), zip([returns], [return_types])):
+        if not is_ndarray_type(t):
+            raise NotImplementedError(f"{t} is not a legit type.")
+        args.append((i, t))
+
+        for actual_s, annotated_s in zip(i.shape, t.shape):
+            if not is_symbol(annotated_s):
+                continue
+            if annotated_s in symbols:
+                assert symbols[annotated_s] == actual_s
+                continue
+            symbols[annotated_s] = actual_s
+    for t, value in symbols.items():
+        args.append([value, t])
+    return args
+
+
+def binded_args_to_c(binded_args):
+    args = []
+    for value, t in binded_args:
+        if is_ndarray_type(t):
+            args += nd_to_c(value, t)
+        elif is_symbol(t):
+            args.append(symbol_to_c(value))
+        else:
+            raise NotImplementedError(f"{t} is not a legit type.")
+    return args
+
+
+def to_c_args(parser: KernelParser, ins, rt=None):
+    args_types = parser.arg_types
+    rt_types = parser.return_types
+    if rt is None:# todo shape may be symbol
+        rt = np.zeros(shape = rt_types.shape, dtype = rt_types.dtype)
+    binded_args = bind_data_to_type(ins, args_types, rt, rt_types)
+    return binded_args_to_c(binded_args), rt
+
+def run(parser: KernelParser, *args, rt = None):
+    code_file_name = parser.file_name.split('/')[-1].split('.')[0]
+    file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
+    print(file_name)
+    compile_linalg(parser.main_node_ir, file_name)
+    linalg_func = CDLL(file_name + ".so")
+    func = getattr(linalg_func, parser.func_name)
+    args, rt = to_c_args(parser, args, rt=rt)
+    func(*args)
+    print("pass")
+    print(rt)
+    return rt
