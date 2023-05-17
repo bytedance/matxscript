@@ -114,6 +114,7 @@ def scalar_to_c(v, v_t):
     v = PYTYPE_TO_C_TYPE[v_t.dtype](v)
     return v
 
+
 def symbol_to_c(value):
     print(f"symbol = {value}")
     return c_int64(value)
