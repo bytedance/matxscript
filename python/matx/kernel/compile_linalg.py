@@ -103,22 +103,26 @@ def nd_to_c(nd, nd_t):
     aligned_ptr = nd.ctypes.data_as(POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
     offset = c_int64(0)
     shape = list(nd.ctypes.shape_as(c_int64))
-    print(f"shape[0] = {shape[0]}, shape[1] = {shape[1]}")
+    print(", ".join([f"shape{i} = {shape[i]}" for i in range(len(shape))]))
     print(nd.strides)
-    strides = [c_int64(s//nd.dtype.itemsize) for s in nd.strides]
-    print(f"strides[0] = {strides[0]}, strides[1] = {strides[1]}")
+    strides = [c_int64(s // nd.dtype.itemsize) for s in nd.strides]
+    print(", ".join([f"strides{i} = {strides[i]}" for i in range(len(strides))]))
     return [allocated_ptr, aligned_ptr, offset, *shape, *strides]
 
+
+def scalar_to_c(v, v_t):
+    v = PYTYPE_TO_C_TYPE[v_t.dtype](v)
+    return v
 
 def symbol_to_c(value):
     print(f"symbol = {value}")
     return c_int64(value)
 
 
-def bind_data_to_type(ins, types, returns, return_types):
+def bind_data_to_type(ins, types):
     args = []
     symbols = OrderedDict()
-    for i, t in chain(zip(ins, types), zip([returns], [return_types])):
+    for i, t in zip(ins, types):
         if not is_ndarray_type(t):
             raise NotImplementedError(f"{t} is not a legit type.")
         args.append((i, t))
@@ -130,15 +134,15 @@ def bind_data_to_type(ins, types, returns, return_types):
                 assert symbols[annotated_s] == actual_s
                 continue
             symbols[annotated_s] = actual_s
-    for t, value in symbols.items():
-        args.append([value, t])
-    return args
+    return args, symbols
 
 
 def binded_args_to_c(binded_args):
     args = []
     for value, t in binded_args:
-        if is_ndarray_type(t):
+        if is_scalar_type(t):
+            args.append(scalar_to_c(value, t))
+        elif is_ndarray_type(t):
             args += nd_to_c(value, t)
         elif is_symbol(t):
             args.append(symbol_to_c(value))
@@ -150,12 +154,22 @@ def binded_args_to_c(binded_args):
 def to_c_args(parser: KernelParser, ins, rt=None):
     args_types = parser.arg_types
     rt_types = parser.return_types
-    if rt is None:# todo shape may be symbol
-        rt = np.zeros(shape = rt_types.shape, dtype = rt_types.dtype)
-    binded_args = bind_data_to_type(ins, args_types, rt, rt_types)
+    binded_args, symbol_dict = bind_data_to_type(ins, args_types)
+    if rt is None:  # todo shape may be symbol
+        shape = [symbol_dict[s] if is_symbol(s) else s for s in rt_types.shape]
+        rt = np.zeros(shape=shape, dtype=rt_types.dtype)
+    for actual_s, ann_s in zip(rt.shape, rt_types.shape):
+        assert symbol_dict[ann_s] == actual_s
+    binded_args.append((rt, rt_types))
+    for t, value in symbol_dict.items():
+        binded_args.append((value, t))
     return binded_args_to_c(binded_args), rt
 
-def run(parser: KernelParser, *args, rt = None):
+
+def run(parser: KernelParser, *args, rt=None):
+    if len(args) != len(parser.arg_types):
+        raise NotImplementedError(f"the size of the given input {len(args)}"
+                                  f" is not the same as the annotation {len(parser.arg_types)}")
     code_file_name = parser.file_name.split('/')[-1].split('.')[0]
     file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
     print(file_name)
@@ -163,6 +177,7 @@ def run(parser: KernelParser, *args, rt = None):
     linalg_func = CDLL(file_name + ".so")
     func = getattr(linalg_func, parser.func_name)
     args, rt = to_c_args(parser, args, rt=rt)
+    print(args)
     func(*args)
     print("pass")
     print(rt)
