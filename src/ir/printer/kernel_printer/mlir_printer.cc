@@ -24,6 +24,7 @@
  *        that can be parsed by a parser.
  */
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -393,7 +394,7 @@ void MLIRTextPrinter::VisitExpr_(const PrimCastNode* op, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitExpr_(const BufferLoadNode* op, std::ostream& os) {
-  insert_or_assign_expr_name_map_(op, expr_name_map_->at(op->buffer->data.get()));
+  insert_or_assign_expr_name_map_(op, computeBlockPrinter->GetPrimVarName(op));
 }
 
 // Begin Stmt
@@ -482,8 +483,9 @@ void MLIRTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitStmt_(const ComputeBlockNode* op, std::ostream& os) {
-  LinalgGenericPrinter printer(this);
-  printer.ComputeBlockToLinalgGeneric(op, os);
+  computeBlockPrinter = std::make_unique<LinalgGenericPrinter>(this);
+  computeBlockPrinter->ComputeBlockToLinalgGeneric(op, os);
+  computeBlockPrinter.reset();
 }
 void MLIRTextPrinter::VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream& os) {
 }
