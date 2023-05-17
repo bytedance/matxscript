@@ -40,30 +40,29 @@ class TestSingleReturnParser(unittest.TestCase):
 
         p = KernelParser(foo)
         p.parse()
-        
-        a = np.arange(300*400, dtype=np.int32).reshape(300, 400)
-        b = np.arange(300*400, dtype=np.int64).reshape(300, 400)
+
+        a = np.arange(300 * 400, dtype=np.int32).reshape(300, 400)
+        b = np.arange(300 * 400, dtype=np.int64).reshape(300, 400)
         c = np.float32(3)
         rt = np.zeros(a.shape, dtype=np.float32)
         f = compile_linalg(p)
         c_args, _ = f.to_c_args(a, b, c, rt=rt)
-        print('-'*100)
+        print('-' * 100)
         print(*c_args)
 
         # warmup
         for _ in range(WARM_UP):
             f.raw_call(*c_args)
-            
+
         linalg_start_time = time.time()
         for _ in range(ITERATION):
             f.raw_call(*c_args)
         print("--- linalg time: %s seconds ---" % (time.time() - linalg_start_time))
-        
+
         for _ in range(WARM_UP):
             _ = foo(a, b, c)
-        
+
         numpy_start_time = time.time()
         for _ in range(ITERATION):
             _ = foo(a, b, c)
-        print("--- numpy time: %s seconds ---" % (time.time() - numpy_start_time))   
-        
+        print("--- numpy time: %s seconds ---" % (time.time() - numpy_start_time))
