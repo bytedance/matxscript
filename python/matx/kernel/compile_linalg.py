@@ -28,76 +28,6 @@ import os
 import time
 
 
-def compile_linalg(matx_ir, file_name="tmp"):
-    code = _ffi_node_api.as_linalg_text(matx_ir).decode()
-    with open(file_name + ".mlir", "w+") as f:
-        f.write(code)
-    env = os.environ.copy()
-    lower = subprocess.Popen(['mlir-opt',
-                              '--convert-linalg-to-loops',
-                              '--lower-affine',
-                              '--convert-scf-to-cf',
-                              '--convert-linalg-to-llvm',
-                              '--convert-func-to-llvm',
-                              '--convert-index-to-llvm',
-                              '--convert-arith-to-llvm',
-                              '--convert-memref-to-llvm',
-                              '--convert-cf-to-llvm',
-                              '--reconcile-unrealized-casts',
-                              file_name + ".mlir",
-                              '-o',
-                              'llvm_' + file_name + ".mlir"],
-                             env=env,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-    stdout, stderr = lower.communicate()
-    print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
-    to_llvm = subprocess.Popen(['mlir-translate',
-                                '--mlir-to-llvmir',
-                                'llvm_' + file_name + ".mlir",
-                                '-o',
-                                'llvm_' + file_name + ".ll"],
-                               env=env,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
-    stdout, stderr = to_llvm.communicate()
-    print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
-    compile_llvm = subprocess.Popen(["llc",
-                                     "-filetype=obj",
-                                     'llvm_' + file_name + ".ll",
-                                     "-o",
-                                     file_name + ".o"],
-                                    env=env,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-    stdout, stderr = compile_llvm.communicate()
-    print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
-
-    compile_llvm = subprocess.Popen(["g++",
-                                     "-shared",
-                                     "-fPIC",
-                                     "-o",
-                                     file_name + ".so",
-                                     file_name + ".o"],
-                                    env=env,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-    stdout, stderr = compile_llvm.communicate()
-    print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
-
-
 def nd_to_c(nd, nd_t):
     allocated_ptr = nd.ctypes.data_as(POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
     aligned_ptr = nd.ctypes.data_as(POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
@@ -152,34 +82,138 @@ def binded_args_to_c(binded_args):
     return args
 
 
-def to_c_args(parser: KernelParser, ins, rt=None):
-    args_types = parser.arg_types
-    rt_types = parser.return_types
-    binded_args, symbol_dict = bind_data_to_type(ins, args_types)
-    if rt is None:  # todo shape may be symbol
-        shape = [symbol_dict[s] if is_symbol(s) else s for s in rt_types.shape]
-        rt = np.zeros(shape=shape, dtype=rt_types.dtype)
-    for actual_s, ann_s in zip(rt.shape, rt_types.shape):
-        assert symbol_dict[ann_s] == actual_s
-    binded_args.append((rt, rt_types))
-    for t, value in symbol_dict.items():
-        binded_args.append((value, t))
-    return binded_args_to_c(binded_args), rt
+def write_linalg(matx_ir, output_fname="tmp.mlir"):
+    code = _ffi_node_api.as_linalg_text(matx_ir).decode()
+    with open(output_fname, "w+") as f:
+        f.write(code)
+    return output_fname
 
 
-def run(parser: KernelParser, *args, rt=None):
-    if len(args) != len(parser.arg_types):
-        raise NotImplementedError(f"the size of the given input {len(args)}"
-                                  f" is not the same as the annotation {len(parser.arg_types)}")
-    code_file_name = parser.file_name.split('/')[-1].split('.')[0]
-    file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
-    print(file_name)
-    compile_linalg(parser.main_node_ir, file_name)
-    linalg_func = CDLL(file_name + ".so")
+def lower_linalg_to_cpu(input_fname, output_fname="llvm_tmp.mlir"):
+    env = os.environ.copy()
+    lower = subprocess.Popen(['mlir-opt',
+                              '--convert-linalg-to-loops',
+                              '--lower-affine',
+                              '--convert-scf-to-cf',
+                              '--convert-linalg-to-llvm',
+                              '--convert-func-to-llvm',
+                              '--convert-index-to-llvm',
+                              '--convert-arith-to-llvm',
+                              '--convert-memref-to-llvm',
+                              '--convert-cf-to-llvm',
+                              '--reconcile-unrealized-casts',
+                              input_fname,
+                              '-o',
+                              output_fname],
+                             env=env,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+    stdout, stderr = lower.communicate()
+    print(stdout.decode())
+    err = stderr.decode()
+    if len(err) != 0:
+        raise RuntimeError("\n" + err)
+    return output_fname
+
+
+def translate_to_llvm(input_fname, output_fname="llvm_tmp.ll"):
+    env = os.environ.copy()
+    to_llvm = subprocess.Popen(['mlir-translate',
+                                '--mlir-to-llvmir',
+                                input_fname,
+                                '-o',
+                                output_fname],
+                               env=env,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    stdout, stderr = to_llvm.communicate()
+    print(stdout.decode())
+    err = stderr.decode()
+    if len(err) != 0:
+        raise RuntimeError("\n" + err)
+    return output_fname
+
+
+def llvm_compile(input_fname, output_fname="llvm_tmp.ll"):
+    env = os.environ.copy()
+    compile_llvm = subprocess.Popen(["llc",
+                                     "-filetype=obj",
+                                     input_fname,
+                                     "-o",
+                                     input_fname + ".o"],
+                                    env=env,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+    stdout, stderr = compile_llvm.communicate()
+    print(stdout.decode())
+    err = stderr.decode()
+    if len(err) != 0:
+        raise RuntimeError("\n" + err)
+
+    compile_llvm = subprocess.Popen(["g++",
+                                     "-shared",
+                                     "-fPIC",
+                                     "-o",
+                                     output_fname,
+                                     input_fname + ".o"],
+                                    env=env,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+    stdout, stderr = compile_llvm.communicate()
+    print(stdout.decode())
+    err = stderr.decode()
+    if len(err) != 0:
+        raise RuntimeError("\n" + err)
+    return output_fname
+
+
+class LinalgFuncWrapper:
+
+    def __init__(self, func, parser: KernelParser):
+        self.func = func
+        self.arg_types = parser.arg_types
+        self.rt_types = parser.return_types
+
+    def __call__(self, *args, rt=None):
+        if len(args) != len(self.arg_types):
+            raise NotImplementedError(f"the size of the given input {len(args)}"
+                                      f" is not the same as the annotation {len(self.arg_types)}")
+        args, rt = self.to_c_args(*args, rt=rt)
+        self.raw_call(*args)
+        return rt
+
+    def raw_call(self, *args):
+        print(*args)
+        self.func(*args)
+
+    def to_c_args(self, *args, rt=None):
+        binded_args, symbol_dict = bind_data_to_type(args, self.arg_types)
+        if rt is None:  # todo shape may be symbol
+            shape = [symbol_dict[s] if is_symbol(s) else s for s in self.rt_types.shape]
+            rt = np.zeros(shape=shape, dtype=self.rt_types.dtype)
+        for actual_s, ann_s in zip(rt.shape, self.rt_types.shape):
+            assert symbol_dict[ann_s] == actual_s
+
+        binded_args.append((rt, self.rt_types))
+        for t, value in symbol_dict.items():
+            binded_args.append((value, t))
+        print(binded_args)
+        return binded_args_to_c(binded_args), rt
+
+
+def load_func(shared_lib, parser: KernelParser):
+    linalg_func = CDLL(shared_lib)
     func = getattr(linalg_func, parser.func_name)
-    args, rt = to_c_args(parser, args, rt=rt)
-    print(args)
-    func(*args)
-    print("pass")
-    print(rt)
-    return rt
+    return LinalgFuncWrapper(func, parser)
+
+
+def compile_linalg(parser: KernelParser, file_name=None):
+    if file_name is None:
+        code_file_name = parser.file_name.split('/')[-1].split('.')[0]
+        file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
+    print(file_name)
+    mlir_f = write_linalg(parser.main_node_ir, file_name + "mlir")
+    lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
+    llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
+    shared_lib = llvm_compile(llvm_f, file_name + ".so")
+    return load_func(shared_lib, parser)
