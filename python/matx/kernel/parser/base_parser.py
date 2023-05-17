@@ -102,11 +102,14 @@ class BaseParser(ast.NodeVisitor):
         self.context.new_scope(nodes=node.body)
         span_ = build_span(self.root_node, node)
         # add parameters of function
+        nd_dim_map = {}
         for arg, ctx in self.ndarray_context_table.items():
             if not (isinstance(ctx, NDArrayNode) or isinstance(ctx, ScalarNode)):
-                continue
+                raise NotImplementedError("func parameters can only be markedas ndarray noe scalar")
             self.context.update_symbol(arg, ctx.script_var)
             self.context.func_params.append(ctx.script_var)
+            if isinstance(ctx, NDArrayNode):
+                nd_dim_map[ctx.script_var] = ctx.buffer
 
         # make dim variables as args
         for dim, dim_var in self.shape_symbol_table.items():
@@ -133,6 +136,7 @@ class BaseParser(ast.NodeVisitor):
             ret_type=None
         )
         func = func.with_attr(_ir.FuncAttr.kGlobalSymbol, node.name)
+        func = func.with_attr(_ir.FuncAttr.kKernelFunctionParameterBinding, nd_dim_map)
         self.context.pop_scope()
         return func
 
