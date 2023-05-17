@@ -33,10 +33,7 @@ def nd_to_c(nd, nd_t):
     aligned_ptr = nd.ctypes.data_as(POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
     offset = c_int64(0)
     shape = list(nd.ctypes.shape_as(c_int64))
-    print(", ".join([f"shape{i} = {shape[i]}" for i in range(len(shape))]))
-    print(nd.strides)
     strides = [c_int64(s // nd.dtype.itemsize) for s in nd.strides]
-    print(", ".join([f"strides{i} = {strides[i]}" for i in range(len(strides))]))
     return [allocated_ptr, aligned_ptr, offset, *shape, *strides]
 
 
@@ -46,7 +43,6 @@ def scalar_to_c(v, v_t):
 
 
 def symbol_to_c(value):
-    print(f"symbol = {value}")
     return c_int64(value)
 
 
@@ -183,7 +179,6 @@ class LinalgFuncWrapper:
         return rt
 
     def raw_call(self, *args):
-        print(*args)
         self.func(*args)
 
     def to_c_args(self, *args, rt=None):
@@ -197,7 +192,6 @@ class LinalgFuncWrapper:
         binded_args.append((rt, self.rt_types))
         for t, value in symbol_dict.items():
             binded_args.append((value, t))
-        print(binded_args)
         return binded_args_to_c(binded_args), rt
 
 
@@ -211,8 +205,7 @@ def compile_linalg(parser: KernelParser, file_name=None):
     if file_name is None:
         code_file_name = parser.file_name.split('/')[-1].split('.')[0]
         file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
-    print(file_name)
-    mlir_f = write_linalg(parser.main_node_ir, file_name + "mlir")
+    mlir_f = write_linalg(parser.main_node_ir, file_name + ".mlir")
     lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
     llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
     shared_lib = llvm_compile(llvm_f, file_name + ".so")
