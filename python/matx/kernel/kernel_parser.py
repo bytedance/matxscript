@@ -35,11 +35,12 @@ class KernelParser:
         # get args
         self.signature = inspect.signature(func)
         self.args = {k: v.annotation for k, v in self.signature.parameters.items()}
+        self.arg_types = list(self.args.values())
         # get return type
         self.return_types = self.signature.return_annotation
         # get shape symbols in dict like {'x':X}
         self.symbols = dict()
-        for arg_type in self.args.values():
+        for arg_type in self.arg_types:
             shape_symbol = extract_symbol_from_type(arg_type)
             self.symbols.update(shape_symbol)
         self.main_node_ir = None
