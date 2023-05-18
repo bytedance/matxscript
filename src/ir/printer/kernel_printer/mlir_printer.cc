@@ -41,6 +41,7 @@
 #include "matxscript/ir/type.h"
 #include "matxscript/runtime/container/dict_private.h"
 #include "matxscript/runtime/dlpack.h"
+#include "matxscript/runtime/logging.h"
 #include "matxscript/runtime/object.h"
 
 #include <matxscript/ir/expr_functor.h>
@@ -131,7 +132,7 @@ std::string MLIRTextPrinter::ConvertTypeToMLIR(const runtime::DataType& type) co
 
 std::string MLIRTextPrinter::ConvertTypeToMLIR(const matxscript::ir::PointerTypeNode* node) const {
   if (pointer_buffer_map.find(node) != pointer_buffer_map.end()) {
-    return ConvertTypeToMLIR((pointer_buffer_map.at(node)), true);
+    return ConvertTypeToMLIR((pointer_buffer_map.at(node)));
   }
   MXTHROW << "Pointer type " << node->GetPythonTypeName() << " has not been binded to a buffer";
   return "";
@@ -148,18 +149,20 @@ std::string MLIRTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Type& type)
   }
 }
 
-std::string MLIRTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Buffer& buffer,
-                                               const bool skip_dim_check) const {
+std::string MLIRTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Buffer& buffer) const {
   std::stringstream ss;
   ss << "memref<";
   for (auto dim : buffer->shape) {
     if (dim->IsInstance<PrimVarNode>()) {
       auto node = runtime::Downcast<PrimVar>(dim);
-      if (!skip_dim_check && expr_name_map_->find(dim.get()) == expr_name_map_->end()) {
+      if (expr_name_map_->find(dim.get()) == expr_name_map_->end()) {
         MXLOG(WARNING)
             << "[MLIRTextPrinter.ConvertTypeToMLIR] Buffer(" << buffer->name
             << ") is annotated with " << node->name_hint
-            << ", but for now linalg printer only supports constant or predefined symbols";
+            << ", which is not a constant or a predefined symbol. "
+               "This could simply be that the buffer is used to initialize func parameters, "
+               "which is a intended behavior. "
+               "And for now it is treated as ? in MLIR.";
       }
       ss << "?x";
     } else if (dim->IsInstance<IntImmNode>()) {
