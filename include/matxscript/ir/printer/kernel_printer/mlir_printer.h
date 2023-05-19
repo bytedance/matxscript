@@ -31,6 +31,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <unordered_map>
 #include <vector>
 #include "matxscript/ir/base.h"
 #include "matxscript/ir/prim_expr.h"
@@ -152,7 +153,7 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
  private:
   /*! \brief the stream to be printed */
   std::ostringstream stream_;
-
+  std::unordered_map<const PointerTypeNode*, const Buffer> pointer_buffer_map;
   std::vector<var_name_map> var_name_scope;
   std::vector<var_type_map> var_type_scope;
   var_name_map* expr_name_map_;

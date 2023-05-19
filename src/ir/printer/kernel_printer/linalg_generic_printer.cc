@@ -196,6 +196,7 @@ std::string LinalgGenericPrinter::GetPrimVarName(const BufferLoadNode* op) {
     return "%_" + element_name;
   }
   MXTHROW << "[Linalg.generic] the corresponding buffer has not been recroded.";
+  return "";
 }
 
 void LinalgGenericPrinter::VisitComputBlockBody_(const matxscript::ir::Stmt& body,

@@ -523,6 +523,7 @@ constexpr const char* kExportSymbol = "export_symbol";
 constexpr const char* kClassConstructor = "class_constructor";
 constexpr const char* kClassNameBelongTo = "class_name_belong_to";
 constexpr const char* kCaptureSessionHandle = "capture_session_handle";
+constexpr const char* kKernelFunctionParameterBinding = "kernel_function_parameter_binding";
 
 /*!
  * \brief Whether to set noalias rule on the function arguments.

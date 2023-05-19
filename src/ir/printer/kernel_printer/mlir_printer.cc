@@ -30,6 +30,7 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include "matxscript/ir/_base/cow_map_ref.h"
 #include "matxscript/ir/base.h"
 #include "matxscript/ir/none_expr.h"
 #include "matxscript/ir/prim_expr.h"
@@ -38,7 +39,9 @@
 #include "matxscript/ir/printer/kernel_printer/linalg_generic_printer.h"
 #include "matxscript/ir/tensor_stmt.h"
 #include "matxscript/ir/type.h"
+#include "matxscript/runtime/container/dict_private.h"
 #include "matxscript/runtime/dlpack.h"
+#include "matxscript/runtime/logging.h"
 #include "matxscript/runtime/object.h"
 
 #include <matxscript/ir/expr_functor.h>
@@ -128,14 +131,11 @@ std::string MLIRTextPrinter::ConvertTypeToMLIR(const runtime::DataType& type) co
 }
 
 std::string MLIRTextPrinter::ConvertTypeToMLIR(const matxscript::ir::PointerTypeNode* node) const {
-  std::stringstream ss;
-  ss << "memref<?x";
-  while (auto* e = node->element_type.as<PointerTypeNode>()) {
-    node = e;
-    ss << "?x";
+  if (pointer_buffer_map.find(node) != pointer_buffer_map.end()) {
+    return ConvertTypeToMLIR((pointer_buffer_map.at(node)));
   }
-  ss << ConvertTypeToMLIR(node->element_type) << '>';
-  return ss.str();
+  MXTHROW << "Pointer type " << node->GetPythonTypeName() << " has not been binded to a buffer";
+  return "";
 }
 
 std::string MLIRTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Type& type) const {
@@ -156,8 +156,13 @@ std::string MLIRTextPrinter::ConvertTypeToMLIR(const matxscript::ir::Buffer& buf
     if (dim->IsInstance<PrimVarNode>()) {
       auto node = runtime::Downcast<PrimVar>(dim);
       if (expr_name_map_->find(dim.get()) == expr_name_map_->end()) {
-        MXTHROW << "Buffer(" << buffer->name << ") is annotated with " << node->name_hint
-                << ", but for now linalg printer only supports constant or predefined symbols";
+        MXLOG(WARNING)
+            << "[MLIRTextPrinter.ConvertTypeToMLIR] Buffer(" << buffer->name
+            << ") is annotated with " << node->name_hint
+            << ", which is not a constant or a predefined symbol. "
+               "This could simply be that the buffer is used to initialize func parameters, "
+               "which is a intended behavior. "
+               "And for now it is treated as ? in MLIR.";
       }
       ss << "?x";
     } else if (dim->IsInstance<IntImmNode>()) {
@@ -451,6 +456,25 @@ void MLIRTextPrinter::VisitStmt_(const ExprStmtNode* op, std::ostream& os) {
 
 void MLIRTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
   // TODO, add func name and params
+  const auto& opt_parameter_map =
+      op->GetAttr<matxscript::ir::Map<PrimVar, Buffer>>(attr::kKernelFunctionParameterBinding);
+  if (!opt_parameter_map.defined()) {
+    MXLOG(WARNING) << "Kernel function, " << op->GetReprName()
+                   << ", is supposed to have an attribute named kKernelFunctionParameterBinding.";
+  }
+  const auto& parameter_map = opt_parameter_map.value();
+  for (const auto& item : parameter_map) {
+    const auto& var = item.first;
+    const auto& buffer = item.second;
+    const auto* var_type = var->checked_type().as<PointerTypeNode>();
+    if (var_type == nullptr) {
+      MXLOG(WARNING) << "The attribute, kKernelFunctionParameterBinding, binded to "
+                     << op->GetReprName()
+                     << ", is expected to have PrimVar of PointerType as keys.";
+    }
+    pointer_buffer_map.emplace(var_type, buffer);
+  }
+
   os << "func.func @" << op->GetGlobalName();
   os << "(";
   auto func_params = op->GetParams();

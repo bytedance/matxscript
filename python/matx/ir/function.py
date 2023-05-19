@@ -49,6 +49,7 @@ class FuncAttr(object):
     kClassConstructor = "class_constructor"
     kClassNameBelongTo = "class_name_belong_to"
     kCaptureSessionHandle = "capture_session_handle"
+    kKernelFunctionParameterBinding = "kernel_function_parameter_binding"
 
 
 class BaseFunc(Stmt):
