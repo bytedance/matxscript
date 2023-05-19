@@ -97,6 +97,8 @@ def lower_linalg_to_cpu(input_fname, output_fname="llvm_tmp.mlir"):
                               '--convert-arith-to-llvm',
                               '--convert-memref-to-llvm',
                               '--convert-cf-to-llvm',
+                              '--scf-for-loop-peeling',
+                              '--scf-for-loop-specialization',
                               '--reconcile-unrealized-casts',
                               input_fname,
                               '-o',
@@ -133,6 +135,7 @@ def translate_to_llvm(input_fname, output_fname="llvm_tmp.ll"):
 def llvm_compile(input_fname, output_fname="llvm_tmp.ll"):
     env = os.environ.copy()
     compile_llvm = subprocess.Popen(["llc",
+                                     "-O3",
                                      "-filetype=obj",
                                      input_fname,
                                      "-o",
