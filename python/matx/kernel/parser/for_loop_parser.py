@@ -124,8 +124,8 @@ class ForLoopParser(BaseParser):
         iter_vars_names = [self.tmp_scalar_table[name].script_var
                            for name in self.loop_variable_map.keys()]
         iter_vars = [PrimIterVar(loop_range[i], iter_vars_names[i]) for i in range(len(loop_range))]
-        reads = [i.reads() for i in rt_ir]
-        writes = [i.writes() for i in rt_ir]
+        reads = [e for i in rt_ir for e in i.reads()]
+        writes = [e for i in rt_ir for e in i.writes()]
 
         # for lhs_name, rhs in zip(self.loop_variable_map.keys(), iter_vars_names):
         #    lhs = self.tmp_scalar_table[lhs_name].script_var
