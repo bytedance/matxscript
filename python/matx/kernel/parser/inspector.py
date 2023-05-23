@@ -16,10 +16,13 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-from typing import Any, Dict, TYPE_CHECKING
+import ast
+from typing import Any, Dict, List, TYPE_CHECKING
 
 from .for_loop_parser import ForLoopParser
 from .single_return_parser import KernelSingleReturnParser
+from .base_parser import BaseParser
+from matx import ir as _ir
 from .utils import *
 from ..ir import *
 
@@ -38,38 +41,31 @@ class KernelInspector(ast.NodeVisitor):
 
         # necessary for reuse script functionality
         self.root_node = node
-
-        self.kernel_parser = None
+        self.context = None
 
         # for kernel use
-        self.ndarray_context_table: Dict[str, ExpressionBaseNode] = {}
+        self.arg_context_table: Dict[str, ExpressionBaseNode] = {}
         self.shape_symbol_table: Dict[str, SymbolNode] = {}
+        self.tmp_scalar_table = {}
+        self.tmp_ndarray_table = {}
         self.return_ctx = None
+        self.return_types = kernel_p.return_types
+        self.func_name = kernel_p.func_name
 
         # for checking
         self.visited_FunctionDef = False  # nested function definition is not allowed
         self.ast_nodes = []
 
     def check_and_dispatch(self, node: ast.AST) -> Any:
-        self.visit(node)
-        return self.kernel_parser(
-            self.kernel_p,
-            self.ndarray_context_table,
-            self.shape_symbol_table,
-            self.return_ctx,
-            self.root_node)
-
-    def generic_visit(self, node):
-        self.ast_nodes.append(node.__class__)
-        return super().generic_visit(node)
-
-    def visit(self, node: ast.AST) -> Any:
-        """Override method in ast.NodeVisitor"""
-        method = "visit_" + node.__class__.__name__
-        print(method)
-        visitor = getattr(self, method, self.generic_visit)
-        visit_res = visitor(node)
-        return visit_res
+        if isinstance(node, ast.For):
+            p = ForLoopParser(self)
+            return p.visit(node)
+        elif isinstance(node, (ast.Return, ast.AnnAssign, ast.Assign)):
+            p = KernelSingleReturnParser(self)
+            return p.visit(node)
+        else:
+            p = BaseParser(self)
+            return p.visit(node)
 
     def declare_shape_var(self, type_annotation, span):
         if not isinstance(type_annotation, kernelNDArrayT):
@@ -90,32 +86,14 @@ class KernelInspector(ast.NodeVisitor):
         for arg, type_annotation in self.kernel_p.args.items():
             if is_scalar_type(type_annotation):
                 scalar_ctx = ScalarNode(arg, type_annotation, span)
-                self.ndarray_context_table[arg] = scalar_ctx
+                self.arg_context_table[arg] = scalar_ctx
             elif is_ndarray_type(type_annotation):
                 self.declare_shape_var(type_annotation, span)
                 nd_ctx = NDArrayNode(arg, type_annotation, self.shape_symbol_table, span)
-                self.ndarray_context_table[arg] = nd_ctx
+                self.arg_context_table[arg] = nd_ctx
             else:
                 raise SyntaxError(f"right now only kernel ndarray are supported, "
                                   f"but get {type_annotation} for {arg}")
-
-    def check_body(self, node: ast.FunctionDef) -> None:
-        stmts = node.body
-        # case 1 one line of return
-        if len(stmts) == 1 and isinstance(stmts[0], ast.Return):
-            self.kernel_parser = KernelSingleReturnParser
-            self.visit(stmts[0])
-            print(self.ast_nodes)
-            for node in self.ast_nodes:
-                if node not in KernelSingleReturnParser.allowed_ast_node:
-                    raise SyntaxError(f"{node.__name__} is not allowed for single return")
-        # case 2 for loop
-        else:
-            self.kernel_parser = ForLoopParser
-
-        # else:
-        #    raise SyntaxError("right now kernel func only support two patterns."
-        #                      " 1st is return a single line. 2nd is a simple for loop")
 
     def check_return(self, node: ast.FunctionDef) -> Any:
         # todo return scalar
@@ -130,18 +108,78 @@ class KernelInspector(ast.NodeVisitor):
             if is_symbol(dim) and str(dim) not in self.shape_symbol_table:
                 raise SyntaxError(
                     f"{dim} in the return type is not defined in any of the shape in input args")
+        if self.return_var_name in self.arg_context_table:
+            self.return_ctx = self.arg_context_table[self.return_var_name]
+            return
         nd_ctx = NDArrayNode(
             self.return_var_name,
             self.kernel_p.return_types,
             self.shape_symbol_table,
             span)
-        self.ndarray_context_table[self.return_var_name] = nd_ctx
+        self.arg_context_table[self.return_var_name] = nd_ctx
         self.return_ctx = nd_ctx
+
+    @staticmethod
+    def to_seq_stmt(body: List[_ir.Stmt], span: _ir.Span):
+        if body is None or len(body) == 0:
+            return _ir.SeqStmt([], span)
+        return _ir.SeqStmt(body, span) if len(body) > 1 else body[0]
+
+    def parse_body(self, auto_add_return=False):
+        body = []
+        last_ast = None
+        while len(self.context.node_stack[-1]) > 0:
+            last_ast = self.context.node_stack[-1].pop()
+            res = self.check_and_dispatch(last_ast)
+            if res is not None:
+                if isinstance(res, StatementBaseNode):
+                    res = res.to_matx_ir()
+                if not isinstance(res, _ir.Stmt):
+                    raise SyntaxError('Every IR node here should be a stmt!')
+                body.append(res)
+            else:
+                # ignore the stmt
+                pass
+        if auto_add_return and (len(body) == 0 or not isinstance(last_ast, ast.Return)):
+            body.append(self.check_and_dispatch(ast.Return(value=None)))
+        return body
+
+    def visit_body(self, node: ast.FunctionDef):
+        self.context = script_context.ScopeContext()
+        self.context.new_scope(nodes=node.body)
+        span_ = build_span(self.root_node, node)
+        # add parameters of function
+        nd_dim_map = {}
+        for arg, ctx in self.arg_context_table.items():
+            if not (isinstance(ctx, NDArrayNode) or isinstance(ctx, ScalarNode)):
+                raise NotImplementedError("func parameters can only be markedas ndarray noe scalar")
+            self.context.update_symbol(arg, ctx.script_var)
+            self.context.func_params.append(ctx.script_var)
+            if isinstance(ctx, NDArrayNode):
+                nd_dim_map[ctx.script_var] = ctx.buffer
+
+        # make dim variables as args
+        for dim, dim_var in self.shape_symbol_table.items():
+            self.context.update_symbol(dim, dim_var.script_var)
+            self.context.func_params.append(dim_var.script_var)
+
+        body_stmts = self.parse_body(True)
+
+        func = _ir.PrimFunc(
+            self.context.func_params,
+            [],
+            self.to_seq_stmt(body_stmts, span_),
+            ret_type=None
+        )
+        func = func.with_attr(_ir.FuncAttr.kGlobalSymbol, node.name)
+        func = func.with_attr(_ir.FuncAttr.kKernelFunctionParameterBinding, nd_dim_map)
+        self.context.pop_scope()
+        return func
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:
         if self.visited_FunctionDef:
             raise SyntaxError("nested function def is not allowed.")
         self.visited_FunctionDef = True
         self.init_args(node)
-        self.check_body(node)
         self.check_return(node)
+        return self.visit_body(node)

@@ -66,6 +66,9 @@ class AssignNDArrayNode(StatementBaseNode):
     def reads(self):
         return self.rhs.buffer_regions(rng=self.range)
 
+    def alocate_buffer(self):
+        return []
+
 
 class AssignScalarNode(StatementBaseNode):
 
@@ -85,8 +88,11 @@ class AssignScalarNode(StatementBaseNode):
     def reads(self):
         return self.rhs.buffer_regions()
 
+    def alocate_buffer(self):
+        return []
 
-class AllocationScalarNode(AssignScalarNode):
+
+class ScalarAllocationNode(AssignScalarNode):
 
     def __init__(self, lhs, rhs, span):
         super().__init__(lhs, rhs, span)
@@ -100,3 +106,24 @@ class AllocationScalarNode(AssignScalarNode):
 
     def writes(self):
         return []
+
+    def alocate_buffer(self):
+        return []
+
+
+class NDArrayAllocationNode(AssignNDArrayNode):
+    def __init__(self, lhs: NDArrayNode, rhs: ExpressionBaseNode, span):
+        super().__init__(lhs, rhs)
+        self.span = span
+
+    def to_matx_ir(self, **kwargs):
+        return _ir.AllocaVarStmt(self.lhs.name, self.lhs.script_type, self.span)
+
+    def writes(self):
+        return self.lhs.writes()
+
+    def reads(self):
+        return self.rhs.reads()
+
+    def alocate_buffer(self):
+        return self.lhs.buffer

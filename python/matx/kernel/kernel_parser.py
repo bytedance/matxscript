@@ -82,8 +82,7 @@ class KernelParser:
         self.passes(sc_ctx)
 
         def parser_node(node: script_context.ASTNode):
-            parser = KernelInspector(self, node).check_and_dispatch(node.ast)
-            node.ir = parser.visit(node.ast)
+            node.ir = KernelInspector(self, node).visit_FunctionDef(node.ast)
             print(_ffi_node_api.IRTextPrinter_Print(node.ir, None).decode())
             return node.ir
 

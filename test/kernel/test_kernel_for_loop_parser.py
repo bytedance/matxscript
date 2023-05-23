@@ -147,7 +147,7 @@ class TestForLoopParser(unittest.TestCase):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
 
-        def foo(a: int32[M, N], b: float32[M, N]) -> int32[M, N]:
+        def foo(a: int32[M, N], b: float32[M, N]) -> float32[M, N]:
             for i in range(M):
                 for j in range(N):
                     b[i, j] = a[i, j] + b[i, j]
@@ -161,7 +161,7 @@ class TestForLoopParser(unittest.TestCase):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
 
-        def foo(a: int32[M, N], b: float32[M, N], c: int32[N], d: float32[M]) -> int32[M, N]:
+        def foo(a: int32[M, N], b: float32[M, N], c: int32[N], d: float32[M]) -> float32[M, N]:
             for i in range(M):
                 for j in range(N):
                     b[i, j] = (a[i, j] + c[j]) / (b[i, j] * d[i])
@@ -175,7 +175,8 @@ class TestForLoopParser(unittest.TestCase):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
 
-        def foo(a: int32[M, N], b: float32[2 * M, N], c: int32[N], d: float32[M]) -> int32[M, N]:
+        def foo(a: int32[M, N], b: float32[2 * M, N],
+                c: int32[N], d: float32[M]) -> float32[2 * M, N]:
             for i in range(M):
                 for j in range(N):
                     b[i + 1, j] = (a[i, j] + c[j]) / (b[i, j] * d[i])
@@ -189,7 +190,8 @@ class TestForLoopParser(unittest.TestCase):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
 
-        def foo(a: int32[M, N], b: float32[2 * M, N], c: int32[N], d: float32[M]) -> int32[M, N]:
+        def foo(a: int32[M, N], b: float32[2 * M, N],
+                c: int32[N], d: float32[M]) -> float32[2 * M, N]:
             for i in range(2, M // 2, 2):
                 for j in range(N - 10, N - 1, 1):
                     b[i + 1, j] = (a[i, j] + c[j]) / (b[i, j] * d[i])
