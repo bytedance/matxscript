@@ -91,6 +91,31 @@ StringRef GenerateUniqueName(StringRef name_hint,
   return name;
 }
 
+bool AllowConciseScoping(const IRDocsifier& d) {
+  MXCHECK(!d->frames.empty());
+  if (const auto* f = d->frames.back().as<IRFrameNode>()) {
+    return f->allow_concise_scoping;
+  }
+  MXLOG(FATAL) << "NotImplementedError: fragment printing";
+  return false;
+}
+
+Doc DoConciseScoping(const Optional<ExprDoc>& lhs,
+                     const ExprDoc& rhs,
+                     Array<StmtDoc>* stmts,
+                     bool concise_scoping) {
+  if (concise_scoping) {
+    if (lhs.defined()) {
+      stmts->insert(stmts->begin(), AssignDoc(lhs.value(), rhs, NullOpt));
+    } else {
+      stmts->insert(stmts->begin(), ExprStmtDoc(rhs));
+    }
+    return StmtBlockDoc(*stmts);
+  } else {
+    return ScopeDoc(lhs, rhs, *stmts);
+  }
+}
+
 }  // namespace printer
 }  // namespace ir
 }  // namespace matxscript

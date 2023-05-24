@@ -382,3 +382,46 @@ class ComputeBlockRealize(Stmt):
             block,
             span,
         )  # type: ignore
+
+
+@_ffi.register_object("ir.Allocate")
+class Allocate(Stmt):
+    """Allocate node.
+
+    Parameters
+    ----------
+    buffer_var : PrimVar
+        The buffer variable.
+
+    dtype : str
+        The data type of the buffer.
+
+    extents : list of Expr
+        The extents of the allocate
+
+    condition : PrimExpr
+        The condition.
+
+    body : Stmt
+        The body statement.
+
+    annotations: Optional[Mapping[str, Object]]
+        Additional annotation hints
+
+    span : Optional[Span]
+        The location of this itervar in the source code.
+    """
+
+    def __init__(self, buffer_var, dtype, extents, condition, body, annotations=None, span=None):
+        if annotations is None:
+            annotations = dict()
+        self.__init_handle_by_constructor__(
+            _ffi_api.Allocate,  # type: ignore
+            buffer_var,
+            dtype,
+            _to_ir(extents),
+            condition,
+            body,
+            _to_ir(annotations),
+            span,
+        )

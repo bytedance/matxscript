@@ -161,6 +161,13 @@ ExprDoc PrintVarCreation(const ir::PrimVar& var, const ObjectPath& var_p, const 
 StringRef GenerateUniqueName(StringRef name_hint,
                              const std::unordered_set<StringRef>& defined_names);
 
+bool AllowConciseScoping(const IRDocsifier& d);
+
+Doc DoConciseScoping(const Optional<ExprDoc>& lhs,
+                     const ExprDoc& rhs,
+                     Array<StmtDoc>* stmts,
+                     bool concise_scoping);
+
 }  // namespace printer
 }  // namespace ir
 }  // namespace matxscript
