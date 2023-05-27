@@ -81,7 +81,7 @@ class BinaryOp(ExpressionBaseNode):
         else:
             self.result_dtype = np_result_dtype([self.lhs_dtype, self.rhs_dtype])
         result_shape, lhs_new_shape, rhs_new_shape = broadcast(self.lhs_shape, self.rhs_shape)
-        self.result_shape = result_shape
+        self.result_shape = tuple(result_shape)
         self.result_type = NDArrayType(self.result_shape, self.result_dtype)
         self.lhs_broad_cast_shape = lhs_new_shape
         self.rhs_broad_cast_shape = rhs_new_shape

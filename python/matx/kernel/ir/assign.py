@@ -19,6 +19,7 @@
 from .ndarray import *
 from ... import ir as _ir
 from ...ir.expr import *
+from typing import List
 
 
 def make_range(shape, shape_symbol_table):
@@ -111,19 +112,22 @@ class ScalarAllocationNode(AssignScalarNode):
         return []
 
 
-class NDArrayAllocationNode(AssignNDArrayNode):
-    def __init__(self, lhs: NDArrayNode, rhs: ExpressionBaseNode, span):
+class ScopedNDArrayAllocationNode(AssignNDArrayNode):
+    def __init__(self, lhs: NDArrayNode, rhs: ExpressionBaseNode, body: List, span):
         super().__init__(lhs, rhs)
         self.span = span
+        self.assign_stmt = AssignNDArrayNode(lhs, rhs)
+        self.body = body
 
-    def to_matx_ir(self, **kwargs):
-        return _ir.AllocaVarStmt(self.lhs.name, self.lhs.script_type, self.span)
-
-    def writes(self):
-        return self.lhs.writes()
-
-    def reads(self):
-        return self.rhs.reads()
-
-    def alocate_buffer(self):
-        return self.lhs.buffer
+    def to_matx_ir(self, assign_stmt, **kwargs):
+        return _ir.Allocate(
+            self.lhs.buffer.data,
+            self.lhs.kernel_type.dtype_str(),
+            self.lhs.buffer_shape,
+            const(
+                1,
+                dtype="uint1"),
+            _ir.SeqStmt(
+                [assign_stmt] +
+                self.body,
+                self.span))

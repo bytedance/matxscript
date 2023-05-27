@@ -30,6 +30,44 @@ if TYPE_CHECKING:
     from ..kernel_parser import KernelParser
 
 
+class BodyIterator:
+
+    def __init__(self, node_stack, auto_add_return=False):
+        self.body = []
+        self.last_ast = None
+        self.node_stack = node_stack
+        self.auto_add_return = auto_add_return
+        self.visited_added_return = False
+
+    def has_next(self) -> bool:
+        if not self.auto_add_return:
+            return len(self.node_stack[-1]) > 0
+        if self.visited_added_return:
+            return False
+        if len(self.node_stack[-1]) > 0:
+            return True
+        return self.auto_add_return and (
+            len(self.body) == 0 or not isinstance(self.last_ast, ast.Return))
+
+    def next(self):
+        if len(self.node_stack[-1]) > 0:
+            self.last_ast = self.node_stack[-1].pop()
+            return self.last_ast
+        self.visited_added_return = True
+        return ast.Return(value=None)
+
+    def push_ir(self, res):
+        if res is not None:
+            if isinstance(res, StatementBaseNode):
+                res = res.to_matx_ir()
+            if not isinstance(res, _ir.Stmt):
+                raise SyntaxError('Every IR node here should be a stmt!')
+            self.body.append(res)
+        else:
+            # ignore the stmt
+            pass
+
+
 class KernelInspector(ast.NodeVisitor):
     return_var_name = '__return_93502842947314__'
 
@@ -55,6 +93,8 @@ class KernelInspector(ast.NodeVisitor):
         # for checking
         self.visited_FunctionDef = False  # nested function definition is not allowed
         self.ast_nodes = []
+
+        self.body_visiter = None
 
     def check_and_dispatch(self, node: ast.AST) -> Any:
         if isinstance(node, ast.For):
@@ -126,23 +166,21 @@ class KernelInspector(ast.NodeVisitor):
         return _ir.SeqStmt(body, span) if len(body) > 1 else body[0]
 
     def parse_body(self, auto_add_return=False):
-        body = []
-        last_ast = None
-        while len(self.context.node_stack[-1]) > 0:
-            last_ast = self.context.node_stack[-1].pop()
-            res = self.check_and_dispatch(last_ast)
-            if res is not None:
-                if isinstance(res, StatementBaseNode):
-                    res = res.to_matx_ir()
-                if not isinstance(res, _ir.Stmt):
-                    raise SyntaxError('Every IR node here should be a stmt!')
-                body.append(res)
-            else:
-                # ignore the stmt
-                pass
-        if auto_add_return and (len(body) == 0 or not isinstance(last_ast, ast.Return)):
-            body.append(self.check_and_dispatch(ast.Return(value=None)))
-        return body
+        self.body_visiter = BodyIterator(self.context.node_stack, auto_add_return)
+        while self.body_visiter.has_next():
+            res = self.check_and_dispatch(self.body_visiter.next())
+            self.body_visiter.push_ir(res)
+        return self.body_visiter.body
+
+    def continue_parse_as_scoped(self):
+        ir_sofar = self.body_visiter.body
+        self.body_visiter.body = []
+        while self.body_visiter.has_next():
+            res = self.check_and_dispatch(self.body_visiter.next())
+            self.body_visiter.push_ir(res)
+        scoped_ir = self.body_visiter.body
+        self.body_visiter.body = ir_sofar
+        return scoped_ir
 
     def visit_body(self, node: ast.FunctionDef):
         self.context = script_context.ScopeContext()

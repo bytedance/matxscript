@@ -20,10 +20,11 @@
 
 from __future__ import annotations
 
+import ast
 from typing import Any, TYPE_CHECKING
 
 from matx import ir as _ir
-from .utils import build_span, annotation_to_kernel_type
+from .utils import build_span
 from ..ir import *
 
 if TYPE_CHECKING:
@@ -92,6 +93,9 @@ class BaseParser(ast.NodeVisitor):
             return ctx
         if name in self.tmp_scalar_table:
             ctx = self.tmp_scalar_table[name]
+            return ctx
+        if name in self.tmp_ndarray_table:
+            ctx = self.tmp_ndarray_table[name]
             return ctx
         raise NotImplementedError(f'the type of {name} is not support')
         # return node.id
@@ -164,7 +168,7 @@ class BaseParser(ast.NodeVisitor):
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
         span = self.build_span(node)
-        ann = annotation_to_kernel_type(node.annotation)
+        ann = self.annotation_to_kernel_type(node.annotation)
         value = self.visit(node.value)
         if not isinstance(node.target, (ast.Name, ast.Subscript)):
             raise SyntaxError(f"Assigning to {type(node.target)} is not allowed.")
@@ -216,7 +220,8 @@ class BaseParser(ast.NodeVisitor):
         # todo shape marked here may be by scalars.
         tmp_ndarray_ctx = NDArrayNode(target_name, ann, self.shape_symbol_table, span)
         self.tmp_ndarray_table[target_name] = tmp_ndarray_ctx
-        return NDArrayAllocationNode(tmp_ndarray_ctx, value, span)
+        return ScopedNDArrayAllocationNode(
+            tmp_ndarray_ctx, value, self.kernel_p.continue_parse_as_scoped(), span)
 
     def _assign_scalar(self, target_name, value, node, span):
         # the name is conflict with args
@@ -307,3 +312,37 @@ class BaseParser(ast.NodeVisitor):
 
     def visit_Return(self, node: ast.Return) -> Any:
         pass
+
+    def visit_Tuple(self, node: ast.Tuple) -> Any:
+        values = []
+        for e in node.elts:
+            if not isinstance(e, ast.Name):
+                raise SyntaxError(f"for now tuple only support symbol")
+            if e.id not in self.kernel_p.shape_symbol_table:
+                raise SyntaxError(f"for now tuple only support symbol")
+            s = self.kernel_p.shape_symbol_table[e.id]
+            values.append(s.symbol)
+        return values
+
+    def annotation_to_kernel_type(self, ann):
+        if isinstance(ann, ast.Subscript):
+            if not isinstance(ann.value, ast.Name):
+                raise SyntaxError(
+                    f"kernel variable can only be marked with kernel type, but get ann.value is {type(ann.value)}")
+            type_name = ann.value.id
+            if type_name not in STR_TO_KERNEL_TYPE:
+                raise SyntaxError(
+                    f"kernel variable can only be marked with kernel type, but get {type_name}")
+            kernel_t = STR_TO_KERNEL_TYPE[type_name]
+            if not isinstance(ann.slice, ast.Tuple):
+                raise SyntaxError(
+                    f"kernel variable can only be marked with kernel type, but get ann.slice is {type(ann.slice)}")
+            return kernel_t[self.visit(ann.slice)]
+        if isinstance(ann, ast.Name):
+            type_name = ann.id
+            if type_name not in STR_TO_KERNEL_TYPE:
+                raise SyntaxError(
+                    f"kernel variable can only be marked with kernel type, but get {type_name}")
+            return STR_TO_KERNEL_TYPE[type_name]
+        raise SyntaxError(
+            f"kernel variable can only be marked with kernel type, but get {type(ann)}")
