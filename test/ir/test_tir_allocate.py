@@ -32,8 +32,7 @@ class TestTIRBuffer(unittest.TestCase):
         buffer_var = matx.ir.PrimVar("buf", matx.ir.PointerType(matx.ir.PrimType("float32")))
         x = matx.ir.Allocate(
             buffer_var, "float32", [10], matx.ir.const(
-                1, "uint1"), matx.ir.SeqStmt(
-                []))
+                1, "uint1"), matx.ir.ReturnStmt(buffer_var))
         assert isinstance(x, matx.ir.Allocate)
         assert x.dtype == "float32"
         print(x)
@@ -42,8 +41,7 @@ class TestTIRBuffer(unittest.TestCase):
         buffer_var = matx.ir.PrimVar("buf", matx.ir.PointerType(matx.ir.PrimType("float32")))
         x = matx.ir.Allocate(
             buffer_var, "float32", [10], matx.ir.const(
-                1, "uint1"), matx.ir.SeqStmt(
-                []))
+                1, "uint1"), matx.ir.ReturnStmt(buffer_var))
         assert isinstance(x, matx.ir.Allocate)
         assert x.dtype == "float32"
         print(x)
