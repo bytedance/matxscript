@@ -816,5 +816,81 @@ MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
                                       return PrintBlock(d, block, p, NullOpt, NullOpt);
                                     });
 
+// Allocate
+Allocate::Allocate(PrimVar buffer_var,
+                   DataType dtype,
+                   Array<PrimExpr> extents,
+                   PrimExpr condition,
+                   Stmt body,
+                   Map<StringRef, ObjectRef> annotations,
+                   Span span) {
+  MXCHECK(IsPointerType(buffer_var->type_annotation, dtype) ||
+          (dtype.is_bool() && IsPointerType(buffer_var->type_annotation, DataType::Int(8))))
+      << "The allocated data type (" << dtype
+      << ") does not match the type annotation of the buffer " << buffer_var << " ("
+      << buffer_var->type_annotation
+      << "). The data type should be an element of the pointer type.";
+
+  for (size_t i = 0; i < extents.size(); ++i) {
+    MXCHECK(extents[i].defined());
+    MXCHECK(extents[i].dtype().is_scalar());
+  }
+  MXCHECK(body.defined());
+  MXCHECK(condition.defined());
+  MXCHECK(condition.dtype().is_bool());
+
+  ObjectPtr<AllocateNode> node = runtime::make_object<AllocateNode>();
+  node->buffer_var = std::move(buffer_var);
+  node->dtype = dtype;
+  node->extents = std::move(extents);
+  node->condition = std::move(condition);
+  node->body = std::move(body);
+  node->annotations = std::move(annotations);
+  node->span = std::move(span);
+  data_ = std::move(node);
+}
+MATXSCRIPT_REGISTER_NODE_TYPE(AllocateNode);
+MATXSCRIPT_REGISTER_GLOBAL("ir.Allocate")
+    .set_body_typed([](PrimVar buffer_var,
+                       DataType type,
+                       Array<PrimExpr> extents,
+                       PrimExpr condition,
+                       Stmt body,
+                       Map<StringRef, ObjectRef> annotations,
+                       Span span) {
+      return Allocate(buffer_var, type, extents, condition, body, annotations, span);
+    });
+
+MATXSCRIPT_STATIC_IR_FUNCTOR(IRDocsifier, vtable)
+    .set_dispatch<ir::Allocate>(  //
+        "",
+        [](ir::Allocate stmt, ObjectPath stmt_p, IRDocsifier d) -> Doc {
+          bool concise = AllowConciseScoping(d);
+          Array<ExprDoc> args;
+          Array<StringRef> kwargs_keys;
+          Array<ExprDoc> kwargs_values;
+          args.push_back(d->AsDoc<ExprDoc>(stmt->extents, stmt_p->Attr("extents")));
+          args.push_back(LiteralDoc::DataType(stmt->dtype, stmt_p->Attr("dtype")));
+          args.push_back(LiteralDoc::Str("global",
+                                         stmt_p
+                                             ->Attr("buffer_var")  //
+                                             ->Attr("type_annotation")
+                                             ->Attr("storage_scope")));
+          if (!ir::is_one(stmt->condition)) {
+            args.push_back(d->AsDoc<ExprDoc>(stmt->condition, stmt_p->Attr("condition")));
+          }
+          if (!stmt->annotations.empty()) {
+            kwargs_keys.push_back("annotations");
+            kwargs_values.push_back(
+                d->AsDoc<ExprDoc>(stmt->annotations, stmt_p->Attr("annotations")));
+          }
+          ExprDoc lhs = DefineVar(stmt->buffer_var, d->frames.back(), d);
+          With<IRFrame> f(d, stmt);
+          ExprDoc rhs = Dialect(d, "allocate")->Call(args, kwargs_keys, kwargs_values);
+
+          AsDocBody(stmt->body, stmt_p->Attr("body"), f->get(), d);
+          return DoConciseScoping(lhs, rhs, &(*f)->stmts, concise);
+        });
+
 }  // namespace ir
 }  // namespace matxscript

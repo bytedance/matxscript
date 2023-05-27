@@ -580,5 +580,93 @@ class ComputeBlockRealize : public Stmt {
   MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(ComputeBlockRealizeNode);
 };
 
+/*!
+ * \brief Allocate a buffer that can be used in body.
+ */
+class AllocateNode : public StmtNode {
+ public:
+  /*! \brief The buffer variable. */
+  PrimVar buffer_var;
+  /*! \brief The type of the buffer. */
+  runtime::DataType dtype;
+  /*! \brief The extents of the buffer. */
+  Array<PrimExpr> extents;
+  /*! \brief Only allocate buffer when condition is satisfied. */
+  PrimExpr condition;
+  /*! \brief The body to be executed. */
+  Stmt body;
+  /*!
+   * \brief Additional annotations about the allocation.
+   *
+   *  These annotations can be used as auxiliary hint
+   *  to future transformations.
+   */
+  Map<StringRef, ObjectRef> annotations;
+
+  void VisitAttrs(AttrVisitor* v) {
+    v->Visit("buffer_var", &buffer_var);
+    v->Visit("dtype", &dtype);
+    v->Visit("extents", &extents);
+    v->Visit("condition", &condition);
+    v->Visit("body", &body);
+    v->Visit("annotations", &annotations);
+    v->Visit("span", &span);
+  }
+
+  bool SEqualReduce(const AllocateNode* other, SEqualReducer equal) const {
+    return equal.DefEqual(buffer_var, other->buffer_var) && equal(dtype, other->dtype) &&
+           equal(extents, other->extents) && equal(condition, other->condition) &&
+           equal(body, other->body) && equal(annotations, other->annotations);
+  }
+
+  void SHashReduce(SHashReducer hash_reduce) const {
+    hash_reduce.DefHash(buffer_var);
+    hash_reduce(dtype);
+    hash_reduce(extents);
+    hash_reduce(condition);
+    hash_reduce(body);
+    hash_reduce(annotations);
+  }
+
+  /*!
+   * \brief If the buffer size is constant, return the size.
+   *        Otherwise return 0.
+   * \return The result.
+   */
+  int64_t ConstantAllocationSize() const {
+    return ConstantAllocationSize(extents);
+  }
+  /*!
+   * \brief If the buffer size is constant, return the size.
+   *        Otherwise return 0.
+   * \param extents The extents of the buffer.
+   * \return The result.
+   */
+  MATX_DLL static int64_t ConstantAllocationSize(const Array<PrimExpr>& extents);
+
+  static constexpr const char* _type_key = "ir.Allocate";
+  static constexpr const bool _type_has_method_sequal_reduce = true;
+  static constexpr const bool _type_has_method_shash_reduce = true;
+  MATXSCRIPT_DECLARE_FINAL_OBJECT_INFO(AllocateNode, StmtNode);
+};
+
+/*!
+ * \brief Managed reference to AllocateNode.
+ * \sa AllocateNode
+ */
+class Allocate : public Stmt {
+ public:
+  MATX_DLL Allocate(PrimVar buffer_var,
+                    runtime::DataType dtype,
+                    Array<PrimExpr> extents,
+                    PrimExpr condition,
+                    Stmt body,
+                    Map<StringRef, ObjectRef> annotations = Map<StringRef, ObjectRef>(),
+                    Span span = Span());
+
+  MATXSCRIPT_DEFINE_OBJECT_REF_METHODS(Allocate, Stmt, AllocateNode);
+  MATXSCRIPT_DEFINE_OBJECT_REF_COW_METHOD(AllocateNode);
+};
+
 }  // namespace ir
 }  // namespace matxscript

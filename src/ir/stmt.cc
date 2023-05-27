@@ -43,17 +43,6 @@
 namespace matxscript {
 namespace ir {
 
-namespace printer {
-bool AllowConciseScoping(const IRDocsifier& d) {
-  MXCHECK(!d->frames.empty());
-  if (const auto* f = d->frames.back().as<IRFrameNode>()) {
-    return f->allow_concise_scoping;
-  }
-  MXLOG(FATAL) << "NotImplementedError: fragment printing";
-  return false;
-}
-}  // namespace printer
-
 using ::matxscript::runtime::Downcast;
 using ::matxscript::runtime::make_object;
 using ::matxscript::runtime::String;
