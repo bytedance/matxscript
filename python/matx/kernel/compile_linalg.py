@@ -32,7 +32,7 @@ def nd_to_c(nd, nd_t):
     allocated_ptr = nd.ctypes.data_as(ctypes.POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
     aligned_ptr = nd.ctypes.data_as(ctypes.POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
     offset = ctypes.c_int64(0)
-    #shape = list(nd.ctypes.shape_as(c_int64))
+    # shape = list(nd.ctypes.shape_as(c_int64))
     shape = [ctypes.c_int64(s) for s in nd.shape]
     strides = [ctypes.c_int64(s // nd.dtype.itemsize) for s in nd.strides]
     return [allocated_ptr, aligned_ptr, offset, *shape, *strides]
