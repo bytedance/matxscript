@@ -26,13 +26,40 @@ from matx.kernel.compile_linalg import compile_linalg
 from matx.kernel.typing import int32, int64, float32
 
 
+t = """
+func.func @foo(%a: memref<?x?xi32>, %b: memref<?x?xi32>, %c: memref<?x?xi32>, %__return_93502842947314__: memref<?x?xi32>, %symbol_M: i64, %symbol_N: i64){
+%0 = index.casts %symbol_M : i64 to index
+%1 = index.casts %symbol_N : i64 to index
+%d = memref.alloca(%0, %1) : memref<?x?xi32>
+linalg.generic {indexing_maps = [affine_map<(symbol_M, symbol_N) -> (symbol_M, symbol_N)>, affine_map<(symbol_M, symbol_N) -> (symbol_M, symbol_N)>, affine_map<(symbol_M, symbol_N) -> (symbol_M, symbol_N)>], iterator_types = ["parallel", "parallel"]}
+                    ins(%c, %b: memref<?x?xi32>, memref<?x?xi32>)
+                    outs(%d: memref<?x?xi32>)
+{
+^bb0(%_c_10: i32, %_b_10: i32, %_d0: i32):
+%2 = arith.addi %_c_10, %_b_10 : i32
+linalg.yield %2 : i32
+}
+linalg.generic {indexing_maps = [affine_map<(symbol_M, symbol_N) -> (symbol_M, symbol_N)>, affine_map<(symbol_M, symbol_N) -> (symbol_M, symbol_N)>, affine_map<(symbol_M, symbol_N) -> (symbol_M, symbol_N)>], iterator_types = ["parallel", "parallel"]}
+                    ins(%a, %d: memref<?x?xi32>, memref<?x?xi32>)
+                    outs(%__return_93502842947314__: memref<?x?xi32>)
+{
+^bb0(%_a_10: i32, %_d0: i32, %___return_93502842947314___10: i32):
+%3 = arith.addi %_a_10, %_d0 : i32
+linalg.yield %3 : i32
+}
+func.return
+}
+
+"""
+
+
 class TestSingleReturnParser(unittest.TestCase):
 
     def test_two_op(self):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
 
-        def foo(a: int32[M, N], b: int32[M, N], c: int32[N]) -> int32[M, N]:
+        def foo(a: int32[M, N], b: int32[M, N], c: int32[M, N]) -> int32[M, N]:
             d: int32[M, N] = c * b
             return a + (b - c) * d
 
@@ -41,10 +68,18 @@ class TestSingleReturnParser(unittest.TestCase):
         print()
         print("=" * 30, "linalg_code", "=" * 30, sep="")
         print()
-        # print(p.linalg_code())
+        print(p.linalg_code())
         print()
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
+        a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
+        c = np.array([[13, 14, 15], [16, 17, 18]], dtype=np.int32)
+        print(a.shape)
+        rt = np.zeros(a.shape, dtype=np.int32)
+        f = compile_linalg(p)
+        f(a, b, c, rt=rt)
+        np.testing.assert_equal(rt, foo(a, b, c))
 
     def test_three_op(self):
         M = sympy.Symbol('M', positive=True)
@@ -60,7 +95,15 @@ class TestSingleReturnParser(unittest.TestCase):
         print()
         print("=" * 30, "linalg_code", "=" * 30, sep="")
         print()
-        # print(p.linalg_code())
+        print(p.linalg_code())
         print()
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
+        a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
+        c = np.array([13, 14, 15], dtype=np.int32)
+        print(a.shape)
+        rt = np.zeros(a.shape, dtype=np.int32)
+        f = compile_linalg(p)
+        f(a, b, c, rt=rt)
+        np.testing.assert_equal(rt, foo(a, b, c))

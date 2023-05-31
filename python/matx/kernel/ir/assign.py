@@ -124,10 +124,7 @@ class ScopedNDArrayAllocationNode(AssignNDArrayNode):
             self.lhs.buffer.data,
             self.lhs.kernel_type.dtype_str(),
             self.lhs.buffer_shape,
-            const(
-                1,
-                dtype="uint1"),
-            _ir.SeqStmt(
-                [assign_stmt] +
-                self.body,
-                self.span))
+            const(1, dtype="uint1"),
+            _ir.SeqStmt([assign_stmt] + self.body, self.span),
+            annotations={"allocation_buffer": self.lhs.buffer},
+            span=self.span)
