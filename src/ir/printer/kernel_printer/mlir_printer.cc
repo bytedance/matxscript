@@ -544,7 +544,7 @@ void MLIRTextPrinter::VisitStmt_(const AllocateNode* op, std::ostream& os) {
   MXCHECK_EQ(alloc_dtype, buffer->dtype) << "Allocating an ndarray with " << alloc_dtype
                                          << ", but corresponding buffer dtype is " << buffer->dtype;
 
-  std::vector<const std::string> dims;
+  std::vector<std::string> dims;
   for (int64_t i = 0; i < alloc_shape.size(); i++) {
     const auto& alloc_dim = alloc_shape[i];
     const auto& buffer_dim = buffer->shape[i];

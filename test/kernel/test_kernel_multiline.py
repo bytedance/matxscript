@@ -26,33 +26,6 @@ from matx.kernel.compile_linalg import compile_linalg
 from matx.kernel.typing import int32, int64, float32
 
 
-t = """
-func.func @foo(%a: memref<?x?xi32>, %b: memref<?x?xi32>, %c: memref<?x?xi32>, %__return_93502842947314__: memref<?x?xi32>, %symbol_M: i64, %symbol_N: i64){
-%0 = index.casts %symbol_M : i64 to index
-%1 = index.casts %symbol_N : i64 to index
-%d = memref.alloca(%0, %1) : memref<?x?xi32>
-linalg.generic {indexing_maps = [affine_map<(symbol_M, symbol_N) -> (symbol_M, symbol_N)>, affine_map<(symbol_M, symbol_N) -> (symbol_M, symbol_N)>, affine_map<(symbol_M, symbol_N) -> (symbol_M, symbol_N)>], iterator_types = ["parallel", "parallel"]}
-                    ins(%c, %b: memref<?x?xi32>, memref<?x?xi32>)
-                    outs(%d: memref<?x?xi32>)
-{
-^bb0(%_c_10: i32, %_b_10: i32, %_d0: i32):
-%2 = arith.addi %_c_10, %_b_10 : i32
-linalg.yield %2 : i32
-}
-linalg.generic {indexing_maps = [affine_map<(symbol_M, symbol_N) -> (symbol_M, symbol_N)>, affine_map<(symbol_M, symbol_N) -> (symbol_M, symbol_N)>, affine_map<(symbol_M, symbol_N) -> (symbol_M, symbol_N)>], iterator_types = ["parallel", "parallel"]}
-                    ins(%a, %d: memref<?x?xi32>, memref<?x?xi32>)
-                    outs(%__return_93502842947314__: memref<?x?xi32>)
-{
-^bb0(%_a_10: i32, %_d0: i32, %___return_93502842947314___10: i32):
-%3 = arith.addi %_a_10, %_d0 : i32
-linalg.yield %3 : i32
-}
-func.return
-}
-
-"""
-
-
 class TestSingleReturnParser(unittest.TestCase):
 
     def test_two_op(self):
