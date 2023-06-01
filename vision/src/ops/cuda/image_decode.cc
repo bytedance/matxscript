@@ -48,48 +48,53 @@ namespace cuda {
 
 using namespace matxscript::runtime;
 
+
 int dev_malloc(void* ctx, void **ptr, size_t size, cudaStream_t stream){
   MATXScriptDevice * casted_ctx = (MATXScriptDevice *) ctx;
   DeviceAPI* dev_api = matxscript::runtime::DeviceAPI::Get(*casted_ctx);;
-  *ptr = dev_api->Alloc(casted_ctx, size);
+  *ptr = dev_api->Alloc(*casted_ctx, size);
   return *ptr == nullptr;
 }
 
 int dev_free(void* ctx, void *ptr, size_t size, cudaStream_t stream){
   MATXScriptDevice * casted_ctx = (MATXScriptDevice *) ctx;
   DeviceAPI* dev_api = matxscript::runtime::DeviceAPI::Get(*casted_ctx);;
-  dev_api->Free(local_ctx, ptr);
+  dev_api->Free(*casted_ctx, ptr);
   return 0;
 }
 
 int pin_malloc(void* ctx, void **ptr, size_t size, cudaStream_t stream){
   MATXScriptDevice * casted_ctx = (MATXScriptDevice *) ctx;
   DeviceAPI* pinned_api = matxscript::runtime::DeviceAPI::Get(*casted_ctx);;
-  *ptr = pinned_api->Alloc(casted_ctx, size);
+  *ptr = pinned_api->Alloc(*casted_ctx, size);
   return *ptr == nullptr;
 }
 
 int pin_free(void* ctx, void *ptr, size_t size, cudaStream_t stream){
   MATXScriptDevice * casted_ctx = (MATXScriptDevice *) ctx;
   DeviceAPI* pin_api = matxscript::runtime::DeviceAPI::Get(*casted_ctx);;
-  pin_api->Free(local_ctx, ptr);
+  pin_api->Free(*casted_ctx, ptr);
   return 0;
 }
 
 
 struct DecoderHandlerImpl {
+  std::unique_ptr<MATXScriptDevice> cpu_ctx;
+  std::unique_ptr<MATXScriptDevice> gpu_ctx;
+  std::unique_ptr<nvjpegPinnedAllocatorV2_t> pin_allocator;
+  std::unique_ptr<nvjpegDevAllocatorV2_t> dev_allocator;
   std::shared_ptr<cuda_op::decode_params_t> params;
   std::shared_ptr<cuda_op::Decoder> decoder;
   MATXScriptStreamHandle stream;  // 每个decoder独立stream
   DeviceAPI* api;
   MATXScriptDevice ctx;
-  MATXScriptDevice cpu_ctx{kDLCUDAHost, 0};
-  nvjpegPinnedAllocatorV2_t pin_allocator{pin_malloc, pin_free, cpu_ctx};
-  nvjpegDevAllocatorV2_t dev_allocator{dev_malloc, dev_free, ctx};
   DecoderHandlerImpl(std::shared_ptr<cuda_op::decode_params_t> arg_params,
                      std::shared_ptr<cuda_op::Decoder> arg_decoder,
-                     int device_id)
-      : params(std::move(arg_params)), decoder(std::move(arg_decoder)) {
+                     int device_id,   std::unique_ptr<MATXScriptDevice> arg_cpu_ctx,
+  std::unique_ptr<MATXScriptDevice> arg_gpu_ctx,
+  std::unique_ptr<nvjpegPinnedAllocatorV2_t> arg_pin_allocator,
+  std::unique_ptr<nvjpegDevAllocatorV2_t> arg_dev_allocator)
+      : params(std::move(arg_params)), decoder(std::move(arg_decoder)), cpu_ctx(std::move(arg_cpu_ctx)), gpu_ctx(std::move(arg_gpu_ctx)), pin_allocator(std::move(arg_pin_allocator)), dev_allocator(std::move(arg_dev_allocator)) {
     ctx.device_type = kDLCUDA;
     ctx.device_id = device_id;
     api = DeviceAPI::Get(ctx);
@@ -379,8 +384,22 @@ std::unique_ptr<DecoderHandlerImpl> DecoderHandlerImpl::build(
   };
   auto params =
       std::shared_ptr<cuda_op::decode_params_t>(new cuda_op::decode_params_t, params_deleter);
-  decoder->prepareDecoderParams("", max_batch_size, fmt, *params, &dev_allocator, &pin_allocator);
-  auto ptr = std::make_unique<DecoderHandlerImpl>(std::move(params), std::move(decoder), device_id);
+  std::unique_ptr<MATXScriptDevice> cpu_ctx = std::make_unique<MATXScriptDevice>();;
+  cpu_ctx-> device_type = kDLCPUPinned;
+  cpu_ctx-> device_id = 0;
+  std::unique_ptr<MATXScriptDevice> gpu_ctx = std::make_unique<MATXScriptDevice>();;
+  gpu_ctx-> device_type = kDLGPU;
+  gpu_ctx-> device_id = device_id;
+  std::unique_ptr<nvjpegPinnedAllocatorV2_t> pin_allocator = std::make_unique<nvjpegPinnedAllocatorV2_t>();;
+  pin_allocator->pinned_malloc = pin_malloc;
+  pin_allocator->pinned_free = pin_free;
+  pin_allocator->pinned_ctx = &(*cpu_ctx);
+  std::unique_ptr<nvjpegDevAllocatorV2_t> dev_allocator = std::make_unique<nvjpegDevAllocatorV2_t>();;
+  dev_allocator->dev_malloc = dev_malloc;
+  dev_allocator->dev_free = dev_free;
+  dev_allocator->dev_ctx = &(*gpu_ctx);
+  decoder->prepareDecoderParams("", max_batch_size, fmt, *params, &(*dev_allocator), &(*pin_allocator));
+  auto ptr = std::make_unique<DecoderHandlerImpl>(std::move(params), std::move(decoder), device_id, std::move(cpu_ctx), std::move(gpu_ctx), std::move(pin_allocator), std::move(dev_allocator));
   return ptr;
 }
 
