@@ -48,12 +48,44 @@ namespace cuda {
 
 using namespace matxscript::runtime;
 
+int dev_malloc(void* ctx, void **ptr, size_t size, cudaStream_t stream){
+  MATXScriptDevice * casted_ctx = (MATXScriptDevice *) ctx;
+  DeviceAPI* dev_api = matxscript::runtime::DeviceAPI::Get(*casted_ctx);;
+  *ptr = dev_api->Alloc(casted_ctx, size);
+  return *ptr == nullptr;
+}
+
+int dev_free(void* ctx, void *ptr, size_t size, cudaStream_t stream){
+  MATXScriptDevice * casted_ctx = (MATXScriptDevice *) ctx;
+  DeviceAPI* dev_api = matxscript::runtime::DeviceAPI::Get(*casted_ctx);;
+  dev_api->Free(local_ctx, ptr);
+  return 0;
+}
+
+int pin_malloc(void* ctx, void **ptr, size_t size, cudaStream_t stream){
+  MATXScriptDevice * casted_ctx = (MATXScriptDevice *) ctx;
+  DeviceAPI* pinned_api = matxscript::runtime::DeviceAPI::Get(*casted_ctx);;
+  *ptr = pinned_api->Alloc(casted_ctx, size);
+  return *ptr == nullptr;
+}
+
+int pin_free(void* ctx, void *ptr, size_t size, cudaStream_t stream){
+  MATXScriptDevice * casted_ctx = (MATXScriptDevice *) ctx;
+  DeviceAPI* pin_api = matxscript::runtime::DeviceAPI::Get(*casted_ctx);;
+  pin_api->Free(local_ctx, ptr);
+  return 0;
+}
+
+
 struct DecoderHandlerImpl {
   std::shared_ptr<cuda_op::decode_params_t> params;
   std::shared_ptr<cuda_op::Decoder> decoder;
   MATXScriptStreamHandle stream;  // 每个decoder独立stream
   DeviceAPI* api;
   MATXScriptDevice ctx;
+  MATXScriptDevice cpu_ctx{kDLCUDAHost, 0};
+  nvjpegPinnedAllocatorV2_t pin_allocator{pin_malloc, pin_free, cpu_ctx};
+  nvjpegDevAllocatorV2_t dev_allocator{dev_malloc, dev_free, ctx};
   DecoderHandlerImpl(std::shared_ptr<cuda_op::decode_params_t> arg_params,
                      std::shared_ptr<cuda_op::Decoder> arg_decoder,
                      int device_id)
@@ -347,7 +379,7 @@ std::unique_ptr<DecoderHandlerImpl> DecoderHandlerImpl::build(
   };
   auto params =
       std::shared_ptr<cuda_op::decode_params_t>(new cuda_op::decode_params_t, params_deleter);
-  decoder->prepareDecoderParams("", max_batch_size, fmt, *params);
+  decoder->prepareDecoderParams("", max_batch_size, fmt, *params, &dev_allocator, &pin_allocator);
   auto ptr = std::make_unique<DecoderHandlerImpl>(std::move(params), std::move(decoder), device_id);
   return ptr;
 }
