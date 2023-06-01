@@ -53,7 +53,7 @@ from .stmt import ExceptionHandler, TryExcept, Raise
 
 from .tensor_stmt import Buffer, decl_buffer
 from .tensor_stmt import BufferStore, BufferLoad, BufferRegion, MatchBufferRegion
-from .tensor_stmt import ComputeBlock, ComputeBlockRealize
+from .tensor_stmt import ComputeBlock, ComputeBlockRealize, Allocate
 
 from .function import PrimFunc, Function, LambdaFunction, FuncAttr
 from .class_stmt import ClassStmt

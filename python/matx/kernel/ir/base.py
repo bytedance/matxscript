@@ -44,3 +44,6 @@ class StatementBaseNode:
 
     def writes(self):
         raise NotImplementedError("writes is not implemented")
+
+    def alocate_buffer(self):
+        raise NotImplementedError("alocate buffer is not implemented")

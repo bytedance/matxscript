@@ -511,6 +511,75 @@ void MLIRTextPrinter::VisitStmt_(const ComputeBlockNode* op, std::ostream& os) {
   computeBlockPrinter->ComputeBlockToLinalgGeneric(op, os);
   computeBlockPrinter.reset();
 }
+
+void MLIRTextPrinter::VisitStmt_(const AllocateNode* op, std::ostream& os) {
+  const auto& condition = op->condition;
+  MXCHECK(condition->IsInstance<IntImmNode>())
+      << "The condition for allocate node should only be a constant of int, but get "
+      << op->condition->checked_type();
+  const auto& node = runtime::Downcast<IntImm>(op->condition);
+  if (!node->value) {
+    MXLOG(WARNING)
+        << "Warning for matx developer, the condition for allocate node is intended to only be 1, but get "
+        << node->value;
+    return;
+  }
+  if (node->value != 1) {
+    MXLOG(WARNING)
+        << "Warning for matx developer, the condition for allocate node is intended to only be 1, but get "
+        << node->value;
+  }
+
+  // value
+  const auto& opt_buffer = op->annotations.Get("allocation_buffer");
+  MXCHECK(opt_buffer.defined()) << "AllocateNode has to be decleard with the corresponding buffer";
+  const auto& value = opt_buffer.value();
+  MXCHECK(value->IsInstance<BufferNode>())
+      << "AllocateNode has to be decleard with the corresponding buffer, but get "
+      << value->GetTypeKey();
+  const auto& buffer = runtime::Downcast<Buffer>(value);
+  const auto& type_str = ConvertTypeToMLIR(buffer);
+  auto& alloc_shape = op->extents;
+  auto& alloc_dtype = op->dtype;
+  MXCHECK_EQ(alloc_dtype, buffer->dtype) << "Allocating an ndarray with " << alloc_dtype
+                                         << ", but corresponding buffer dtype is " << buffer->dtype;
+
+  std::vector<std::string> dims;
+  for (int64_t i = 0; i < alloc_shape.size(); i++) {
+    const auto& alloc_dim = alloc_shape[i];
+    const auto& buffer_dim = buffer->shape[i];
+    MXCHECK_EQ(alloc_dim.get(), buffer_dim.get())
+        << "Allocating an ndarray with " << alloc_shape << ", but corresponding buffer shape is "
+        << buffer->shape;
+    if (alloc_dim->IsInstance<IntImmNode>()) {
+      continue;
+    }
+    PrimExprFunctor::VisitExpr(alloc_dim, os);
+    const auto& var_type = GetRuntimeDataType(alloc_dim->checked_type());
+    MXCHECK(var_type.is_int() || var_type.is_uint())
+        << "Allocating an ndarray whose dim is not a integer";
+    if (index_map.find(alloc_dim.get()) == index_map.end()) {
+      const std::string index_var_name('%' + std::to_string(cur_index_));
+      cur_index_++;
+      os << index_var_name << " = index.casts " << expr_name_map_->at(alloc_dim.get());
+      os << " : " << ConvertTypeToMLIR(alloc_dim->checked_type()) << " to index" << std::endl;
+      index_map.emplace(alloc_dim.get(), index_var_name);
+    }
+    dims.push_back(index_map.at(alloc_dim.get()));
+  }
+  const std::string var_name = std::string(1, '%') + op->buffer_var->name_hint;
+  os << var_name << " = memref.alloca(";
+  for (int i = 0; i < dims.size(); i++) {
+    os << dims[i];
+    if (i != dims.size() - 1) {
+      os << ", ";
+    }
+  }
+  os << ") : " << type_str << std::endl;
+  insert_or_assign_expr_name_map_(op->buffer_var.get(), var_name);
+  VisitStmt(op->body, os);
+}
+
 void MLIRTextPrinter::VisitStmt_(const ComputeBlockRealizeNode* op, std::ostream& os) {
 }
 

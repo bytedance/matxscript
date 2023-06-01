@@ -233,6 +233,16 @@ void LinalgGenericPrinter::ComputeBlockToLinalgGeneric(const ComputeBlockNode* o
    *   StringRef name_hint;
    *   Stmt body;
    */
+  if (op->reads.empty()) {
+    MXTHROW << "Not able to convert to linalg.generic. The reads in the compute block is empty";
+    return;
+  }
+
+  if (op->writes.empty()) {
+    MXTHROW << "Not able to convert to linalg.generic. The writes in the compute block is empty";
+    return;
+  }
+
   mlir_printer_->NewScope();
   os << "linalg.generic {";
   // visit iter_var (affine_map&iterator_types)

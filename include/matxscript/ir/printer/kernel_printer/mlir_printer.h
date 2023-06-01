@@ -112,6 +112,7 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   void VisitStmt_(const ForNode* op, std::ostream& os) override;
   void VisitStmt_(const ExprStmtNode* op, std::ostream& os) override;
   void VisitStmt_(const PrimFuncNode* op, std::ostream& os) override;
+  void VisitStmt_(const AllocateNode* op, std::ostream& os) override;
   void VisitStmtDefault_(const Object* op, std::ostream& os) override;
 
   void VisitStmt_(const BufferStoreNode* op, std::ostream& os) override;
@@ -154,6 +155,7 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   /*! \brief the stream to be printed */
   std::ostringstream stream_;
   std::unordered_map<const PointerTypeNode*, const Buffer> pointer_buffer_map;
+  std::unordered_map<const PrimExprNode*, const std::string> index_map;
   std::vector<var_name_map> var_name_scope;
   std::vector<var_type_map> var_type_scope;
   var_name_map* expr_name_map_;

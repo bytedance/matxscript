@@ -25,6 +25,7 @@
  */
 #include <matxscript/ir/stmt_functor.h>
 #include "functor_common.h"
+#include "matxscript/ir/tensor_stmt.h"
 
 #include <functional>
 #include <unordered_set>
@@ -181,6 +182,12 @@ void StmtVisitor::VisitStmt_(const ComputeBlockRealizeNode* op) {
   VisitArray(op->iter_values, [this](const PrimExpr& e) { this->VisitExpr(e); });
   this->VisitExpr(op->predicate);
   this->VisitStmt(op->block);
+}
+
+void StmtVisitor::VisitStmt_(const AllocateNode* op) {
+  VisitArray(op->extents, [this](const PrimExpr& e) { this->VisitExpr(e); });
+  this->VisitStmt(op->body);
+  this->VisitExpr(op->condition);
 }
 
 class StmtMutator::Internal {
@@ -660,6 +667,22 @@ Stmt StmtMutator::VisitStmt_(const ComputeBlockRealizeNode* op) {
     n->iter_values = std::move(v);
     n->predicate = std::move(pred);
     n->block = Downcast<ComputeBlock>(block);
+    return Stmt(n);
+  }
+}
+
+Stmt StmtMutator::VisitStmt_(const AllocateNode* op) {
+  Array<PrimExpr> extents = Internal::Mutate(this, op->extents);
+  Stmt body = this->VisitStmt(op->body);
+  PrimExpr condition = this->VisitExpr(op->condition);
+
+  if (extents.same_as(op->extents) && body.same_as(op->body) && condition.same_as(op->condition)) {
+    return GetRef<Stmt>(op);
+  } else {
+    auto n = CopyOnWrite(op);
+    n->extents = std::move(extents);
+    n->body = std::move(body);
+    n->condition = std::move(condition);
     return Stmt(n);
   }
 }

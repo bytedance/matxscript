@@ -21,27 +21,20 @@ from __future__ import annotations
 from typing import Any, Dict, TYPE_CHECKING
 
 from matx import ir as _ir
-from matx.script import context as script_context
 from .base_parser import BaseParser
 from ..ir import *
 from ...ir.tensor_stmt import ComputeBlock
 
 if TYPE_CHECKING:
-    from ..kernel_parser import KernelParser
+    from .inspector import KernelInspector
 
 
 class ForLoopParser(BaseParser):
     allowed_ast_node = []
 
     def __init__(self,
-                 kernel_p: 'KernelParser',
-                 ndarray_context_table: Dict[str,
-                                             ExpressionBaseNode],
-                 shape_symbol_table: Dict[str,
-                                          SymbolNode],
-                 return_ctx: ExpressionBaseNode,
-                 node: script_context.ASTNode):
-        super().__init__(kernel_p, ndarray_context_table, shape_symbol_table, return_ctx, node)
+                 kernel_p: 'KernelInspector'):
+        super().__init__(kernel_p)
         self.loop_variable_map = {}
         self.writes = []
         self.reads = []
@@ -124,8 +117,8 @@ class ForLoopParser(BaseParser):
         iter_vars_names = [self.tmp_scalar_table[name].script_var
                            for name in self.loop_variable_map.keys()]
         iter_vars = [PrimIterVar(loop_range[i], iter_vars_names[i]) for i in range(len(loop_range))]
-        reads = [i.reads() for i in rt_ir]
-        writes = [i.writes() for i in rt_ir]
+        reads = [e for i in rt_ir for e in i.reads()]
+        writes = [e for i in rt_ir for e in i.writes()]
 
         # for lhs_name, rhs in zip(self.loop_variable_map.keys(), iter_vars_names):
         #    lhs = self.tmp_scalar_table[lhs_name].script_var

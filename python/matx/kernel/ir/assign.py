@@ -19,6 +19,7 @@
 from .ndarray import *
 from ... import ir as _ir
 from ...ir.expr import *
+from typing import List
 
 
 def make_range(shape, shape_symbol_table):
@@ -66,6 +67,9 @@ class AssignNDArrayNode(StatementBaseNode):
     def reads(self):
         return self.rhs.buffer_regions(rng=self.range)
 
+    def alocate_buffer(self):
+        return []
+
 
 class AssignScalarNode(StatementBaseNode):
 
@@ -85,8 +89,11 @@ class AssignScalarNode(StatementBaseNode):
     def reads(self):
         return self.rhs.buffer_regions()
 
+    def alocate_buffer(self):
+        return []
 
-class AllocationScalarNode(AssignScalarNode):
+
+class ScalarAllocationNode(AssignScalarNode):
 
     def __init__(self, lhs, rhs, span):
         super().__init__(lhs, rhs, span)
@@ -100,3 +107,24 @@ class AllocationScalarNode(AssignScalarNode):
 
     def writes(self):
         return []
+
+    def alocate_buffer(self):
+        return []
+
+
+class ScopedNDArrayAllocationNode(AssignNDArrayNode):
+    def __init__(self, lhs: NDArrayNode, rhs: ExpressionBaseNode, body: List, span):
+        super().__init__(lhs, rhs)
+        self.span = span
+        self.assign_stmt = AssignNDArrayNode(lhs, rhs)
+        self.body = body
+
+    def to_matx_ir(self, assign_stmt, **kwargs):
+        return _ir.Allocate(
+            self.lhs.buffer.data,
+            self.lhs.kernel_type.dtype_str(),
+            self.lhs.buffer_shape,
+            const(1, dtype="uint1"),
+            _ir.SeqStmt([assign_stmt] + self.body, self.span),
+            annotations={"allocation_buffer": self.lhs.buffer},
+            span=self.span)

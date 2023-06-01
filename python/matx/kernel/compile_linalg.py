@@ -19,7 +19,7 @@
 
 from matx.ir import _ffi_node_api
 from .kernel_parser import KernelParser
-from ctypes import *
+import ctypes
 from .typing import *
 from collections import OrderedDict
 from itertools import chain
@@ -29,11 +29,12 @@ import time
 
 
 def nd_to_c(nd, nd_t):
-    allocated_ptr = nd.ctypes.data_as(POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
-    aligned_ptr = nd.ctypes.data_as(POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
-    offset = c_int64(0)
-    shape = list(nd.ctypes.shape_as(c_int64))
-    strides = [c_int64(s // nd.dtype.itemsize) for s in nd.strides]
+    allocated_ptr = nd.ctypes.data_as(ctypes.POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
+    aligned_ptr = nd.ctypes.data_as(ctypes.POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
+    offset = ctypes.c_int64(0)
+    # shape = list(nd.ctypes.shape_as(c_int64))
+    shape = [ctypes.c_int64(s) for s in nd.shape]
+    strides = [ctypes.c_int64(s // nd.dtype.itemsize) for s in nd.strides]
     return [allocated_ptr, aligned_ptr, offset, *shape, *strides]
 
 
@@ -43,7 +44,7 @@ def scalar_to_c(v, v_t):
 
 
 def symbol_to_c(value):
-    return c_int64(value)
+    return ctypes.c_int64(value)
 
 
 def bind_data_to_type(ins, types):
@@ -78,10 +79,13 @@ def binded_args_to_c(binded_args):
     return args
 
 
-def write_linalg(matx_ir, output_fname="tmp.mlir"):
+def write_linalg(matx_ir, output_fname="tmp.mlir", debug=False, over_written_code=None):
     code = _ffi_node_api.as_linalg_text(matx_ir).decode()
     with open(output_fname, "w+") as f:
-        f.write(code)
+        if debug and over_written_code is not None:
+            f.write(over_written_code)
+        else:
+            f.write(code)
     return output_fname
 
 
@@ -204,11 +208,13 @@ def load_func(shared_lib, parser: KernelParser):
     return LinalgFuncWrapper(func, parser)
 
 
-def compile_linalg(parser: KernelParser, file_name=None):
+def compile_linalg(parser: KernelParser, file_name=None, debug=False, over_written_code=None):
     if file_name is None:
         code_file_name = parser.file_name.split('/')[-1].split('.')[0]
         file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
-    mlir_f = write_linalg(parser.main_node_ir, file_name + ".mlir")
+    if debug:
+        file_name = f"_mlir_debug"
+    mlir_f = write_linalg(parser.main_node_ir, file_name + ".mlir", debug, over_written_code)
     lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
     llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
     shared_lib = llvm_compile(llvm_f, file_name + ".so")

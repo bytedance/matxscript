@@ -27,6 +27,7 @@ class SymbolNode(ExpressionBaseNode):
         super().__init__(sympy.Basic)
         assert is_symbol(symbol), 'syntax error'
         self.name: str = str(symbol)
+        self.symbol = symbol
         self.script_type = _ir.PrimType("int64")
         self.script_var = _ir.PrimVar(f"symbol_{self.name}", self.script_type, span)
 
