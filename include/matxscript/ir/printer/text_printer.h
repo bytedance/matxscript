@@ -59,11 +59,11 @@ class PrinterConfigNode : public Object {
   /* \brief Object path to be underlined */
   Array<ObjectPath> path_to_underline = Array<ObjectPath>();
   /*! \brief Object path to be annotated. */
-  Map<ObjectPath, StringRef> path_to_annotate = Map<ObjectPath, StringRef>();
+  Map<ObjectPath, StringRef> path_to_annotate = {};
   /*! \brief Object to be underlined. */
   Array<ObjectRef> obj_to_underline = Array<ObjectRef>();
   /*! \brief Object to be annotated. */
-  Map<ObjectRef, StringRef> obj_to_annotate = Map<ObjectRef, StringRef>();
+  Map<ObjectRef, StringRef> obj_to_annotate = {};
 
   void VisitAttrs(AttrVisitor* v) {
     v->Visit("binding_names", &binding_names);

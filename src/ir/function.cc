@@ -372,6 +372,12 @@ struct LambdaFunctionToComprehension {
     ExprDoc target{nullptr};
     ExprDoc iter{nullptr};
     Array<ExprDoc> ifs;
+
+    ComprehensionHelper(const ExprDoc& target, const ExprDoc& iter, const Array<ExprDoc>& ifs) {
+      this->target = target;
+      this->iter = iter;
+      this->ifs = ifs;
+    }
   };
 
   void VisitExpr_(const CallNode* op, ObjectPath p) {
