@@ -22,7 +22,7 @@
 #include <cuda_runtime.h>
 #include <matxscript/runtime/device_api.h>
 #include <matxscript/runtime/threadpool/i_thread_pool.h>
-#include <opencv_cuda.h>
+#include <cv_cuda.h>
 #include <utils/cuda/config.h>
 #include "driver_types.h"
 
