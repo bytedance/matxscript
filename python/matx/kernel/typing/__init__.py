@@ -17,7 +17,7 @@
 #   * specific language governing permissions and limitations
 #   * under the License.
 #   */
-
+import numpy as np
 
 from .broadcast import *
 from .kernel_type import *
@@ -35,13 +35,13 @@ uint64: ScalarType = ScalarType(np.uint64)
 # float16: ScalarType = ScalarType(np.float16)
 float32: ScalarType = ScalarType(np.float32)
 float64: ScalarType = ScalarType(np.float64)
-bool_ = None  # todo implement bool
+boolean: ScalarType = ScalarType(np.bool_)  # todo implement bool
 
 PYTYPE_TO_KERNEL_TYPE = {
     bool: ScalarType(bool),
     int: ScalarType(int),
     float: ScalarType(float),
-    np.bool_: bool_,
+    np.bool_: boolean,
     np.int8: int8,
     np.int16: int16,
     np.int32: int32,

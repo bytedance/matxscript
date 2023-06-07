@@ -208,14 +208,25 @@ def load_func(shared_lib, parser: KernelParser):
     return LinalgFuncWrapper(func, parser)
 
 
-def compile_linalg(parser: KernelParser, file_name=None, debug=False, over_written_code=None):
+def compile_linalg(
+        parser: KernelParser,
+        file_name=None,
+        dir="__mlir_output__",
+        debug=False,
+        over_written_code=None):
     if file_name is None:
         code_file_name = parser.file_name.split('/')[-1].split('.')[0]
         file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
     if debug:
         file_name = f"_mlir_debug"
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    current_path = os.getcwd()
+    os.chdir(dir)
     mlir_f = write_linalg(parser.main_node_ir, file_name + ".mlir", debug, over_written_code)
     lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
     llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
     shared_lib = llvm_compile(llvm_f, file_name + ".so")
-    return load_func(shared_lib, parser)
+    func = load_func(shared_lib, parser)
+    os.chdir(current_path)
+    return func

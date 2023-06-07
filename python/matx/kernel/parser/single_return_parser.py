@@ -34,6 +34,12 @@ if TYPE_CHECKING:
 
 class KernelSingleReturnParser(BaseParser):
 
+    @staticmethod
+    def can_parse(kernel_p: 'KernelInspector', node):
+        if isinstance(node, (ast.Return, ast.AnnAssign, ast.Assign)):
+            return True
+        return False
+
     def __init__(self,
                  kernel_p: 'KernelInspector'):
         super().__init__(kernel_p)
@@ -90,13 +96,13 @@ class KernelSingleReturnParser(BaseParser):
                 ctx = self.tmp_scalar_table[node.value]
                 return _ir.ReturnStmt(ctx.to_matx_ir())
 
-        if isinstance(self.return_ctx, NDArrayNode):
+        if isinstance(self.return_ctx, ScalarNode):
+            return _ir.ReturnStmt(rt_ir.to_matx_ir())
+        elif isinstance(self.return_ctx, NDArrayNode):
             if self.return_ctx.name != self.kernel_p.return_var_name:
                 return _ir.ReturnStmt(NoneExpr())
             stmt = AssignNDArrayNode(self.return_ctx, rt_ir)
             cmptblk = self.make_compute_block(stmt)
             return _ir.SeqStmt([cmptblk, _ir.ReturnStmt(NoneExpr())])
-        elif isinstance(self.return_ctx, ScalarNode):
-            return _ir.ReturnStmt(ScalarNode.to_matx_ir())
         else:
             raise RuntimeError(f"return {type(rt_ir)} is not support now")

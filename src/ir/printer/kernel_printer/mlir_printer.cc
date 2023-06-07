@@ -49,6 +49,7 @@
 #include <matxscript/ir/stmt_functor.h>
 #include <matxscript/ir/type_functor.h>
 #include <matxscript/runtime/data_type.h>
+#include <unistd.h>
 
 namespace matxscript {
 namespace ir {
@@ -116,7 +117,7 @@ std::string MLIRTextPrinter::ConvertTypeToMLIR(const runtime::DataType& type) co
       break;
     }
     case DataType::TypeCode::kUInt: {
-      data_type = "ui" + std::to_string(bits);
+      data_type = "i" + std::to_string(bits);
       break;
     }
     case DataType::TypeCode::kFloat: {
@@ -226,14 +227,22 @@ std::pair<std::string, std::string> MLIRTextPrinter::GetNodeDataType(const PrimE
 }
 
 template <typename T>
-void MLIRTextPrinter::GenMLIRArithStatement(const std::string& arith_type,
-                                            const PrimBinaryOpNode<T>* op,
-                                            std::ostream& os) {
+void MLIRTextPrinter::GenMLIRArithStatement(
+    const std::string& arith_type,
+    const PrimBinaryOpNode<T>* op,
+    std::ostream& os,
+    const std::unordered_map<std::string, std::string>& suffix_map) {
   PrimExprFunctor::VisitExpr(op->a, os);
   PrimExprFunctor::VisitExpr(op->b, os);
-  auto data_arith_suffix_type = GetNodeDataType(op);
-  std::string data_type = data_arith_suffix_type.first;
-  std::string arith_total_type = arith_type + data_arith_suffix_type.second;
+  const auto& data_arith_suffix_type = GetNodeDataType(op);
+  const auto& data_type = data_arith_suffix_type.first;
+  const auto& suffix_type = data_arith_suffix_type.second;
+  std::string arith_total_type;
+  if (suffix_map.find(suffix_type) == suffix_map.end()) {
+    arith_total_type = arith_type + suffix_type;
+  } else {
+    arith_total_type = arith_type + suffix_map.at(suffix_type);
+  }
 
   os << '%' << cur_index_ << " = arith." << arith_total_type << " ";
   PrintNodeName(op->a, os);
@@ -264,36 +273,94 @@ void MLIRTextPrinter::VisitExpr_(const PrimDivNode* op, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimModNode* op, std::ostream& os) {
+  std::unordered_map<std::string, std::string> suffix_map = {{"i", "si"}};
+  GenMLIRArithStatement("rem", op, os, suffix_map);
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimFloorDivNode* op, std::ostream& os) {
+  std::unordered_map<std::string, std::string> suffix_map = {{"i", "si"}};
+  GenMLIRArithStatement("floordiv", op, os, suffix_map);
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimFloorModNode* op, std::ostream& os) {
+  VisitExprDefault_(op, os);
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimMinNode* op, std::ostream& os) {
+  std::unordered_map<std::string, std::string> suffix_map = {{"i", "si"}};
+  GenMLIRArithStatement("min", op, os, suffix_map);
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimMaxNode* op, std::ostream& os) {
+  std::unordered_map<std::string, std::string> suffix_map = {{"i", "si"}};
+  GenMLIRArithStatement("max", op, os, suffix_map);
+}
+
+template <typename T>
+void MLIRTextPrinter::GenMLIRCompareStatement(const std::string& compare_type,
+                                              const PrimCmpOpNode<T>* op,
+                                              std::ostream& os) {
+  PrimExprFunctor::VisitExpr(op->a, os);
+  PrimExprFunctor::VisitExpr(op->b, os);
+  const auto& a_type = GetNodeDataType(op->a.get());
+  const auto& b_type = GetNodeDataType(op->b.get());
+  MXCHECK_EQ(a_type.first, b_type.first)
+      << "[mlir printer] the two values for comparesion are not the same type";
+  MXCHECK_EQ(a_type.second, b_type.second)
+      << "[mlir printer] the two values for comparesion are not the same type";
+  const auto& a_arith_suffix = a_type.second;
+  const std::string op_name = "arith.cmp" + a_arith_suffix;
+  std::string predicate = compare_type;
+  if (a_arith_suffix == "f") {
+    // to match the behavior of numpy, use orderedness float comparison
+    predicate = "o" + predicate;
+  } else if (compare_type != "eq" && compare_type != "ne") {
+    if (a_arith_suffix == "ui") {
+      MXLOG(WARNING) << "Enconuntered a unsuppoerted type: " << a_arith_suffix
+                     << " Will try to treat it as unsigned int";
+      predicate = "u" + predicate;
+    } else if (a_arith_suffix == "i") {
+      predicate = "s" + predicate;
+    } else {
+      MXLOG(WARNING) << "Enconuntered a unsuppoerted type: " << a_arith_suffix
+                     << " Will try to treat it as signed int";
+      predicate = "s" + predicate;
+    }
+  }
+  os << '%' << cur_index_ << " = " << op_name << ' ' << predicate << ", ";
+  PrintNodeName(op->a, os);
+  os << ", ";
+  PrintNodeName(op->b, os);
+  os << " : " << a_type.first << std::endl;
+  if (expr_name_map_->find(op) != expr_name_map_->end()) {
+    MXTHROW << "[linalg] op is already in expr_index_map_";
+  }
+  insert_or_assign_expr_name_map_(op, '%' + std::to_string(cur_index_));
+  cur_index_ += 1;
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimEQNode* op, std::ostream& os) {
+  GenMLIRCompareStatement("eq", op, os);
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimNENode* op, std::ostream& os) {
+  GenMLIRCompareStatement("ne", op, os);
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimLTNode* op, std::ostream& os) {
+  GenMLIRCompareStatement("lt", op, os);
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimLENode* op, std::ostream& os) {
+  GenMLIRCompareStatement("le", op, os);
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimGTNode* op, std::ostream& os) {
+  GenMLIRCompareStatement("gt", op, os);
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimGENode* op, std::ostream& os) {
+  GenMLIRCompareStatement("ge", op, os);
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimAndNode* op, std::ostream& os) {
@@ -438,6 +505,17 @@ void MLIRTextPrinter::VisitStmt_(const AssertStmtNode* op, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitStmt_(const IfThenElseNode* op, std::ostream& os) {
+  MXCHECK(op->condition->IsInstance<PrimExprNode>())
+      << "The condition of if op: " << op << " is not a PrimExprNode";
+  const auto& condition = runtime::Downcast<PrimExpr>(op->condition);
+  const auto& then_case = op->then_case;
+  const auto& else_case = op->else_case;
+  PrimExprFunctor::VisitExpr(condition, os);
+  os << "scf.if " << expr_name_map_->at(condition.get()) << " {" << std::endl;
+  VisitStmt(then_case, os);
+  os << "} else {" << std::endl;
+  VisitStmt(else_case, os);
+  os << "}" << std::endl;
 }
 
 void MLIRTextPrinter::VisitStmt_(const SeqStmtNode* op, std::ostream& os) {

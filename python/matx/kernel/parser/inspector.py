@@ -100,7 +100,7 @@ class KernelInspector(ast.NodeVisitor):
         if isinstance(node, ast.For):
             p = ForLoopParser(self)
             return p.visit(node)
-        elif isinstance(node, (ast.Return, ast.AnnAssign, ast.Assign)):
+        elif KernelSingleReturnParser.can_parse(self, node):
             p = KernelSingleReturnParser(self)
             return p.visit(node)
         else:
@@ -151,13 +151,18 @@ class KernelInspector(ast.NodeVisitor):
         if self.return_var_name in self.arg_context_table:
             self.return_ctx = self.arg_context_table[self.return_var_name]
             return
-        nd_ctx = NDArrayNode(
-            self.return_var_name,
-            self.kernel_p.return_types,
-            self.shape_symbol_table,
-            span)
-        self.arg_context_table[self.return_var_name] = nd_ctx
-        self.return_ctx = nd_ctx
+
+        if is_scalar_type(self.kernel_p.return_types):
+            nd_ctx = ScalarNode(self.return_var_name, self.kernel_p.return_types, span)
+            self.return_ctx = nd_ctx
+        elif is_ndarray_type(self.kernel_p.return_types):
+            nd_ctx = NDArrayNode(
+                self.return_var_name,
+                self.kernel_p.return_types,
+                self.shape_symbol_table,
+                span)
+            self.arg_context_table[self.return_var_name] = nd_ctx
+            self.return_ctx = nd_ctx
 
     @staticmethod
     def to_seq_stmt(body: List[_ir.Stmt], span: _ir.Span):
@@ -207,7 +212,7 @@ class KernelInspector(ast.NodeVisitor):
             self.context.func_params,
             [],
             self.to_seq_stmt(body_stmts, span_),
-            ret_type=None
+            ret_type=None if not self.is_scalar_return() else self.return_ctx.script_type
         )
         func = func.with_attr(_ir.FuncAttr.kGlobalSymbol, node.name)
         func = func.with_attr(_ir.FuncAttr.kKernelFunctionParameterBinding, nd_dim_map)
@@ -221,3 +226,6 @@ class KernelInspector(ast.NodeVisitor):
         self.init_args(node)
         self.check_return(node)
         return self.visit_body(node)
+
+    def is_scalar_return(self):
+        return is_scalar_type(self.return_types)

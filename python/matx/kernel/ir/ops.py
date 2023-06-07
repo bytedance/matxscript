@@ -77,7 +77,7 @@ class BinaryOp(ExpressionBaseNode):
         self.lhs_shape = get_shape(self.lhs_type)
         self.rhs_shape = get_shape(self.rhs_type)
         if self.is_boolean_op:
-            self.result_dtype = bool_
+            self.result_dtype = np.bool_
         else:
             self.result_dtype = np_result_dtype([self.lhs_dtype, self.rhs_dtype])
         result_shape, lhs_new_shape, rhs_new_shape = broadcast(self.lhs_shape, self.rhs_shape)
