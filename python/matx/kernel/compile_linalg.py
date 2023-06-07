@@ -55,6 +55,8 @@ def bind_data_to_type(ins, types):
             raise NotImplementedError(f"{t} is not a legit type.")
         args.append((i, t))
 
+        if is_scalar_type(t):
+            continue
         for actual_s, annotated_s in zip(i.shape, t.shape):
             if not is_symbol(annotated_s):
                 continue
@@ -182,21 +184,22 @@ class LinalgFuncWrapper:
             raise NotImplementedError(f"the size of the given input {len(args)}"
                                       f" is not the same as the annotation {len(self.arg_types)}")
         args, rt = self.to_c_args(*args, rt=rt)
-        self.raw_call(*args)
-        return rt
+        rc = self.raw_call(*args)
+        return rt if rt is not None else rc
 
     def raw_call(self, *args):
-        self.func(*args)
+        return self.func(*args)
 
     def to_c_args(self, *args, rt=None):
         binded_args, symbol_dict = bind_data_to_type(args, self.arg_types)
-        if rt is None:  # todo shape may be symbol
-            shape = [symbol_dict[s] if is_symbol(s) else s for s in self.rt_types.shape]
-            rt = np.zeros(shape=shape, dtype=self.rt_types.dtype)
-        for actual_s, ann_s in zip(rt.shape, self.rt_types.shape):
-            assert symbol_dict[ann_s] == actual_s
+        if not is_scalar_type(self.rt_types):
+            if rt is None:
+                shape = [symbol_dict[s] if is_symbol(s) else s for s in self.rt_types.shape]
+                rt = np.zeros(shape=shape, dtype=self.rt_types.dtype)
+            for actual_s, ann_s in zip(rt.shape, self.rt_types.shape):
+                assert symbol_dict[ann_s] == actual_s
+            binded_args.append((rt, self.rt_types))
 
-        binded_args.append((rt, self.rt_types))
         for t, value in symbol_dict.items():
             binded_args.append((value, t))
         return binded_args_to_c(binded_args), rt
