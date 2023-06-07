@@ -288,8 +288,8 @@ class TestMLIRFloatComparsion(unittest.TestCase):
         self.assertTrue(foo_32(1.9999, 2.000))
         self.assertTrue(foo_32(2.1, 200.96))
         # due to floating point precision, use float64
-        #self.assertTrue(foo_32(1, 1.000000000001))
-        #self.assertTrue(foo_32(1.00000000000001, 1.000000000001))
+        # self.assertTrue(foo_32(1, 1.000000000001))
+        # self.assertTrue(foo_32(1.00000000000001, 1.000000000001))
         self.assertTrue(foo_64(1, 1.000000000001))
         self.assertTrue(foo_64(1.00000000000001, 1.000000000001))
 
@@ -303,8 +303,8 @@ class TestMLIRFloatComparsion(unittest.TestCase):
         self.assertFalse(foo_32(2.000, 1.9999))
         self.assertFalse(foo_32(200.96, 2.1))
         # due to floating point precision, use float64
-        #self.assertFalse(foo_32(1.000000000001, 1))
-        #self.assertFalse(foo_32(1.000000000001, 1.00000000000001))
+        # self.assertFalse(foo_32(1.000000000001, 1))
+        # self.assertFalse(foo_32(1.000000000001, 1.00000000000001))
         self.assertFalse(foo_64(1.000000000001, 1))
         self.assertFalse(foo_64(1.000000000001, 1.00000000000001))
 
@@ -348,8 +348,8 @@ class TestMLIRFloatComparsion(unittest.TestCase):
         self.assertTrue(foo_32(1.9999, 2.000))
         self.assertTrue(foo_32(2.1, 200.96))
         # due to floating point precision, use float64
-        #self.assertTrue(foo_32(1, 1.000000000001))
-        #self.assertTrue(foo_32(1.00000000000001, 1.000000000001))
+        # self.assertTrue(foo_32(1, 1.000000000001))
+        # self.assertTrue(foo_32(1.00000000000001, 1.000000000001))
         self.assertTrue(foo_64(1, 1.000000000001))
         self.assertTrue(foo_64(1.00000000000001, 1.000000000001))
 
@@ -363,8 +363,8 @@ class TestMLIRFloatComparsion(unittest.TestCase):
         self.assertFalse(foo_32(2.000, 1.9999))
         self.assertFalse(foo_32(200.96, 2.1))
         # due to floating point precision, use float64
-        #self.assertFalse(foo_32(1.000000000001, 1))
-        #self.assertFalse(foo_32(1.000000000001, 1.00000000000001))
+        # self.assertFalse(foo_32(1.000000000001, 1))
+        # self.assertFalse(foo_32(1.000000000001, 1.00000000000001))
         self.assertFalse(foo_64(1.000000000001, 1))
         self.assertFalse(foo_64(1.000000000001, 1.00000000000001))
 
@@ -408,8 +408,8 @@ class TestMLIRFloatComparsion(unittest.TestCase):
         self.assertFalse(foo_32(1.9999, 2.000))
         self.assertFalse(foo_32(2.1, 200.96))
         # due to floating point precision, use float64
-        #self.assertFalse(foo_32(1, 1.000000000001))
-        #self.assertFalse(foo_32(1.00000000000001, 1.000000000001))
+        # self.assertFalse(foo_32(1, 1.000000000001))
+        # self.assertFalse(foo_32(1.00000000000001, 1.000000000001))
         self.assertFalse(foo_64(1, 1.000000000001))
         self.assertFalse(foo_64(1.00000000000001, 1.000000000001))
 
@@ -423,8 +423,8 @@ class TestMLIRFloatComparsion(unittest.TestCase):
         self.assertTrue(foo_32(2.000, 1.9999))
         self.assertTrue(foo_32(200.96, 2.1))
         # due to floating point precision, use float64
-        #self.assertTrue(foo_32(1.000000000001, 1))
-        #self.assertTrue(foo_32(1.000000000001, 1.00000000000001))
+        # self.assertTrue(foo_32(1.000000000001, 1))
+        # self.assertTrue(foo_32(1.000000000001, 1.00000000000001))
         self.assertTrue(foo_64(1.000000000001, 1))
         self.assertTrue(foo_64(1.000000000001, 1.00000000000001))
 
@@ -468,8 +468,8 @@ class TestMLIRFloatComparsion(unittest.TestCase):
         self.assertFalse(foo_32(1.9999, 2.000))
         self.assertFalse(foo_32(2.1, 200.96))
         # due to floating point precision, use float64
-        #self.assertFalse(foo_32(1, 1.000000000001))
-        #self.assertFalse(foo_32(1.00000000000001, 1.000000000001))
+        # self.assertFalse(foo_32(1, 1.000000000001))
+        # self.assertFalse(foo_32(1.00000000000001, 1.000000000001))
         self.assertFalse(foo_64(1, 1.000000000001))
         self.assertFalse(foo_64(1.00000000000001, 1.000000000001))
 
@@ -483,8 +483,8 @@ class TestMLIRFloatComparsion(unittest.TestCase):
         self.assertTrue(foo_32(2.000, 1.9999))
         self.assertTrue(foo_32(200.96, 2.1))
         # due to floating point precision, use float64
-        #self.assertTrue(foo_32(1.000000000001, 1))
-        #self.assertTrue(foo_32(1.000000000001, 1.00000000000001))
+        # self.assertTrue(foo_32(1.000000000001, 1))
+        # self.assertTrue(foo_32(1.000000000001, 1.00000000000001))
         self.assertTrue(foo_64(1.000000000001, 1))
         self.assertTrue(foo_64(1.000000000001, 1.00000000000001))
 
