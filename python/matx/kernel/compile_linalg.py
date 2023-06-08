@@ -104,6 +104,7 @@ def lower_linalg_to_cpu(input_fname, output_fname="llvm_tmp.mlir"):
                               '--convert-index-to-llvm',
                               '--convert-arith-to-llvm',
                               '--convert-memref-to-llvm',
+                              '--convert-math-to-llvm',
                               '--convert-cf-to-llvm',
                               '--scf-for-loop-peeling',
                               '--scf-for-loop-specialization',

@@ -278,14 +278,24 @@ void MLIRTextPrinter::VisitExpr_(const PrimModNode* op, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimFloorDivNode* op, std::ostream& os) {
-  std::unordered_map<std::string, std::string> suffix_map = {{"i", "si"}};
-  GenMLIRArithStatement("floordiv", op, os, suffix_map);
+  std::unordered_map<std::string, std::string> suffix_map = {{"f", "divf"}, {"i", "floordivsi"}};
+  GenMLIRArithStatement("", op, os, suffix_map);
+  const auto& op_data_type = GetNodeDataType(op);
+  const auto& data_type = op_data_type.first;
+  const auto& suffix_type = op_data_type.second;
+  if (suffix_type != "f") {
+    return;
+  }
+  const std::string var_name = '%' + std::to_string(cur_index_);
+  os << var_name << " = math.floor " << expr_name_map_->at(op) << " : " << data_type << std::endl;
+  insert_or_assign_expr_name_map_(op, var_name);
+  cur_index_++;
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimFloorModNode* op, std::ostream& os) {
   // ((a%b)+b)%b
-  const auto &lhs = op->a;
-  const auto &rhs = op->b;
+  const auto& lhs = op->a;
+  const auto& rhs = op->b;
   PrimMod normal_mod(lhs, rhs);
   PrimAdd add(normal_mod, rhs);
   PrimMod mod2(add, rhs);

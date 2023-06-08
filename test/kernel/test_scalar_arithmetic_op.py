@@ -219,7 +219,8 @@ class TestMLIRFloatArithmeticOp(unittest.TestCase):
         self.assertEqual(foo(18328, -32202), 18328 % -32202)
 
     def test_int_floordiv(self):
-        def foo(a: float64, b: float64) -> int32:
+        # numpy float64/float64 = float 64
+        def foo(a: float64, b: float64) -> float64:
             return a // b
 
         foo = self.helper(foo)
