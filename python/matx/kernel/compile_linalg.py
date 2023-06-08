@@ -96,6 +96,8 @@ def lower_linalg_to_cpu(input_fname, output_fname="llvm_tmp.mlir"):
     lower = subprocess.Popen(['mlir-opt',
                               '--convert-linalg-to-loops',
                               '--lower-affine',
+                              '--arith-expand',
+                              '--arith-unsigned-when-equivalent',
                               '--convert-scf-to-cf',
                               '--convert-linalg-to-llvm',
                               '--convert-func-to-llvm',
@@ -178,6 +180,8 @@ class LinalgFuncWrapper:
         self.func = func
         self.arg_types = parser.arg_types
         self.rt_types = parser.return_types
+        if is_scalar_type(self.rt_types):
+            self.func.restype = PYTYPE_TO_C_TYPE[self.rt_types.dtype]
 
     def __call__(self, *args, rt=None):
         if len(args) != len(self.arg_types):
@@ -217,19 +221,23 @@ def compile_linalg(
         dir="__mlir_output__",
         debug=False,
         over_written_code=None):
-    if file_name is None:
-        code_file_name = parser.file_name.split('/')[-1].split('.')[0]
-        file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
-    if debug:
-        file_name = f"_mlir_debug"
-    if not os.path.exists(dir):
-        os.makedirs(dir)
     current_path = os.getcwd()
-    os.chdir(dir)
-    mlir_f = write_linalg(parser.main_node_ir, file_name + ".mlir", debug, over_written_code)
-    lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
-    llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
-    shared_lib = llvm_compile(llvm_f, file_name + ".so")
-    func = load_func(shared_lib, parser)
-    os.chdir(current_path)
-    return func
+    try:
+        if file_name is None:
+            code_file_name = parser.file_name.split('/')[-1].split('.')[0]
+            file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
+        if debug:
+            file_name = f"_mlir_debug"
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        os.chdir(dir)
+        mlir_f = write_linalg(parser.main_node_ir, file_name + ".mlir", debug, over_written_code)
+        lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
+        llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
+        shared_lib = llvm_compile(llvm_f, file_name + ".so")
+        func = load_func(shared_lib, parser)
+        return func
+    except Exception as e:
+        raise e
+    finally:
+        os.chdir(current_path)

@@ -311,7 +311,18 @@ class BaseParser(ast.NodeVisitor):
         return [*value, attr_name]
 
     def visit_Return(self, node: ast.Return) -> Any:
-        pass
+        if node.value is None:
+            return _ir.ReturnStmt(NoneExpr())
+        if not is_scalar_type(self.return_ctx.kernel_type):
+            raise NotImplementedError(
+                "base parser does not support returning things other than scalar")
+
+        rt_ir = self.visit(node.value)
+        if not is_scalar_shape(rt_ir.shape):
+            raise NotImplementedError(
+                "The return value is not a scalar which does not match the annotation")
+
+        return _ir.ReturnStmt(rt_ir.to_matx_ir())
 
     def visit_Tuple(self, node: ast.Tuple) -> Any:
         values = []

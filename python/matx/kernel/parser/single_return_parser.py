@@ -76,8 +76,8 @@ class KernelSingleReturnParser(BaseParser):
     def visit_Return(self, node: ast.Return) -> Any:
         # treat return as assign and
         # for now kernel does not return anything.
-        if node.value is None:
-            return _ir.ReturnStmt(NoneExpr())
+        if node.value is None or is_scalar_type(self.return_ctx.kernel_type):
+            return super().visit_Return(node)
 
         result_shape = self.kernel_p.return_types.shape
         if list(result_shape) != list(self.return_ctx.shape):
@@ -89,16 +89,7 @@ class KernelSingleReturnParser(BaseParser):
             raise SyntaxError(
                 f"The return shape is annotated as {result_shape} but get {rt_ir.shape}")
 
-        if isinstance(node.value, (NDArrayNode, ScalarNode)):
-            if node.value in self.arg_context_table:
-                return _ir.ReturnStmt(None)
-            if node.value in self.tmp_scalar_table:
-                ctx = self.tmp_scalar_table[node.value]
-                return _ir.ReturnStmt(ctx.to_matx_ir())
-
-        if isinstance(self.return_ctx, ScalarNode):
-            return _ir.ReturnStmt(rt_ir.to_matx_ir())
-        elif isinstance(self.return_ctx, NDArrayNode):
+        if isinstance(self.return_ctx, NDArrayNode):
             if self.return_ctx.name != self.kernel_p.return_var_name:
                 return _ir.ReturnStmt(NoneExpr())
             stmt = AssignNDArrayNode(self.return_ctx, rt_ir)
