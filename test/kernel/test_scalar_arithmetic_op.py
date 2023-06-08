@@ -115,6 +115,8 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
         self.assertEqual(foo(1, 1), 1 // 1)
         self.assertEqual(foo(-5, -8), -5 // -8)
         self.assertEqual(foo(5, 7), 5 // 7)
+        self.assertEqual(foo(5, -2), -3)
+        self.assertEqual(foo(5, 2), 2)
 
     def test_int_min(self):
         def foo(a: int32, b: int32) -> int32:
@@ -227,6 +229,8 @@ class TestMLIRFloatArithmeticOp(unittest.TestCase):
         self.assertAlmostEquals(foo(-1.1, 1.1), -1.1 // 1.1)
         self.assertAlmostEquals(foo(-5.9, -8.0001), -5.9 // (-8.0001))
         self.assertAlmostEquals(foo(5.34, 7.287953), 5.34 // 7.287953)
+        self.assertEqual(foo(5, -2), -3)
+        self.assertEqual(foo(5, 2), 2)
 
     def test_int_min(self):
         def foo(a: float64, b: float64) -> float64:
