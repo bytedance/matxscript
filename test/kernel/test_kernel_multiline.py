@@ -82,7 +82,6 @@ class TestSingleReturnParser(unittest.TestCase):
         np.testing.assert_equal(rt, foo(a, b, c))
 
 
-
 if __name__ == "__main__":
     import logging
 

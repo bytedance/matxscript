@@ -217,4 +217,3 @@ linalg.yield %1 : f64
 }
  """
         self.assertEqual(expected_statement.strip(), linalg_statement.strip())
-
