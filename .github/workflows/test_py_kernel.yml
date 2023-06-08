@@ -22,3 +22,8 @@ jobs:
         run: bash ./ci/download_mlir_binary.sh && echo "$GITHUB_WORKSPACE/mlir_build/pre_build/bin" >> $GITHUB_PATH
       - name: Test Python Script
         run: python3 ci/run_py_kernel_test.py
+      
+      - name: List directory on failure
+        if: ${{ failure() }}
+        run: ls -la "$GITHUB_WORKSPACE" && ls -la "$GITHUB_WORKSPACE/test/kernel"
+        
