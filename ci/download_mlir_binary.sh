@@ -25,19 +25,20 @@ THIS_PATH=$(cd $(dirname "$0"); pwd)
 ROOT_PATH=${THIS_PATH}/../
 MLIR_PATH=${ROOT_PATH}/mlir_build
 
-if [ -f "${THIS_PATH}/pre-commit" ];then
-    cp ${THIS_PATH}/pre-commit ${ROOT_PATH}/.git/hooks/pre-commit
-fi
-
 if [ ! -d "$MLIR_PATH" ]; then
-    # Create the directory if it doesn't exist
     mkdir "$MLIR_PATH"
 fi
 
 cd "$MLIR_PATH"
 
-wget https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.5/clang+llvm-16.0.5-powerpc64le-linux-rhel-8.7.tar.xz
 
-tar -xf clang+llvm-16.0.5-powerpc64le-linux-rhel-8.7.tar.xz
+if [ ! -d "./pre_build" ]; then
+    if [ ! -f "./clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04.tar.xz" ]; then
+        wget https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.4/clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04.tar.xz
+    fi
+    tar -xf clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04.tar.xz
+    mv ./clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04 pre_build
+fi
 
 
+#export PATH=$PATH:/path/to/your/binarys/directory
