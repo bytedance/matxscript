@@ -39,6 +39,3 @@ if [ ! -d "./pre_build" ]; then
     tar -xf clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04.tar.xz
     mv ./clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04 pre_build
 fi
-
-
-#export PATH=$PATH:/path/to/your/binarys/directory

@@ -18,5 +18,7 @@ jobs:
           python-version: '3.7'
       - name: install requirements
         run: pip3 install msgpack && pip3 install numpy && pip3 install sympy
+      - name: Add directory to PATH
+        run: bash ./ci/download_mlir_binary.sh && echo "$GITHUB_WORKSPACE/mlir_build/pre_build_bin" >> $GITHUB_PATH
       - name: Test Python Script
-        run: python3 ci/run_py_script_test.py
+        run: python3 ci/run_py_kernel_test.py
