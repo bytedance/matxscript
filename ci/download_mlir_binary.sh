@@ -34,7 +34,7 @@ cd "$MLIR_PATH"
 
 if [ ! -d "./pre_build" ]; then
     if [ ! -f "./clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04.tar.xz" ]; then
-        wget https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.4/clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04.tar.xz
+        wget -nv https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.4/clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04.tar.xz
     fi
     tar -xf clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04.tar.xz
     mv ./clang+llvm-16.0.4-x86_64-linux-gnu-ubuntu-22.04 pre_build
