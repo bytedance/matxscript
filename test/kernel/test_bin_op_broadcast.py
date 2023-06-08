@@ -237,3 +237,10 @@ class TestBroadCast(unittest.TestCase):
 
         self.assertRaises(SyntaxError, broadcast, shape1, shape2)
         self.assertRaises(SyntaxError, broadcast, shape2, shape1)
+
+
+if __name__ == "__main__":
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    unittest.main()
