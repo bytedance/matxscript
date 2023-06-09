@@ -495,3 +495,10 @@ class TestMLIRFloatComparsion(unittest.TestCase):
         self.assertFalse(foo_32(float("nan"), -2))
         self.assertFalse(foo_32(-2, float("nan")))
         self.assertFalse(foo_32(float("nan"), -2.00001))
+
+
+if __name__ == "__main__":
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    unittest.main()

@@ -171,7 +171,7 @@ class TestMLIRFloatArithmeticOp(unittest.TestCase):
         self.assertAlmostEquals(foo(-5.9, -8.0001), -5.9 - (-8.0001))
         self.assertAlmostEquals(foo(5.34, 7.287953), 5.34 - 7.287953)
 
-    def test_int_mul(self):
+    def test_float_mul(self):
         def foo(a: float64, b: float64) -> float64:
             return a * b
 
@@ -183,7 +183,7 @@ class TestMLIRFloatArithmeticOp(unittest.TestCase):
         self.assertAlmostEquals(foo(-5.9, -8.0001), -5.9 * (-8.0001))
         self.assertAlmostEquals(foo(5.34, 7.287953), 5.34 * 7.287953)
 
-    def test_int_div(self):
+    def test_float_div(self):
         # numpy int32/int32 = float 64
         def foo(a: float64, b: float64) -> float64:
             return a / b
@@ -196,7 +196,7 @@ class TestMLIRFloatArithmeticOp(unittest.TestCase):
         self.assertAlmostEquals(foo(-5.9, -8.0001), -5.9 / (-8.0001))
         self.assertAlmostEquals(foo(5.34, 7.287953), 5.34 / 7.287953)
 
-    def test_int_rem(self):
+    def test_float_rem(self):
         def foo(a: float64, b: float64) -> float64:
             return a % b
 
@@ -218,7 +218,7 @@ class TestMLIRFloatArithmeticOp(unittest.TestCase):
         self.assertEqual(foo(-18328.3534, 32202.3534), -18328.3534 % 32202.3534)
         self.assertEqual(foo(18328, -32202), 18328 % -32202)
 
-    def test_int_floordiv(self):
+    def test_float_floordiv(self):
         # numpy float64/float64 = float 64
         def foo(a: float64, b: float64) -> float64:
             return a // b
@@ -233,14 +233,21 @@ class TestMLIRFloatArithmeticOp(unittest.TestCase):
         self.assertEqual(foo(5, -2), -3)
         self.assertEqual(foo(5, 2), 2)
 
-    def test_int_min(self):
+    def test_float_min(self):
         def foo(a: float64, b: float64) -> float64:
             return min(a, b)
         # todo not supported yet
         # foo = self.helper(foo)
 
-    def test_int_max(self):
+    def test_float_max(self):
         def foo(a: float64, b: float64) -> float64:
             return max(a, b)
         # todo not supported yet
         # foo = self.helper(foo)
+
+
+if __name__ == "__main__":
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    unittest.main()
