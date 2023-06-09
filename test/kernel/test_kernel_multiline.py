@@ -80,3 +80,10 @@ class TestSingleReturnParser(unittest.TestCase):
         f = compile_linalg(p)
         f(a, b, c, rt=rt)
         np.testing.assert_equal(rt, foo(a, b, c))
+
+
+if __name__ == "__main__":
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    unittest.main()

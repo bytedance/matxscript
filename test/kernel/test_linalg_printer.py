@@ -217,10 +217,3 @@ linalg.yield %1 : f64
 }
  """
         self.assertEqual(expected_statement.strip(), linalg_statement.strip())
-
-
-if __name__ == "__main__":
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    unittest.main()

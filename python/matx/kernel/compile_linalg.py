@@ -211,7 +211,7 @@ class LinalgFuncWrapper:
 
 
 def load_func(shared_lib, parser: KernelParser):
-    linalg_func = CDLL(shared_lib)
+    linalg_func = CDLL(os.path.join(os.getcwd(), shared_lib))
     func = getattr(linalg_func, parser.func_name)
     return LinalgFuncWrapper(func, parser)
 
