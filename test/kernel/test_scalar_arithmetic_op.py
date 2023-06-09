@@ -246,6 +246,171 @@ class TestMLIRFloatArithmeticOp(unittest.TestCase):
         # foo = self.helper(foo)
 
 
+class TestMLIRMixedArithmeticOp(unittest.TestCase):
+    def helper(self, foo):
+        p = KernelParser(foo)
+        p.parse()
+        print()
+        print("=" * 30, "linalg_code", "=" * 30, sep="")
+        print()
+        print(p.linalg_code())
+        print()
+        print("=" * 30, "compile and run", "=" * 30, sep="")
+        print()
+        f = compile_linalg(p)
+        return f
+
+    def mixed_run_helper(self, int_a, float_b, f):
+        self.assertAlmostEquals(self.foo1(int_a, float_b), f(int_a, float_b))
+        self.assertAlmostEquals(self.foo2(float_b, int_a), f(float_b, int_a))
+        self.assertAlmostEquals(self.foo3(float_b, int_a), f(float_b, int_a), places=3)
+
+    def test_Mixed_add(self):
+        def foo1(a: int32, b: float64) -> float64:
+            return a + b
+
+        def foo2(a: float64, b: int32) -> float64:
+            return a + b
+
+        def foo3(a: float32, b: int32) -> float32:
+            return a + b
+
+        self.foo1 = self.helper(foo1)
+        self.foo2 = self.helper(foo2)
+        self.foo3 = self.helper(foo3)
+
+        self.mixed_run_helper(0, 1.213, lambda a, b: a + b)
+        self.mixed_run_helper(-1, 1.1, lambda a, b: a + b)
+        self.mixed_run_helper(-5, -8.0001, lambda a, b: a + b)
+        self.mixed_run_helper(5, 7.287953, lambda a, b: a + b)
+
+    def test_Mixed_sub(self):
+        def foo1(a: int32, b: float64) -> float64:
+            return a - b
+
+        def foo2(a: float64, b: int32) -> float64:
+            return a - b
+
+        def foo3(a: float32, b: int32) -> float32:
+            return a - b
+
+        self.foo1 = self.helper(foo1)
+        self.foo2 = self.helper(foo2)
+        self.foo3 = self.helper(foo3)
+
+        self.mixed_run_helper(0, 1.213, lambda a, b: a - b)
+        self.mixed_run_helper(-1, 1.1, lambda a, b: a - b)
+        self.mixed_run_helper(-5, -8.0001, lambda a, b: a - b)
+        self.mixed_run_helper(5, 7.287953, lambda a, b: a - b)
+
+    def test_Mixed_mul(self):
+        def foo1(a: int32, b: float64) -> float64:
+            return a * b
+
+        def foo2(a: float64, b: int32) -> float64:
+            return a * b
+
+        def foo3(a: float32, b: int32) -> float32:
+            return a * b
+
+        self.foo1 = self.helper(foo1)
+        self.foo2 = self.helper(foo2)
+        self.foo3 = self.helper(foo3)
+
+        self.mixed_run_helper(0, 1.213, lambda a, b: a * b)
+        self.mixed_run_helper(-1, 1.1, lambda a, b: a * b)
+        self.mixed_run_helper(-5, -8.0001, lambda a, b: a * b)
+        self.mixed_run_helper(5, 7.287953, lambda a, b: a * b)
+
+    def test_Mixed_div(self):
+        def foo1(a: int32, b: float64) -> float64:
+            return a / b
+
+        def foo2(a: float64, b: int32) -> float64:
+            return a / b
+
+        # numpy float32/int32 = float 64
+        def foo3(a: float32, b: int32) -> float64:
+            return a / b
+
+        self.foo1 = self.helper(foo1)
+        self.foo2 = self.helper(foo2)
+        self.foo3 = self.helper(foo3)
+
+        self.mixed_run_helper(6, 1.213, lambda a, b: a / b)
+        self.mixed_run_helper(-1, 1.1, lambda a, b: a / b)
+        self.mixed_run_helper(-5, -8.0001, lambda a, b: a / b)
+        self.mixed_run_helper(5, 7.287953, lambda a, b: a / b)
+
+    def test(self):
+        def foo1(a: float64, b: int32) -> float64:
+            return a % b
+        foo1 = self.helper(foo1)
+
+    def test_Mixed_rem(self):
+        def foo1(a: int32, b: float64) -> float64:
+            return a % b
+
+        def foo2(a: float64, b: int32) -> float64:
+            return a % b
+
+        def foo3(a: float32, b: int32) -> float64:
+            return a % b
+
+        self.foo1 = self.helper(foo1)
+        self.foo2 = self.helper(foo2)
+        self.foo3 = self.helper(foo3)
+        self.mixed_run_helper(10, -3, lambda a, b: a % b)
+        self.mixed_run_helper(-10, 3, lambda a, b: a % b)
+        self.mixed_run_helper(1, 1, lambda a, b: a % b)
+        self.mixed_run_helper(-5, -8, lambda a, b: a % b)
+        self.mixed_run_helper(5, -8, lambda a, b: a % b)
+        self.mixed_run_helper(5, -8.3, lambda a, b: a % b)
+        self.mixed_run_helper(5, 7, lambda a, b: a % b)
+        self.mixed_run_helper(-5, 7, lambda a, b: a % b)
+        self.mixed_run_helper(5, 7, lambda a, b: a % b)
+        self.mixed_run_helper(-5, 7.68, lambda a, b: a % b)
+        self.mixed_run_helper(18328, 32202, lambda a, b: a % b)
+        self.mixed_run_helper(32202, 18328, lambda a, b: a % b)
+        self.mixed_run_helper(-18328, 32202, lambda a, b: a % b)
+        self.mixed_run_helper(-18328, 32202.3534, lambda a, b: a % b)
+        self.mixed_run_helper(18328, -32202, lambda a, b: a % b)
+
+    def test_Mixed_floordiv(self):
+        # numpy float64/float64 = float 64
+        def foo1(a: int32, b: float64) -> float64:
+            return a // b
+
+        def foo2(a: float64, b: int32) -> float64:
+            return a // b
+
+        def foo3(a: float32, b: int32) -> float64:
+            return a // b
+
+        self.foo1 = self.helper(foo1)
+        self.foo2 = self.helper(foo2)
+        self.foo3 = self.helper(foo3)
+
+        self.mixed_run_helper(6, 1.213, lambda a, b: a // b)
+        self.mixed_run_helper(-1, 1.1, lambda a, b: a // b)
+        self.mixed_run_helper(-5, -8.0001, lambda a, b: a // b)
+        self.mixed_run_helper(5, 7.287953, lambda a, b: a // b)
+        self.mixed_run_helper(5, -2, lambda a, b: a // b)
+        self.mixed_run_helper(5, 2, lambda a, b: a // b)
+
+    def test_Mixed_min(self):
+        def foo(a: float64, b: float64) -> float64:
+            return min(a, b)
+        # todo not supported yet
+        # foo = self.helper(foo)
+
+    def test_Mixed_max(self):
+        def foo(a: float64, b: float64) -> float64:
+            return max(a, b)
+        # todo not supported yet
+        # foo = self.helper(foo)
+
+
 if __name__ == "__main__":
     import logging
 

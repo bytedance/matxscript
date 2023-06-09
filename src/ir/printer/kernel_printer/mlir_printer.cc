@@ -470,6 +470,9 @@ void printCastOp(const Type& origin, const Type& target, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimCastNode* op, std::ostream& os) {
+  if (expr_name_map_->find(op) != expr_name_map_->end()) {
+    return;
+  }
   auto& v = op->value;
   PrimExprFunctor::VisitExpr(v, os);
   os << '%' << cur_index_ << " = ";
@@ -478,9 +481,6 @@ void MLIRTextPrinter::VisitExpr_(const PrimCastNode* op, std::ostream& os) {
   os << " : ";
   os << ConvertTypeToMLIR(v->checked_type()) << " to " << ConvertTypeToMLIR(op->checked_type())
      << std::endl;
-  if (expr_name_map_->find(op) != expr_name_map_->end()) {
-    MXTHROW << "[linalg] op is already in expr_index_map_";
-  }
   insert_or_assign_expr_name_map_(op, '%' + std::to_string(cur_index_));
   cur_index_ += 1;
 }
