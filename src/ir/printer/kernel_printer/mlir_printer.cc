@@ -384,9 +384,53 @@ void MLIRTextPrinter::VisitExpr_(const PrimGENode* op, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimAndNode* op, std::ostream& os) {
+  PrimExprFunctor::VisitExpr(op->a, os);
+  PrimExprFunctor::VisitExpr(op->b, os);
+  const auto& a_type = GetNodeDataType(op->a.get());
+  const auto& b_type = GetNodeDataType(op->b.get());
+  const auto& rc_type = GetNodeDataType(op);
+  MXCHECK_EQ(a_type.second, b_type.second)
+      << "[mlir printer] the two values for comparesion are not the same type";
+  MXCHECK_EQ(a_type.first, b_type.first)
+      << "[mlir printer] the two values for comparesion are not the same type";
+  const auto& a_arith_suffix = a_type.second;
+  const std::string op_name = "arith.andi ";
+
+  os << '%' << cur_index_ << " = " << op_name;
+  PrintNodeName(op->a, os);
+  os << ", ";
+  PrintNodeName(op->b, os);
+  os << " : " << rc_type.first << std::endl;
+  if (expr_name_map_->find(op) != expr_name_map_->end()) {
+    MXTHROW << "[linalg] op is already in expr_index_map_";
+  }
+  insert_or_assign_expr_name_map_(op, '%' + std::to_string(cur_index_));
+  cur_index_ += 1;
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimOrNode* op, std::ostream& os) {
+  PrimExprFunctor::VisitExpr(op->a, os);
+  PrimExprFunctor::VisitExpr(op->b, os);
+  const auto& a_type = GetNodeDataType(op->a.get());
+  const auto& b_type = GetNodeDataType(op->b.get());
+  const auto& rc_type = GetNodeDataType(op);
+  MXCHECK_EQ(a_type.second, b_type.second)
+      << "[mlir printer] the two values for comparesion are not the same type";
+  MXCHECK_EQ(a_type.first, b_type.first)
+      << "[mlir printer] the two values for comparesion are not the same type";
+  const auto& a_arith_suffix = a_type.second;
+  const std::string op_name = "arith.ori ";
+
+  os << '%' << cur_index_ << " = " << op_name;
+  PrintNodeName(op->a, os);
+  os << ", ";
+  PrintNodeName(op->b, os);
+  os << " : " << rc_type.first << std::endl;
+  if (expr_name_map_->find(op) != expr_name_map_->end()) {
+    MXTHROW << "[linalg] op is already in expr_index_map_";
+  }
+  insert_or_assign_expr_name_map_(op, '%' + std::to_string(cur_index_));
+  cur_index_ += 1;
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimNotNode* op, std::ostream& os) {

@@ -56,8 +56,8 @@ _boolop_marker = {
     ast.IsNot: lambda lhs, rhs, span: _generic.op_not(_generic.op_is(lhs, rhs, span), span),
 
 
-    ast.And: lambda span, *args: _generic.op_and(span, *args),
-    ast.Or: lambda span, *args: _generic.op_or(span, *args)
+    ast.And: lambda lhs, rhs, span: _generic.op_and(span, lhs, rhs),
+    ast.Or: lambda lhs, rhs, span: _generic.op_or(span, lhs, rhs)
 }
 
 
