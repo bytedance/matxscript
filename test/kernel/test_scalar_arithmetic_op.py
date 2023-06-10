@@ -44,13 +44,13 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
 
         foo = self.helper(foo)
 
-        self.assertEqual(foo(0, 1), 1)
-        self.assertEqual(foo(-1, 1), 0)
-        self.assertEqual(foo(-5, -8), -13)
-        self.assertEqual(foo(5, 7), 12)
+        self.assertEqual(1, foo(0, 1))
+        self.assertEqual(0, foo(-1, 1))
+        self.assertEqual(-13, foo(-5, -8))
+        self.assertEqual(12, foo(5, 7))
         # overflow case
-        self.assertEqual(foo(2147483647, 1), -2147483648)
-        self.assertEqual(foo(-2147483648, -1), 2147483647)
+        self.assertEqual(-2147483648, foo(2147483647, 1))
+        self.assertEqual(2147483647, foo(-2147483648, -1))
 
     def test_int_sub(self):
         def foo(a: int32, b: int32) -> int32:
@@ -58,22 +58,22 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
 
         foo = self.helper(foo)
 
-        self.assertEqual(foo(0, 1), -1)
-        self.assertEqual(foo(-1, 1), -2)
-        self.assertEqual(foo(1, 1), 0)
-        self.assertEqual(foo(-5, -8), 3)
-        self.assertEqual(foo(5, 7), -2)
+        self.assertEqual(-1, foo(0, 1))
+        self.assertEqual(-2, foo(-1, 1))
+        self.assertEqual(0, foo(1, 1))
+        self.assertEqual(3, foo(-5, -8))
+        self.assertEqual(-2, foo(5, 7))
 
     def test_int_mul(self):
         def foo(a: int32, b: int32) -> int32:
             return a * b
 
         foo = self.helper(foo)
-        self.assertEqual(foo(0, 1), 0)
-        self.assertEqual(foo(-1, 1), -1)
-        self.assertEqual(foo(1, 1), 1)
-        self.assertEqual(foo(-5, -8), 40)
-        self.assertEqual(foo(5, 7), 35)
+        self.assertEqual(0, foo(0, 1))
+        self.assertEqual(-1, foo(-1, 1))
+        self.assertEqual(1, foo(1, 1))
+        self.assertEqual(40, foo(-5, -8))
+        self.assertEqual(35, foo(5, 7))
 
     def test_int_div(self):
         # numpy int32/int32 = float 64
@@ -81,42 +81,42 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
             return a / b
 
         foo = self.helper(foo)
-        self.assertEqual(foo(0, 1), 0 / 1)
-        self.assertEqual(foo(-1, 1), -1 / 1)
-        self.assertEqual(foo(1, 1), 1 / 1)
-        self.assertEqual(foo(-5, -8), -5 / -8)
-        self.assertEqual(foo(5, 7), 5 / 7)
+        self.assertEqual(0 / 1, foo(0, 1))
+        self.assertEqual(-1 / 1, foo(-1, 1))
+        self.assertEqual(1 / 1, foo(1, 1))
+        self.assertEqual(-5 / -8, foo(-5, -8))
+        self.assertEqual(5 / 7, foo(5, 7))
 
     def test_int_rem(self):
         def foo(a: int32, b: int32) -> int32:
             return a % b
 
         foo = self.helper(foo)
-        self.assertEqual(foo(-10, 3), -10 % 3)
-        self.assertEqual(foo(0, 1), 0 % 1)
-        self.assertEqual(foo(-1, 1), -1 % 1)
-        self.assertEqual(foo(1, 1), 1 % 1)
-        self.assertEqual(foo(-5, -8), -5 % -8)
-        self.assertEqual(foo(5, -8), 5 % -8)
-        self.assertEqual(foo(5, 7), 5 % 7)
-        self.assertEqual(foo(-5, 7), -5 % 7)
-        self.assertEqual(foo(18328, 32202), 18328 % 32202)
-        self.assertEqual(foo(32202, 18328), 32202 % 18328)
-        self.assertEqual(foo(-18328, 32202), -18328 % 32202)
-        self.assertEqual(foo(18328, -32202), 18328 % -32202)
+        self.assertEqual(-10 % 3, foo(-10, 3))
+        self.assertEqual(0 % 1, foo(0, 1))
+        self.assertEqual(-1 % 1, foo(-1, 1))
+        self.assertEqual(1 % 1, foo(1, 1))
+        self.assertEqual(-5 % -8, foo(-5, -8))
+        self.assertEqual(5 % -8, foo(5, -8))
+        self.assertEqual(5 % 7, foo(5, 7))
+        self.assertEqual(-5 % 7, foo(-5, 7))
+        self.assertEqual(18328 % 32202, foo(18328, 32202))
+        self.assertEqual(32202 % 18328, foo(32202, 18328))
+        self.assertEqual(-18328 % 32202, foo(-18328, 32202))
+        self.assertEqual(18328 % -32202, foo(18328, -32202))
 
     def test_int_floordiv(self):
         def foo(a: int32, b: int32) -> int32:
             return a // b
 
         foo = self.helper(foo)
-        self.assertEqual(foo(0, 1), 0 // 1)
-        self.assertEqual(foo(-1, 1), -1 // 1)
-        self.assertEqual(foo(1, 1), 1 // 1)
-        self.assertEqual(foo(-5, -8), -5 // -8)
-        self.assertEqual(foo(5, 7), 5 // 7)
-        self.assertEqual(foo(5, -2), -3)
-        self.assertEqual(foo(5, 2), 2)
+        self.assertEqual(0 // 1, foo(0, 1))
+        self.assertEqual(-1 // 1, foo(-1, 1))
+        self.assertEqual(1 // 1, foo(1, 1))
+        self.assertEqual(-5 // -8, foo(-5, -8))
+        self.assertEqual(5 // 7, foo(5, 7))
+        self.assertEqual(-3, foo(5, -2))
+        self.assertEqual(2, foo(5, 2))
 
     def test_int_min(self):
         def foo(a: int32, b: int32) -> int32:
@@ -151,12 +151,12 @@ class TestMLIRFloatArithmeticOp(unittest.TestCase):
 
         foo = self.helper(foo)
 
-        self.assertAlmostEquals(foo(0, 1.213), 1.213)
-        self.assertAlmostEquals(foo(0, 1.213), 1.213)
-        self.assertAlmostEquals(foo(0.1, 1.213), 1.313)
-        self.assertAlmostEquals(foo(-1.1, 1.1), 0)
-        self.assertAlmostEquals(foo(-5.9, -8.0001), -13.9001)
-        self.assertAlmostEquals(foo(5.34, 7.287953), 5.34 + 7.287953)
+        self.assertAlmostEquals(1.213, foo(0, 1.213))
+        self.assertAlmostEquals(1.213, foo(0, 1.213))
+        self.assertAlmostEquals(1.313, foo(0.1, 1.213))
+        self.assertAlmostEquals(0, foo(-1.1, 1.1))
+        self.assertAlmostEquals(-13.9001, foo(-5.9, -8.0001))
+        self.assertAlmostEquals(5.34 + 7.287953, foo(5.34, 7.287953))
 
     def test_float_sub(self):
         def foo(a: float64, b: float64) -> float64:
@@ -164,24 +164,24 @@ class TestMLIRFloatArithmeticOp(unittest.TestCase):
 
         foo = self.helper(foo)
 
-        self.assertAlmostEquals(foo(0, 1.213), -1.213)
-        self.assertAlmostEquals(foo(0, 1.213), -1.213)
-        self.assertAlmostEquals(foo(0.1, 1.213), 0.1 - 1.213)
-        self.assertAlmostEquals(foo(-1.1, 1.1), -1.1 - 1.1)
-        self.assertAlmostEquals(foo(-5.9, -8.0001), -5.9 - (-8.0001))
-        self.assertAlmostEquals(foo(5.34, 7.287953), 5.34 - 7.287953)
+        self.assertAlmostEquals(-1.213, foo(0, 1.213))
+        self.assertAlmostEquals(-1.213, foo(0, 1.213))
+        self.assertAlmostEquals(0.1 - 1.213, foo(0.1, 1.213))
+        self.assertAlmostEquals(-1.1 - 1.1, foo(-1.1, 1.1))
+        self.assertAlmostEquals(-5.9 - (-8.0001), foo(-5.9, -8.0001))
+        self.assertAlmostEquals(5.34 - 7.287953, foo(5.34, 7.287953))
 
     def test_float_mul(self):
         def foo(a: float64, b: float64) -> float64:
             return a * b
 
         foo = self.helper(foo)
-        self.assertAlmostEquals(foo(0, 1.213), 0 * 1.213)
-        self.assertAlmostEquals(foo(0, 1.213), 0 * 1.213)
-        self.assertAlmostEquals(foo(0.1, 1.213), 0.1 * 1.213)
-        self.assertAlmostEquals(foo(-1.1, 1.1), -1.1 * 1.1)
-        self.assertAlmostEquals(foo(-5.9, -8.0001), -5.9 * (-8.0001))
-        self.assertAlmostEquals(foo(5.34, 7.287953), 5.34 * 7.287953)
+        self.assertAlmostEquals(0 * 1.213, foo(0, 1.213))
+        self.assertAlmostEquals(0 * 1.213, foo(0, 1.213))
+        self.assertAlmostEquals(0.1 * 1.213, foo(0.1, 1.213))
+        self.assertAlmostEquals(-1.1 * 1.1, foo(-1.1, 1.1))
+        self.assertAlmostEquals(-5.9 * (-8.0001), foo(-5.9, -8.0001))
+        self.assertAlmostEquals(5.34 * 7.287953, foo(5.34, 7.287953))
 
     def test_float_div(self):
         # numpy int32/int32 = float 64
@@ -189,34 +189,34 @@ class TestMLIRFloatArithmeticOp(unittest.TestCase):
             return a / b
 
         foo = self.helper(foo)
-        self.assertAlmostEquals(foo(0, 1.213), 0 / 1.213)
-        self.assertAlmostEquals(foo(0, 1.213), 0 / 1.213)
-        self.assertAlmostEquals(foo(0.1, 1.213), 0.1 / 1.213)
-        self.assertAlmostEquals(foo(-1.1, 1.1), -1.1 / 1.1)
-        self.assertAlmostEquals(foo(-5.9, -8.0001), -5.9 / (-8.0001))
-        self.assertAlmostEquals(foo(5.34, 7.287953), 5.34 / 7.287953)
+        self.assertAlmostEquals(0 / 1.213, foo(0, 1.213))
+        self.assertAlmostEquals(0 / 1.213, foo(0, 1.213))
+        self.assertAlmostEquals(0.1 / 1.213, foo(0.1, 1.213))
+        self.assertAlmostEquals(-1.1 / 1.1, foo(-1.1, 1.1))
+        self.assertAlmostEquals(-5.9 / (-8.0001), foo(-5.9, -8.0001))
+        self.assertAlmostEquals(5.34 / 7.287953, foo(5.34, 7.287953))
 
     def test_float_rem(self):
         def foo(a: float64, b: float64) -> float64:
             return a % b
 
         foo = self.helper(foo)
-        self.assertEqual(foo(10, -3), 10 % -3)
-        self.assertEqual(foo(-10, 3), -10 % 3)
-        self.assertEqual(foo(0, 1.1), 0 % 1.1)
-        self.assertEqual(foo(-1.1, 1.2), -1.1 % 1.2)
-        self.assertEqual(foo(1, 1), 1 % 1)
-        self.assertEqual(foo(-5, -8), -5 % -8)
-        self.assertEqual(foo(5, -8), 5 % -8)
-        self.assertEqual(foo(5.5, -8.3), 5.5 % -8.3)
-        self.assertEqual(foo(5, 7), 5 % 7)
-        self.assertEqual(foo(-5, 7), -5 % 7)
-        self.assertEqual(foo(-5.34, 7.68), -5.34 % 7.68)
-        self.assertEqual(foo(18328, 32202), 18328 % 32202)
-        self.assertEqual(foo(32202, 18328), 32202 % 18328)
-        self.assertEqual(foo(-18328, 32202), -18328 % 32202)
-        self.assertEqual(foo(-18328.3534, 32202.3534), -18328.3534 % 32202.3534)
-        self.assertEqual(foo(18328, -32202), 18328 % -32202)
+        self.assertEqual(10 % -3, foo(10, -3))
+        self.assertEqual(-10 % 3, foo(-10, 3))
+        self.assertEqual(0 % 1.1, foo(0, 1.1))
+        self.assertEqual(-1.1 % 1.2, foo(-1.1, 1.2))
+        self.assertEqual(1 % 1, foo(1, 1))
+        self.assertEqual(-5 % -8, foo(-5, -8))
+        self.assertEqual(5 % -8, foo(5, -8))
+        self.assertEqual(5.5 % -8.3, foo(5.5, -8.3))
+        self.assertEqual(5 % 7, foo(5, 7))
+        self.assertEqual(-5 % 7, foo(-5, 7))
+        self.assertEqual(-5.34 % 7.68, foo(-5.34, 7.68))
+        self.assertEqual(18328 % 32202, foo(18328, 32202))
+        self.assertEqual(32202 % 18328, foo(32202, 18328))
+        self.assertEqual(-18328 % 32202, foo(-18328, 32202))
+        self.assertEqual(-18328.3534 % 32202.3534, foo(-18328.3534, 32202.3534))
+        self.assertEqual(18328 % -32202, foo(18328, -32202))
 
     def test_float_floordiv(self):
         # numpy float64/float64 = float 64
@@ -224,14 +224,14 @@ class TestMLIRFloatArithmeticOp(unittest.TestCase):
             return a // b
 
         foo = self.helper(foo)
-        self.assertAlmostEquals(foo(0, 1.213), 0 // 1.213)
-        self.assertAlmostEquals(foo(0, 1.213), 0 // 1.213)
-        self.assertAlmostEquals(foo(0.1, 1.213), 0.1 // 1.213)
-        self.assertAlmostEquals(foo(-1.1, 1.1), -1.1 // 1.1)
-        self.assertAlmostEquals(foo(-5.9, -8.0001), -5.9 // (-8.0001))
-        self.assertAlmostEquals(foo(5.34, 7.287953), 5.34 // 7.287953)
-        self.assertEqual(foo(5, -2), -3)
-        self.assertEqual(foo(5, 2), 2)
+        self.assertAlmostEquals(0 // 1.213, foo(0, 1.213))
+        self.assertAlmostEquals(0 // 1.213, foo(0, 1.213))
+        self.assertAlmostEquals(0.1 // 1.213, foo(0.1, 1.213))
+        self.assertAlmostEquals(-1.1 // 1.1, foo(-1.1, 1.1))
+        self.assertAlmostEquals(-5.9 // (-8.0001), foo(-5.9, -8.0001))
+        self.assertAlmostEquals(5.34 // 7.287953, foo(5.34, 7.287953))
+        self.assertEqual(-3, foo(5, -2))
+        self.assertEqual(2, foo(5, 2))
 
     def test_float_min(self):
         def foo(a: float64, b: float64) -> float64:
@@ -261,9 +261,9 @@ class TestMLIRMixedArithmeticOp(unittest.TestCase):
         return f
 
     def mixed_run_helper(self, int_a, float_b, f):
-        self.assertAlmostEquals(self.foo1(int_a, float_b), f(int_a, float_b))
-        self.assertAlmostEquals(self.foo2(float_b, int_a), f(float_b, int_a))
-        self.assertAlmostEquals(self.foo3(float_b, int_a), f(float_b, int_a), places=3)
+        self.assertAlmostEquals(f(int_a, float_b), self.foo1(int_a, float_b))
+        self.assertAlmostEquals(f(float_b, int_a), self.foo2(float_b, int_a))
+        self.assertAlmostEquals(f(float_b, int_a), self.foo3(float_b, int_a), places=3)
 
     def test_Mixed_add(self):
         def foo1(a: int32, b: float64) -> float64:
@@ -341,11 +341,6 @@ class TestMLIRMixedArithmeticOp(unittest.TestCase):
         self.mixed_run_helper(-1, 1.1, lambda a, b: a / b)
         self.mixed_run_helper(-5, -8.0001, lambda a, b: a / b)
         self.mixed_run_helper(5, 7.287953, lambda a, b: a / b)
-
-    def test(self):
-        def foo1(a: float64, b: int32) -> float64:
-            return a % b
-        foo1 = self.helper(foo1)
 
     def test_Mixed_rem(self):
         def foo1(a: int32, b: float64) -> float64:
