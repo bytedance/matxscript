@@ -95,3 +95,25 @@ class BinaryOp(ExpressionBaseNode):
 
     def buffer_regions(self, **kwargs):
         return self.lhs.buffer_regions(**kwargs) + self.rhs.buffer_regions(**kwargs)
+
+
+class UnaryOp(ExpressionBaseNode):
+
+    def __init__(self, operand: ExpressionBaseNode, op_type, span):
+        self.op = _unaryop_maker[op_type]
+        self.operand = operand
+        self.span = span
+        self.operand_type = operand.kernel_type
+        self.operand_dtype = get_dtype(self.operand_type)
+        self.result_dtype = np_result_dtype([self.operand_dtype])
+        result_shape = self.operand.kernel_type.shape
+        self.result_shape = tuple(result_shape)
+        self.result_type = NDArrayType(self.result_shape, self.result_dtype)
+        super().__init__(self.result_type)
+        self.shape = result_shape
+
+    def to_matx_ir(self, **kwargs):
+        return self.op(self.operand.to_matx_ir(**kwargs), self.span)
+
+    def buffer_regions(self, **kwargs):
+        return self.operand.buffer_regions(**kwargs)

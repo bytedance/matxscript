@@ -102,7 +102,13 @@ class BaseParser(ast.NodeVisitor):
 
     # Expressions
     def visit_UnaryOp(self, node: ast.UnaryOp) -> Any:
-        raise NotImplementedError("visit_UnaryOp is not Implemented")
+        opname = type(node.op).__name__
+        operand_ir = self.visit(node.operand)
+        if (is_scalar_type(operand_ir.kernel_type) or is_symbol_type(operand_ir.kernel_type)):
+            return UnaryOp(operand_ir, type(node.op), self.build_span(node))
+        else:
+            raise SyntaxError(f"{opname} ({operand_ir}) is not supported "
+                              f"because {operand_ir} is not a scalar")
 
     def visit_BinOp(self, node: ast.BinOp) -> Any:
         opname = type(node.op).__name__
