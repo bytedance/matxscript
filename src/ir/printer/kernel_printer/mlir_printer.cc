@@ -43,6 +43,7 @@
 #include "matxscript/runtime/dlpack.h"
 #include "matxscript/runtime/logging.h"
 #include "matxscript/runtime/object.h"
+#include "rapidjson/document.h"
 
 #include <matxscript/ir/expr_functor.h>
 #include <matxscript/ir/function.h>
@@ -59,17 +60,21 @@ using namespace ::matxscript::ir;
 using namespace ::matxscript::runtime;
 
 void MLIRTextPrinter::NewScope() {
-  var_name_scope.emplace_back(expr_name_map_->begin(), expr_name_map_->end());
-  expr_name_map_ = &(var_name_scope.back());
+  expr_name_scope.emplace_back(expr_name_map_->begin(), expr_name_map_->end());
+  expr_name_map_ = &(expr_name_scope.back());
   var_type_scope.emplace_back(val_type_map_->begin(), val_type_map_->end());
   val_type_map_ = &(var_type_scope.back());
+  var_name_scope.emplace_back(var_name_map_->begin(), var_name_map_->end());
+  var_name_map_ = &(var_name_scope.back());
 }
 
 void MLIRTextPrinter::PopScope() {
-  var_name_scope.pop_back();
-  expr_name_map_ = &(var_name_scope.back());
+  expr_name_scope.pop_back();
+  expr_name_map_ = &(expr_name_scope.back());
   var_type_scope.pop_back();
   val_type_map_ = &(var_type_scope.back());
+  var_name_scope.pop_back();
+  var_name_map_ = &(var_name_scope.back());
 }
 
 // Error Handlers
@@ -184,12 +189,13 @@ void MLIRTextPrinter::PrintNodeName(const BaseExpr& ptr, std::ostream& os) {
     os << expr_name_map_->at(ptr.get());
     return;
   }
-  //if (ptr->IsInstance<PrimVarNode>()) {
-  //  auto node = runtime::Downcast<PrimVar>(ptr);
-  //  insert_or_assign_expr_name_map_(ptr.get(), node->name_hint.c_str());
-  //  os << node->name_hint;
-  //  return;
-  //}
+  if (ptr->IsInstance<PrimVarNode>()) {
+    auto node = runtime::Downcast<PrimVar>(ptr);
+    const auto & var_name = var_name_map_->find(node->name_hint);
+    MXCHECK(var_name!=var_name_map_->end())<< "Expr: " << ptr << " has no corrresponding ssa value";
+    os << var_name->second;
+    return;
+  }
   MXTHROW << "Expr: " << ptr << " has no corrresponding ssa value";
 }
 
@@ -567,10 +573,10 @@ void MLIRTextPrinter::VisitStmt_(const AllocaVarStmtNode* op, std::ostream& os) 
     return;
   }
   const auto & name = op->var;
-  std::string mlir_name = "%";
+  StringRef node_name;
   if (name->IsInstance<PrimVarNode>()) {
     const auto &node = runtime::Downcast<PrimVar>(name);
-    mlir_name += node->name_hint.c_str();
+    node_name = node->name_hint;
   } else {
     MXTHROW<< "The target var of "<< op <<" is not a PrimVar.";
     return;
@@ -583,8 +589,7 @@ void MLIRTextPrinter::VisitStmt_(const AllocaVarStmtNode* op, std::ostream& os) 
     MXTHROW<< "The init value of "<< op <<" is not a PrimExpr.";
     return;
   }
-  os << mlir_name << " = " << expr_name_map_->at(init_value.get())<<std::endl;;
-  insert_or_assign_expr_name_map_(op, mlir_name);
+  insert_or_assign_var_name_map_(node_name, expr_name_map_->at(init_value.get()));
 }
 
 void MLIRTextPrinter::VisitStmt_(const AssignStmtNode* op, std::ostream& os) {

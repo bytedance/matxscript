@@ -58,11 +58,11 @@ class NDArrayType:
         return ScalarType(self.dtype)
 
     def __eq__(self, other):
-        return self.shape == other.shape and self.dtype == self.dtype
+        return self.shape == other.shape and self.dtype == other.dtype
 
     def compatible_with(self, other):
         # todo check dtype
-        return self.shape == other and self.dtype == self.dtype
+        return self.shape == other.shape and self.dtype == other.dtype
 
 
 class ScalarType(NDArrayType):

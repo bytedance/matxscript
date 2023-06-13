@@ -18,8 +18,10 @@
 #  under the License.
 import ast
 
+import numpy as np
 from matx.ir import generic as _generic
 from .base import *
+from .scalar import ConstScalarNode
 from .utils import *
 from ... import ir as _ir
 
@@ -31,7 +33,8 @@ _arithmetic_binop_maker = {
     ast.FloorDiv: lambda lhs, rhs, span: _generic.floordiv(lhs, rhs, span),
     # ast.Mod: lambda lhs, rhs, span: _generic.floormod(lhs, rhs, span),
     # quick fix for mod sign issue
-    ast.Mod: lambda lhs, rhs, span: _generic.floormod(_generic.add(_generic.floormod(lhs, rhs, span), rhs, span), rhs, span),
+    ast.Mod: lambda lhs, rhs, span: _generic.floormod(_generic.add(_generic.floormod(lhs, rhs, span), rhs, span), rhs,
+                                                      span),
     ast.BitOr: lambda lhs, rhs, span: _generic.bitwise_or(lhs, rhs, span),
     ast.BitAnd: lambda lhs, rhs, span: _generic.bitwise_and(lhs, rhs, span),
     ast.BitXor: lambda lhs, rhs, span: _generic.bitwise_xor(lhs, rhs, span),
@@ -55,10 +58,32 @@ _boolop_marker = {
     ast.Is: lambda lhs, rhs, span: _generic.op_is(lhs, rhs, span),
     ast.IsNot: lambda lhs, rhs, span: _generic.op_not(_generic.op_is(lhs, rhs, span), span),
 
-
     ast.And: lambda lhs, rhs, span: _generic.op_and(span, lhs, rhs),
     ast.Or: lambda lhs, rhs, span: _generic.op_or(span, lhs, rhs)
 }
+
+
+def reset_constant_dtype(lhs: ExpressionBaseNode, rhs: ExpressionBaseNode):
+    def helper(const: ConstScalarNode, other: ExpressionBaseNode):
+        const_kernel_t = const.kernel_type
+        other_kernel_t = other.kernel_type
+        const_dtype = const_kernel_t.dtype
+        other_dtype = other_kernel_t.dtype
+        if np.can_cast(const_dtype, other_dtype, "same_kind") and np.can_cast(const.value, other_dtype, "safe"):
+            return ConstScalarNode(const.value, PYTYPE_TO_KERNEL_TYPE[other_dtype], const.span)
+        else:
+            raise SyntaxError(f"Cannot cast constant {const} from {const_dtype} to {other_dtype} "
+                              f" which is the type of the other oprhand.")
+
+    lhs_is_constant = isinstance(lhs, ConstScalarNode)
+    rhs_is_constant = isinstance(rhs, ConstScalarNode)
+    if lhs_is_constant == rhs_is_constant:
+        return lhs, rhs
+    if lhs_is_constant:
+        return helper(lhs, rhs), rhs
+    else:
+        new_constant = helper(rhs, lhs)
+        return lhs, new_constant
 
 
 class BinaryOp(ExpressionBaseNode):
@@ -69,6 +94,7 @@ class BinaryOp(ExpressionBaseNode):
             self.op = _boolop_marker[op_type]
         else:
             self.op = _arithmetic_binop_maker[op_type]
+        lhs, rhs = reset_constant_dtype(lhs, rhs)
         self.lhs = lhs
         self.rhs = rhs
         self.span = span
