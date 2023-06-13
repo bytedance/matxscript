@@ -184,12 +184,12 @@ void MLIRTextPrinter::PrintNodeName(const BaseExpr& ptr, std::ostream& os) {
     os << expr_name_map_->at(ptr.get());
     return;
   }
-  if (ptr->IsInstance<PrimVarNode>()) {
-    auto node = runtime::Downcast<PrimVar>(ptr);
-    insert_or_assign_expr_name_map_(ptr.get(), node->name_hint.c_str());
-    os << node->name_hint;
-    return;
-  }
+  //if (ptr->IsInstance<PrimVarNode>()) {
+  //  auto node = runtime::Downcast<PrimVar>(ptr);
+  //  insert_or_assign_expr_name_map_(ptr.get(), node->name_hint.c_str());
+  //  os << node->name_hint;
+  //  return;
+  //}
   MXTHROW << "Expr: " << ptr << " has no corrresponding ssa value";
 }
 
@@ -452,6 +452,9 @@ void MLIRTextPrinter::VisitExpr_(const PrimNotNode* op, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimSelectNode* op, std::ostream& os) {
+  //%x = arith.select %cond, %true, %false : i32
+  VisitStmtDefault_(op, os);
+
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimVarNode* op, std::ostream& os) {
@@ -459,9 +462,11 @@ void MLIRTextPrinter::VisitExpr_(const PrimVarNode* op, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimLetNode* op, std::ostream& os) {
+  VisitStmtDefault_(op, os);
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimCallNode* op, std::ostream& os) {
+  VisitStmtDefault_(op, os);
 }
 
 void printCastOp(const Type& origin, const Type& target, std::ostream& os) {
@@ -557,9 +562,33 @@ void MLIRTextPrinter::VisitStmt_(const BufferStoreNode* op, std::ostream& os) {
 }
 
 void MLIRTextPrinter::VisitStmt_(const AllocaVarStmtNode* op, std::ostream& os) {
+  if (expr_name_map_->find(op->var.get()) != expr_name_map_->end()) {
+    MXTHROW<< "Allocating var "<< op->var <<" which has already been allocated.";
+    return;
+  }
+  const auto & name = op->var;
+  std::string mlir_name = "%";
+  if (name->IsInstance<PrimVarNode>()) {
+    const auto &node = runtime::Downcast<PrimVar>(name);
+    mlir_name += node->name_hint.c_str();
+  } else {
+    MXTHROW<< "The target var of "<< op <<" is not a PrimVar.";
+    return;
+  }
+  const auto & init_value = op->init_value;
+  if(init_value->IsInstance<PrimExprNode>()){
+    const auto &node = runtime::Downcast<PrimExpr>(init_value);
+    PrimExprFunctor::VisitExpr(node, os);
+  }else {
+    MXTHROW<< "The init value of "<< op <<" is not a PrimExpr.";
+    return;
+  }
+  os << mlir_name << " = " << expr_name_map_->at(init_value.get())<<std::endl;;
+  insert_or_assign_expr_name_map_(op, mlir_name);
 }
 
 void MLIRTextPrinter::VisitStmt_(const AssignStmtNode* op, std::ostream& os) {
+  VisitStmtDefault_(op, os);
 }
 
 void MLIRTextPrinter::VisitStmt_(const ReturnStmtNode* op, std::ostream& os) {
