@@ -69,7 +69,7 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   explicit MLIRTextPrinter() : expr_name_scope(1), var_type_scope(1), var_name_scope(1) {
     expr_name_map_ = &(expr_name_scope.back());
     val_type_map_ = &(var_type_scope.back());
-    var_name_map_ =  &(var_name_scope.back());
+    var_name_map_ = &(var_name_scope.back());
   }
 
   void AddFunction(const PrimFunc& fn);
@@ -160,7 +160,7 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   }
 
   template <class... Args>
-  void insert_or_assign_var_name_map_(StringRef &key, Args&&... args) {
+  void insert_or_assign_var_name_map_(StringRef& key, Args&&... args) {
     auto rt = var_name_map_->emplace(
         std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple(args...));
     if (!rt.second) {

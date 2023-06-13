@@ -69,11 +69,17 @@ def reset_constant_dtype(lhs: ExpressionBaseNode, rhs: ExpressionBaseNode):
         other_kernel_t = other.kernel_type
         const_dtype = const_kernel_t.dtype
         other_dtype = other_kernel_t.dtype
-        if np.can_cast(const_dtype, other_dtype, "same_kind") and np.can_cast(const.value, other_dtype, "safe"):
+        if np.can_cast(
+                const_dtype,
+                other_dtype,
+                "same_kind") and np.can_cast(
+                const.value,
+                other_dtype,
+                "safe"):
             return ConstScalarNode(const.value, PYTYPE_TO_KERNEL_TYPE[other_dtype], const.span)
         else:
             raise SyntaxError(f"Cannot cast constant {const} from {const_dtype} to {other_dtype} "
-                                f" which is the type of the other operand.")
+                              f" which is the type of the other operand.")
 
     lhs_is_constant = isinstance(lhs, ConstScalarNode)
     rhs_is_constant = isinstance(rhs, ConstScalarNode)
@@ -97,10 +103,12 @@ class CastOp(ExpressionBaseNode):
         super().__init__(self.result_type)
 
     def to_matx_ir(self, **kwargs):
-        return _generic.cast(self.operand.to_matx_ir(**kwargs), NPDTYPE_TO_STR[self.target_dtype], self.span)
+        return _generic.cast(self.operand.to_matx_ir(**kwargs),
+                             NPDTYPE_TO_STR[self.target_dtype], self.span)
 
     def buffer_regions(self, **kwargs):
         return self.operand.buffer_regions(**kwargs)
+
 
 class BinaryOp(ExpressionBaseNode):
 

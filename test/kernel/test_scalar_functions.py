@@ -41,7 +41,7 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
 
     def test_int_assign(self):
         def foo(a: int32, b: int32) -> int32:
-            c:int32 = a+b
+            c: int32 = a + b
             return a - c
 
         k_foo = self.helper(foo)
@@ -50,7 +50,7 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
 
     def test_mixed_assign(self):
         def foo(a: int32, b: float32) -> float32:
-            c:float32 = a+b
+            c: float32 = a + b
             return a - c
 
         k_foo = self.helper(foo)
@@ -58,9 +58,9 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
             self.assertEqual(foo(x, y), k_foo(x, y))
 
     def test_int_reassign1(self):
-        def foo(a: int32, b: int32, c:int32) -> int32:
-            c1:int32 = b * c
-            c1:int32 = 1 + c1
+        def foo(a: int32, b: int32, c: int32) -> int32:
+            c1: int32 = b * c
+            c1: int32 = 1 + c1
             return a + b - c1
 
         k_foo = self.helper(foo)
@@ -68,8 +68,8 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
             self.assertEqual(foo(x, y, z), k_foo(x, y, z))
 
     def test_int_reassign2(self):
-        def foo(a: int32, b: int32, c:int32) -> int32:
-            c1:int32 = b * c
+        def foo(a: int32, b: int32, c: int32) -> int32:
+            c1: int32 = b * c
             c1 = 1 + c1
             return a + b - c1
 
@@ -77,11 +77,10 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
         for x, y, z in itertools.product([-50, -1, 0, 6, 32], repeat=3):
             self.assertEqual(foo(x, y, z), k_foo(x, y, z))
 
-
     def test_int_reassign3(self):
-        def foo(a: int32, b: int32, c:int32) -> int32:
-            c1:int32 = b * c
-            c2:int32 = 1 + c1
+        def foo(a: int32, b: int32, c: int32) -> int32:
+            c1: int32 = b * c
+            c2: int32 = 1 + c1
             return a + b - c2
 
         k_foo = self.helper(foo)
@@ -94,4 +93,3 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
     unittest.main()
-    

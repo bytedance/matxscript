@@ -191,8 +191,9 @@ void MLIRTextPrinter::PrintNodeName(const BaseExpr& ptr, std::ostream& os) {
   }
   if (ptr->IsInstance<PrimVarNode>()) {
     auto node = runtime::Downcast<PrimVar>(ptr);
-    const auto & var_name = var_name_map_->find(node->name_hint);
-    MXCHECK(var_name!=var_name_map_->end())<< "Expr: " << ptr << " has no corrresponding ssa value";
+    const auto& var_name = var_name_map_->find(node->name_hint);
+    MXCHECK(var_name != var_name_map_->end())
+        << "Expr: " << ptr << " has no corrresponding ssa value";
     os << var_name->second;
     return;
   }
@@ -460,7 +461,6 @@ void MLIRTextPrinter::VisitExpr_(const PrimNotNode* op, std::ostream& os) {
 void MLIRTextPrinter::VisitExpr_(const PrimSelectNode* op, std::ostream& os) {
   //%x = arith.select %cond, %true, %false : i32
   VisitStmtDefault_(op, os);
-
 }
 
 void MLIRTextPrinter::VisitExpr_(const PrimVarNode* op, std::ostream& os) {
@@ -569,24 +569,24 @@ void MLIRTextPrinter::VisitStmt_(const BufferStoreNode* op, std::ostream& os) {
 
 void MLIRTextPrinter::VisitStmt_(const AllocaVarStmtNode* op, std::ostream& os) {
   if (expr_name_map_->find(op->var.get()) != expr_name_map_->end()) {
-    MXTHROW<< "Allocating var "<< op->var <<" which has already been allocated.";
+    MXTHROW << "Allocating var " << op->var << " which has already been allocated.";
     return;
   }
-  const auto & name = op->var;
+  const auto& name = op->var;
   StringRef node_name;
   if (name->IsInstance<PrimVarNode>()) {
-    const auto &node = runtime::Downcast<PrimVar>(name);
+    const auto& node = runtime::Downcast<PrimVar>(name);
     node_name = node->name_hint;
   } else {
-    MXTHROW<< "The target var of "<< op <<" is not a PrimVar.";
+    MXTHROW << "The target var of " << op << " is not a PrimVar.";
     return;
   }
-  const auto & init_value = op->init_value;
-  if(init_value->IsInstance<PrimExprNode>()){
-    const auto &node = runtime::Downcast<PrimExpr>(init_value);
+  const auto& init_value = op->init_value;
+  if (init_value->IsInstance<PrimExprNode>()) {
+    const auto& node = runtime::Downcast<PrimExpr>(init_value);
     PrimExprFunctor::VisitExpr(node, os);
-  }else {
-    MXTHROW<< "The init value of "<< op <<" is not a PrimExpr.";
+  } else {
+    MXTHROW << "The init value of " << op << " is not a PrimExpr.";
     return;
   }
   insert_or_assign_var_name_map_(node_name, expr_name_map_->at(init_value.get()));

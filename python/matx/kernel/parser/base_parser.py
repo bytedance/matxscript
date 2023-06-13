@@ -204,7 +204,8 @@ class BaseParser(ast.NodeVisitor):
         # make sure the annotated type is the same as rhs value
         if value.kernel_type != ann:
             if value.kernel_type.shape != ann.shape:
-                raise SyntaxError(f"Assigning {value.kernel_type} to {ann} is not allowed because they have different shapes")
+                raise SyntaxError(
+                    f"Assigning {value.kernel_type} to {ann} is not allowed because they have different shapes")
             elif value.kernel_type.dtype != ann.dtype:
                 value = CastOp(value, ann.dtype, span)
             else:
