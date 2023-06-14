@@ -142,7 +142,12 @@ class BinaryOp(ExpressionBaseNode):
         self.shape = result_shape
 
     def to_matx_ir(self, **kwargs):
-        matx_result = self.op(self.lhs.to_matx_ir(**kwargs), self.rhs.to_matx_ir(**kwargs), self.span)
+        matx_result = self.op(
+            self.lhs.to_matx_ir(
+                **kwargs),
+            self.rhs.to_matx_ir(
+                **kwargs),
+            self.span)
         if matx_result.checked_type != _ir.PrimType(self.result_type.dtype_str()):
             matx_result = _generic.cast(matx_result, self.result_type.dtype_str(), self.span)
         return matx_result

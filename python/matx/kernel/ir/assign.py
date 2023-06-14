@@ -58,7 +58,8 @@ class AssignNDArrayNode(StatementBaseNode):
             begin = tuple(self.iter_var_names)
             value = self.rhs.to_matx_ir(iter_var=self.iter_var_names, **kwargs)
             if value.checked_type != _ir.PrimType(self.lhs.kernel_type.dtype_str()):
-                raise SyntaxError(f"Cannot store {value.checked_type} to buffer of {self.lhs.kernel_type.dtype_str()}")
+                raise SyntaxError(
+                    f"Cannot store {value.checked_type} to buffer of {self.lhs.kernel_type.dtype_str()}")
             return self.lhs.buffer.vstore(begin, value)
         raise NotImplementedError(f"Unsupported assign statement lhs: {self.lhs} rhs: {self.rhs}")
         # self.lhs
