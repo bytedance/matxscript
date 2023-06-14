@@ -55,6 +55,8 @@ def bind_data_to_type(ins, types):
             raise NotImplementedError(f"{t} is not a legit type.")
         args.append((i, t))
 
+        if is_scalar_type(t):
+            continue
         for actual_s, annotated_s in zip(i.shape, t.shape):
             if not is_symbol(annotated_s):
                 continue
@@ -94,12 +96,15 @@ def lower_linalg_to_cpu(input_fname, output_fname="llvm_tmp.mlir"):
     lower = subprocess.Popen(['mlir-opt',
                               '--convert-linalg-to-loops',
                               '--lower-affine',
+                              '--arith-expand',
+                              '--arith-unsigned-when-equivalent',
                               '--convert-scf-to-cf',
                               '--convert-linalg-to-llvm',
                               '--convert-func-to-llvm',
                               '--convert-index-to-llvm',
                               '--convert-arith-to-llvm',
                               '--convert-memref-to-llvm',
+                              '--convert-math-to-llvm',
                               '--convert-cf-to-llvm',
                               '--scf-for-loop-peeling',
                               '--scf-for-loop-specialization',
@@ -176,27 +181,30 @@ class LinalgFuncWrapper:
         self.func = func
         self.arg_types = parser.arg_types
         self.rt_types = parser.return_types
+        if is_scalar_type(self.rt_types):
+            self.func.restype = PYTYPE_TO_C_TYPE[self.rt_types.dtype]
 
     def __call__(self, *args, rt=None):
         if len(args) != len(self.arg_types):
             raise NotImplementedError(f"the size of the given input {len(args)}"
                                       f" is not the same as the annotation {len(self.arg_types)}")
         args, rt = self.to_c_args(*args, rt=rt)
-        self.raw_call(*args)
-        return rt
+        rc = self.raw_call(*args)
+        return rt if rt is not None else rc
 
     def raw_call(self, *args):
-        self.func(*args)
+        return self.func(*args)
 
     def to_c_args(self, *args, rt=None):
         binded_args, symbol_dict = bind_data_to_type(args, self.arg_types)
-        if rt is None:  # todo shape may be symbol
-            shape = [symbol_dict[s] if is_symbol(s) else s for s in self.rt_types.shape]
-            rt = np.zeros(shape=shape, dtype=self.rt_types.dtype)
-        for actual_s, ann_s in zip(rt.shape, self.rt_types.shape):
-            assert symbol_dict[ann_s] == actual_s
+        if not is_scalar_type(self.rt_types):
+            if rt is None:
+                shape = [symbol_dict[s] if is_symbol(s) else s for s in self.rt_types.shape]
+                rt = np.zeros(shape=shape, dtype=self.rt_types.dtype)
+            for actual_s, ann_s in zip(rt.shape, self.rt_types.shape):
+                assert symbol_dict[ann_s] == actual_s
+            binded_args.append((rt, self.rt_types))
 
-        binded_args.append((rt, self.rt_types))
         for t, value in symbol_dict.items():
             binded_args.append((value, t))
         return binded_args_to_c(binded_args), rt
@@ -208,14 +216,29 @@ def load_func(shared_lib, parser: KernelParser):
     return LinalgFuncWrapper(func, parser)
 
 
-def compile_linalg(parser: KernelParser, file_name=None, debug=False, over_written_code=None):
-    if file_name is None:
-        code_file_name = parser.file_name.split('/')[-1].split('.')[0]
-        file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
-    if debug:
-        file_name = f"_mlir_debug"
-    mlir_f = write_linalg(parser.main_node_ir, file_name + ".mlir", debug, over_written_code)
-    lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
-    llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
-    shared_lib = llvm_compile(llvm_f, file_name + ".so")
-    return load_func(shared_lib, parser)
+def compile_linalg(
+        parser: KernelParser,
+        file_name=None,
+        dir="__mlir_output__",
+        debug=False,
+        over_written_code=None):
+    current_path = os.getcwd()
+    try:
+        if file_name is None:
+            code_file_name = parser.file_name.split('/')[-1].split('.')[0]
+            file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
+        if debug:
+            file_name = f"_mlir_debug"
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        os.chdir(dir)
+        mlir_f = write_linalg(parser.main_node_ir, file_name + ".mlir", debug, over_written_code)
+        lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
+        llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
+        shared_lib = llvm_compile(llvm_f, file_name + ".so")
+        func = load_func(shared_lib, parser)
+        return func
+    except Exception as e:
+        raise e
+    finally:
+        os.chdir(current_path)

@@ -122,7 +122,13 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   template <typename T>
   void GenMLIRArithStatement(const std::string& arith_type,
                              const PrimBinaryOpNode<T>* op,
-                             std::ostream& os);
+                             std::ostream& os,
+                             const std::unordered_map<std::string, std::string>& suffix_map = {});
+
+  template <typename T>
+  void GenMLIRCompareStatement(const std::string& compare_type,
+                               const PrimCmpOpNode<T>* op,
+                               std::ostream& os);
 
   std::string ConvertTypeToMLIR(const runtime::DataType& type) const;
   std::string ConvertTypeToMLIR(const Type& type) const;

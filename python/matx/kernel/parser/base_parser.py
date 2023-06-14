@@ -102,7 +102,13 @@ class BaseParser(ast.NodeVisitor):
 
     # Expressions
     def visit_UnaryOp(self, node: ast.UnaryOp) -> Any:
-        raise NotImplementedError("visit_UnaryOp is not Implemented")
+        opname = type(node.op).__name__
+        operand_ir = self.visit(node.operand)
+        if (is_scalar_type(operand_ir.kernel_type) or is_symbol_type(operand_ir.kernel_type)):
+            return UnaryOp(operand_ir, type(node.op), self.build_span(node))
+        else:
+            raise SyntaxError(f"{opname} ({operand_ir}) is not supported "
+                              f"because {operand_ir} is not a scalar")
 
     def visit_BinOp(self, node: ast.BinOp) -> Any:
         opname = type(node.op).__name__
@@ -311,7 +317,18 @@ class BaseParser(ast.NodeVisitor):
         return [*value, attr_name]
 
     def visit_Return(self, node: ast.Return) -> Any:
-        pass
+        if node.value is None:
+            return _ir.ReturnStmt(NoneExpr())
+        if not is_scalar_type(self.return_ctx.kernel_type):
+            raise NotImplementedError(
+                "base parser does not support returning things other than scalar")
+
+        rt_ir = self.visit(node.value)
+        if not is_scalar_shape(rt_ir.shape):
+            raise NotImplementedError(
+                "The return value is not a scalar which does not match the annotation")
+
+        return _ir.ReturnStmt(rt_ir.to_matx_ir())
 
     def visit_Tuple(self, node: ast.Tuple) -> Any:
         values = []

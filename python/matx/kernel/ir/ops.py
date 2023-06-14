@@ -29,7 +29,9 @@ _arithmetic_binop_maker = {
     ast.Mult: lambda lhs, rhs, span: _generic.multiply(lhs, rhs, span),
     ast.Div: lambda lhs, rhs, span: _generic.divide(lhs, rhs, span),
     ast.FloorDiv: lambda lhs, rhs, span: _generic.floordiv(lhs, rhs, span),
-    ast.Mod: lambda lhs, rhs, span: _generic.floormod(lhs, rhs, span),
+    # ast.Mod: lambda lhs, rhs, span: _generic.floormod(lhs, rhs, span),
+    # quick fix for mod sign issue
+    ast.Mod: lambda lhs, rhs, span: _generic.floormod(_generic.add(_generic.floormod(lhs, rhs, span), rhs, span), rhs, span),
     ast.BitOr: lambda lhs, rhs, span: _generic.bitwise_or(lhs, rhs, span),
     ast.BitAnd: lambda lhs, rhs, span: _generic.bitwise_and(lhs, rhs, span),
     ast.BitXor: lambda lhs, rhs, span: _generic.bitwise_xor(lhs, rhs, span),
@@ -54,8 +56,8 @@ _boolop_marker = {
     ast.IsNot: lambda lhs, rhs, span: _generic.op_not(_generic.op_is(lhs, rhs, span), span),
 
 
-    ast.And: lambda span, *args: _generic.op_and(span, *args),
-    ast.Or: lambda span, *args: _generic.op_or(span, *args)
+    ast.And: lambda lhs, rhs, span: _generic.op_and(span, lhs, rhs),
+    ast.Or: lambda lhs, rhs, span: _generic.op_or(span, lhs, rhs)
 }
 
 
@@ -77,7 +79,7 @@ class BinaryOp(ExpressionBaseNode):
         self.lhs_shape = get_shape(self.lhs_type)
         self.rhs_shape = get_shape(self.rhs_type)
         if self.is_boolean_op:
-            self.result_dtype = bool_
+            self.result_dtype = np.bool_
         else:
             self.result_dtype = np_result_dtype([self.lhs_dtype, self.rhs_dtype])
         result_shape, lhs_new_shape, rhs_new_shape = broadcast(self.lhs_shape, self.rhs_shape)
@@ -93,3 +95,25 @@ class BinaryOp(ExpressionBaseNode):
 
     def buffer_regions(self, **kwargs):
         return self.lhs.buffer_regions(**kwargs) + self.rhs.buffer_regions(**kwargs)
+
+
+class UnaryOp(ExpressionBaseNode):
+
+    def __init__(self, operand: ExpressionBaseNode, op_type, span):
+        self.op = _unaryop_maker[op_type]
+        self.operand = operand
+        self.span = span
+        self.operand_type = operand.kernel_type
+        self.operand_dtype = get_dtype(self.operand_type)
+        self.result_dtype = np_result_dtype([self.operand_dtype])
+        result_shape = self.operand.kernel_type.shape
+        self.result_shape = tuple(result_shape)
+        self.result_type = NDArrayType(self.result_shape, self.result_dtype)
+        super().__init__(self.result_type)
+        self.shape = result_shape
+
+    def to_matx_ir(self, **kwargs):
+        return self.op(self.operand.to_matx_ir(**kwargs), self.span)
+
+    def buffer_regions(self, **kwargs):
+        return self.operand.buffer_regions(**kwargs)
