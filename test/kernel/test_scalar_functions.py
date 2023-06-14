@@ -17,12 +17,12 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-import unittest
 import itertools
+import unittest
 
-from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.compile_linalg import compile_linalg
-from matx.kernel.typing import int32, float32, float64, boolean
+from matx.kernel.kernel_parser import KernelParser
+from matx.kernel.typing import int32, float32, float64
 
 
 class TestMLIRIntArithmeticOp(unittest.TestCase):
@@ -49,7 +49,7 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
             self.assertEqual(foo(x, y), k_foo(x, y))
 
     def test_mixed_assign(self):
-        def foo(a: int32, b: float32) -> float32:
+        def foo(a: int32, b: float32) -> float64:
             c: float32 = a + b
             return a - c
 

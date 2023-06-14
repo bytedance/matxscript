@@ -18,7 +18,6 @@
 #  under the License.
 import ast
 
-import numpy as np
 from matx.ir import generic as _generic
 from .base import *
 from .scalar import ConstScalarNode
@@ -130,6 +129,8 @@ class BinaryOp(ExpressionBaseNode):
         self.rhs_shape = get_shape(self.rhs_type)
         if self.is_boolean_op:
             self.result_dtype = np.bool_
+        elif op_type == ast.Div:
+            self.result_dtype = (self.lhs_dtype(1) / self.rhs_dtype(1)).dtype.type
         else:
             self.result_dtype = np_result_dtype([self.lhs_dtype, self.rhs_dtype])
         result_shape, lhs_new_shape, rhs_new_shape = broadcast(self.lhs_shape, self.rhs_shape)
@@ -141,7 +142,10 @@ class BinaryOp(ExpressionBaseNode):
         self.shape = result_shape
 
     def to_matx_ir(self, **kwargs):
-        return self.op(self.lhs.to_matx_ir(**kwargs), self.rhs.to_matx_ir(**kwargs), self.span)
+        matx_result = self.op(self.lhs.to_matx_ir(**kwargs), self.rhs.to_matx_ir(**kwargs), self.span)
+        if matx_result.checked_type != _ir.PrimType(self.result_type.dtype_str()):
+            matx_result = _generic.cast(matx_result, self.result_type.dtype_str(), self.span)
+        return matx_result
 
     def buffer_regions(self, **kwargs):
         return self.lhs.buffer_regions(**kwargs) + self.rhs.buffer_regions(**kwargs)

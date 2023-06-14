@@ -19,9 +19,9 @@
 
 import unittest
 
-from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.compile_linalg import compile_linalg
-from matx.kernel.typing import int32, float32, float64, boolean
+from matx.kernel.kernel_parser import KernelParser
+from matx.kernel.typing import int32, float32, float64
 
 
 class TestMLIRIntArithmeticOp(unittest.TestCase):
@@ -272,7 +272,7 @@ class TestMLIRMixedArithmeticOp(unittest.TestCase):
         def foo2(a: float64, b: int32) -> float64:
             return a + b
 
-        def foo3(a: float32, b: int32) -> float32:
+        def foo3(a: float32, b: int32) -> float64:
             return a + b
 
         self.foo1 = self.helper(foo1)
@@ -291,7 +291,7 @@ class TestMLIRMixedArithmeticOp(unittest.TestCase):
         def foo2(a: float64, b: int32) -> float64:
             return a - b
 
-        def foo3(a: float32, b: int32) -> float32:
+        def foo3(a: float32, b: int32) -> float64:
             return a - b
 
         self.foo1 = self.helper(foo1)
@@ -310,7 +310,7 @@ class TestMLIRMixedArithmeticOp(unittest.TestCase):
         def foo2(a: float64, b: int32) -> float64:
             return a * b
 
-        def foo3(a: float32, b: int32) -> float32:
+        def foo3(a: float32, b: int32) -> float64:
             return a * b
 
         self.foo1 = self.helper(foo1)

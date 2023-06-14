@@ -16,10 +16,11 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
+from typing import List
+
 from .ndarray import *
 from ... import ir as _ir
 from ...ir.expr import *
-from typing import List
 
 
 def make_range(shape, shape_symbol_table):
@@ -54,11 +55,13 @@ class AssignNDArrayNode(StatementBaseNode):
 
     def to_matx_ir(self, **kwargs):
         if isinstance(self.lhs, NDArrayNode) and is_ndarray_type(self.rhs.kernel_type):
-            return self.lhs.buffer.vstore(
-                tuple(
-                    self.iter_var_names), self.rhs.to_matx_ir(
-                    iter_var=self.iter_var_names, **kwargs))
-            # self.lhs
+            begin = tuple(self.iter_var_names)
+            value = self.rhs.to_matx_ir(iter_var=self.iter_var_names, **kwargs)
+            if value.checked_type != _ir.PrimType(self.lhs.kernel_type.dtype_str()):
+                raise SyntaxError(f"Cannot store {value.checked_type} to buffer of {self.lhs.kernel_type.dtype_str()}")
+            return self.lhs.buffer.vstore(begin, value)
+        raise NotImplementedError(f"Unsupported assign statement lhs: {self.lhs} rhs: {self.rhs}")
+        # self.lhs
         # return self.lhs.
 
     def writes(self):
