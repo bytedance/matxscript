@@ -62,19 +62,23 @@ using namespace ::matxscript::runtime;
 void MLIRTextPrinter::NewScope() {
   expr_name_scope.emplace_back(expr_name_map_->begin(), expr_name_map_->end());
   expr_name_map_ = &(expr_name_scope.back());
-  var_type_scope.emplace_back(val_type_map_->begin(), val_type_map_->end());
-  val_type_map_ = &(var_type_scope.back());
+  val_type_scope.emplace_back(val_type_map_->begin(), val_type_map_->end());
+  val_type_map_ = &(val_type_scope.back());
   var_name_scope.emplace_back(var_name_map_->begin(), var_name_map_->end());
   var_name_map_ = &(var_name_scope.back());
+  var_type_scope.emplace_back(var_type_map_->begin(), var_type_map_->end());
+  var_type_map_ = &(var_type_scope.back());
 }
 
 void MLIRTextPrinter::PopScope() {
   expr_name_scope.pop_back();
   expr_name_map_ = &(expr_name_scope.back());
-  var_type_scope.pop_back();
-  val_type_map_ = &(var_type_scope.back());
+  val_type_scope.pop_back();
+  val_type_map_ = &(val_type_scope.back());
   var_name_scope.pop_back();
   var_name_map_ = &(var_name_scope.back());
+  var_type_scope.pop_back();
+  var_type_map_ = &(var_type_scope.back());
 }
 
 // Error Handlers
@@ -97,7 +101,7 @@ void MLIRTextPrinter::VisitExpr_(const IntImmNode* op, std::ostream& os) {
   if (expr_name_map_->find(op) != expr_name_map_->end()) {
     MXTHROW << "[linalg] op is already in expr_index_map_";
   }
-  insert_or_assign_expr_name_map_(op, '%' + std::to_string(cur_index_));
+  insert_or_assign_map_(expr_name_map_, static_cast<const Object*>(op), '%' + std::to_string(cur_index_));
   cur_index_ += 1;
 }
 
@@ -107,7 +111,7 @@ void MLIRTextPrinter::VisitExpr_(const FloatImmNode* op, std::ostream& os) {
   if (expr_name_map_->find(op) != expr_name_map_->end()) {
     MXTHROW << "[linalg] op is already in expr_index_map_";
   }
-  insert_or_assign_expr_name_map_(op, '%' + std::to_string(cur_index_));
+  insert_or_assign_map_(expr_name_map_,static_cast<const Object*>(op), '%' + std::to_string(cur_index_));
   cur_index_ += 1;
 }
 
@@ -259,7 +263,7 @@ void MLIRTextPrinter::GenMLIRArithStatement(
   if (expr_name_map_->find(op) != expr_name_map_->end()) {
     MXTHROW << "[linalg] op is already in expr_index_map_";
   }
-  insert_or_assign_expr_name_map_(op, '%' + std::to_string(cur_index_));
+  insert_or_assign_map_(expr_name_map_,static_cast<const Object*>(op), '%' + std::to_string(cur_index_));
   cur_index_ += 1;
 }
 
@@ -295,7 +299,7 @@ void MLIRTextPrinter::VisitExpr_(const PrimFloorDivNode* op, std::ostream& os) {
   }
   const std::string var_name = '%' + std::to_string(cur_index_);
   os << var_name << " = math.floor " << expr_name_map_->at(op) << " : " << data_type << std::endl;
-  insert_or_assign_expr_name_map_(op, var_name);
+  insert_or_assign_map_(expr_name_map_,static_cast<const Object*>(op), var_name);
   cur_index_++;
 }
 
@@ -307,7 +311,7 @@ void MLIRTextPrinter::VisitExpr_(const PrimFloorModNode* op, std::ostream& os) {
   PrimAdd add(normal_mod, rhs);
   PrimMod mod2(add, rhs);
   VisitExpr_(mod2.get(), os);
-  insert_or_assign_expr_name_map_(op, expr_name_map_->at(mod2.get()));
+  insert_or_assign_map_(expr_name_map_,static_cast<const Object*>(op), expr_name_map_->at(mod2.get()));
   expr_name_map_->erase(normal_mod.get());
   expr_name_map_->erase(add.get());
   expr_name_map_->erase(mod2.get());
@@ -362,7 +366,7 @@ void MLIRTextPrinter::GenMLIRCompareStatement(const std::string& compare_type,
   if (expr_name_map_->find(op) != expr_name_map_->end()) {
     MXTHROW << "[linalg] op is already in expr_index_map_";
   }
-  insert_or_assign_expr_name_map_(op, '%' + std::to_string(cur_index_));
+  insert_or_assign_map_(expr_name_map_,static_cast<const Object*>(op), '%' + std::to_string(cur_index_));
   cur_index_ += 1;
 }
 
@@ -411,7 +415,7 @@ void MLIRTextPrinter::VisitExpr_(const PrimAndNode* op, std::ostream& os) {
   if (expr_name_map_->find(op) != expr_name_map_->end()) {
     MXTHROW << "[linalg] op is already in expr_index_map_";
   }
-  insert_or_assign_expr_name_map_(op, '%' + std::to_string(cur_index_));
+  insert_or_assign_map_(expr_name_map_,static_cast<const Object*>(op), '%' + std::to_string(cur_index_));
   cur_index_ += 1;
 }
 
@@ -435,7 +439,7 @@ void MLIRTextPrinter::VisitExpr_(const PrimOrNode* op, std::ostream& os) {
   if (expr_name_map_->find(op) != expr_name_map_->end()) {
     MXTHROW << "[linalg] op is already in expr_index_map_";
   }
-  insert_or_assign_expr_name_map_(op, '%' + std::to_string(cur_index_));
+  insert_or_assign_map_(expr_name_map_,static_cast<const Object*>(op), '%' + std::to_string(cur_index_));
   cur_index_ += 1;
 }
 
@@ -454,7 +458,7 @@ void MLIRTextPrinter::VisitExpr_(const PrimNotNode* op, std::ostream& os) {
   if (expr_name_map_->find(op) != expr_name_map_->end()) {
     MXTHROW << "[linalg] op is already in expr_index_map_";
   }
-  insert_or_assign_expr_name_map_(op, '%' + std::to_string(cur_index_));
+  insert_or_assign_map_(expr_name_map_,static_cast<const Object*>(op), '%' + std::to_string(cur_index_));
   cur_index_ += 1;
 }
 
@@ -551,12 +555,12 @@ void MLIRTextPrinter::VisitExpr_(const PrimCastNode* op, std::ostream& os) {
   os << " : ";
   os << ConvertTypeToMLIR(v->checked_type()) << " to " << ConvertTypeToMLIR(op->checked_type())
      << std::endl;
-  insert_or_assign_expr_name_map_(op, '%' + std::to_string(cur_index_));
+  insert_or_assign_map_(expr_name_map_,static_cast<const Object*>(op), '%' + std::to_string(cur_index_));
   cur_index_ += 1;
 }
 
 void MLIRTextPrinter::VisitExpr_(const BufferLoadNode* op, std::ostream& os) {
-  insert_or_assign_expr_name_map_(op, computeBlockPrinter->GetPrimVarName(op));
+  insert_or_assign_map_(expr_name_map_, static_cast<const Object*>(op), computeBlockPrinter->GetPrimVarName(op));
 }
 
 // Begin Stmt
@@ -585,7 +589,7 @@ void MLIRTextPrinter::VisitStmt_(const AllocaVarStmtNode* op, std::ostream& os) 
     MXTHROW << "The init value of " << op << " is not a PrimExpr.";
     return;
   }
-  insert_or_assign_var_name_map_(node_name, expr_name_map_->at(init_value.get()));
+  insert_or_assign_map_(var_name_map_, std::move(node_name), expr_name_map_->at(init_value.get()));
 }
 
 void MLIRTextPrinter::VisitStmt_(const AssignStmtNode* op, std::ostream& os) {
@@ -607,7 +611,7 @@ void MLIRTextPrinter::VisitStmt_(const AssignStmtNode* op, std::ostream& os) {
     MXTHROW << "The init value of " << op << " is not a PrimExpr.";
     return;
   }
-  insert_or_assign_var_name_map_(node_name, expr_name_map_->at(rhs_expr.get()));
+  insert_or_assign_map_(var_name_map_, std::move(node_name), expr_name_map_->at(rhs_expr.get()));
 }
 
 void MLIRTextPrinter::VisitStmt_(const ReturnStmtNode* op, std::ostream& os) {
@@ -631,6 +635,21 @@ void MLIRTextPrinter::VisitStmt_(const AssertStmtNode* op, std::ostream& os) {
   VisitStmtDefault_(op, os);
 }
 
+
+auto SearchCommonNewVars(const MLIRTextPrinter::var_name_map &if_case,
+                         const MLIRTextPrinter::var_name_map &else_case,
+                         const MLIRTextPrinter::var_name_map &old_vars){
+  std::unordered_map<StringRef, std::pair<std::string, std::string>> common_new_vars;
+  for (const auto &pair:if_case){
+    if(else_case.count(pair.first) && !old_vars.count(pair.first)){
+      MXCHECK(common_new_vars.find(pair.first)== common_new_vars.end())<<"[MLIR Printer] "<<pair.first;
+      std::pair<std::string, std::string> names(pair.second, else_case.at(pair.first));
+      common_new_vars.emplace(pair.first, std::move(names));
+    }
+  }
+  return common_new_vars;
+}
+
 void MLIRTextPrinter::VisitStmt_(const IfThenElseNode* op, std::ostream& os) {
   MXCHECK(op->condition->IsInstance<PrimExprNode>())
       << "The condition of if op: " << op << " is not a PrimExprNode";
@@ -638,11 +657,58 @@ void MLIRTextPrinter::VisitStmt_(const IfThenElseNode* op, std::ostream& os) {
   const auto& then_case = op->then_case;
   const auto& else_case = op->else_case;
   PrimExprFunctor::VisitExpr(condition, os);
-  os << "scf.if " << expr_name_map_->at(condition.get()) << " {" << std::endl;
-  VisitStmt(then_case, os);
-  os << "} else {" << std::endl;
-  VisitStmt(else_case, os);
-  os << "}" << std::endl;
+  std::stringstream true_block, false_block;
+  const auto &current_vars = var_name_scope.back();
+  this->NewScope();
+  VisitStmt(then_case, true_block);
+  const auto true_new_vars = var_name_scope.back();
+  this->PopScope();
+  this->NewScope();
+  VisitStmt(then_case, false_block);
+  const auto false_new_vars = var_name_scope.back();
+  this->PopScope();
+
+  const auto & common_new_vars = SearchCommonNewVars(true_new_vars, false_new_vars, current_vars);
+  if(common_new_vars.empty()) {
+    os << "scf.if " << expr_name_map_->at(condition.get()) << " {" << std::endl;
+    os << true_block.rdbuf();
+    os << "} else {" << std::endl;
+    os << false_block.rdbuf();
+    os << "}" << std::endl;
+  } else {
+    std::vector<StringRef> py_var_names;
+    std::vector<std::string> type_info;
+    for(const auto& k_v : common_new_vars) {
+      StringRef key = k_v.first;
+      const auto& value = k_v.second;
+      // assign a new mlir var name to the python variable
+      const std::string name = '%' + std::to_string(cur_index_);
+      cur_index_++;
+      insert_or_assign_map_(var_name_map_, key, name);
+      py_var_names.push_back(std::move(key));
+      //type_info.push_back(ConvertTypeToMLIR())
+    }
+    // pass the var out
+    for(size_t i=0; i<py_var_names.size(); i++){
+      const auto &mlir_name = var_name_map_->at(py_var_names.at(i));
+      os<<py_var_names.at(i);
+      if(i!=py_var_names.size()-1){
+        os<<", ";
+      } else {
+        os<<" = " "scf.if " << expr_name_map_->at(condition.get());
+        os<<" -> (f32, f32)"<<std::endl;
+        os<< " {" << std::endl;
+      }
+    }
+    // print the if block
+    os << true_block.rdbuf();
+    os << "scf.yield %x_true, %y_true : f32, f32";
+    os << "} else {" << std::endl;
+    // print the else block
+    os << false_block.rdbuf();
+    os << "scf.yield %x_true, %y_true : f32, f32";
+    os << "}" << std::endl;
+  }
 }
 
 void MLIRTextPrinter::VisitStmt_(const SeqStmtNode* op, std::ostream& os) {
@@ -689,7 +755,7 @@ void MLIRTextPrinter::VisitStmt_(const PrimFuncNode* op, std::ostream& os) {
       auto node = runtime::Downcast<PrimVar>(param);
       os << '%' << node->name_hint << ": ";
       VisitType(node->checked_type(), os);
-      insert_or_assign_expr_name_map_(param.get(), '%' + std::string(node->name_hint.data()));
+      insert_or_assign_map_(expr_name_map_, static_cast<const Object*>(param.get()), '%' + std::string(node->name_hint.data()));
     } else {
       MXTHROW << "[linalg] not support arg node: " << param->checked_type();
     }
@@ -781,7 +847,7 @@ void MLIRTextPrinter::VisitStmt_(const AllocateNode* op, std::ostream& os) {
     }
   }
   os << ") : " << type_str << std::endl;
-  insert_or_assign_expr_name_map_(op->buffer_var.get(), var_name);
+  insert_or_assign_map_(expr_name_map_,static_cast<const Object*>(op->buffer_var.get()), var_name);
   VisitStmt(op->body, os);
 }
 
