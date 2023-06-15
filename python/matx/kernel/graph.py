@@ -144,8 +144,8 @@ class IntVar(Node):
 
     def __eq__(self, another: Any) -> bool:
         return (
-                isinstance(another, IntVar)
-                and self._attrs["symbolic_value"] == another._attrs["symbolic_value"]
+            isinstance(another, IntVar)
+            and self._attrs["symbolic_value"] == another._attrs["symbolic_value"]
         )
 
     def __hash__(self) -> int:
@@ -353,8 +353,8 @@ class IntImm(IntVar):
             return self.value() == another
 
         return (
-                isinstance(another, IntImm)
-                and self._attrs["values"] == another._attrs["values"]
+            isinstance(another, IntImm)
+            and self._attrs["values"] == another._attrs["values"]
         )
 
     def value(self) -> int:
