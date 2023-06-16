@@ -22,17 +22,17 @@
 # pylint: disable=invalid-name
 from __future__ import annotations
 
+import copy
+import math
 from abc import ABC, abstractmethod
 from numbers import Number
 from pprint import pformat
 from typing import Any, Dict, Iterable, List, Optional, Set, Union
 
-from matx.kernel import symbolic
-from matx.kernel.op_registry import OP_REGISTRY
-
-import math
-import copy
 import sympy
+
+from matx.kernel.graphIR import symbolic
+from matx.kernel.graphIR.op_registry import OP_REGISTRY
 
 
 # TODO: Introduce networkx

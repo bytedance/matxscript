@@ -38,12 +38,10 @@ For more advanced usage on Sympy, check: https://docs.sympy.org/latest/tutorials
 from __future__ import annotations
 
 import itertools
-
 from numbers import Number
 from typing import Any, List, Optional, Set
 
 import sympy
-
 
 _k_symbolic_to_intvar = {}
 _k_symbolic_index = 0
