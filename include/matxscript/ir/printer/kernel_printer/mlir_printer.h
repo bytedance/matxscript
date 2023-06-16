@@ -68,12 +68,10 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
 
   using expr_name_map = std::unordered_map<const Object*, std::string>;
   using var_name_map = std::unordered_map<StringRef, mlir_info>;
-  using val_type_map = std::unordered_map<const Object*, std::pair<std::string, std::string>>;
   friend class LinalgGenericPrinter;
 
-  explicit MLIRTextPrinter() : expr_name_scope(1), val_type_scope(1), var_name_scope(1) {
+  explicit MLIRTextPrinter() : expr_name_scope(1), var_name_scope(1) {
     expr_name_map_ = &(expr_name_scope.back());
-    val_type_map_ = &(val_type_scope.back());
     var_name_map_ = &(var_name_scope.back());
   }
 
@@ -143,7 +141,7 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   std::string ConvertTypeToMLIR(const PointerTypeNode* node) const;
   void PrintNodeName(const BaseExpr& ptr, std::ostream& os);
 
-  std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op);
+  std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op) const;
 
   // Begin Type
   // Overload of Type printing functions
@@ -172,10 +170,8 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   std::unordered_map<const PointerTypeNode*, const Buffer> pointer_buffer_map;
   std::unordered_map<const PrimExprNode*, const std::string> index_map;
   std::vector<expr_name_map> expr_name_scope;
-  std::vector<val_type_map> val_type_scope;
   std::vector<var_name_map> var_name_scope;
   expr_name_map* expr_name_map_;
-  val_type_map* val_type_map_;
   var_name_map* var_name_map_;
   std::atomic<uint32_t> cur_index_{0};
   std::unique_ptr<LinalgGenericPrinter> computeBlockPrinter = nullptr;

@@ -62,8 +62,6 @@ using namespace ::matxscript::runtime;
 void MLIRTextPrinter::NewScope() {
   expr_name_scope.emplace_back(expr_name_map_->begin(), expr_name_map_->end());
   expr_name_map_ = &(expr_name_scope.back());
-  val_type_scope.emplace_back(val_type_map_->begin(), val_type_map_->end());
-  val_type_map_ = &(val_type_scope.back());
   var_name_scope.emplace_back(var_name_map_->begin(), var_name_map_->end());
   var_name_map_ = &(var_name_scope.back());
 }
@@ -71,8 +69,6 @@ void MLIRTextPrinter::NewScope() {
 void MLIRTextPrinter::PopScope() {
   expr_name_scope.pop_back();
   expr_name_map_ = &(expr_name_scope.back());
-  val_type_scope.pop_back();
-  val_type_map_ = &(val_type_scope.back());
   var_name_scope.pop_back();
   var_name_map_ = &(var_name_scope.back());
 }
@@ -202,12 +198,8 @@ void MLIRTextPrinter::PrintNodeName(const BaseExpr& ptr, std::ostream& os) {
   MXTHROW << "Expr: " << ptr << " has no corrresponding ssa value";
 }
 
-std::pair<std::string, std::string> MLIRTextPrinter::GetNodeDataType(const PrimExprNode* op) {
-  auto val_type_iter = val_type_map_->find(op);
-  if (val_type_iter != val_type_map_->end()) {
-    return val_type_iter->second;
-  }
-  std::string arith_suffix = "";
+std::pair<std::string, std::string> MLIRTextPrinter::GetNodeDataType(const PrimExprNode* op) const {
+  std::string arith_suffix;
   std::string data_type = ConvertTypeToMLIR(op->checked_type());
   MXCHECK(op->dtype.lanes() == 1) << " lanes must be 1, but receive " << op->dtype.lanes();
   auto op_dtype = op->dtype.code();
@@ -224,14 +216,13 @@ std::pair<std::string, std::string> MLIRTextPrinter::GetNodeDataType(const PrimE
       MXTHROW << "data type not supported, type: " << op->dtype.code() << " bits: " << bits;
   }
 
-  if (arith_suffix == "" || data_type == "") {
+  if (arith_suffix.empty() || data_type.empty()) {
     MXTHROW << "data type not supported, type: " << op->dtype.code()
             << " bits: " << op->dtype.bits();
   }
 
   auto node_data_type =
       std::make_pair<std::string, std::string>(std::move(data_type), std::move(arith_suffix));
-  val_type_map_->emplace(op, node_data_type);
   return node_data_type;
 }
 

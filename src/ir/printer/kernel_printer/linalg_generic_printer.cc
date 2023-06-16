@@ -23,6 +23,7 @@
  * \brief Printer to print out the unified IR text format
  *        that can be parsed by a parser.
  */
+#include "matxscript/ir/printer/kernel_printer/linalg_generic_printer.h"
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -33,7 +34,6 @@
 #include "matxscript/ir/prim_expr.h"
 #include "matxscript/ir/prim_ops.h"
 #include "matxscript/ir/prim_var.h"
-#include "matxscript/ir/printer/kernel_printer/linalg_generic_printer.h"
 #include "matxscript/ir/tensor_stmt.h"
 #include "matxscript/ir/type.h"
 #include "matxscript/runtime/dlpack.h"
@@ -74,10 +74,9 @@ void LinalgGenericPrinter::VisitBufferRegionArray_(const Array<matxscript::ir::B
       types << ", ";
     }
   }
-  if (arr_.size() > 0) {
+  if (!arr_.empty()) {
     os << ": " << types.str();
   }
-  return;
 }
 
 bool isInt(const matxscript::ir::PrimExpr& expr, const int expect) {
@@ -112,11 +111,11 @@ void LinalgGenericPrinter::VisitRangeExpr_(const matxscript::ir::BufferRegion& b
 }
 
 void LinalgGenericPrinter::PrintBufferArray(const Array<matxscript::ir::BufferRegion>& bufferArray,
-                                            const std::string& perfix_str,
+                                            const std::string& prefix_str,
                                             std::ostream& os) {
   for (int i = 0; i < bufferArray.size(); i++) {
     const auto& read_buffer = bufferArray[i];
-    os << perfix_str;
+    os << prefix_str;
     const auto& buffer = read_buffer->buffer;
     const auto& region = read_buffer->region;
     for (int i = 0; i < region.size(); i++) {
@@ -210,12 +209,14 @@ void LinalgGenericPrinter::VisitComputBlockBody_(const matxscript::ir::Stmt& bod
     const auto& buffer = bufferRegionPtr->buffer;
     std::string element_name = buffer->name.c_str();
     const auto& regionArray = regionMap[buffer.get()];
-    const int idx =
+    const auto idx =
         std::find(regionArray.begin(), regionArray.end(), bufferRegionPtr) - regionArray.begin();
-    element_name = "%_" + element_name + std::to_string(idx);
-    mlir_printer_->insert_or_assign_map_(
-        mlir_printer_->expr_name_map_, static_cast<const Object*>(bufferRegionPtr), element_name);
-    os << element_name << ": " << mlir_printer_->ConvertTypeToMLIR(buffer->dtype);
+    element_name += std::to_string(idx);
+
+    mlir_printer_->insert_or_assign_map_(mlir_printer_->expr_name_map_,
+                                         static_cast<const Object*>(bufferRegionPtr),
+                                         "%_" + element_name);
+    os << "%_" << element_name << ": " << mlir_printer_->ConvertTypeToMLIR(buffer->dtype);
     if (i != bufferRegionOrder.size() - 1) {
       os << ", ";
     }
@@ -258,7 +259,7 @@ void LinalgGenericPrinter::ComputeBlockToLinalgGeneric(const ComputeBlockNode* o
   VisitBufferRegionArray_(op->writes, os);
   os << ')' << std::endl;
   os << "{" << std::endl;
-  // visit computblock
+  // visit compute block
   VisitComputBlockBody_(op->body, os);
   os << "}" << std::endl;
   mlir_printer_->PopScope();
