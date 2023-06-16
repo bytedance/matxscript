@@ -86,8 +86,8 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
         k_foo = self.helper(foo)
         for x, y, z in itertools.product([-50, -1, 0, 6, 32], repeat=3):
             self.assertEqual(foo(x, y, z), k_foo(x, y, z))
-"""
-    def test_scalar_if(self):
+
+    def test_scalar_if1(self):
         def foo(a: int32, b: int32, c: int32) -> int32:
             if a % 2 == 0:
                 d: int32 = b + c
@@ -97,8 +97,52 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
 
         k_foo = self.helper(foo)
         for x, y, z in itertools.product([-50, -1, 0, 6, 32], repeat=3):
-            self.assertEqual(foo(x, y, z), k_foo(x, y, z))"""
+            self.assertEqual(foo(x, y, z), k_foo(x, y, z))
 
+    def test_scalar_if2(self):
+        def foo(a: int32, b: int32, c: int32) -> int32:
+            if a % 2 == 0:
+                i: int32 = a % 3
+                d: int32 = b + c + i
+            else:
+                i: int32 = a % 4
+                d: int32 = b - c + i
+            return d
+
+        k_foo = self.helper(foo)
+        for x, y, z in itertools.product([-50, -1, 0, 6, 32], repeat=3):
+            self.assertEqual(foo(x, y, z), k_foo(x, y, z))
+
+    def test_scalar_if3(self):
+        def foo(a: int32, b: int32, c: int32) -> int32:
+            if a % 2 == 0:
+                i: int32 = a % 3
+                d: int32 = b + c + i
+            else:
+                j: int32 = a % 4
+                d: int32 = b - c + j
+            return d
+
+        k_foo = self.helper(foo)
+        for x, y, z in itertools.product([-50, -1, 0, 6, 32], repeat=3):
+            self.assertEqual(foo(x, y, z), k_foo(x, y, z))
+
+
+"""
+    def test_scalar_if4(self):
+        def foo(a: int32, b: int32, c: int32) -> float64:
+            if a % 2 == 0:
+                i: int32 = a % 3
+                d: float64 = b + c / i
+            else:
+                i: float64 = a / 4
+                d: float64 = b - c / i
+            return d
+
+        k_foo = self.helper(foo)
+        for x, y, z in itertools.product([-50, -1, 0, 6, 32], repeat=3):
+            self.assertEqual(foo(x, y, z), k_foo(x, y, z))
+"""
 
 if __name__ == "__main__":
     import logging

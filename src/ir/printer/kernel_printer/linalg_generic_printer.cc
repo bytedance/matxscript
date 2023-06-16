@@ -23,6 +23,7 @@
  * \brief Printer to print out the unified IR text format
  *        that can be parsed by a parser.
  */
+#include "matxscript/ir/printer/kernel_printer/linalg_generic_printer.h"
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -33,7 +34,6 @@
 #include "matxscript/ir/prim_expr.h"
 #include "matxscript/ir/prim_ops.h"
 #include "matxscript/ir/prim_var.h"
-#include "matxscript/ir/printer/kernel_printer/linalg_generic_printer.h"
 #include "matxscript/ir/tensor_stmt.h"
 #include "matxscript/ir/type.h"
 #include "matxscript/runtime/dlpack.h"
@@ -213,7 +213,8 @@ void LinalgGenericPrinter::VisitComputBlockBody_(const matxscript::ir::Stmt& bod
     const int idx =
         std::find(regionArray.begin(), regionArray.end(), bufferRegionPtr) - regionArray.begin();
     element_name = "%_" + element_name + std::to_string(idx);
-    mlir_printer_->insert_or_assign_map_(mlir_printer_->expr_name_map_, static_cast<const Object*>(bufferRegionPtr), element_name);
+    mlir_printer_->insert_or_assign_map_(
+        mlir_printer_->expr_name_map_, static_cast<const Object*>(bufferRegionPtr), element_name);
     os << element_name << ": " << mlir_printer_->ConvertTypeToMLIR(buffer->dtype);
     if (i != bufferRegionOrder.size() - 1) {
       os << ", ";

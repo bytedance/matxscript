@@ -32,8 +32,7 @@ _arithmetic_binop_maker = {
     ast.FloorDiv: lambda lhs, rhs, span: _generic.floordiv(lhs, rhs, span),
     # ast.Mod: lambda lhs, rhs, span: _generic.floormod(lhs, rhs, span),
     # quick fix for mod sign issue
-    ast.Mod: lambda lhs, rhs, span: _generic.floormod(_generic.add(_generic.floormod(lhs, rhs, span), rhs, span), rhs,
-                                                      span),
+    ast.Mod: lambda lhs, rhs, span: _generic.floormod(lhs, rhs, span),
     ast.BitOr: lambda lhs, rhs, span: _generic.bitwise_or(lhs, rhs, span),
     ast.BitAnd: lambda lhs, rhs, span: _generic.bitwise_and(lhs, rhs, span),
     ast.BitXor: lambda lhs, rhs, span: _generic.bitwise_xor(lhs, rhs, span),
