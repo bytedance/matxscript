@@ -2,3 +2,4 @@ numpy>=1.6,<2.0.0
 typed_ast>=1.4.2,<2.0.0
 astpretty>=1.0,<3.0.0
 prettytable>=1.0,<4.0.0
+sympy>=1.0,<2.0
