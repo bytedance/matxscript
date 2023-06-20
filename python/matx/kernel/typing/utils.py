@@ -23,7 +23,9 @@ import numbers
 
 import numpy as np
 
-from .kernel_type import NDArrayType, is_symbol, ScalarType
+from matx.kernel.typing import NDArrayType, ScalarType
+
+from matx.kernel.symbol.utils import is_symbol, is_symbol_type
 
 
 def is_scalar(x: NDArrayType):
@@ -50,7 +52,7 @@ def is_scalar_type(t):
     return t is ScalarType or isinstance(t, ScalarType)
 
 
-def get_dtype(x):
+def get_np_dtype(x):
     if isinstance(x, bool):
         return np.bool_
     if isinstance(x, int):

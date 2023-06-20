@@ -18,9 +18,8 @@
 #   * under the License.
 #   */
 
-
-from .utils import is_scalar_shape
-from ..symbol import is_symbol, equals, simplify
+import utils as typing_utils
+import matx.kernel.symbol.utils as symbol_utils
 
 
 def calculate_output_axis(arr1_shape, arr2_shape, axis_idx):
@@ -35,17 +34,17 @@ def calculate_output_axis(arr1_shape, arr2_shape, axis_idx):
     if axis1 is not None and axis2 is None:
         return axis1
 
-    if all([is_symbol(axis1), is_symbol(axis2)]):
-        if equals(axis1, axis2):
-            return simplify(axis1)
+    if all([symbol_utils.is_symbol(axis1), symbol_utils.is_symbol(axis2)]):
+        if symbol_utils.equals(axis1, axis2):
+            return symbol_utils.simplify(axis1)
         else:
             SyntaxError(f"{arr1_shape} cannot broadcast with {arr2_shape} "
                         f"because {axis1} is not equal to {axis2}.")
 
-    if is_symbol(axis1):
+    if symbol_utils.is_symbol(axis1):
         raise SyntaxError(f"{arr1_shape} cannot broadcast with {arr2_shape} "
                           f"because {axis1} is a symbol but {axis2} is not.")
-    if is_symbol(axis2):
+    if symbol_utils.is_symbol(axis2):
         raise SyntaxError(f"{arr1_shape} cannot broadcast with {arr2_shape}"
                           f" because {axis1} is not a symbol but {axis2} is.")
 
@@ -56,12 +55,12 @@ def calculate_output_axis(arr1_shape, arr2_shape, axis_idx):
 
 
 def broadcast_with_scalar(arr1_shape, arr2_shape):
-    if is_scalar_shape(arr1_shape) and is_scalar_shape(arr2_shape):
+    if typing_utils.is_scalar_shape(arr1_shape) and typing_utils.is_scalar_shape(arr2_shape):
         if len(arr1_shape) > len(arr2_shape):
             return arr1_shape, arr1_shape, arr2_shape
         else:
             return arr2_shape, arr1_shape, arr2_shape
-    if is_scalar_shape(arr1_shape):
+    if typing_utils.is_scalar_shape(arr1_shape):
         padding = max(0, len(arr1_shape) - len(arr2_shape))
         padding_shape = [1] * padding
         new_arr2_shape = padding_shape + arr2_shape
@@ -76,7 +75,7 @@ def broadcast_with_scalar(arr1_shape, arr2_shape):
 def broadcast(arr1_shape, arr2_shape):
     arr1_shape = list(arr1_shape)
     arr2_shape = list(arr2_shape)
-    if is_scalar_shape(arr1_shape) or is_scalar_shape(arr2_shape):
+    if typing_utils.is_scalar_shape(arr1_shape) or typing_utils.is_scalar_shape(arr2_shape):
         return broadcast_with_scalar(arr1_shape, arr2_shape)
 
     arr1_shape.reverse()

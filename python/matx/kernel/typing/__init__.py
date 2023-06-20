@@ -21,7 +21,6 @@ import numpy as np
 
 from .broadcast import *
 from .kernel_type import *
-from .utils import *
 from ctypes import *
 
 int8: ScalarType = ScalarType(np.int8)

@@ -19,7 +19,7 @@
 
 import numpy as np
 
-from ..symbol import is_symbol
+import matx.kernel.symbol.utils as symbol_utils
 
 NPDTYPE_TO_STR = {
     np.bool_: 'bool',
@@ -46,7 +46,7 @@ class NDArrayType:
         self.shape = tuple(shape)
         self.dtype = dtype
         self.storage = 'cpu'
-        self.symbol_list = [axis for axis in shape if is_symbol(axis)]
+        self.symbol_list = [axis for axis in shape if symbol_utils.is_symbol(axis)]
 
     def __repr__(self):
         return f'NDArrayType (dtype={self.dtype}, shape={self.shape})'
