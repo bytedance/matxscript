@@ -18,7 +18,7 @@
 #  under the License.
 
 from matx.ir import _ffi_node_api
-from .kernel_parser import KernelParser
+from matx.kernel.kernel_parser import KernelParser
 import ctypes
 from matx.kernel.typing import PYTYPE_TO_C_TYPE
 import matx.kernel.typing.utils as typing_utils

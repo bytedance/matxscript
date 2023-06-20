@@ -21,7 +21,7 @@ import ast
 import inspect
 
 from matx.script import context as script_context
-from ..typing import is_symbol, STR_TO_KERNEL_TYPE
+import matx.kernel.typing.utils as typing_utils
 
 
 def parse_ast(func):
@@ -36,7 +36,7 @@ def parse_ast(func):
 
 def extract_symbol_from_type(t):
     shape = t.shape
-    symbols = set([dim for dim in shape if is_symbol(dim)])
+    symbols = set([dim for dim in shape if typing_utils.is_symbol(dim)])
     return {str(s): s for s in symbols}
 
 

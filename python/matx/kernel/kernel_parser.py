@@ -22,8 +22,7 @@ import inspect
 from matx.ir import _ffi_node_api
 from matx.script import analysis
 from matx.script import context as script_context
-from .parser import KernelInspector
-from .parser import extract_symbol_from_type
+from matx.kernel.parser import KernelInspector, extract_symbol_from_type
 
 
 class KernelParser:
