@@ -16,7 +16,7 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-
+import warnings
 from .assign import *
 from .base import *
 from .control_flow import *
@@ -24,3 +24,5 @@ from .ndarray import *
 from .ops import *
 from .scalar import *
 from .symbol import *
+
+warnings.warn("This module is deprecated", category=DeprecationWarning)

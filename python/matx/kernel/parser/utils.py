@@ -20,20 +20,8 @@
 import ast
 import inspect
 
-from matx import ir as _ir
 from matx.script import context as script_context
 from ..typing import is_symbol, STR_TO_KERNEL_TYPE
-
-
-def build_span(root_node, node):
-    root_span = root_node.span
-    abs_lineno = root_span.lineno + node.lineno - 1
-    source_code = root_span.source_code
-
-    return _ir.Span(root_span.file_name,
-                    abs_lineno,
-                    root_node.context.name,
-                    source_code)
 
 
 def parse_ast(func):

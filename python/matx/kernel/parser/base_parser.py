@@ -24,7 +24,6 @@ import ast
 from typing import Any, TYPE_CHECKING
 
 from matx import ir as _ir
-from .utils import build_span
 from ..ir import *
 
 if TYPE_CHECKING:
@@ -64,9 +63,6 @@ class BaseParser(ast.NodeVisitor):
         visit_res = visitor(node)
         return visit_res
 
-    def build_span(self, node):
-        return build_span(self.root_node, node)
-
     def visit_Constant(self, node: ast.Constant) -> Any:
         if node.value is None:
             raise SyntaxError("None is not allowed")
@@ -75,7 +71,7 @@ class BaseParser(ast.NodeVisitor):
 
             const_scalar_ctx = ConstScalarNode(node.value,
                                                PYTYPE_TO_KERNEL_TYPE[dtype],
-                                               build_span(self.root_node, node))
+                                               None)
             return const_scalar_ctx
         else:
             raise NotImplementedError(f'Unsupported value {node.value}')
