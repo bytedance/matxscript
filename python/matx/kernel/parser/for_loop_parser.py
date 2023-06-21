@@ -18,11 +18,10 @@
 #  under the License.
 from __future__ import annotations
 
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from matx import ir as _ir
 from .base_parser import BaseParser
-from ..ir import *
 from ...ir.tensor_stmt import ComputeBlock
 
 if TYPE_CHECKING:

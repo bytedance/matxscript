@@ -31,8 +31,8 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Union
 
 import sympy
 
-from matx.kernel.graphIR import symbolic
 import matx.kernel.graphIR
+from matx.kernel.graphIR import symbolic
 
 
 # TODO: Introduce networkx
@@ -436,9 +436,9 @@ class Tensor(Node):
         """
         super().__init__()
         self._attrs["shape"] = self._convert_shape(shape)
-        self._attrs["name"] = name
+        self._attrs["name"] = name if name is not None else ""
         self._attrs["src_ops"] = set(src_ops) if src_ops is not None else set()
-        self._attrs["dst_ops"] = set(dst_ops) if src_ops is not None else set()
+        self._attrs["dst_ops"] = set(dst_ops) if dst_ops is not None else set()
         self._attrs["dtype"] = dtype
         self._attrs["is_output"] = is_output
         self._attrs["is_input"] = is_input
@@ -505,6 +505,9 @@ class Tensor(Node):
         It should not be used directly in IR.
         """
         return self._attrs["shape"]
+
+    def name(self) -> str:
+        return self._attrs["name"]
 
     def _rank(self) -> int:
         """
@@ -607,7 +610,7 @@ class Scalar(Tensor):
             skip_constant_folding: bool = False,
             check_nan_and_inf: bool = False,
             check_outputs: bool = False) -> None:
-        shape = [IntImm(1, "scalar_constant_shape_1")]
+        shape = []
         super().__init__(shape, name, src_ops, dst_ops, dtype, is_input, is_output, value, is_view_of,
                          is_internal_constant, skip_constant_folding, check_nan_and_inf, check_outputs)
 

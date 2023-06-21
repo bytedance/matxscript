@@ -18,7 +18,7 @@
 #  under the License.
 
 import matx.kernel.symbol.utils as symbol_utils
-from matx.kernel.typing import PYTYPE_TO_STR
+import matx.kernel.typing.utils as typing_utils
 
 
 class NDArrayType:
@@ -32,7 +32,7 @@ class NDArrayType:
         return f'NDArrayType (dtype={self.dtype}, shape={self.shape})'
 
     def dtype_str(self):
-        return PYTYPE_TO_STR[self.dtype]
+        return typing_utils.PYTYPE_TO_STR[self.dtype]
 
     def data_type(self):
         return ScalarType(self.dtype)

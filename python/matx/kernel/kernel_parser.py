@@ -19,10 +19,11 @@
 
 import inspect
 
+import matx.kernel.parser.utils as parser_utils
 from matx.ir import _ffi_node_api
+from matx.kernel.parser import KernelInspector
 from matx.script import analysis
 from matx.script import context as script_context
-from matx.kernel.parser import KernelInspector, extract_symbol_from_type
 
 
 class KernelParser:
@@ -40,7 +41,7 @@ class KernelParser:
         # get shape symbols in dict like {'x':X}
         self.symbols = dict()
         for arg_type in self.arg_types:
-            shape_symbol = extract_symbol_from_type(arg_type)
+            shape_symbol = parser_utils.extract_symbol_from_type(arg_type)
             self.symbols.update(shape_symbol)
         self.main_node_ir = None
 

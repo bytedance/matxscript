@@ -21,11 +21,11 @@
 
 import numbers
 
-import numpy as np
+import sympy
 
-from matx.kernel.typing import NDArrayType, ScalarType, PYTYPE_TO_STR
-
-from matx.kernel.symbol.utils import is_symbol, is_symbol_type
+from matx.kernel.symbol.utils import is_symbol
+from matx.kernel.typing.kernel_type import NDArrayType
+from matx.kernel.typing.type_def import *
 
 
 def is_scalar(x: NDArrayType):
@@ -52,7 +52,7 @@ def is_scalar_type(t):
     return t is ScalarType or isinstance(t, ScalarType)
 
 
-def get_np_dtype(x):
+def convert_to_np_dtype(x):
     if isinstance(x, bool):
         return np.bool_
     if isinstance(x, int):
@@ -61,6 +61,37 @@ def get_np_dtype(x):
         return np.float32
 
 
-def get_string_dtype(x):
-    np_dtype = get_np_dtype(x)
+def convert_to_string_dtype(x):
+    np_dtype = convert_to_np_dtype(x)
     return PYTYPE_TO_STR[np_dtype]
+
+
+def get_dtype_str(t):
+    if isinstance(t, NDArrayType):
+        return t.dtype_str()
+    elif isinstance(t, (numbers.Number, np.bool_)):
+        return PYTYPE_TO_KERNEL_TYPE[type(t)].dtype_str()
+    elif t is sympy.Basic:
+        return "int64"
+    else:
+        raise TypeError(f"Type {type(t)} of argument {t} is not supported")
+
+
+def get_shape(t):
+    if isinstance(t, NDArrayType):
+        return t.shape
+    elif isinstance(t, (numbers.Number, np.bool_)):
+        return None
+    elif t is sympy.Basic:
+        return (1,)
+    else:
+        raise TypeError(f"Shape {type(t)} of argument {t} is not supported")
+
+
+def np_result_dtype(nptypes):
+    restype = np.result_type(*nptypes)
+    if restype.type not in PYTYPE_TO_KERNEL_TYPE.keys():
+        for k in PYTYPE_TO_KERNEL_TYPE.keys():
+            if k == restype.type:
+                return k
+    return restype.type

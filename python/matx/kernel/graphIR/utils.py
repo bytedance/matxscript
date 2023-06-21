@@ -18,7 +18,13 @@
 #  under the License.
 
 import ast
+from itertools import chain
+from typing import List
+
+import matx.kernel.graphIR as _gir
+from matx import ir as _ir
 from matx.ir import generic as _generic
+from matx.kernel.typing.broadcast import broadcast as typing_broadcast
 
 _arithmetic_binop_maker = {
     ast.Add: lambda lhs, rhs, span: _generic.add(lhs, rhs, span),
@@ -28,7 +34,8 @@ _arithmetic_binop_maker = {
     ast.FloorDiv: lambda lhs, rhs, span: _generic.floordiv(lhs, rhs, span),
     # ast.Mod: lambda lhs, rhs, span: _generic.floormod(lhs, rhs, span),
     # quick fix for mod sign issue
-    ast.Mod: lambda lhs, rhs, span: _generic.floormod(_generic.add(_generic.floormod(lhs, rhs, span), rhs, span), rhs, span),
+    ast.Mod: lambda lhs, rhs, span: _generic.floormod(_generic.add(_generic.floormod(lhs, rhs, span), rhs, span), rhs,
+                                                      span),
     ast.BitOr: lambda lhs, rhs, span: _generic.bitwise_or(lhs, rhs, span),
     ast.BitAnd: lambda lhs, rhs, span: _generic.bitwise_and(lhs, rhs, span),
     ast.BitXor: lambda lhs, rhs, span: _generic.bitwise_xor(lhs, rhs, span),
@@ -52,11 +59,61 @@ _boolop_marker = {
     ast.Is: lambda lhs, rhs, span: _generic.op_is(lhs, rhs, span),
     ast.IsNot: lambda lhs, rhs, span: _generic.op_not(_generic.op_is(lhs, rhs, span), span),
 
-
     ast.And: lambda lhs, rhs, span: _generic.op_and(span, lhs, rhs),
     ast.Or: lambda lhs, rhs, span: _generic.op_or(span, lhs, rhs)
 }
 
 
-def is_scalar():
-    pass
+def is_graph_ir_scalar(t):
+    if isinstance(t, _gir.Scalar):
+        return True
+    if isinstance(t, _gir.Tensor):
+        return is_graph_ir_scalar_shape(t.shape())
+    return False
+
+
+def is_graph_ir_scalar_shape(s):
+    return len(s) == 0
+
+
+def is_compatible(lhs: _gir.Tensor, rhs: _gir.Tensor):
+    return lhs.dtype() == rhs.dtype() and lhs.shape() == rhs.shape()
+
+
+def unwrap_shape(shape: List[_gir.IntVar]) -> List:
+    unwrapped_shape = []
+    for e in shape:
+        if isinstance(e, _gir.IntImm):
+            unwrapped_shape.append(e.value())
+        else:
+            unwrapped_shape.append(e.symbolic_value())
+    return unwrapped_shape
+
+
+def broadcast(arr1_shape: List[_gir.IntVar], arr2_shape: List[_gir.IntVar]):
+    unwrapped_shape1 = unwrap_shape(arr1_shape)
+    unwrapped_shape2 = unwrap_shape(arr2_shape)
+    var_map = {}
+    for origin, unwrapped in zip(chain(arr1_shape, arr2_shape),
+                                 chain(unwrapped_shape1, unwrapped_shape2)):
+        if unwrapped not in var_map:
+            var_map[unwrapped] = origin
+
+    if len(unwrapped_shape1) == 0:
+        unwrapped_shape1 = [1]
+    if len(unwrapped_shape2) == 0:
+        unwrapped_shape2 = [1]
+
+    result_shape, lhs_new_shape, rhs_new_shape = typing_broadcast(
+        unwrapped_shape1, unwrapped_shape2)
+
+    def convert_back(shape):
+        if len(shape) == 1 and shape[0] == 1:
+            return []
+        print(shape)
+        return list(map(lambda x: var_map[x], shape))
+
+    result_shape = convert_back(result_shape)
+    # lhs_new_shape = convert_back(lhs_new_shape)
+    # rhs_new_shape = convert_back(rhs_new_shape)
+    return result_shape

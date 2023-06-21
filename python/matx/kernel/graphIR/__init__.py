@@ -18,8 +18,8 @@
 #  under the License.
 
 
+from . import symbolic
+from . import utils
 from .graph import *
-from .ops import *
 from .op_registry import *
-from .symbolic import *
-from .utils import *
+from .ops import *

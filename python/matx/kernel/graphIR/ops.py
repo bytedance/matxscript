@@ -18,9 +18,10 @@
 #  under the License.
 
 from typing import List
-from matx.kernel.ir.utils import np_result_dtype
-from matx.kernel.typing import broadcast
-from .graph import Operator, Tensor
+
+import matx.kernel.graphIR.utils as graph_utils
+import matx.kernel.typing.utils as typing_utils
+from matx.kernel.graphIR import Operator, Tensor
 
 
 class ElementWiseOperator(Operator):
@@ -36,12 +37,15 @@ class BinaryElementWiseOperator(ElementWiseOperator):
         self.op_type = op_type
 
     def __call__(self, lhs: Tensor, rhs: Tensor) -> List[Tensor]:
+        lhs.dst_ops().add(self)
+        rhs.dst_ops().add(self)
         lhs_dtype = lhs.dtype()
         lhs_shape = lhs.shape()
         rhs_dtype = rhs.dtype()
         rhs_shape = rhs.shape()
-        result_dtype = np_result_dtype([lhs_dtype, rhs_dtype])
-        result_shape, lhs_new_shape, rhs_new_shape = broadcast(lhs_shape, rhs_shape)
+        # todo dtype conversion
+        result_dtype = typing_utils.np_result_dtype([lhs_dtype, rhs_dtype])
+        result_shape = graph_utils.broadcast(lhs_shape, rhs_shape)
         result_tensor = Tensor(result_shape, src_ops=[self], dtype=result_dtype)
         return [result_tensor]
 
@@ -58,3 +62,30 @@ class UnaryElementWiseOperator(ElementWiseOperator):
 
 class ReductionOperator(Operator):
     pass
+
+
+class CopyOperator(Operator):
+    """
+    This is a shallow copy operator.
+    For tensors, shallow copy does not copy element.
+    For scalars, it copies.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, copy_to: Tensor, copy_from: Tensor) -> List[Tensor]:
+        # read from
+        copy_from.dst_ops().add(self)
+        # write to
+        copy_to.src_ops().add(self)
+        return [copy_to]
+
+
+class DeepCopyOperator(CopyOperator):
+
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, copy_to: Tensor, copy_from: Tensor) -> List[Tensor]:
+        return super().__call__(copy_to, copy_from)

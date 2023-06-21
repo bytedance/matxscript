@@ -19,14 +19,10 @@
 from __future__ import annotations
 
 import ast
-from typing import Any, TYPE_CHECKING
+from typing import Any, Union, TYPE_CHECKING
 
-import matx.ir as _ir
-import matx.kernel.ir as kernel_ir
-from .base_parser import BaseParser
-
-from ..ir import *
-from ...ir.tensor_stmt import ComputeBlock
+import matx.kernel.graphIR as _gir
+from matx.kernel.parser.base_parser import BaseParser
 
 if TYPE_CHECKING:
     from .inspector import KernelInspector
@@ -46,54 +42,63 @@ class KernelSingleReturnParser(BaseParser):
         self.iter_vars_names = []
 
     def visit_BinOp(self, node: ast.BinOp) -> Any:
+        op = _gir.BinaryElementWiseOperator(type(node.op))
         lhs_ir = self.visit(node.left)
         rhs_ir = self.visit(node.right)
-        op = kernel_ir.BinaryOp(lhs_ir, rhs_ir, type(node.op), self.build_span(node))
-        return op
+        result = op(lhs_ir, rhs_ir)[0]
+        self.kernel_p.graph_nodes.append(result)
+        self.kernel_p.graph_nodes.append(op)
+        return result
 
     def visit_Assign(self, node: ast.Assign) -> Any:
+        """
         stmt = super().visit_Assign(node)
         if isinstance(stmt, AssignScalarNode):
             return stmt.to_matx_ir()
-        return self.make_compute_block(stmt)
+        return self.make_compute_block(stmt)"""
+        raise NotImplementedError("not support assassign")
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
+        """
         stmt = super().visit_AnnAssign(node)
         if isinstance(stmt, ScalarAllocationNode):
             return stmt.to_matx_ir()
         if isinstance(stmt, ScopedNDArrayAllocationNode):
             cmptblk = self.make_compute_block(stmt.assign_stmt)
-            return stmt.to_matx_ir(assign_stmt=cmptblk)
+            return stmt.to_matx_ir(assign_stmt=cmptblk)"""
         raise NotImplementedError("not support assassign")
 
     def make_compute_block(self, stmt):
+        """
         writes = stmt.writes()
         reads = stmt.reads()
         body = stmt.to_matx_ir()
         cmptblk = ComputeBlock(stmt.iter_vars, reads, writes, self.kernel_p.func_name, body)
-        return cmptblk
+        return cmptblk"""
+        pass
 
-    def visit_Return(self, node: ast.Return) -> Any:
+    def visit_Return(self, node: ast.Return) -> Union[None, _gir.Node]:
         # treat return as assign and
         # for now kernel does not return anything.
-        if node.value is None or is_scalar_type(self.return_ctx.kernel_type):
+        if node.value is None or _gir.utils.is_graph_ir_scalar(self.return_ctx):
             return super().visit_Return(node)
 
         result_shape = self.kernel_p.return_types.shape
-        if list(result_shape) != list(self.return_ctx.shape):
+        if list(result_shape) != list(_gir.utils.unwrap_shape(self.return_ctx.shape())):
             raise RuntimeError(f"the marked shape {self.return_ctx.shape} "
                                f"is not equal to {result_shape}")
 
         rt_ir = self.visit(node.value)
-        if list(result_shape) != list(rt_ir.shape):
+        if list(result_shape) != list(_gir.utils.unwrap_shape(rt_ir.shape())):
             raise SyntaxError(
                 f"The return shape is annotated as {result_shape} but get {rt_ir.shape}")
 
-        if isinstance(self.return_ctx, NDArrayNode):
-            if self.return_ctx.name != self.kernel_p.return_var_name:
-                return _ir.ReturnStmt(NoneExpr())
-            stmt = AssignNDArrayNode(self.return_ctx, rt_ir)
-            cmptblk = self.make_compute_block(stmt)
-            return _ir.SeqStmt([cmptblk, _ir.ReturnStmt(NoneExpr())])
+        if isinstance(self.return_ctx, _gir.Tensor):
+            if self.return_ctx.name() != self.kernel_p.return_var_name:
+                return None
+            op = _gir.DeepCopyOperator()
+            self.kernel_p.graph_nodes.append(op)
+            op(self.return_ctx, rt_ir)
+            return None
         else:
             raise RuntimeError(f"return {type(rt_ir)} is not support now")

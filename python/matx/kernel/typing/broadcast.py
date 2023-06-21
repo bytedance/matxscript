@@ -18,8 +18,8 @@
 #   * under the License.
 #   */
 
-import utils as typing_utils
 import matx.kernel.symbol.utils as symbol_utils
+import matx.kernel.typing.utils as typing_utils
 
 
 def calculate_output_axis(arr1_shape, arr2_shape, axis_idx):

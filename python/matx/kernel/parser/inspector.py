@@ -17,22 +17,20 @@
 #  specific language governing permissions and limitations
 #  under the License.
 import ast
-import numpy as np
 from typing import Any, Dict, List, Union, TYPE_CHECKING
 
-from matx.script import context as script_context
+import numpy as np
 
 import matx.kernel.graphIR as _gir
-from matx.kernel.typing import NDArrayType as kernelNDArrayT
 import matx.kernel.typing.utils as typing_utils
-
-from for_loop_parser import ForLoopParser
-from single_return_parser import KernelSingleReturnParser
-from base_parser import BaseParser
-import utils
+from matx.kernel.parser.base_parser import BaseParser
+from matx.kernel.parser.for_loop_parser import ForLoopParser
+from matx.kernel.parser.single_return_parser import KernelSingleReturnParser
+from matx.kernel.typing import NDArrayType as kernelNDArrayT
+from matx.script import context as script_context
 
 if TYPE_CHECKING:
-    from ..kernel_parser import KernelParser
+    from matx.kernel.kernel_parser import KernelParser
 
 
 class BodyIterator:
@@ -87,7 +85,7 @@ class KernelInspector(ast.NodeVisitor):
         # for kernel use
         self.arg_context_table: Dict[str, _gir.Tensor] = {}
         self.shape_symbol_table: Dict[str, _gir.IntVar] = {}
-        self.tmp_scalar_table: Dict[str, _gir.IntVar] = {}
+        self.tmp_scalar_table: Dict[str, _gir.Scalar] = {}
         self.tmp_ndarray_table: Dict[str, _gir.Tensor] = {}
         self.return_ctx: Union[None, _gir.Tensor] = None
         self.return_types = kernel_p.return_types
@@ -152,6 +150,7 @@ class KernelInspector(ast.NodeVisitor):
                                   f"but get {type_annotation} for {arg}")
 
     def check_return(self) -> Any:
+        # todo fix return input ndarray
         if self.kernel_p.return_types is None:
             raise SyntaxError("annotating return type is required for kernel functions")
         if not typing_utils.is_ndarray_type(self.kernel_p.return_types):
@@ -171,7 +170,7 @@ class KernelInspector(ast.NodeVisitor):
             nd_ctx = _gir.Scalar(
                 name=self.return_var_name,
                 dtype=dtype,
-                is_input=True,
+                is_input=False,
                 is_output=True)
             self.return_ctx = nd_ctx
         elif typing_utils.is_ndarray_type(self.kernel_p.return_types):
@@ -187,6 +186,7 @@ class KernelInspector(ast.NodeVisitor):
             raise SyntaxError("kernel function is supposed to return a kernel ndarray"
                               " or scalar(a.k.a kernel ndarray with shape 1)"
                               f"but get {self.kernel_p.return_types}")
+        self.graph_nodes.append(self.return_ctx)
         self.graph_output.append(self.return_ctx)
 
     def parse_body(self, auto_add_return=False):
