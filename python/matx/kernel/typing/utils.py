@@ -23,7 +23,7 @@ import numbers
 
 import numpy as np
 
-from matx.kernel.typing import NDArrayType, ScalarType
+from matx.kernel.typing import NDArrayType, ScalarType, PYTYPE_TO_STR
 
 from matx.kernel.symbol.utils import is_symbol, is_symbol_type
 
@@ -59,3 +59,8 @@ def get_np_dtype(x):
         return np.int64
     if isinstance(x, float):
         return np.float32
+
+
+def get_string_dtype(x):
+    np_dtype = get_np_dtype(x)
+    return PYTYPE_TO_STR[np_dtype]

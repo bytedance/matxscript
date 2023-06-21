@@ -200,7 +200,8 @@ class LinalgFuncWrapper:
         binded_args, symbol_dict = bind_data_to_type(args, self.arg_types)
         if not typing_utils.is_scalar_type(self.rt_types):
             if rt is None:
-                shape = [symbol_dict[s] if typing_utils.is_symbol(s) else s for s in self.rt_types.shape]
+                shape = [symbol_dict[s] if typing_utils.is_symbol(
+                    s) else s for s in self.rt_types.shape]
                 rt = np.zeros(shape=shape, dtype=self.rt_types.dtype)
             for actual_s, ann_s in zip(rt.shape, self.rt_types.shape):
                 assert symbol_dict[ann_s] == actual_s

@@ -17,28 +17,8 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-import numpy as np
-
 import matx.kernel.symbol.utils as symbol_utils
-
-NPDTYPE_TO_STR = {
-    np.bool_: 'bool',
-    np.int8: 'int8',
-    np.int16: 'int16',
-    np.int32: 'int32',
-    np.int64: 'int64',
-    np.intc: 'int32',
-    np.uint8: 'uint8',
-    np.uint16: ' uint16',
-    np.uint32: ' uint32',
-    np.uint64: ' uint64',
-    np.uintc: 'uint32',
-    np.float16: 'float16',
-    np.float32: 'float32',
-    np.float64: 'float64',
-    np.longlong: 'int64',
-    np.ulonglong: ' uint64'
-}
+from matx.kernel.typing import PYTYPE_TO_STR
 
 
 class NDArrayType:
@@ -52,7 +32,7 @@ class NDArrayType:
         return f'NDArrayType (dtype={self.dtype}, shape={self.shape})'
 
     def dtype_str(self):
-        return NPDTYPE_TO_STR[self.dtype]
+        return PYTYPE_TO_STR[self.dtype]
 
     def data_type(self):
         return ScalarType(self.dtype)
@@ -68,7 +48,7 @@ class NDArrayType:
 class ScalarType(NDArrayType):
 
     def __init__(self, dtype):
-        super().__init__((1, ), dtype)
+        super().__init__((1,), dtype)
 
     def __getitem__(self, shape) -> NDArrayType:
         if isinstance(shape, list) or isinstance(shape, tuple):

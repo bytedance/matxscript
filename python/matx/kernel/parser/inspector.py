@@ -17,15 +17,19 @@
 #  specific language governing permissions and limitations
 #  under the License.
 import ast
-from typing import Any, Dict, List, TYPE_CHECKING
+import numpy as np
+from typing import Any, Dict, List, Union, TYPE_CHECKING
 
-from .for_loop_parser import ForLoopParser
-from .single_return_parser import KernelSingleReturnParser
-from .base_parser import BaseParser
-from .utils import *
+from matx.script import context as script_context
+
 import matx.kernel.graphIR as _gir
-from matx.kernel.typing import *
 from matx.kernel.typing import NDArrayType as kernelNDArrayT
+import matx.kernel.typing.utils as typing_utils
+
+from for_loop_parser import ForLoopParser
+from single_return_parser import KernelSingleReturnParser
+from base_parser import BaseParser
+import utils
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelParser
@@ -85,7 +89,7 @@ class KernelInspector(ast.NodeVisitor):
         self.shape_symbol_table: Dict[str, _gir.IntVar] = {}
         self.tmp_scalar_table: Dict[str, _gir.IntVar] = {}
         self.tmp_ndarray_table: Dict[str, _gir.Tensor] = {}
-        self.return_ctx: _gir.Tensor = None
+        self.return_ctx: Union[None, _gir.Tensor] = None
         self.return_types = kernel_p.return_types
         self.func_name: str = kernel_p.func_name
 
@@ -116,7 +120,7 @@ class KernelInspector(ast.NodeVisitor):
             return
         shape_symbols = []
         for dim in type_annotation.shape:
-            if not is_symbol(dim):
+            if not typing_utils.is_symbol(dim):
                 continue
             if str(dim) in self.shape_symbol_table:
                 continue
@@ -129,13 +133,13 @@ class KernelInspector(ast.NodeVisitor):
 
     def init_args(self) -> None:
         for arg, type_annotation in self.kernel_p.args.items():
-            if is_scalar_type(type_annotation):
+            if typing_utils.is_scalar_type(type_annotation):
                 dtype = type_annotation.dtype
                 scalar_ctx = _gir.Scalar(name=arg, dtype=dtype, is_input=True)
                 self.arg_context_table[arg] = scalar_ctx
                 self.graph_input.append(scalar_ctx)
                 self.graph_nodes.append(scalar_ctx)
-            elif is_ndarray_type(type_annotation):
+            elif typing_utils.is_ndarray_type(type_annotation):
                 self.declare_shape_var(type_annotation)
                 dtype = type_annotation.dtype
                 shape = self.convert_to_gir_shape(type_annotation.shape)
@@ -150,12 +154,12 @@ class KernelInspector(ast.NodeVisitor):
     def check_return(self) -> Any:
         if self.kernel_p.return_types is None:
             raise SyntaxError("annotating return type is required for kernel functions")
-        if not is_ndarray_type(self.kernel_p.return_types):
+        if not typing_utils.is_ndarray_type(self.kernel_p.return_types):
             raise SyntaxError("kernel function is supposed to return a kernel ndarray"
                               " or scalar(a.k.a kernel ndarray with shape 1)"
                               f"but get {self.kernel_p.return_types}")
         for dim in self.kernel_p.return_types.shape:
-            if is_symbol(dim) and str(dim) not in self.shape_symbol_table:
+            if typing_utils.is_symbol(dim) and str(dim) not in self.shape_symbol_table:
                 raise SyntaxError(
                     f"{dim} in the return type is not defined in any of the shape in input args")
         if self.return_var_name in self.arg_context_table:
@@ -163,14 +167,14 @@ class KernelInspector(ast.NodeVisitor):
 
         dtype = self.kernel_p.return_types.dtype
         shape = self.convert_to_gir_shape(self.kernel_p.return_types.shape)
-        if is_scalar_type(self.kernel_p.return_types):
+        if typing_utils.is_scalar_type(self.kernel_p.return_types):
             nd_ctx = _gir.Scalar(
                 name=self.return_var_name,
                 dtype=dtype,
                 is_input=True,
                 is_output=True)
             self.return_ctx = nd_ctx
-        elif is_ndarray_type(self.kernel_p.return_types):
+        elif typing_utils.is_ndarray_type(self.kernel_p.return_types):
             nd_ctx = _gir.Tensor(
                 shape=shape,
                 name=self.return_var_name,
@@ -203,6 +207,7 @@ class KernelInspector(ast.NodeVisitor):
         return scoped_ir
 
     def visit_body(self, node: ast.FunctionDef):
+        # todo modify the code below
         self.context = script_context.ScopeContext()
         self.context.new_scope(nodes=node.body)
         # add parameters of function
@@ -248,12 +253,12 @@ class KernelInspector(ast.NodeVisitor):
         return self.visit_body(node)
 
     def is_scalar_return(self):
-        return is_scalar_type(self.return_types)
+        return typing_utils.is_scalar_type(self.return_types)
 
     def convert_to_gir_shape(self, shape):
         gir_shape = []
         for d in shape:
-            if is_symbol(d):
+            if typing_utils.is_symbol(d):
                 if str(d) in self.shape_symbol_table:
                     gir_shape.append(self.shape_symbol_table[str(d)])
                 else:
@@ -264,6 +269,6 @@ class KernelInspector(ast.NodeVisitor):
                 self.graph_nodes.append(node)
             else:
                 raise SyntaxError(
-                    f"the shape ({shape}) of the ndarry is expected to be an symbol or int,"
+                    f"the shape ({shape}) of the ndarray is expected to be an symbol or int,"
                     f" but get {d} ({type(d)})")
         return gir_shape
