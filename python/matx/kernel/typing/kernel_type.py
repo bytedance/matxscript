@@ -43,7 +43,7 @@ NPDTYPE_TO_STR = {
 
 class NDArrayType:
     def __init__(self, shape, dtype):
-        self.shape = shape
+        self.shape = tuple(shape)
         self.dtype = dtype
         self.storage = 'cpu'
         self.symbol_list = [axis for axis in shape if is_symbol(axis)]
@@ -58,17 +58,17 @@ class NDArrayType:
         return ScalarType(self.dtype)
 
     def __eq__(self, other):
-        return self.shape == other.shape and self.dtype == self.dtype
+        return self.shape == other.shape and self.dtype == other.dtype
 
     def compatible_with(self, other):
         # todo check dtype
-        return self.shape == other and self.dtype == self.dtype
+        return self.shape == other.shape and self.dtype == other.dtype
 
 
 class ScalarType(NDArrayType):
 
     def __init__(self, dtype):
-        super().__init__([1], dtype)
+        super().__init__((1, ), dtype)
 
     def __getitem__(self, shape) -> NDArrayType:
         if isinstance(shape, list) or isinstance(shape, tuple):

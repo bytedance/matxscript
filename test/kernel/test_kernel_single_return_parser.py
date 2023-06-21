@@ -18,12 +18,12 @@
 #  under the License.
 
 import unittest
-import numpy as np
+
 import sympy
 
-from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.compile_linalg import compile_linalg
-from matx.kernel.typing import int32, int64, float32
+from matx.kernel.kernel_parser import KernelParser
+from matx.kernel.typing import *
 
 
 class TestSingleReturnParser(unittest.TestCase):
@@ -175,7 +175,7 @@ class TestSingleReturnParser(unittest.TestCase):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
 
-        def foo(a: int32[M, N], b: int64[M, N], c: float32[M, N]) -> float32[M, N]:
+        def foo(a: int32[M, N], b: int64[M, N], c: float32[M, N]) -> float64[M, N]:
             return (a + b) * c
 
         p = KernelParser(foo)
@@ -190,7 +190,7 @@ class TestSingleReturnParser(unittest.TestCase):
         a = np.arange(12, dtype=np.int32).reshape(3, 4)
         b = np.arange(12, 24, dtype=np.int64).reshape(3, 4)
         c = np.arange(24, 36, dtype=np.float32).reshape(3, 4)
-        rt = np.zeros(a.shape, dtype=np.float32)
+        rt = np.zeros(a.shape, dtype=np.float64)
         f = compile_linalg(p)
         f(a, b, c, rt=rt)
         np.testing.assert_equal(rt, foo(a, b, c))
@@ -199,7 +199,7 @@ class TestSingleReturnParser(unittest.TestCase):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
 
-        def foo(a: int32[M, N], b: int64[M, N], c: float32) -> float32[M, N]:
+        def foo(a: int32[M, N], b: int64[M, N], c: float32) -> float64[M, N]:
             return ((a + b) * c) + 1
 
         p = KernelParser(foo)
@@ -214,7 +214,7 @@ class TestSingleReturnParser(unittest.TestCase):
         a = np.arange(12, dtype=np.int32).reshape(3, 4)
         b = np.arange(12, 24, dtype=np.int64).reshape(3, 4)
         c = np.float32(3)
-        rt = np.zeros(a.shape, dtype=np.float32)
+        rt = np.zeros(a.shape, dtype=np.float64)
         f = compile_linalg(p)
         f(a, b, c, rt=rt)
         np.testing.assert_equal(rt, foo(a, b, c))

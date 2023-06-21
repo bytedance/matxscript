@@ -52,7 +52,7 @@ def is_scalar_type(t):
 
 def get_dtype(x):
     if isinstance(x, bool):
-        return bool
+        return np.bool_
     if isinstance(x, int):
         return np.int64
     if isinstance(x, float):

@@ -203,7 +203,13 @@ class BaseParser(ast.NodeVisitor):
             raise SyntaxError(f"Annotating {target_name} with type {ann} is not allowed.")
         # make sure the annotated type is the same as rhs value
         if value.kernel_type != ann:
-            raise SyntaxError(f"Assigning {value.kernel_type} to {ann} is not allowed")
+            if value.kernel_type.shape != ann.shape:
+                raise SyntaxError(
+                    f"Assigning {value.kernel_type} to {ann} is not allowed because they have different shapes")
+            elif value.kernel_type.dtype != ann.dtype:
+                value = CastOp(value, ann.dtype, span)
+            else:
+                raise SyntaxError(f"Assigning {value.kernel_type} to {ann} is not allowed")
         tmp_scalar_ctx = ScalarNode(target_name, ann, span)
         self.tmp_scalar_table[target_name] = tmp_scalar_ctx
         return ScalarAllocationNode(tmp_scalar_ctx, value, span)

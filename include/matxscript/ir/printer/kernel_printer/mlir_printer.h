@@ -60,14 +60,19 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
                         public PrimExprFunctor<void(const PrimExpr&, std::ostream&)>,
                         public HLOExprFunctor<void(const HLOExpr&, std::ostream&)>,
                         public TypeFunctor<void(const Type&, std::ostream&)> {
-  using var_name_map = std::unordered_map<const Object*, std::string>;
-  using var_type_map = std::unordered_map<const Object*, std::pair<std::string, std::string>>;
+ public:
+  typedef struct {
+    std::string mlir_name;
+    std::string mlir_type;
+  } mlir_info;
+
+  using expr_name_map = std::unordered_map<const Object*, std::string>;
+  using var_name_map = std::unordered_map<StringRef, mlir_info>;
   friend class LinalgGenericPrinter;
 
- public:
-  explicit MLIRTextPrinter() : var_name_scope(1), var_type_scope(1) {
-    expr_name_map_ = &(var_name_scope.back());
-    val_type_map_ = &(var_type_scope.back());
+  explicit MLIRTextPrinter() : expr_name_scope(1), var_name_scope(1) {
+    expr_name_map_ = &(expr_name_scope.back());
+    var_name_map_ = &(var_name_scope.back());
   }
 
   void AddFunction(const PrimFunc& fn);
@@ -136,7 +141,7 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   std::string ConvertTypeToMLIR(const PointerTypeNode* node) const;
   void PrintNodeName(const BaseExpr& ptr, std::ostream& os);
 
-  std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op);
+  std::pair<std::string, std::string> GetNodeDataType(const PrimExprNode* op) const;
 
   // Begin Type
   // Overload of Type printing functions
@@ -148,12 +153,14 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
 
   void NewScope();
   void PopScope();
-  template <class... Args>
-  void insert_or_assign_expr_name_map_(const Object* key, Args&&... args) {
-    auto rt = expr_name_map_->emplace(
-        std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple(args...));
+
+  template <typename K, typename V, typename T, class... Args>
+  void insert_or_assign_map_(std::unordered_map<K, V>* map, T&& key, Args&&... args) {
+    auto rt = map->emplace(std::piecewise_construct,
+                           std::forward_as_tuple(std::forward<T>(key)),
+                           std::forward_as_tuple(args...));
     if (!rt.second) {
-      rt.first->second = std::string(args...);
+      rt.first->second = V(args...);
     }
   }
 
@@ -162,10 +169,10 @@ class MLIRTextPrinter : public StmtFunctor<void(const Stmt&, std::ostream&)>,
   std::ostringstream stream_;
   std::unordered_map<const PointerTypeNode*, const Buffer> pointer_buffer_map;
   std::unordered_map<const PrimExprNode*, const std::string> index_map;
+  std::vector<expr_name_map> expr_name_scope;
   std::vector<var_name_map> var_name_scope;
-  std::vector<var_type_map> var_type_scope;
-  var_name_map* expr_name_map_;
-  var_type_map* val_type_map_;
+  expr_name_map* expr_name_map_;
+  var_name_map* var_name_map_;
   std::atomic<uint32_t> cur_index_{0};
   std::unique_ptr<LinalgGenericPrinter> computeBlockPrinter = nullptr;
 };

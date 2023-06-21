@@ -30,6 +30,7 @@ class ScalarNode(ExpressionBaseNode):
         assert is_scalar_shape(self.shape), 'sytax error'
         self.script_type = _ir.PrimType(type_.dtype_str())
         self.name: str = name
+        self.span = span
         self.script_var = _ir.PrimVar(name, self.script_type, span)
 
     def to_matx_ir(self, **kwargs):
@@ -40,6 +41,7 @@ class ConstScalarNode(ScalarNode):
 
     def __init__(self, value, type_: kernelNDArrayT, span):
         super().__init__("const", type_, span)
+        self.value = value
         self.script_var = _ir.const(value, type_.dtype_str())
 
 
