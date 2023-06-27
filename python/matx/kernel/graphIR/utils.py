@@ -19,12 +19,15 @@
 
 import ast
 from itertools import chain
-from typing import List
+from typing import List, TYPE_CHECKING
 
 import matx.kernel.graphIR as _gir
 from matx import ir as _ir
 from matx.ir import generic as _generic
 from matx.kernel.typing.broadcast import broadcast as typing_broadcast
+
+if TYPE_CHECKING:
+    from matx.kernel.graphIR import Tensor, IntVar
 
 _arithmetic_binop_maker = {
     ast.Add: lambda lhs, rhs, span: _generic.add(lhs, rhs, span),
@@ -76,11 +79,11 @@ def is_graph_ir_scalar_shape(s):
     return len(s) == 0
 
 
-def is_compatible(lhs: _gir.Tensor, rhs: _gir.Tensor):
+def is_compatible(lhs: 'Tensor', rhs: 'Tensor'):
     return lhs.dtype() == rhs.dtype() and lhs.shape() == rhs.shape()
 
 
-def unwrap_shape(shape: List[_gir.IntVar]) -> List:
+def unwrap_shape(shape: List['IntVar']) -> List:
     unwrapped_shape = []
     for e in shape:
         if isinstance(e, _gir.IntImm):
@@ -90,7 +93,7 @@ def unwrap_shape(shape: List[_gir.IntVar]) -> List:
     return unwrapped_shape
 
 
-def broadcast(arr1_shape: List[_gir.IntVar], arr2_shape: List[_gir.IntVar]):
+def broadcast(arr1_shape: List['IntVar'], arr2_shape: List['IntVar']):
     unwrapped_shape1 = unwrap_shape(arr1_shape)
     unwrapped_shape2 = unwrap_shape(arr2_shape)
     var_map = {}

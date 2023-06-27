@@ -17,10 +17,4 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-
-from . import symbolic
-from . import utils
-from .graph import *
-from .op_registry import *
-from .ops import *
-from . import graph_pass
+from .fuse_element_wise import ElementWiseOpFuser

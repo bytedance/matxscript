@@ -16,11 +16,16 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
+from typing import List, Union
+from ..ops import ElementWiseOperator
+from ..graph import Tensor, Scalar, Node, IntVar, IntImm, Operator
+from queue import Queue
 
 
-from . import symbolic
-from . import utils
-from .graph import *
-from .op_registry import *
-from .ops import *
-from . import graph_pass
+class ComputeAssignOperator(Operator):
+
+    def __init__(self, subgraph: Operator, output):
+        super().__init__()
+        self.output = output
+        self.subgraph = subgraph
+        self._attrs["inputs"] = [*subgraph._attrs["inputs"], output]

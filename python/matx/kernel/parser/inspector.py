@@ -241,6 +241,8 @@ class KernelInspector(ast.NodeVisitor):
         func = func.with_attr(_ir.FuncAttr.kGlobalSymbol, node.name)
         func = func.with_attr(_ir.FuncAttr.kKernelFunctionParameterBinding, nd_dim_map)"""
         self.context.pop_scope()
+        fuser = _gir.graph_pass.ElementWiseOpFuser()
+        fuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
         quit()
         return ...
 

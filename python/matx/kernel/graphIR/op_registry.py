@@ -19,7 +19,7 @@ Registry for basic operators and math functions.
 import ast
 from typing import Callable, Dict
 
-from matx.kernel.graphIR import BinaryElementWiseOperator
+from .ops import BinaryElementWiseOperator
 
 # OP_REGISTRY defines a mapping from a FuncEnum name to a function to create this elementwise operator.
 # This object is initialized in elementwise.py, and referenced in base.py and math.py.

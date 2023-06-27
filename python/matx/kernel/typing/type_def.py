@@ -78,6 +78,9 @@ STR_TO_KERNEL_TYPE = {
 }
 
 PYTYPE_TO_STR = {
+    bool: 'bool',
+    int: 'int64',
+    float: 'float64',
     np.bool_: 'bool',
     np.int8: 'int8',
     np.int16: 'int16',

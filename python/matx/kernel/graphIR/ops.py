@@ -17,7 +17,7 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from typing import List
+from typing import List, Union
 
 import matx.kernel.graphIR.utils as graph_utils
 import matx.kernel.typing.utils as typing_utils
@@ -26,7 +26,22 @@ from matx.kernel.graphIR import Operator, Tensor
 
 class ElementWiseOperator(Operator):
 
+    def __init__(self):
+        super().__init__()
+        self.op_types = []
+
     def __call__(self, *args: List[Tensor]) -> List[Tensor]:
+        pass
+
+
+class FusedElementWiseOperator(ElementWiseOperator):
+
+    def __init__(self, op_types, tensor_list: List[Tensor]):
+        super().__init__()
+        self.op_types = op_types
+        self._attrs["inputs"] = tensor_list
+
+    def __call__(self, *args, **kwargs):
         pass
 
 
@@ -34,9 +49,10 @@ class BinaryElementWiseOperator(ElementWiseOperator):
 
     def __init__(self, op_type):
         super().__init__()
-        self.op_type = op_type
+        self.op_types = [op_type]
 
     def __call__(self, lhs: Tensor, rhs: Tensor) -> List[Tensor]:
+        self._attrs["inputs"] = [lhs, rhs]
         lhs.dst_ops().add(self)
         rhs.dst_ops().add(self)
         lhs_dtype = lhs.dtype()
@@ -54,9 +70,10 @@ class UnaryElementWiseOperator(ElementWiseOperator):
 
     def __init__(self, op_type):
         super().__init__()
-        self.op_type = op_type
+        self.op_types = [op_type]
 
     def __call__(self, operand: Tensor) -> List[Tensor]:
+        self._attrs["inputs"] = [operand]
         pass
 
 
@@ -75,6 +92,7 @@ class CopyOperator(Operator):
         super().__init__()
 
     def __call__(self, copy_to: Tensor, copy_from: Tensor) -> List[Tensor]:
+        self._attrs["inputs"] = [copy_to, copy_from]
         # read from
         copy_from.dst_ops().add(self)
         # write to
@@ -88,4 +106,5 @@ class DeepCopyOperator(CopyOperator):
         super().__init__()
 
     def __call__(self, copy_to: Tensor, copy_from: Tensor) -> List[Tensor]:
+        self._attrs["inputs"] = [copy_to, copy_from]
         return super().__call__(copy_to, copy_from)
