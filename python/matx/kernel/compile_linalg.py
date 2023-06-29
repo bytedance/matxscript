@@ -19,6 +19,7 @@
 
 from matx.ir import _ffi_node_api
 from matx.kernel.kernel_parser import KernelParser
+from matx.kernel.graph_ir_printer import GraphIRPrinter
 import ctypes
 from matx.kernel.typing import PYTYPE_TO_C_TYPE
 import matx.kernel.typing.utils as typing_utils
@@ -82,8 +83,9 @@ def binded_args_to_c(binded_args):
     return args
 
 
-def write_linalg(matx_ir, output_fname="tmp.mlir", debug=False, over_written_code=None):
-    code = _ffi_node_api.as_linalg_text(matx_ir).decode()
+def write_linalg(graph_ir, output_fname="tmp.mlir", debug=False, over_written_code=None):
+    printer = GraphIRPrinter(graph_ir)
+    code = printer.as_linalg_text()
     with open(output_fname, "w+") as f:
         if debug and over_written_code is not None:
             f.write(over_written_code)
@@ -234,7 +236,7 @@ def compile_linalg(
         if not os.path.exists(dir):
             os.makedirs(dir)
         os.chdir(dir)
-        mlir_f = write_linalg(parser.main_node_ir, file_name + ".mlir", debug, over_written_code)
+        mlir_f = write_linalg(parser.graph, file_name + ".mlir", debug, over_written_code)
         lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
         llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
         shared_lib = llvm_compile(llvm_f, file_name + ".so")

@@ -132,14 +132,14 @@ class KernelInspector(ast.NodeVisitor):
     def init_args(self) -> None:
         for arg, type_annotation in self.kernel_p.args.items():
             if typing_utils.is_scalar_type(type_annotation):
-                dtype = type_annotation.dtype
+                dtype = typing_utils.convert_to_string_dtype(type_annotation.dtype)
                 scalar_ctx = _gir.Scalar(name=arg, dtype=dtype, is_input=True)
                 self.arg_context_table[arg] = scalar_ctx
                 self.graph_input.append(scalar_ctx)
                 self.graph_nodes.append(scalar_ctx)
             elif typing_utils.is_ndarray_type(type_annotation):
                 self.declare_shape_var(type_annotation)
-                dtype = type_annotation.dtype
+                dtype = typing_utils.convert_to_string_dtype(type_annotation.dtype)
                 shape = self.convert_to_gir_shape(type_annotation.shape)
                 nd_ctx = _gir.Tensor(shape, name=arg, dtype=dtype, is_input=True)
                 self.arg_context_table[arg] = nd_ctx
@@ -164,7 +164,7 @@ class KernelInspector(ast.NodeVisitor):
         if self.return_var_name in self.arg_context_table:
             raise SyntaxError("return var name is being used")
 
-        dtype = self.kernel_p.return_types.dtype
+        dtype = typing_utils.convert_to_string_dtype(self.kernel_p.return_types.dtype)
         shape = self.convert_to_gir_shape(self.kernel_p.return_types.shape)
         if typing_utils.is_scalar_type(self.kernel_p.return_types):
             nd_ctx = _gir.Scalar(
@@ -207,44 +207,13 @@ class KernelInspector(ast.NodeVisitor):
         return scoped_ir
 
     def visit_body(self, node: ast.FunctionDef):
-        # todo modify the code below
         self.context = script_context.ScopeContext()
         self.context.new_scope(nodes=node.body)
-        # add parameters of function
-        nd_dim_map = {}
-        for arg, ctx in self.arg_context_table.items():
-            if not (isinstance(ctx, _gir.Tensor) or isinstance(ctx, _gir.Scalar)):
-                raise NotImplementedError("func parameters can only be markedas ndarray noe scalar")
-            ...
-            """
-            self.context.update_symbol(arg, ctx.script_var)
-            self.context.func_params.append(ctx.script_var)
-            if isinstance(ctx, NDArrayNode):
-                nd_dim_map[ctx.script_var] = ctx.buffer"""
-
-        # make dim variables as args
-        """
-        for dim, dim_var in self.shape_symbol_table.items():
-            self.context.update_symbol(dim, dim_var.script_var)
-            self.context.func_params.append(dim_var.script_var)"""
-        ...
-
-        body_stmts = self.parse_body(True)
-
-        """
-        func = _ir.PrimFunc(
-            self.context.func_params,
-            [],
-            self.to_seq_stmt(body_stmts, span_),
-            ret_type=None if not self.is_scalar_return() else self.return_ctx.script_type
-        )
-        func = func.with_attr(_ir.FuncAttr.kGlobalSymbol, node.name)
-        func = func.with_attr(_ir.FuncAttr.kKernelFunctionParameterBinding, nd_dim_map)"""
+        self.parse_body(True)
         self.context.pop_scope()
-        fuser = _gir.graph_pass.ElementWiseOpFuser()
-        fuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
-        quit()
-        return ...
+        #fuser = _gir.graph_pass.ElementWiseOpFuser()
+        #fuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
+        return self
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:
         if self.visited_FunctionDef:

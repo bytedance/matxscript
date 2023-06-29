@@ -16,18 +16,23 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-from typing import List, Union
+from typing import List
 from ..ops import ElementWiseOperator
-from ..graph import Tensor, Scalar, Node, IntVar, IntImm, Operator
+from ..graph import Tensor, Node, IntVar, IntImm, Operator
 from queue import Queue
 
 
 class FusedElementWiseOperator(ElementWiseOperator):
 
-    def __init__(self, op_types, tensor_list: List[Tensor]):
+    def __init__(self, op_types, tensor_list: List[Tensor],
+                 op1: ElementWiseOperator, op2: ElementWiseOperator):
         super().__init__()
         self.op_types = op_types
         self._attrs["inputs"] = tensor_list
+        self.op1 = op1
+        self.op2 = op2
+        self.result_dtype = self.op2.result_dtype
+        self.result_shape = self.op2.result_shape
 
 
 class ElementWiseOpFuser:
@@ -72,14 +77,16 @@ class ElementWiseOpFuser:
 
     def _visit_tensor_helper(self, current_node, current_op, node_queue: Queue):
         node_queue.empty()
+        input_idx = 0
         for input_tensor in current_op._attrs["inputs"]:
+            input_idx += 1
             if not isinstance(input_tensor, Tensor):
                 continue
             if input_tensor.is_a_const_num() or input_tensor in self.graph_input:
                 continue
             input_src_op = self._check_src_op(input_tensor)[0]
             result = self._fuse_two_element_wise_op(
-                input_src_op, current_op, input_tensor, current_node)
+                input_src_op, current_op, input_tensor, current_node, input_idx)
             if result is not None:
                 return result
             node_queue.put(input_tensor)
@@ -92,8 +99,13 @@ class ElementWiseOpFuser:
                               f"due to Erroneously constructed graph")
         return src_ops
 
-    def _fuse_two_element_wise_op(self, op1: ElementWiseOperator, op2: ElementWiseOperator,
-                                  tmp_tensor1: Tensor, tmp_tensor2: Tensor):
+    def _fuse_two_element_wise_op(
+            self,
+            op1,
+            op2,
+            tmp_tensor1: Tensor,
+            tmp_tensor2: Tensor,
+            input_idx: int):
         """
         Before:
         a:tensor -\
@@ -129,10 +141,11 @@ class ElementWiseOpFuser:
             return None
         if len(tmp2_src) != 1 or tuple(tmp2_src)[0] != op2:
             return None
+
         op_types: List = op1.op_types + op2.op_types
         inputs = op1._attrs["inputs"] + op2._attrs["inputs"]
         inputs.remove(tmp_tensor1)
-        fused_op = FusedElementWiseOperator(op_types, inputs)
+        fused_op = FusedElementWiseOperator(op_types, inputs, op1, op2)
         # set src of tmp_tensor2 to the fused_op
         tmp_tensor2._attrs["src_ops"] = {fused_op}
         # set dst of op1's inputs to fused_op
@@ -145,3 +158,5 @@ class ElementWiseOpFuser:
         self.graph_nodes.remove(tmp_tensor1)
         self.graph_nodes.append(fused_op)
         return fused_op
+
+    # todo has bug

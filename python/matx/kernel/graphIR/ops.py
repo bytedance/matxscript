@@ -17,8 +17,7 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from typing import List, Union
-
+from typing import List
 import matx.kernel.graphIR.utils as graph_utils
 import matx.kernel.typing.utils as typing_utils
 from matx.kernel.graphIR import Operator, Tensor
@@ -29,20 +28,14 @@ class ElementWiseOperator(Operator):
     def __init__(self):
         super().__init__()
         self.op_types = []
+        self.result_dtype = None
+        self.result_shape = None
 
     def __call__(self, *args: List[Tensor]) -> List[Tensor]:
         pass
 
-
-class FusedElementWiseOperator(ElementWiseOperator):
-
-    def __init__(self, op_types, tensor_list: List[Tensor]):
-        super().__init__()
-        self.op_types = op_types
-        self._attrs["inputs"] = tensor_list
-
-    def __call__(self, *args, **kwargs):
-        pass
+    def get_inputs(self):
+        return self._attrs["inputs"]
 
 
 class BinaryElementWiseOperator(ElementWiseOperator):
@@ -55,14 +48,15 @@ class BinaryElementWiseOperator(ElementWiseOperator):
         self._attrs["inputs"] = [lhs, rhs]
         lhs.dst_ops().add(self)
         rhs.dst_ops().add(self)
-        lhs_dtype = lhs.dtype()
-        lhs_shape = lhs.shape()
-        rhs_dtype = rhs.dtype()
-        rhs_shape = rhs.shape()
+        self.lhs_dtype = lhs.dtype()
+        self.lhs_shape = lhs.shape()
+        self.rhs_dtype = rhs.dtype()
+        self.rhs_shape = rhs.shape()
         # todo dtype conversion
-        result_dtype = typing_utils.np_result_dtype([lhs_dtype, rhs_dtype])
-        result_shape = graph_utils.broadcast(lhs_shape, rhs_shape)
-        result_tensor = Tensor(result_shape, src_ops=[self], dtype=result_dtype)
+        self.result_dtype = typing_utils.convert_to_string_dtype(
+            typing_utils.np_result_dtype([self.lhs_dtype, self.rhs_dtype]))
+        self.result_shape = graph_utils.broadcast(self.lhs_shape, self.rhs_shape)
+        result_tensor = Tensor(self.result_shape, src_ops=[self], dtype=self.result_dtype)
         return [result_tensor]
 
 
@@ -90,9 +84,13 @@ class CopyOperator(Operator):
 
     def __init__(self):
         super().__init__()
+        self.copy_to = None
+        self.copy_from = None
 
     def __call__(self, copy_to: Tensor, copy_from: Tensor) -> List[Tensor]:
         self._attrs["inputs"] = [copy_to, copy_from]
+        self.copy_to = copy_to
+        self.copy_from = copy_from
         # read from
         copy_from.dst_ops().add(self)
         # write to
@@ -106,5 +104,4 @@ class DeepCopyOperator(CopyOperator):
         super().__init__()
 
     def __call__(self, copy_to: Tensor, copy_from: Tensor) -> List[Tensor]:
-        self._attrs["inputs"] = [copy_to, copy_from]
         return super().__call__(copy_to, copy_from)

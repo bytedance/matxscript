@@ -509,6 +509,9 @@ class Tensor(Node):
     def name(self) -> str:
         return self._attrs["name"]
 
+    def value(self):
+        return self._attrs["value"]
+
     def _rank(self) -> int:
         """
         Returns the rank of the tensor.

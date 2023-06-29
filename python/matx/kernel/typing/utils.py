@@ -21,6 +21,7 @@
 
 import numbers
 
+import numpy as np
 import sympy
 
 from matx.kernel.symbol.utils import is_symbol
@@ -53,6 +54,8 @@ def is_scalar_type(t):
 
 
 def convert_to_np_dtype(x):
+    if x in PYTYPE_TO_STR:
+        return x
     if isinstance(x, bool):
         return np.bool_
     if isinstance(x, int):

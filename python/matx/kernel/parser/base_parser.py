@@ -368,7 +368,6 @@ class BaseParser(ast.NodeVisitor):
             raise NotImplementedError(
                 "The return value is not a scalar which does not match the annotation")
         copy_operator = _gir.CopyOperator()
-        self.kernel_p.graph_output.append(rt_ir)
         return copy_operator(self.return_ctx, rt_ir)[0]
 
     def visit_Tuple(self, node: ast.Tuple) -> List[_gir.Node]:

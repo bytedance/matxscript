@@ -22,10 +22,5 @@ from ..graph import Tensor, Scalar, Node, IntVar, IntImm, Operator
 from queue import Queue
 
 
-class ComputeAssignOperator(Operator):
-
-    def __init__(self, subgraph: Operator, output):
-        super().__init__()
-        self.output = output
-        self.subgraph = subgraph
-        self._attrs["inputs"] = [*subgraph._attrs["inputs"], output]
+class TmpVarEliminatorFuser:
+    pass

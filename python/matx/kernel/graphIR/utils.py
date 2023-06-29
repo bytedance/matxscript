@@ -29,7 +29,7 @@ from matx.kernel.typing.broadcast import broadcast as typing_broadcast
 if TYPE_CHECKING:
     from matx.kernel.graphIR import Tensor, IntVar
 
-_arithmetic_binop_maker = {
+arithmetic_binop_maker = {
     ast.Add: lambda lhs, rhs, span: _generic.add(lhs, rhs, span),
     ast.Sub: lambda lhs, rhs, span: _generic.subtract(lhs, rhs, span),
     ast.Mult: lambda lhs, rhs, span: _generic.multiply(lhs, rhs, span),
@@ -46,13 +46,13 @@ _arithmetic_binop_maker = {
     # ast.RShift: lambda lhs, rhs, span: _generic.right_shift(lhs, rhs, span),
 }
 
-_unaryop_maker = {
+unaryop_maker = {
     ast.USub: lambda operand, span: _generic.multiply(operand, _ir.const(-1), span),
     ast.Invert: lambda operand, span: _generic.bitwise_not(operand, span),
     ast.Not: lambda operand, span: _generic.op_not(operand, span)
 }
 
-_boolop_marker = {
+boolop_marker = {
     ast.Gt: lambda lhs, rhs, span: _generic.greater_than(lhs, rhs, span),
     ast.GtE: lambda lhs, rhs, span: _generic.greater_or_equal(lhs, rhs, span),
     ast.Lt: lambda lhs, rhs, span: _generic.less_than(lhs, rhs, span),
