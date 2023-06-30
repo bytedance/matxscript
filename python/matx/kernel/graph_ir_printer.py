@@ -26,22 +26,36 @@ import matx.kernel.typing.utils as typing_utils
 from functools import partial
 from .kernel_parser import KernelInspector
 
+
+@dataclass
+class MLIRType:
+    true_code: str
+    bits: int
+
+    @property
+    def code(self):
+        return self.true_code if self.true_code != "ui" else "i"
+
+    def __str__(self):
+        return f"{self.code}{self.bits}"
+
+
 DTYPE_TO_MLIR = {
-    "int8": "i8",
-    "int16": "i16",
-    "int32": "i32",
-    "int64": "i64",
-    "intc": "i32",
-    "uint8": "i8",
-    "uint16": "i16",
-    "uint32": "i32",
-    "uint64": "i64",
-    "uintc": "i32",
-    "float16": "f16",
-    "float32": "f32",
-    "float64": "f64",
-    "longlong": "i64",
-    "ulonglong": "i64"
+    "int8": MLIRType("i", 8),
+    "int16": MLIRType("i", 16),
+    "int32": MLIRType("i", 32),
+    "int64": MLIRType("i", 64),
+    "intc": MLIRType("i", 32),
+    "uint8": MLIRType("ui", 8),
+    "uint16": MLIRType("ui", 16),
+    "uint32": MLIRType("ui", 32),
+    "uint64": MLIRType("ui", 64),
+    "uintc": MLIRType("ui", 32),
+    "float16": MLIRType("f", 16),
+    "float32": MLIRType("f", 32),
+    "float64": MLIRType("f", 64),
+    "longlong": MLIRType("i", 64),
+    "ulonglong": MLIRType("ui", 64)
 }
 
 
@@ -150,7 +164,7 @@ class GraphIRPrinter:
     @staticmethod
     def _convert_type_to_mlir(node: _gir.Node):
         if isinstance(node, _gir.Scalar):
-            return DTYPE_TO_MLIR[node.dtype()]
+            return str(DTYPE_TO_MLIR[node.dtype()])
         if isinstance(node, _gir.Tensor):
             def dim_cvt(dim):
                 if isinstance(dim, _gir.IntVar):
@@ -209,14 +223,20 @@ class GraphIRPrinter:
         self.mlir_printer.print("}")
         return str(self.mlir_printer)
 
-    def _gen_arith_statement(self, node, lhs, rhs, result_type, mlir_op_name, suffix_map=None):
+    def _gen_arith_statement(self, node: _gir.BinaryElementWiseOperator, lhs: _gir.Scalar, rhs: _gir.Scalar,
+                             result_type: str, mlir_op_name: str, suffix_map=None):
         self._visit(lhs)
         self._visit(rhs)
         mlir_result_type = DTYPE_TO_MLIR[result_type]
         lhs_mlir_var_name = self._mlir_var_map[lhs]
         rhs_mlir_var_name = self._mlir_var_map[rhs]
+        if lhs.dtype() != result_type:
+            lhs_mlir_var_name = self._cast(lhs, result_type)
+        if rhs.dtype() != result_type:
+            rhs_mlir_var_name = self._cast(rhs, result_type)
+
         mlir_var = self.var_index
-        suffix = mlir_result_type[0]
+        suffix = mlir_result_type.code
         if suffix_map is not None and suffix in suffix_map:
             suffix = suffix_map[suffix]
         stmt = f"{mlir_var} = arith.{mlir_op_name}{suffix} " \
@@ -225,24 +245,73 @@ class GraphIRPrinter:
         self.mlir_printer.print(stmt)
         self._mlir_var_map[node] = mlir_var
 
-    def _gen_floor_div_statement(self, node, lhs, rhs, result_type):
+    def _gen_floor_div_statement(self, node: _gir.BinaryElementWiseOperator,
+                                 lhs: _gir.Scalar, rhs: _gir.Scalar, result_type: str):
         suffix_map = {"f": "divf",
                       "i": "floordivsi"}
         self._gen_arith_statement(node, lhs, rhs, result_type, "", suffix_map)
         div_var = self._mlir_var_map[node]
         result_mlir_type = DTYPE_TO_MLIR[result_type]
-        suffix_type = result_mlir_type[0]
+        suffix_type = result_mlir_type.code
         if suffix_type != "f":
             return
         mlir_var = self.var_index
         stmt = f"{mlir_var} = math.floor {div_var} : {result_mlir_type}"
         self.mlir_printer.print(stmt)
+        self._mlir_var_map[node] = mlir_var
 
-    def _gen_mod_statement(self, node, lhs, rhs, result_type):
+    def _cast(self, operand: _gir.Scalar, target_type: str):
+        """
+         arith.extf - cast from floating-point to wider floating-point
+         arith.extsi - integer sign extension operation
+         arith.extui - integer zero extension operation
+         arith.fptosi - cast from floating-point type to signed integer type
+         arith.fptoui - cast from floating-point type to unsigned integer type
+         arith.sitofp - cast from signed integer type to floating-point
+         arith.truncf - cast from floating-point to narrower floating-point
+         arith.trunci - integer truncation operation
+         arith.uitofp - cast from unsigned integer type to floating-point
+        """
+
+        def compare_f(target, origin):
+            return {(target < origin): 0, (target == origin): 1, (target > origin): 2}[True]
+
+        origin_type = operand.dtype()
+        if origin_type == target_type:
+            return self._mlir_var_map[operand]
+        origin_mlir_type = DTYPE_TO_MLIR[origin_type]
+        target_mlir_type = DTYPE_TO_MLIR[target_type]
+        origin_type_bits = origin_mlir_type.bits
+        origin_type_code = origin_mlir_type.true_code
+        target_type_bits = target_mlir_type.bits
+        target_type_code = target_mlir_type.true_code
+        compare = compare_f(target_type_bits, origin_type_bits)
+
+        op_map = {
+            ("i", "i"): ["arith.trunci", "arith.bitcast", "arith.extsi"],
+            ("i", "ui"): ["arith.trunci", "arith.bitcast", "arith.extui"],
+            ("i", "f"): ["arith.sitofp", "arith.sitofp", "arith.sitofp"],
+            ("ui", "i"): ["arith.trunci", "arith.bitcast", "arith.extui"],
+            ("ui", "ui"): ["arith.trunci", "arith.bitcast", "arith.extui"],
+            ("ui", "f"): ["arith.uitofp", "arith.uitofp", "arith.uitofp"],
+            ("f", "i"): ["arith.fptosi", "arith.fptosi", "arith.fptosi"],
+            ("f", "ui"): ["arith.fptoui", "arith.fptoui", "arith.fptoui"],
+            ("f", "f"): ["arith.truncf", "arith.bitcast", "arith.extf"]
+        }
+        op = op_map[(origin_type_code, target_type_code)][compare]
+        mlir_var = self.var_index
+        stmt = f"{mlir_var} = {op} {self._mlir_var_map[operand]} : {origin_mlir_type} to {target_mlir_type}"
+        self.mlir_printer.print(stmt)
+        return mlir_var
+
+    def _gen_mod_statement(self, node: _gir.BinaryElementWiseOperator, lhs: _gir.Scalar, rhs: _gir.Scalar,
+                           result_type: str):
         suffix_map = {"i": "si"}
         self._gen_arith_statement(node, lhs, rhs, result_type, "rem", suffix_map)
+        
 
-    def _gen_comapre_statement(self, node, compare_type, lhs, rhs):
+    def _gen_comapre_statement(self, node: _gir.BinaryElementWiseOperator, compare_type: str, lhs: _gir.Scalar,
+                               rhs: _gir.Scalar):
         self._visit(lhs)
         self._visit(rhs)
         lhs_mlir_var_name = self._mlir_var_map[lhs]
