@@ -18,10 +18,12 @@
 #  under the License.
 
 import ast
+import warnings
 from dataclasses import dataclass
 import matx.kernel.graphIR as _gir
-from typing import Any, List, Union, TYPE_CHECKING, Dict
+from typing import Any, List, Union, TYPE_CHECKING, Dict, Callable
 import matx.kernel.typing.utils as typing_utils
+from functools import partial
 from .kernel_parser import KernelInspector
 
 DTYPE_TO_MLIR = {
@@ -41,44 +43,6 @@ DTYPE_TO_MLIR = {
     "longlong": "i64",
     "ulonglong": "i64"
 }
-
-
-@dataclass
-class Ast2MLIR:
-    arithmetic_binop: Dict[type, str]
-    unaryop: Dict[type, str]
-    boolop: Dict[type, str]
-
-
-AST_TO_MLIR_PREFIX = Ast2MLIR(
-    {
-        ast.Add: "add",
-        ast.Sub: "sub",
-        ast.Mult: "",
-        ast.Div: "",
-        ast.FloorDiv: "",
-        ast.Mod: "",
-        ast.BitOr: "",
-        ast.BitAnd: "",
-        ast.BitXor: ""
-    },
-    {
-        ast.USub: "",
-        ast.Invert: "",
-        ast.Not: ""
-    },
-    {
-        ast.Gt: "",
-        ast.GtE: "",
-        ast.Lt: "",
-        ast.LtE: "",
-        ast.Eq: "",
-        ast.NotEq: "",
-        ast.Is: "",
-        ast.IsNot: "",
-        ast.And: "",
-        ast.Or: ""}
-)
 
 
 class IrPrinter:
@@ -110,6 +74,13 @@ def is_scalar_op(inputs: List[_gir.Tensor]) -> bool:
     return all((len(t.shape()) == 0 for t in inputs))
 
 
+def not_supported_op(*args, node=None):
+    if node is None:
+        raise NotImplementedError("calling op not supported")
+    else:
+        raise NotImplementedError(f"{node} of {type(node)} is not supported")
+
+
 class GraphIRPrinter:
 
     def __init__(self, kernel_p: 'KernelInspector'):
@@ -122,6 +93,53 @@ class GraphIRPrinter:
         self.mlir_printer = IrPrinter()
         self._mlir_var_map = {}
         self._var_index_var = 0
+
+        self.op = {
+            ast.Add: partial(
+                self._gen_arith_statement,
+                mlir_op_name="add"),
+            ast.Sub: partial(
+                self._gen_arith_statement,
+                mlir_op_name="sub"),
+            ast.Mult: partial(
+                self._gen_arith_statement,
+                mlir_op_name="mul"),
+            ast.Div: partial(
+                self._gen_arith_statement,
+                mlir_op_name="",
+                suffix_map={
+                    "f": "divf",
+                    "i": "floordivsi"}),
+            ast.FloorDiv: self._gen_floor_div_statement,
+            ast.Mod: self._gen_mod_statement,
+            ast.BitOr: not_supported_op,
+            ast.BitAnd: not_supported_op,
+            ast.BitXor: not_supported_op,
+            ast.USub: None,
+            ast.Invert: None,
+            ast.Not: None,
+            ast.Gt: partial(
+                self._gen_comapre_statement,
+                compare_type="gt"),
+            ast.GtE: partial(
+                self._gen_comapre_statement,
+                compare_type="ge"),
+            ast.Lt: partial(
+                self._gen_comapre_statement,
+                compare_type="lt"),
+            ast.LtE: partial(
+                self._gen_comapre_statement,
+                compare_type="le"),
+            ast.Eq: partial(
+                self._gen_comapre_statement,
+                compare_type="eq"),
+            ast.NotEq: partial(
+                self._gen_comapre_statement,
+                compare_type="ne"),
+            ast.Is: not_supported_op,
+            ast.IsNot: not_supported_op,
+            ast.And: None,
+            ast.Or: None}
 
     @property
     def var_index(self):
@@ -191,15 +209,74 @@ class GraphIRPrinter:
         self.mlir_printer.print("}")
         return str(self.mlir_printer)
 
+    def _gen_arith_statement(self, node, lhs, rhs, result_type, mlir_op_name, suffix_map=None):
+        self._visit(lhs)
+        self._visit(rhs)
+        mlir_result_type = DTYPE_TO_MLIR[result_type]
+        lhs_mlir_var_name = self._mlir_var_map[lhs]
+        rhs_mlir_var_name = self._mlir_var_map[rhs]
+        mlir_var = self.var_index
+        suffix = mlir_result_type[0]
+        if suffix_map is not None and suffix in suffix_map:
+            suffix = suffix_map[suffix]
+        stmt = f"{mlir_var} = arith.{mlir_op_name}{suffix} " \
+               f"{lhs_mlir_var_name}, {rhs_mlir_var_name} : " \
+               f"{mlir_result_type}"
+        self.mlir_printer.print(stmt)
+        self._mlir_var_map[node] = mlir_var
+
+    def _gen_floor_div_statement(self, node, lhs, rhs, result_type):
+        suffix_map = {"f": "divf",
+                      "i": "floordivsi"}
+        self._gen_arith_statement(node, lhs, rhs, result_type, "", suffix_map)
+        div_var = self._mlir_var_map[node]
+        result_mlir_type = DTYPE_TO_MLIR[result_type]
+        suffix_type = result_mlir_type[0]
+        if suffix_type != "f":
+            return
+        mlir_var = self.var_index
+        stmt = f"{mlir_var} = math.floor {div_var} : {result_mlir_type}"
+        self.mlir_printer.print(stmt)
+
+    def _gen_mod_statement(self, node, lhs, rhs, result_type):
+        suffix_map = {"i": "si"}
+        self._gen_arith_statement(node, lhs, rhs, result_type, "rem", suffix_map)
+
+    def _gen_comapre_statement(self, node, compare_type, lhs, rhs):
+        self._visit(lhs)
+        self._visit(rhs)
+        lhs_mlir_var_name = self._mlir_var_map[lhs]
+        rhs_mlir_var_name = self._mlir_var_map[rhs]
+        lhs_type = self._convert_type_to_mlir(lhs)
+        suffix = lhs_type[0]
+        predicate = compare_type
+        if suffix == "f":
+            predicate = "o" + predicate
+        elif compare_type != "eq" and compare_type != "ne":
+            if suffix == "ui":
+                warnings.warn(f"Enconuntered a unsuppoerted type: {suffix}."
+                              f" Will try to treat it as unsigned int")
+                predicate = "u" + predicate
+            elif suffix == "i":
+                predicate = "s" + predicate
+            else:
+                warnings.warn(f"Enconuntered a unsuppoerted type: {suffix}."
+                              f" Will try to treat it as signed int")
+                predicate = "u" + predicate
+
+        mlir_var = self.var_index
+
+        stmt = f"{mlir_var} = arith.cmp{suffix} {predicate}, " \
+               f"{lhs_mlir_var_name}, {rhs_mlir_var_name} : {lhs_type}"
+        self.mlir_printer.print(stmt)
+        self._mlir_var_map[node] = mlir_var
+
     def _generic_visit(self, node):
-        """Override method in ast.NodeVisitor.
-        To directly filter out invalidate type of stmt.
-        """
         raise NotImplementedError(f'This node is not supported now: {node}')
 
     def _visit(self, node: _gir.Node):
         method = "_visit_" + node.__class__.__name__
-        visitor = getattr(self, method, self._generic_visit)
+        visitor: Callable = getattr(self, method, self._generic_visit)
         visit_res = visitor(node)
         return visit_res
 
@@ -223,27 +300,14 @@ class GraphIRPrinter:
         self._visit(src_op_list[0])
         self._mlir_var_map[node] = self._mlir_var_map[src_op_list[0]]
 
-    def _gen_mlir_arith_statement(self, node, op, lhs, rhs, result_type):
-        self._visit(lhs)
-        self._visit(rhs)
-        mlir_result_type = DTYPE_TO_MLIR[result_type]
-        lhs_mlir_var_name = self._mlir_var_map[lhs]
-        rhs_mlir_var_name = self._mlir_var_map[rhs]
-        mlir_var = self.var_index
-        mlir_op_name = AST_TO_MLIR_PREFIX.arithmetic_binop[op]
-        stmt = f"{mlir_var} = arith.{mlir_op_name}{mlir_result_type[0]} " \
-               f"{lhs_mlir_var_name}, {rhs_mlir_var_name} : " \
-               f"{mlir_result_type}"
-        self.mlir_printer.print(stmt)
-        self._mlir_var_map[node] = mlir_var
-
     def _visit_BinaryElementWiseOperator(self, node: _gir.BinaryElementWiseOperator):
         inputs = node.get_inputs()
         lhs, rhs = inputs
         op = node.op_types[0]
 
         if is_scalar_op(inputs):
-            self._gen_mlir_arith_statement(node, op, lhs, rhs, node.result_dtype)
+            visitor: Callable = self.op[op]
+            visitor(node, lhs, rhs, node.result_dtype)
         else:
             ...
 
@@ -251,3 +315,6 @@ class GraphIRPrinter:
         copy_from = node.copy_from
         self._visit(copy_from)
         self._mlir_var_map[node] = self._mlir_var_map[copy_from]
+
+    def _visit_DeepCopyOperator(self, node: _gir.DeepCopyOperator):
+        return self._generic_visit(node)

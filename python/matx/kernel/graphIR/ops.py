@@ -17,6 +17,8 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
+import ast
+import numpy as np
 from typing import List
 import matx.kernel.graphIR.utils as graph_utils
 import matx.kernel.typing.utils as typing_utils
@@ -43,6 +45,8 @@ class BinaryElementWiseOperator(ElementWiseOperator):
     def __init__(self, op_type):
         super().__init__()
         self.op_types = [op_type]
+        self.is_boolean_op = op_type in (
+            ast.Gt, ast.GtE, ast.Lt, ast.LtE, ast.Eq, ast.NotEq, ast.Is, ast.IsNot, ast.And, ast.Or)
 
     def __call__(self, lhs: Tensor, rhs: Tensor) -> List[Tensor]:
         self._attrs["inputs"] = [lhs, rhs]
@@ -52,9 +56,17 @@ class BinaryElementWiseOperator(ElementWiseOperator):
         self.lhs_shape = lhs.shape()
         self.rhs_dtype = rhs.dtype()
         self.rhs_shape = rhs.shape()
-        # todo dtype conversion
-        self.result_dtype = typing_utils.convert_to_string_dtype(
-            typing_utils.np_result_dtype([self.lhs_dtype, self.rhs_dtype]))
+
+        if self.is_boolean_op:
+            self.result_dtype = np.bool_
+        elif self.op_types[0] == ast.Div:
+            lhs_np_dtype = typing_utils.STR_TO_PYTYPE[self.lhs_dtype]
+            rhs_np_dtype = typing_utils.STR_TO_PYTYPE[self.rhs_dtype]
+            result_np_dtype = (lhs_np_dtype(1) / rhs_np_dtype(1)).dtype.type
+            self.result_dtype = typing_utils.PYTYPE_TO_STR[result_np_dtype]
+        else:
+            self.result_dtype = typing_utils.convert_to_string_dtype(
+                typing_utils.np_result_dtype([self.lhs_dtype, self.rhs_dtype]))
         self.result_shape = graph_utils.broadcast(self.lhs_shape, self.rhs_shape)
         result_tensor = Tensor(self.result_shape, src_ops=[self], dtype=self.result_dtype)
         return [result_tensor]

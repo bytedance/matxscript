@@ -24,7 +24,7 @@ import numbers
 import numpy as np
 import sympy
 
-from matx.kernel.symbol.utils import is_symbol
+from matx.kernel.symbol.utils import is_symbol, is_symbol_type
 from matx.kernel.typing.kernel_type import NDArrayType
 from matx.kernel.typing.type_def import *
 
