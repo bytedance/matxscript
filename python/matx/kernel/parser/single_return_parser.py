@@ -56,7 +56,8 @@ class KernelSingleReturnParser(BaseParser):
         if isinstance(stmt, AssignScalarNode):
             return stmt.to_matx_ir()
         return self.make_compute_block(stmt)"""
-        raise NotImplementedError("not support assassign")
+
+        super().visit_Assign(node)
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
         """
@@ -66,7 +67,7 @@ class KernelSingleReturnParser(BaseParser):
         if isinstance(stmt, ScopedNDArrayAllocationNode):
             cmptblk = self.make_compute_block(stmt.assign_stmt)
             return stmt.to_matx_ir(assign_stmt=cmptblk)"""
-        raise NotImplementedError("not support assassign")
+        super().visit_AnnAssign(node)
 
     def make_compute_block(self, stmt):
         """

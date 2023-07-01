@@ -22,6 +22,7 @@ from itertools import chain
 from typing import List, TYPE_CHECKING
 
 import matx.kernel.graphIR as _gir
+import matx.kernel.typing
 from matx import ir as _ir
 from matx.ir import generic as _generic
 from matx.kernel.typing.broadcast import broadcast as typing_broadcast
@@ -120,3 +121,11 @@ def broadcast(arr1_shape: List['IntVar'], arr2_shape: List['IntVar']):
     # lhs_new_shape = convert_back(lhs_new_shape)
     # rhs_new_shape = convert_back(rhs_new_shape)
     return result_shape
+
+
+def convert_to_kernel_type(node: '_gir.Tensor'):
+    dtype = node.dtype()
+    shape = node.shape()
+    if len(shape) == 0:
+        shape = [1]
+    return matx.kernel.typing.STR_TO_KERNEL_TYPE[dtype][shape]

@@ -77,10 +77,23 @@ class UnaryElementWiseOperator(ElementWiseOperator):
     def __init__(self, op_type):
         super().__init__()
         self.op_types = [op_type]
+        self.is_boolean_op = op_type in (
+            ast.Gt, ast.GtE, ast.Lt, ast.LtE, ast.Eq, ast.NotEq, ast.Is, ast.IsNot, ast.And, ast.Or)
 
     def __call__(self, operand: Tensor) -> List[Tensor]:
         self._attrs["inputs"] = [operand]
-        pass
+        operand.dst_ops().add(self)
+        self.operand_dtype = operand.dtype()
+        self.operand_shape = operand.shape()
+
+        if self.is_boolean_op:
+            self.result_dtype = typing_utils.convert_to_string_dtype(np.bool_)
+        else:
+            self.result_dtype = typing_utils.convert_to_string_dtype(
+                typing_utils.np_result_dtype([self.operand_dtype]))
+        self.result_shape = self.operand_shape
+        result_tensor = Tensor(self.result_shape, src_ops=[self], dtype=self.result_dtype)
+        return [result_tensor]
 
 
 class ReductionOperator(Operator):

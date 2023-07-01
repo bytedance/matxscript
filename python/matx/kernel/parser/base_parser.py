@@ -100,15 +100,16 @@ class BaseParser(ast.NodeVisitor):
     # Expressions
     def visit_UnaryOp(self, node: ast.UnaryOp) -> _gir.Tensor:
         # todo modify the code below
-        """
-        opname = type(node.op).__name__
         operand_ir = self.visit(node.operand)
-        if (is_scalar_type(operand_ir.kernel_type) or is_symbol_type(operand_ir.kernel_type)):
-            return UnaryOp(operand_ir, type(node.op), self.build_span(node))
+        if scalar_or_int_var(operand_ir):
+            op = _gir.UnaryElementWiseOperator(type(node.op))
+            result = op(operand_ir)[0]
+            self.kernel_p.graph_nodes.append(result)
+            self.kernel_p.graph_nodes.append(op)
+            return result
         else:
-            raise SyntaxError(f"{opname} ({operand_ir}) is not supported "
-                              f"because {operand_ir} is not a scalar")"""
-        raise NotImplementedError("visit_UnaryOp is not supported yet")
+            raise SyntaxError(f"{type(node.op).__name__} ({operand_ir}) is not supported "
+                              f"because {operand_ir} is not a scalar")
 
     def visit_BinOp(self, node: ast.BinOp) -> _gir.Tensor:
         lhs_ir = self.visit(node.left)
@@ -198,7 +199,6 @@ class BaseParser(ast.NodeVisitor):
         return idx
 
     def visit_Assign(self, node: ast.Assign) -> _gir.Node:
-        """
         if len(node.targets) > 1:
             raise SyntaxError(f"Assigning multiple is not allowed")
         if not isinstance(node.targets[0], (ast.Name, ast.Subscript)):
@@ -206,58 +206,62 @@ class BaseParser(ast.NodeVisitor):
         value = self.visit(node.value)
         target = self.visit(node.targets[0])
         if isinstance(node.targets[0], ast.Name):
-            return self._assign_scalar(target.name, value, node, span)
+            return self._assign_scalar(target.name(), value, node)
         elif isinstance(node.targets[0], ast.Subscript):
-            return AssignScalarNode(target, value, span)
+            raise SyntaxError(f"not supported node type {type(target)}")
         else:
-            raise SyntaxError(f"not supported node type {type(node.target)}")"""
-        raise NotImplementedError("visit_Assign is not supported yet")
+            raise SyntaxError(f"not supported node type {type(target)}")
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
-        """
-        span = self.build_span(node)
         ann = self.annotation_to_kernel_type(node.annotation)
         value = self.visit(node.value)
         if not isinstance(node.target, (ast.Name, ast.Subscript)):
             raise SyntaxError(f"Assigning to {type(node.target)} is not allowed.")
         if isinstance(node.target, ast.Name):
             if typing_utils.is_scalar_type(ann):
-                return self._allocate_scalar(node.target.id, value, ann, span)
+                return self._allocate_scalar(node.target.id, value, ann)
             if typing_utils.is_ndarray_type(ann):
-                return self._allocate_ndarray(node.target.id, value, ann, span)
+                # return self._allocate_ndarray(node.target.id, value, ann)\
+                raise NotImplementedError("assigning to ndarray not supported yet")
         # symbol case
         elif isinstance(node.target, ast.Subscript):
             raise NotImplementedError("assigning to ndarray not supported yet")
         else:
-            raise SyntaxError(f"not supported node type {type(node.target)}")"""
-        raise NotImplementedError("visit_AnnAssign is not supported yet")
+            raise SyntaxError(f"not supported node type {type(node.target)}")
 
-    def _allocate_scalar(self, target_name, value, ann, span):
-        """
+    def _allocate_scalar(self, target_name, value, ann):
         # the name is conflict with args
         if target_name in self.arg_context_table:
             raise SyntaxError(
                 f"Reassigning the scalar {target_name} defined in arguments is not allowed")
         # the name is conflict with previous defined scalar
-        if target_name in self.tmp_scalar_table and self.tmp_scalar_table[target_name].kernel_type != ann:
-            raise SyntaxError(
-                f"Reallocating the scalar {target_name} defined previous is not allowed")
+        if target_name in self.tmp_scalar_table:
+            t = self.tmp_scalar_table[target_name]
+            t = _gir.utils.convert_to_kernel_type(t)
+            if t != ann:
+                raise SyntaxError(
+                    f"Reallocating the scalar {target_name} defined previous is not allowed")
         # make sure it is annotated as scalar
         if not typing_utils.is_scalar_type(ann):
             raise SyntaxError(f"Annotating {target_name} with type {ann} is not allowed.")
         # make sure the annotated type is the same as rhs value
-        if value.kernel_type != ann:
-            if value.kernel_type.shape != ann.shape:
+        v_kernel = _gir.utils.convert_to_kernel_type(value)
+        if v_kernel != ann:
+            if v_kernel.shape != ann.shape:
                 raise SyntaxError(
                     f"Assigning {value.kernel_type} to {ann} is not allowed because they have different shapes")
-            elif value.kernel_type.dtype != ann.dtype:
-                value = CastOp(value, ann.dtype, span)
+            elif v_kernel.dtype != ann.dtype:
+                pass
             else:
                 raise SyntaxError(f"Assigning {value.kernel_type} to {ann} is not allowed")
-        tmp_scalar_ctx = ScalarNode(target_name, ann, span)
+        tmp_scalar_ctx = _gir.Scalar(
+            name=target_name,
+            dtype=ann.dtype_str(),
+            is_internal_constant=True)
         self.tmp_scalar_table[target_name] = tmp_scalar_ctx
-        return ScalarAllocationNode(tmp_scalar_ctx, value, span)"""
-        pass
+        copy_op = _gir.CopyOperator()
+        rt = copy_op(tmp_scalar_ctx, value)[0]
+        return rt
 
     def _allocate_ndarray(self, target_name, value, ann, span):
         """
@@ -283,7 +287,6 @@ class BaseParser(ast.NodeVisitor):
         pass
 
     def _assign_scalar(self, target_name, value, node):
-        """
         # the name is conflict with args
         if target_name in self.arg_context_table:
             raise SyntaxError(
@@ -299,8 +302,14 @@ class BaseParser(ast.NodeVisitor):
         previous_ctx = self.tmp_scalar_table[target_name]
         if _gir.utils.is_compatible(previous_ctx, value):
             raise SyntaxError(f"the value assigned to {target_name} is not scalar")
-        return AssignScalarNode(previous_ctx, value)"""
-        pass
+        new_ctx = _gir.Scalar(
+            name=target_name,
+            dtype=previous_ctx.dtype(),
+            is_internal_constant=True)
+        self.tmp_scalar_table[target_name] = new_ctx
+        copy_op = _gir.CopyOperator()
+        rt = copy_op(new_ctx, value)
+        return rt[0]
 
     def _assign_ndarray(self, target_name, value, node):
         """

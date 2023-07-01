@@ -52,4 +52,6 @@ def user_function_wrapper(value, resource_handle, span):
 
 
 def scalar_or_int_var(node: _gir.Node):
-    return isinstance(node, _gir.Scalar) or isinstance(node, _gir.IntVar)
+    return isinstance(node, _gir.Scalar) or \
+        isinstance(node, _gir.IntVar) or \
+        (isinstance(node, _gir.Tensor) and len(node.shape()) == 0)
