@@ -22,6 +22,7 @@ import inspect
 
 from matx.script import context as script_context
 import matx.kernel.typing.utils as typing_utils
+import matx.kernel.graphIR as _gir
 
 
 def parse_ast(func):
@@ -48,3 +49,7 @@ def user_function_wrapper(value, resource_handle, span):
     if isinstance(value, script_context.GetClassAttr):
         return value.as_user_function(resource_handle, span)
     return value
+
+
+def scalar_or_int_var(node: _gir.Node):
+    return isinstance(node, _gir.Scalar) or isinstance(node, _gir.IntVar)

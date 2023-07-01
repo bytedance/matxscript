@@ -26,6 +26,7 @@ from typing import Any, List, Union, TYPE_CHECKING
 
 import matx.kernel.graphIR as _gir
 import matx.kernel.typing.utils as typing_utils
+from .utils import scalar_or_int_var
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelInspector
@@ -110,20 +111,16 @@ class BaseParser(ast.NodeVisitor):
         raise NotImplementedError("visit_UnaryOp is not supported yet")
 
     def visit_BinOp(self, node: ast.BinOp) -> _gir.Tensor:
-        opname = type(node.op).__name__
         lhs_ir = self.visit(node.left)
         rhs_ir = self.visit(node.right)
-        if (typing_utils.is_scalar_type(lhs_ir.kernel_type)
-            or typing_utils.is_symbol_type(lhs_ir.kernel_type)) \
-                and (typing_utils.is_scalar_type(rhs_ir.kernel_type)
-                     or typing_utils.is_symbol_type(rhs_ir.kernel_type)):
+        if scalar_or_int_var(lhs_ir) and scalar_or_int_var(rhs_ir):
             op = _gir.BinaryElementWiseOperator(type(node.op))
-            result = op(lhs_ir, rhs_ir)
-            self.kernel_p.graph_nodes.append(result[0])
+            result = op(lhs_ir, rhs_ir)[0]
+            self.kernel_p.graph_nodes.append(result)
             self.kernel_p.graph_nodes.append(op)
-            return result[0]
+            return result
         else:
-            raise SyntaxError(f"{lhs_ir} {opname} {rhs_ir} is not supported "
+            raise SyntaxError(f"{lhs_ir} {type(node.op).__name__} {rhs_ir} is not supported "
                               f"because they are not both scalar")
 
     def visit_BoolOp(self, node: ast.BoolOp) -> Any:
@@ -132,8 +129,7 @@ class BaseParser(ast.NodeVisitor):
         for i in range(len(values) - 1):
             lhs = values[i]
             rhs = values[i + 1]
-            if (typing_utils.is_scalar_type(lhs.kernel_type) or typing_utils.is_symbol_type(lhs.kernel_type)) and (
-                    typing_utils.is_scalar_type(rhs.kernel_type) or typing_utils.is_symbol_type(rhs.kernel_type)):
+            if scalar_or_int_var(lhs) and scalar_or_int_var(rhs):
                 op = _gir.BinaryElementWiseOperator(type(node.op))
                 t = op(lhs, rhs)[0]
                 self.kernel_p.graph_nodes.append(t)
@@ -151,9 +147,8 @@ class BaseParser(ast.NodeVisitor):
             op = node.ops[i]
             opname = type(op).__name__
             rhs = comparators[i]
-            if (typing_utils.is_scalar_type(lhs.kernel_type) or typing_utils.is_symbol_type(lhs.kernel_type)) and (
-                    typing_utils.is_scalar_type(rhs.kernel_type) or typing_utils.is_symbol_type(rhs.kernel_type)):
-                op = _gir.BinaryElementWiseOperator(type(node.op))
+            if scalar_or_int_var(lhs) and scalar_or_int_var(rhs):
+                op = _gir.BinaryElementWiseOperator(type(op))
                 lhs = op(lhs, rhs)[0]
                 self.kernel_p.graph_nodes.append(lhs)
                 self.kernel_p.graph_nodes.append(op)

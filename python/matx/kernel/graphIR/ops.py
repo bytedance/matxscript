@@ -58,7 +58,7 @@ class BinaryElementWiseOperator(ElementWiseOperator):
         self.rhs_shape = rhs.shape()
 
         if self.is_boolean_op:
-            self.result_dtype = np.bool_
+            self.result_dtype = typing_utils.convert_to_string_dtype(np.bool_)
         elif self.op_types[0] == ast.Div:
             lhs_np_dtype = typing_utils.STR_TO_PYTYPE[self.lhs_dtype]
             rhs_np_dtype = typing_utils.STR_TO_PYTYPE[self.rhs_dtype]

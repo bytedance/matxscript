@@ -41,6 +41,7 @@ class MLIRType:
 
 
 DTYPE_TO_MLIR = {
+    "bool": MLIRType("i", 1),
     "int8": MLIRType("i", 8),
     "int16": MLIRType("i", 16),
     "int32": MLIRType("i", 32),
@@ -223,8 +224,14 @@ class GraphIRPrinter:
         self.mlir_printer.print("}")
         return str(self.mlir_printer)
 
-    def _gen_arith_statement(self, node: _gir.BinaryElementWiseOperator, lhs: _gir.Scalar, rhs: _gir.Scalar,
-                             result_type: str, mlir_op_name: str, suffix_map=None):
+    def _gen_arith_statement(
+            self,
+            node: _gir.BinaryElementWiseOperator,
+            lhs: _gir.Scalar,
+            rhs: _gir.Scalar,
+            result_type: str,
+            mlir_op_name: str,
+            suffix_map=None):
         self._visit(lhs)
         self._visit(rhs)
         mlir_result_type = DTYPE_TO_MLIR[result_type]
@@ -304,14 +311,41 @@ class GraphIRPrinter:
         self.mlir_printer.print(stmt)
         return mlir_var
 
-    def _gen_mod_statement(self, node: _gir.BinaryElementWiseOperator, lhs: _gir.Scalar, rhs: _gir.Scalar,
-                           result_type: str):
+    def _gen_mod_statement(
+            self,
+            node: _gir.BinaryElementWiseOperator,
+            lhs: _gir.Scalar,
+            rhs: _gir.Scalar,
+            result_type: str):
         suffix_map = {"i": "si"}
-        self._gen_arith_statement(node, lhs, rhs, result_type, "rem", suffix_map)
-        
+        self._visit(lhs)
+        self._visit(rhs)
+        mlir_result_type = DTYPE_TO_MLIR[result_type]
+        lhs_mlir_var_name = self._mlir_var_map[lhs]
+        rhs_mlir_var_name = self._mlir_var_map[rhs]
+        if lhs.dtype() != result_type:
+            lhs_mlir_var_name = self._cast(lhs, result_type)
+        if rhs.dtype() != result_type:
+            rhs_mlir_var_name = self._cast(rhs, result_type)
 
-    def _gen_comapre_statement(self, node: _gir.BinaryElementWiseOperator, compare_type: str, lhs: _gir.Scalar,
-                               rhs: _gir.Scalar):
+        suffix = mlir_result_type.code
+        mode_suffix = suffix
+        if suffix_map is not None and mode_suffix in suffix_map:
+            mode_suffix = suffix_map[mode_suffix]
+        mod_op = f"arith.rem{mode_suffix}"
+        mod1_var = self.var_index
+        mod1 = f"{mod1_var} = {mod_op} {lhs_mlir_var_name}, {rhs_mlir_var_name} : {mlir_result_type}"
+        add_var = self.var_index
+        add = f"{add_var} = arith.add{suffix} {mod1_var}, {rhs_mlir_var_name} : {mlir_result_type}"
+        mod2_var = self.var_index
+        mod2 = f"{mod2_var} = {mod_op} {add_var}, {rhs_mlir_var_name} : {mlir_result_type}"
+        self.mlir_printer.print(mod1)
+        self.mlir_printer.print(add)
+        self.mlir_printer.print(mod2)
+        self._mlir_var_map[node] = mod2_var
+
+    def _gen_comapre_statement(self, node: _gir.BinaryElementWiseOperator, lhs: _gir.Scalar,
+                               rhs: _gir.Scalar, result_type: str, compare_type: str):
         self._visit(lhs)
         self._visit(rhs)
         lhs_mlir_var_name = self._mlir_var_map[lhs]
