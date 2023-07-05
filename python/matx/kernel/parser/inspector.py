@@ -211,8 +211,8 @@ class KernelInspector(ast.NodeVisitor):
         self.context.new_scope(nodes=node.body)
         self.parse_body(True)
         self.context.pop_scope()
-        #fuser = _gir.graph_pass.ElementWiseOpFuser()
-        #fuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
+        # fuser = _gir.graph_pass.ElementWiseOpFuser()
+        # fuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
         return self
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:
