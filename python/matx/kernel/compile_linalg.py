@@ -17,9 +17,8 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from matx.ir import _ffi_node_api
 from matx.kernel.kernel_parser import KernelParser
-from matx.kernel.graph_ir_printer import GraphIRPrinter
+from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 import ctypes
 from matx.kernel.typing import PYTYPE_TO_C_TYPE
 import matx.kernel.typing.utils as typing_utils

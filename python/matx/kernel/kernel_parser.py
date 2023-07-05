@@ -20,11 +20,10 @@
 import inspect
 
 import matx.kernel.parser.utils as parser_utils
-from matx.ir import _ffi_node_api
 from matx.kernel.parser import KernelInspector
 from matx.script import analysis
 from matx.script import context as script_context
-from .graph_ir_printer import GraphIRPrinter
+from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 
 
 class KernelParser:

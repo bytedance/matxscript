@@ -24,7 +24,8 @@ import matx.kernel.graphIR as _gir
 from typing import Any, List, Union, TYPE_CHECKING, Dict, Callable
 import matx.kernel.typing.utils as typing_utils
 from functools import partial
-from .kernel_parser import KernelInspector
+from matx.kernel.kernel_parser import KernelInspector
+from .linalg_printer import LinalgGenericPrinter
 
 
 @dataclass
@@ -67,10 +68,12 @@ class IrPrinter:
         self._apply_indent = True
 
     def print(self, *args, sep=' ', end='\n'):
-        text = sep.join(str(arg) for arg in args) + end
-        if self._apply_indent:
-            self.output += self._scope_indent
-        self.output += text
+        text = sep.join(str(arg) for arg in args)
+        for s in text.split("\n"):
+            if self._apply_indent:
+                self.output += self._scope_indent
+            self.output += s + "\n"
+            self._apply_indent = True
         self._apply_indent = end == '\n'
 
     def new_scope(self):
@@ -89,7 +92,7 @@ def is_scalar_op(inputs: List[_gir.Tensor]) -> bool:
     return all((len(t.shape()) == 0 for t in inputs))
 
 
-def not_supported_op(*args, node=None):
+def not_supported_op(*_, node=None):
     if node is None:
         raise NotImplementedError("calling op not supported")
     else:
@@ -106,8 +109,11 @@ class GraphIRPrinter:
         self.graph_nodes: List[_gir.Node] = kernel_p.graph_nodes
 
         self.mlir_printer = IrPrinter()
-        self._mlir_var_map = {}
+        self.mlir_var_map = {}
         self._var_index_var = 0
+        self.visited = set(self.graph_input)
+
+        self.linalg_generic_map: Dict[_gir.ElementWiseOperator, LinalgGenericPrinter] = {}
 
         self.op = {
             ast.Add: partial(
@@ -163,7 +169,7 @@ class GraphIRPrinter:
         return f"%{i}"
 
     @staticmethod
-    def _convert_type_to_mlir(node: _gir.Node):
+    def convert_type_to_mlir(node: _gir.Node):
         if isinstance(node, _gir.Scalar):
             return str(DTYPE_TO_MLIR[node.dtype()])
         if isinstance(node, _gir.Tensor):
@@ -188,14 +194,14 @@ class GraphIRPrinter:
                 raise NotImplementedError("func parameters can only be marked as ndarray or scalar")
             name = f"%{arg}"
             mlir_args.append(name)
-            mlir_arg_types.append(self._convert_type_to_mlir(node))
-            self._mlir_var_map[node] = name
+            mlir_arg_types.append(self.convert_type_to_mlir(node))
+            self.mlir_var_map[node] = name
 
         for dim, dim_var in self.kernel_p.shape_symbol_table.items():
             name = f"%{dim}"
             mlir_args.append(name)
-            mlir_arg_types.append(self._convert_type_to_mlir(dim_var))
-            self._mlir_var_map[dim_var] = name
+            mlir_arg_types.append(self.convert_type_to_mlir(dim_var))
+            self.mlir_var_map[dim_var] = name
 
         # todo assert one return
         if len(self.graph_output) != 1:
@@ -208,18 +214,18 @@ class GraphIRPrinter:
         self.mlir_printer.print(f"({', '.join(mlir_name_and_type)})", end='')
         if self.kernel_p.is_scalar_return():
             self.mlir_printer.print(
-                f"->{self._convert_type_to_mlir(self.kernel_p.return_ctx)}", end='')
+                f"->{self.convert_type_to_mlir(self.kernel_p.return_ctx)}", end='')
         self.mlir_printer.print("{")
         self.mlir_printer.new_scope()
 
         # convert graph
-        self._visit(self.graph_output[0])
+        self.visit(self.graph_output[0], None)
         if not self.kernel_p.is_scalar_return():
             self.mlir_printer.print(f"func.return")
         else:
             self.mlir_printer.print(
-                f"func.return {self._mlir_var_map[self.graph_output[0]]}", end='')
-            self.mlir_printer.print(f" : {self._convert_type_to_mlir(self.graph_output[0])}")
+                f"func.return {self.mlir_var_map[self.graph_output[0]]}", end='')
+            self.mlir_printer.print(f" : {self.convert_type_to_mlir(self.graph_output[0])}")
         self.mlir_printer.pop_scope()
         self.mlir_printer.print("}")
         return str(self.mlir_printer)
@@ -232,11 +238,11 @@ class GraphIRPrinter:
             result_type: str,
             mlir_op_name: str,
             suffix_map=None):
-        self._visit(lhs)
-        self._visit(rhs)
+        self.visit(lhs, node)
+        self.visit(rhs, node)
         mlir_result_type = DTYPE_TO_MLIR[result_type]
-        lhs_mlir_var_name = self._mlir_var_map[lhs]
-        rhs_mlir_var_name = self._mlir_var_map[rhs]
+        lhs_mlir_var_name = self.mlir_var_map[lhs]
+        rhs_mlir_var_name = self.mlir_var_map[rhs]
         if lhs.dtype() != result_type:
             lhs_mlir_var_name = self._cast(lhs, result_type)
         if rhs.dtype() != result_type:
@@ -250,22 +256,24 @@ class GraphIRPrinter:
                f"{lhs_mlir_var_name}, {rhs_mlir_var_name} : " \
                f"{mlir_result_type}"
         self.mlir_printer.print(stmt)
-        self._mlir_var_map[node] = mlir_var
+        self.mlir_var_map[node] = mlir_var
+        return mlir_var
 
     def _gen_floor_div_statement(self, node: _gir.BinaryElementWiseOperator,
                                  lhs: _gir.Scalar, rhs: _gir.Scalar, result_type: str):
         suffix_map = {"f": "divf",
                       "i": "floordivsi"}
-        self._gen_arith_statement(node, lhs, rhs, result_type, "", suffix_map)
-        div_var = self._mlir_var_map[node]
+        rt = self._gen_arith_statement(node, lhs, rhs, result_type, "", suffix_map)
+        div_var = self.mlir_var_map[node]
         result_mlir_type = DTYPE_TO_MLIR[result_type]
         suffix_type = result_mlir_type.code
         if suffix_type != "f":
-            return
+            return rt
         mlir_var = self.new_var_name
         stmt = f"{mlir_var} = math.floor {div_var} : {result_mlir_type}"
         self.mlir_printer.print(stmt)
-        self._mlir_var_map[node] = mlir_var
+        self.mlir_var_map[node] = mlir_var
+        return mlir_var
 
     def _cast(self, operand: _gir.Scalar, target_type: str):
         """
@@ -285,7 +293,7 @@ class GraphIRPrinter:
 
         origin_type = operand.dtype()
         if origin_type == target_type:
-            return self._mlir_var_map[operand]
+            return self.mlir_var_map[operand]
         origin_mlir_type = DTYPE_TO_MLIR[origin_type]
         target_mlir_type = DTYPE_TO_MLIR[target_type]
         origin_type_bits = origin_mlir_type.bits
@@ -307,7 +315,7 @@ class GraphIRPrinter:
         }
         op = op_map[(origin_type_code, target_type_code)][compare]
         mlir_var = self.new_var_name
-        stmt = f"{mlir_var} = {op} {self._mlir_var_map[operand]} : {origin_mlir_type} to {target_mlir_type}"
+        stmt = f"{mlir_var} = {op} {self.mlir_var_map[operand]} : {origin_mlir_type} to {target_mlir_type}"
         self.mlir_printer.print(stmt)
         return mlir_var
 
@@ -318,11 +326,11 @@ class GraphIRPrinter:
             rhs: _gir.Scalar,
             result_type: str):
         suffix_map = {"i": "si"}
-        self._visit(lhs)
-        self._visit(rhs)
+        self.visit(lhs, node)
+        self.visit(rhs, node)
         mlir_result_type = DTYPE_TO_MLIR[result_type]
-        lhs_mlir_var_name = self._mlir_var_map[lhs]
-        rhs_mlir_var_name = self._mlir_var_map[rhs]
+        lhs_mlir_var_name = self.mlir_var_map[lhs]
+        rhs_mlir_var_name = self.mlir_var_map[rhs]
         if lhs.dtype() != result_type:
             lhs_mlir_var_name = self._cast(lhs, result_type)
         if rhs.dtype() != result_type:
@@ -342,15 +350,16 @@ class GraphIRPrinter:
         self.mlir_printer.print(mod1)
         self.mlir_printer.print(add)
         self.mlir_printer.print(mod2)
-        self._mlir_var_map[node] = mod2_var
+        self.mlir_var_map[node] = mod2_var
+        return mod2_var
 
     def _gen_compare_statement(self, node: _gir.BinaryElementWiseOperator, lhs: _gir.Scalar,
                                rhs: _gir.Scalar, result_type: str, compare_type: str):
-        self._visit(lhs)
-        self._visit(rhs)
-        lhs_mlir_var_name = self._mlir_var_map[lhs]
-        rhs_mlir_var_name = self._mlir_var_map[rhs]
-        lhs_type = self._convert_type_to_mlir(lhs)
+        self.visit(lhs, node)
+        self.visit(rhs, node)
+        lhs_mlir_var_name = self.mlir_var_map[lhs]
+        rhs_mlir_var_name = self.mlir_var_map[rhs]
+        lhs_type = self.convert_type_to_mlir(lhs)
         suffix = lhs_type[0]
         predicate = compare_type
         if suffix == "f":
@@ -372,27 +381,30 @@ class GraphIRPrinter:
         stmt = f"{mlir_var} = arith.cmp{suffix} {predicate}, " \
                f"{lhs_mlir_var_name}, {rhs_mlir_var_name} : {lhs_type}"
         self.mlir_printer.print(stmt)
-        self._mlir_var_map[node] = mlir_var
+        self.mlir_var_map[node] = mlir_var
+        return mlir_var
 
     def _gen_boolean_statement(self, node: _gir.BinaryElementWiseOperator, lhs: _gir.Scalar,
                                rhs: _gir.Scalar, result_type: str, bool_op_type: str):
-        self._visit(lhs)
-        self._visit(rhs)
-        lhs_mlir_var_name = self._mlir_var_map[lhs]
-        rhs_mlir_var_name = self._mlir_var_map[rhs]
+        self.visit(lhs, node)
+        self.visit(rhs, node)
+        lhs_mlir_var_name = self.mlir_var_map[lhs]
+        rhs_mlir_var_name = self.mlir_var_map[rhs]
         mlir_result_type = DTYPE_TO_MLIR[result_type]
         suffix = mlir_result_type.code
 
         mlir_var = self.new_var_name
 
-        stmt = f"{mlir_var} = arith.{bool_op_type}{suffix}  {lhs_mlir_var_name}, {rhs_mlir_var_name} : {mlir_result_type}"
+        stmt = f"{mlir_var} = arith.{bool_op_type}{suffix}" \
+               f" {lhs_mlir_var_name}, {rhs_mlir_var_name} : {mlir_result_type}"
         self.mlir_printer.print(stmt)
-        self._mlir_var_map[node] = mlir_var
+        self.mlir_var_map[node] = mlir_var
+        return mlir_var
 
     def _gen_not_statement(self, node: _gir.UnaryElementWiseOperator, operand: _gir.Scalar,
                            result_type: str):
-        self._visit(operand)
-        operand_mlir_var_name = self._mlir_var_map[operand]
+        self.visit(operand, node)
+        operand_mlir_var_name = self.mlir_var_map[operand]
         mlir_result_type = DTYPE_TO_MLIR[result_type]
         operand_type = DTYPE_TO_MLIR[operand.dtype()]
 
@@ -403,68 +415,115 @@ class GraphIRPrinter:
         self.mlir_printer.print(const_stmt)
         xor_stmt = f"{xor} = arith.xori {const_1}, {operand_mlir_var_name} : {mlir_result_type}"
         self.mlir_printer.print(xor_stmt)
-        self._mlir_var_map[node] = xor
+        self.mlir_var_map[node] = xor
+        return xor
 
-    def _generic_visit(self, node):
+    def _gen_lingalg_generic(self, node: _gir.ElementWiseOperator, _from: _gir.Tensor):
+        if node not in self.linalg_generic_map:
+            self.linalg_generic_map[node] = LinalgGenericPrinter(node, self)
+
+        lg_printer = self.linalg_generic_map[node]
+        # allocate _from
+        if _from not in self.mlir_var_map:
+            mlir_var = self.new_var_name
+            shape_var = (self.mlir_var_map[d] for d in _from.shape() if isinstance(d, _gir.IntVar))
+            casted_shape_var = []
+            for sv in shape_var:
+                sv_name = self.new_var_name
+                cast_stmt = f"{sv_name} = builtin.unrealized_conversion_cast {sv} : " \
+                            f"i64 to index"
+                self.mlir_printer.print(cast_stmt)
+                casted_shape_var.append(sv_name)
+            stmt = f"{mlir_var} = memref.alloca({', '.join(casted_shape_var)}) : {self.convert_type_to_mlir(_from)}"
+            lg_printer.add_allocate_stmt((mlir_var, _from, stmt))
+            self.mlir_var_map[_from] = mlir_var
+        else:
+            mlir_var = self.mlir_var_map[_from]
+        lg_printer.add_output(_from, mlir_var)
+        if lg_printer.ok_to_generic():
+            for i in node.get_inputs():
+                self.visit(i, node)
+            lg_printer.gen_code()
+        return mlir_var
+
+    def _generic_visit(self, node, _from):
         raise NotImplementedError(f'This node is not supported now: {node}')
 
-    def _visit(self, node: _gir.Node):
+    def visit(self, node: _gir.Node, _from: Union[_gir.Node, None]):
         method = "_visit_" + node.__class__.__name__
+        print(method)
         visitor: Callable = getattr(self, method, self._generic_visit)
-        visit_res = visitor(node)
+        visit_res = visitor(node, _from)
         return visit_res
 
-    def _visit_Scalar(self, node: _gir.Scalar):
-        if node in self._mlir_var_map:
-            return
+    def _visit_Scalar(self, node: _gir.Scalar, _from: _gir.Node) -> str:
+        if node in self.visited:
+            return self.mlir_var_map[node]
         if node.is_a_const_num():
             mlir_type = DTYPE_TO_MLIR[node.dtype()]
             mlir_var = self.new_var_name
             stmt = f"{mlir_var} = arith.constant {node.value()} : {mlir_type}"
             self.mlir_printer.print(stmt)
-            self._mlir_var_map[node] = mlir_var
+            self.mlir_var_map[node] = mlir_var
+            self.visited.add(node)
+            return mlir_var
         else:
-            self._visit_Tensor(node)
+            return self._visit_Tensor(node, _from)
 
-    def _visit_Tensor(self, node: _gir.Tensor):
-        if node in self._mlir_var_map:
-            return
+    def _visit_Tensor(self, node: _gir.Tensor, _from: _gir.Node) -> str:
+        if node in self.visited:
+            return self.mlir_var_map[node]
+        self.visited.add(node)
         src_ops = node.src_ops()
         src_op_list = list(src_ops)
-        self._visit(src_op_list[0])
-        self._mlir_var_map[node] = self._mlir_var_map[src_op_list[0]]
+        mlir_name = self.visit(src_op_list[0], node)
+        self.mlir_var_map[node] = mlir_name
+        return mlir_name
 
-    def _visit_BinaryElementWiseOperator(self, node: _gir.BinaryElementWiseOperator):
+    def _visit_BinaryElementWiseOperator(
+            self,
+            node: _gir.BinaryElementWiseOperator,
+            _from: _gir.Node) -> str:
         inputs = node.get_inputs()
         lhs, rhs = inputs
         op = node.op_types[0]
 
         if is_scalar_op(inputs):
             visitor: Callable = self.op[op]
-            visitor(node, lhs, rhs, node.result_dtype)
+            return visitor(node, lhs, rhs, node.result_dtype)
         else:
-            ...
+            return self._gen_lingalg_generic(node, _from)
 
-    def _visit_UnaryElementWiseOperator(self, node: _gir.UnaryElementWiseOperator):
+    def _visit_UnaryElementWiseOperator(
+            self,
+            node: _gir.UnaryElementWiseOperator,
+            _from: _gir.Node) -> str:
         inputs = node.get_inputs()
         operand = inputs[0]
         op = node.op_types[0]
 
         if is_scalar_op(inputs):
             visitor: Callable = self.op[op]
-            visitor(node, operand, node.result_dtype)
+            return visitor(node, operand, node.result_dtype)
         else:
-            ...
+            return self._gen_lingalg_generic(node, _from)
 
-    def _visit_CopyOperator(self, node: _gir.CopyOperator):
+    def _visit_CopyOperator(self, node: _gir.CopyOperator, _from: _gir.Node) -> str:
         copy_from = node.copy_from
         copy_to = node.copy_to
-        self._visit(copy_from)
+        self.visit(copy_from, _from)
         if copy_to.dtype() != copy_from.dtype():
             casted_copy_from_mlir_var_name = self._cast(copy_from, copy_to.dtype())
-            self._mlir_var_map[node] = casted_copy_from_mlir_var_name
+            self.mlir_var_map[node] = casted_copy_from_mlir_var_name
         else:
-            self._mlir_var_map[node] = self._mlir_var_map[copy_from]
+            self.mlir_var_map[node] = self.mlir_var_map[copy_from]
+        return self.mlir_var_map[copy_from]
 
-    def _visit_DeepCopyOperator(self, node: _gir.DeepCopyOperator):
-        return self._generic_visit(node)
+    def _visit_DeepCopyOperator(self, node: _gir.DeepCopyOperator, _from: _gir.Node) -> str:
+        copy_from = node.copy_from
+        copy_to = node.copy_to
+        self.visit(copy_from, node)
+        stmt = f"linalg.copy \n\tins({self.mlir_var_map[copy_from]}: {self.convert_type_to_mlir(copy_from)})" \
+               f"\n\touts({self.mlir_var_map[copy_to]}: {self.convert_type_to_mlir(copy_to)})"
+        self.mlir_printer.print(stmt)
+        return self.mlir_var_map[copy_to]
