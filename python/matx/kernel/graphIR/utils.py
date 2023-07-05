@@ -125,7 +125,15 @@ def broadcast(arr1_shape: List['IntVar'], arr2_shape: List['IntVar']):
 
 def convert_to_kernel_type(node: '_gir.Tensor'):
     dtype = node.dtype()
-    shape = node.shape()
+    shape = []
+    for s in node.shape():
+        if isinstance(s, _gir.IntVar):
+            shape.append(s.symbolic_value())
+        elif isinstance(s, _gir.IntImm):
+            shape.append(s.value())
+        else:
+            raise SyntaxError(f"not supported shape value {s}")
+
     if len(shape) == 0:
         shape = [1]
     return matx.kernel.typing.STR_TO_KERNEL_TYPE[dtype][shape]

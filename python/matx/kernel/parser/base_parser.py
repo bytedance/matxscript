@@ -221,8 +221,7 @@ class BaseParser(ast.NodeVisitor):
             if typing_utils.is_scalar_type(ann):
                 return self._allocate_scalar(node.target.id, value, ann)
             if typing_utils.is_ndarray_type(ann):
-                # return self._allocate_ndarray(node.target.id, value, ann)\
-                raise NotImplementedError("assigning to ndarray not supported yet")
+                return self._allocate_ndarray(node.target.id, value, ann)
         # symbol case
         elif isinstance(node.target, ast.Subscript):
             raise NotImplementedError("assigning to ndarray not supported yet")
@@ -263,28 +262,29 @@ class BaseParser(ast.NodeVisitor):
         rt = copy_op(tmp_scalar_ctx, value)[0]
         return rt
 
-    def _allocate_ndarray(self, target_name, value, ann, span):
-        """
+    def _allocate_ndarray(self, target_name, value, ann):
         # the name is conflict with args
         if target_name in self.arg_context_table:
             raise SyntaxError(
                 f"Reassigning the ndarray {target_name} defined in arguments is not allowed")
         # the name is conflict with previous defined ndarray
-        if target_name in self.tmp_ndarray_table and self.tmp_ndarray_table[target_name].kernel_type != ann:
+        if target_name in self.tmp_ndarray_table and \
+                _gir.utils.convert_to_kernel_type(self.tmp_ndarray_table[target_name]) != ann:
             raise SyntaxError(
                 f"Reallocating the ndarray {target_name} defined previous is not allowed")
         # make sure it is annotated as scalar
         if not typing_utils.is_ndarray_type(ann):
             raise SyntaxError(f"Annotating {target_name} with type {ann} is not allowed.")
         # make sure the annotated type is the same as rhs value
-        if value.kernel_type != ann:
-            raise SyntaxError(f"Assigning {value.kernel_type} to {ann} is not allowed")
+        v_kernel = _gir.utils.convert_to_kernel_type(value)
+        if v_kernel != ann:
+            raise SyntaxError(f"Assigning {v_kernel} to {ann} is not allowed")
         # todo shape marked here may be by scalars.
-        tmp_ndarray_ctx = NDArrayNode(target_name, ann, self.shape_symbol_table, span)
+        tmp_ndarray_ctx = _gir.Tensor(name=target_name, dtype=value.dtype(), shape=value.shape())
         self.tmp_ndarray_table[target_name] = tmp_ndarray_ctx
-        return ScopedNDArrayAllocationNode(
-            tmp_ndarray_ctx, value, self.kernel_p.continue_parse_as_scoped(), span)"""
-        pass
+        copy_op = _gir.CopyOperator()
+        rt = copy_op(tmp_ndarray_ctx, value)[0]
+        return rt
 
     def _assign_scalar(self, target_name, value, node):
         # the name is conflict with args
