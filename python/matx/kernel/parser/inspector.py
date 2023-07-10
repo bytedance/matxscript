@@ -211,8 +211,12 @@ class KernelInspector(ast.NodeVisitor):
         self.context.new_scope(nodes=node.body)
         self.parse_body(True)
         self.context.pop_scope()
-        # fuser = _gir.graph_pass.ElementWiseOpFuser()
-        # fuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
+        cfuse = _gir.graph_pass.TmpVarEliminator()
+        cfuse.apply(self.graph_input, self.graph_output, self.graph_nodes)
+        # self.print_graph()
+        efuser = _gir.graph_pass.ElementWiseOpFuser()
+        efuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
+        # self.print_graph()
         return self
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:
@@ -243,3 +247,43 @@ class KernelInspector(ast.NodeVisitor):
                     f"the shape ({shape}) of the ndarray is expected to be an symbol or int,"
                     f" but get {d} ({type(d)})")
         return gir_shape
+
+    def print_graph(self):
+        import networkx as nx
+        import matplotlib.pyplot as plt
+
+        def str_node(node):
+            if _gir.utils.is_graph_ir_scalar(node):
+                return f"scalar({node.name() if len(node.name()) != 0 else f'tmp{id(node)}'})"
+            elif isinstance(node, _gir.Tensor):
+                return f"Tensor({node.name() if len(node.name()) != 0 else f'tmp{id(node)}'})"
+            elif isinstance(node, _gir.IntImm):
+                return f"IntImm({node.value()})"
+            elif isinstance(node, _gir.IntVar):
+                return f"IntVar({node.symbolic_value()})"
+            elif isinstance(node, _gir.Operator):
+                return f"op({str(type(node)).split('.')[-1][:-2]}({id(node)}))"
+            else:
+                return f"{type(node)}({id(node)})"
+
+        G = nx.DiGraph()
+
+        # Add nodes and edges to the graph
+        for node in self.graph_nodes:
+            G.add_node(str_node(node))
+            if isinstance(node, _gir.Operator):
+                for i in node._attrs["inputs"]:
+                    G.add_edge(str_node(i), str_node(node))
+            elif isinstance(node, _gir.Tensor):
+                for src in node.src_ops():
+                    G.add_edge(str_node(src), str_node(node))
+                for dst in node.dst_ops():
+                    G.add_edge(str_node(node), str_node(dst))
+            elif isinstance(node, _gir.IntVar):
+                ...
+            else:
+                ...
+        # Draw the graph
+        pos = nx.spring_layout(G, scale=20, k=6 / np.sqrt(G.order()))
+        nx.draw_networkx(G, pos, with_labels=True)
+        plt.show()

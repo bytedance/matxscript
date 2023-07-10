@@ -81,8 +81,8 @@ class LinalgGenericPrinter:
     def print_compute_func(self):
         self.graph_printer.mlir_printer.print("{")
         self.graph_printer.mlir_printer.new_scope()
-        input_args: List[_gir.Scalar] = [v for k, v in self.node.sub_graph_input.items()
-                                         if not _gir.utils.is_graph_ir_scalar(k)]
+        input_args: List[_gir.Scalar] = [self.node.sub_graph_input[i] for i in self.node.get_inputs(
+        ) if i in self.node.sub_graph_input and not _gir.utils.is_graph_ir_scalar(i)]
         output_args: List[_gir.Scalar] = list(self.node.sub_graph_outputs.keys())
         arg_names = []
         for a in chain(input_args, output_args):

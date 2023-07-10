@@ -26,6 +26,10 @@ import matx.kernel.typing.utils as typing_utils
 from matx.kernel.graphIR import Operator, Tensor, Node, Scalar
 
 
+def not_tensor(x):
+    return not (isinstance(x, Tensor) and len(x.shape()) != 0)
+
+
 class ElementWiseOperator(Operator):
 
     def __init__(self):
@@ -47,13 +51,13 @@ class ElementWiseOperator(Operator):
     def get_outputs(self):
         return self.results
 
-    def make_subgraph(self, f):
-        def not_tensor(x):
-            return not (isinstance(x, Tensor) and len(x.shape()) != 0)
+    def is_scalar_op(self):
+        return all(not_tensor(i) for i in self.get_inputs())
 
-        inputs = self.get_inputs()
-        if all(not_tensor(i) for i in inputs):
+    def make_subgraph(self, f):
+        if self.is_scalar_op():
             return
+        inputs = self.get_inputs()
         for i in inputs:
             if not_tensor(i):
                 if i not in self.sub_graph_input:
@@ -67,7 +71,7 @@ class ElementWiseOperator(Operator):
                 scalar = Scalar(name=i.name() + "_scalar", dtype=i.dtype())
                 self.sub_graph_outputs[scalar] = i
         self.sub_graph_nodes = [
-            *self.sub_graph_input,
+            *self.sub_graph_input.values(),
             *f(self.sub_graph_input, self.sub_graph_outputs),
             *self.sub_graph_outputs
         ]

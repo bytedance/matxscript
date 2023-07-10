@@ -260,6 +260,8 @@ class BaseParser(ast.NodeVisitor):
         self.tmp_scalar_table[target_name] = tmp_scalar_ctx
         copy_op = _gir.CopyOperator()
         rt = copy_op(tmp_scalar_ctx, value)[0]
+        self.kernel_p.graph_nodes.append(copy_op)
+        self.kernel_p.graph_nodes.append(tmp_scalar_ctx)
         return rt
 
     def _allocate_ndarray(self, target_name, value, ann):
@@ -284,6 +286,8 @@ class BaseParser(ast.NodeVisitor):
         self.tmp_ndarray_table[target_name] = tmp_ndarray_ctx
         copy_op = _gir.CopyOperator()
         rt = copy_op(tmp_ndarray_ctx, value)[0]
+        self.kernel_p.graph_nodes.append(copy_op)
+        self.kernel_p.graph_nodes.append(tmp_ndarray_ctx)
         return rt
 
     def _assign_scalar(self, target_name, value, node):

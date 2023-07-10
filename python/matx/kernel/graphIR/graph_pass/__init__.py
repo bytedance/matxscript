@@ -18,3 +18,4 @@
 #  under the License.
 
 from .fuse_element_wise import ElementWiseOpFuser
+from .fuse_compute_copy import TmpVarEliminator

@@ -69,10 +69,14 @@ class IrPrinter:
 
     def print(self, *args, sep=' ', end='\n'):
         text = sep.join(str(arg) for arg in args)
-        for s in text.split("\n"):
+        split_text = text.split("\n")
+        for idx, s in enumerate(split_text):
             if self._apply_indent:
                 self.output += self._scope_indent
-            self.output += s + "\n"
+            if idx != len(split_text) - 1:
+                self.output += s + "\n"
+            else:
+                self.output += s + end
             self._apply_indent = True
         self._apply_indent = end == '\n'
 
@@ -447,11 +451,10 @@ class GraphIRPrinter:
         return mlir_var
 
     def _generic_visit(self, node, _from):
-        raise NotImplementedError(f'This node is not supported now: {node}')
+        raise NotImplementedError(f'This node is not supported now: {node.__class__.__name__}')
 
     def visit(self, node: _gir.Node, _from: Union[_gir.Node, None]):
         method = "_visit_" + node.__class__.__name__
-        print(method)
         visitor: Callable = getattr(self, method, self._generic_visit)
         visit_res = visitor(node, _from)
         return visit_res
@@ -479,6 +482,15 @@ class GraphIRPrinter:
         mlir_name = self.visit(src_op_list[0], node)
         self.mlir_var_map[node] = mlir_name
         return mlir_name
+
+    def _visit_FusedElementWiseOperator(
+            self,
+            node: _gir.BinaryElementWiseOperator,
+            _from: _gir.Node) -> str:
+        inputs = node.get_inputs()
+        if is_scalar_op(inputs):
+            raise SyntaxError("fused op should not be a scalar op")
+        return self._gen_lingalg_generic(node, _from)
 
     def _visit_BinaryElementWiseOperator(
             self,
@@ -515,9 +527,10 @@ class GraphIRPrinter:
         if copy_to.dtype() != copy_from.dtype():
             casted_copy_from_mlir_var_name = self._cast(copy_from, copy_to.dtype())
             self.mlir_var_map[node] = casted_copy_from_mlir_var_name
+            return casted_copy_from_mlir_var_name
         else:
             self.mlir_var_map[node] = self.mlir_var_map[copy_from]
-        return self.mlir_var_map[copy_from]
+            return self.mlir_var_map[copy_from]
 
     def _visit_DeepCopyOperator(self, node: _gir.DeepCopyOperator, _from: _gir.Node) -> str:
         copy_from = node.copy_from
