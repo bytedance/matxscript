@@ -20,20 +20,9 @@
 import ast
 import inspect
 
-from matx import ir as _ir
 from matx.script import context as script_context
-from ..typing import is_symbol, STR_TO_KERNEL_TYPE
-
-
-def build_span(root_node, node):
-    root_span = root_node.span
-    abs_lineno = root_span.lineno + node.lineno - 1
-    source_code = root_span.source_code
-
-    return _ir.Span(root_span.file_name,
-                    abs_lineno,
-                    root_node.context.name,
-                    source_code)
+import matx.kernel.typing.utils as typing_utils
+import matx.kernel.graphIR as _gir
 
 
 def parse_ast(func):
@@ -48,7 +37,7 @@ def parse_ast(func):
 
 def extract_symbol_from_type(t):
     shape = t.shape
-    symbols = set([dim for dim in shape if is_symbol(dim)])
+    symbols = set([dim for dim in shape if typing_utils.is_symbol(dim)])
     return {str(s): s for s in symbols}
 
 
@@ -60,3 +49,9 @@ def user_function_wrapper(value, resource_handle, span):
     if isinstance(value, script_context.GetClassAttr):
         return value.as_user_function(resource_handle, span)
     return value
+
+
+def scalar_or_int_var(node: _gir.Node):
+    return isinstance(node, _gir.Scalar) or \
+        isinstance(node, _gir.IntVar) or \
+        (isinstance(node, _gir.Tensor) and len(node.shape()) == 0)

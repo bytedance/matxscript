@@ -16,20 +16,5 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-from matx import ir as _ir
-from .base import *
-from ..symbol import *
 
-
-class SymbolNode(ExpressionBaseNode):
-
-    def __init__(self, symbol, span) -> None:
-        super().__init__(sympy.Basic)
-        assert is_symbol(symbol), 'syntax error'
-        self.name: str = str(symbol)
-        self.symbol = symbol
-        self.script_type = _ir.PrimType("int64")
-        self.script_var = _ir.PrimVar(f"symbol_{self.name}", self.script_type, span)
-
-    def to_matx_ir(self, **kwargs):
-        return self.script_var
+from .graph_ir_printer import GraphIRPrinter

@@ -22,17 +22,17 @@
 # pylint: disable=invalid-name
 from __future__ import annotations
 
+import copy
+import math
 from abc import ABC, abstractmethod
 from numbers import Number
 from pprint import pformat
 from typing import Any, Dict, Iterable, List, Optional, Set, Union
 
-from matx.kernel import symbolic
-from matx.kernel.op_registry import OP_REGISTRY
-
-import math
-import copy
 import sympy
+
+import matx.kernel.graphIR
+from matx.kernel.graphIR import symbolic
 
 
 # TODO: Introduce networkx
@@ -436,9 +436,9 @@ class Tensor(Node):
         """
         super().__init__()
         self._attrs["shape"] = self._convert_shape(shape)
-        self._attrs["name"] = name
-        self._attrs["src_ops"] = set(src_ops)
-        self._attrs["dst_ops"] = set(dst_ops)
+        self._attrs["name"] = name if name is not None else ""
+        self._attrs["src_ops"] = set(src_ops) if src_ops is not None else set()
+        self._attrs["dst_ops"] = set(dst_ops) if dst_ops is not None else set()
         self._attrs["dtype"] = dtype
         self._attrs["is_output"] = is_output
         self._attrs["is_input"] = is_input
@@ -506,6 +506,12 @@ class Tensor(Node):
         """
         return self._attrs["shape"]
 
+    def name(self) -> str:
+        return self._attrs["name"]
+
+    def value(self):
+        return self._attrs["value"]
+
     def _rank(self) -> int:
         """
         Returns the rank of the tensor.
@@ -564,31 +570,52 @@ class Tensor(Node):
         return result
 
     def __add__(self, other: Any) -> Tensor:
-        return OP_REGISTRY.get("ADD")(self, other)
+        return matx.kernel.graphIR.OP_REGISTRY.get("ADD")(self, other)
 
     def __radd__(self, other: Any) -> Tensor:
-        return OP_REGISTRY.get("ADD")(other, self)
+        return matx.kernel.graphIR.OP_REGISTRY.get("ADD")(other, self)
 
     def __sub__(self, other: Any) -> Tensor:
-        return OP_REGISTRY.get("SUB")(self, other)
+        return matx.kernel.graphIR.OP_REGISTRY.get("SUB")(self, other)
 
     def __rsub__(self, other: Any) -> Tensor:
-        return OP_REGISTRY.get("SUB")(other, self)
+        return matx.kernel.graphIR.OP_REGISTRY.get("SUB")(other, self)
 
     def __mul__(self, other: Any) -> Tensor:
-        return OP_REGISTRY.get("MUL")(self, other)
+        return matx.kernel.graphIR.OP_REGISTRY.get("MUL")(self, other)
 
     def __rmul__(self, other: Any) -> Tensor:
-        return OP_REGISTRY.get("MUL")(other, self)
+        return matx.kernel.graphIR.OP_REGISTRY.get("MUL")(other, self)
 
     def __truediv__(self, other: Any) -> Tensor:
-        return OP_REGISTRY.get("DIV")(self, other)
+        return matx.kernel.graphIR.OP_REGISTRY.get("DIV")(self, other)
 
     def __rtruediv__(self, other: Any) -> Tensor:
-        return OP_REGISTRY.get("DIV")(other, self)
+        return matx.kernel.graphIR.OP_REGISTRY.get("DIV")(other, self)
 
     def __neg__(self) -> Tensor:
-        return OP_REGISTRY.get("MUL")(-1, self)
+        return matx.kernel.graphIR.OP_REGISTRY.get("MUL")(-1, self)
+
+
+class Scalar(Tensor):
+
+    def __init__(
+            self,
+            name: str = None,
+            src_ops: Iterable[Node] = None,
+            dst_ops: Iterable[Node] = None,
+            dtype: str = "float16",
+            is_input: bool = False,
+            is_output: bool = False,
+            value: Any = None,
+            is_view_of: Any = None,
+            is_internal_constant: bool = False,
+            skip_constant_folding: bool = False,
+            check_nan_and_inf: bool = False,
+            check_outputs: bool = False) -> None:
+        shape = []
+        super().__init__(shape, name, src_ops, dst_ops, dtype, is_input, is_output, value, is_view_of,
+                         is_internal_constant, skip_constant_folding, check_nan_and_inf, check_outputs)
 
 
 class Operator(Node):

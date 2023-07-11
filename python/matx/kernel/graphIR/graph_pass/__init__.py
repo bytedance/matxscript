@@ -17,10 +17,5 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from .assign import *
-from .base import *
-from .control_flow import *
-from .ndarray import *
-from .ops import *
-from .scalar import *
-from .symbol import *
+from .fuse_element_wise import ElementWiseOpFuser
+from .fuse_compute_copy import TmpVarEliminator

@@ -19,11 +19,11 @@
 
 import inspect
 
-from matx.ir import _ffi_node_api
+import matx.kernel.parser.utils as parser_utils
+from matx.kernel.parser import KernelInspector
 from matx.script import analysis
 from matx.script import context as script_context
-from .parser import KernelInspector
-from .parser import extract_symbol_from_type
+from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 
 
 class KernelParser:
@@ -41,9 +41,9 @@ class KernelParser:
         # get shape symbols in dict like {'x':X}
         self.symbols = dict()
         for arg_type in self.arg_types:
-            shape_symbol = extract_symbol_from_type(arg_type)
+            shape_symbol = parser_utils.extract_symbol_from_type(arg_type)
             self.symbols.update(shape_symbol)
-        self.main_node_ir = None
+        self.graph = None
 
     def passes(self, sc_ctx):
         dep_anls = analysis.DepsAnalysis()
@@ -82,11 +82,13 @@ class KernelParser:
         self.passes(sc_ctx)
 
         def parser_node(node: script_context.ASTNode):
-            node.ir = KernelInspector(self, node).visit_FunctionDef(node.ast)
-            print(_ffi_node_api.IRTextPrinter_Print(node.ir, None).decode())
-            return node.ir
+            inspector = KernelInspector(self, node).visit_FunctionDef(node.ast)
+            printer = GraphIRPrinter(inspector)
+            print(printer.as_linalg_text())
+            return inspector
 
-        self.main_node_ir = parser_node(sc_ctx.main_node)
+        self.graph = parser_node(sc_ctx.main_node)
 
     def linalg_code(self):
-        return _ffi_node_api.as_linalg_text(self.main_node_ir).decode()
+        printer = GraphIRPrinter(self.graph)
+        return printer.as_linalg_text()

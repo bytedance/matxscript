@@ -17,15 +17,16 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from matx.ir import _ffi_node_api
-from .kernel_parser import KernelParser
+from matx.kernel.kernel_parser import KernelParser
+from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 import ctypes
-from .typing import *
+from matx.kernel.typing import PYTYPE_TO_C_TYPE
+import matx.kernel.typing.utils as typing_utils
 from collections import OrderedDict
-from itertools import chain
 import subprocess
 import os
 import time
+import numpy as np
 
 
 def nd_to_c(nd, nd_t):
@@ -51,14 +52,14 @@ def bind_data_to_type(ins, types):
     args = []
     symbols = OrderedDict()
     for i, t in zip(ins, types):
-        if not is_ndarray_type(t):
+        if not typing_utils.is_ndarray_type(t):
             raise NotImplementedError(f"{t} is not a legit type.")
         args.append((i, t))
 
-        if is_scalar_type(t):
+        if typing_utils.is_scalar_type(t):
             continue
         for actual_s, annotated_s in zip(i.shape, t.shape):
-            if not is_symbol(annotated_s):
+            if not typing_utils.is_symbol(annotated_s):
                 continue
             if annotated_s in symbols:
                 assert symbols[annotated_s] == actual_s
@@ -70,19 +71,20 @@ def bind_data_to_type(ins, types):
 def binded_args_to_c(binded_args):
     args = []
     for value, t in binded_args:
-        if is_scalar_type(t):
+        if typing_utils.is_scalar_type(t):
             args.append(scalar_to_c(value, t))
-        elif is_ndarray_type(t):
+        elif typing_utils.is_ndarray_type(t):
             args += nd_to_c(value, t)
-        elif is_symbol(t):
+        elif typing_utils.is_symbol(t):
             args.append(symbol_to_c(value))
         else:
             raise NotImplementedError(f"{t} is not a legit type.")
     return args
 
 
-def write_linalg(matx_ir, output_fname="tmp.mlir", debug=False, over_written_code=None):
-    code = _ffi_node_api.as_linalg_text(matx_ir).decode()
+def write_linalg(graph_ir, output_fname="tmp.mlir", debug=False, over_written_code=None):
+    printer = GraphIRPrinter(graph_ir)
+    code = printer.as_linalg_text()
     with open(output_fname, "w+") as f:
         if debug and over_written_code is not None:
             f.write(over_written_code)
@@ -181,7 +183,7 @@ class LinalgFuncWrapper:
         self.func = func
         self.arg_types = parser.arg_types
         self.rt_types = parser.return_types
-        if is_scalar_type(self.rt_types):
+        if typing_utils.is_scalar_type(self.rt_types):
             self.func.restype = PYTYPE_TO_C_TYPE[self.rt_types.dtype]
 
     def __call__(self, *args, rt=None):
@@ -197,9 +199,10 @@ class LinalgFuncWrapper:
 
     def to_c_args(self, *args, rt=None):
         binded_args, symbol_dict = bind_data_to_type(args, self.arg_types)
-        if not is_scalar_type(self.rt_types):
+        if not typing_utils.is_scalar_type(self.rt_types):
             if rt is None:
-                shape = [symbol_dict[s] if is_symbol(s) else s for s in self.rt_types.shape]
+                shape = [symbol_dict[s] if typing_utils.is_symbol(
+                    s) else s for s in self.rt_types.shape]
                 rt = np.zeros(shape=shape, dtype=self.rt_types.dtype)
             for actual_s, ann_s in zip(rt.shape, self.rt_types.shape):
                 assert symbol_dict[ann_s] == actual_s
@@ -211,7 +214,7 @@ class LinalgFuncWrapper:
 
 
 def load_func(shared_lib, parser: KernelParser):
-    linalg_func = CDLL(os.path.join(os.getcwd(), shared_lib))
+    linalg_func = ctypes.CDLL(os.path.join(os.getcwd(), shared_lib))
     func = getattr(linalg_func, parser.func_name)
     return LinalgFuncWrapper(func, parser)
 
@@ -232,7 +235,7 @@ def compile_linalg(
         if not os.path.exists(dir):
             os.makedirs(dir)
         os.chdir(dir)
-        mlir_f = write_linalg(parser.main_node_ir, file_name + ".mlir", debug, over_written_code)
+        mlir_f = write_linalg(parser.graph, file_name + ".mlir", debug, over_written_code)
         lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
         llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
         shared_lib = llvm_compile(llvm_f, file_name + ".so")

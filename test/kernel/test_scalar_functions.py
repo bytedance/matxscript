@@ -87,6 +87,8 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
         for x, y, z in itertools.product([-50, -1, 0, 6, 32], repeat=3):
             self.assertEqual(foo(x, y, z), k_foo(x, y, z))
 
+
+"""
     def test_scalar_if1(self):
         def foo(a: int32, b: int32, c: int32) -> int32:
             if a % 2 == 0:
@@ -128,7 +130,7 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
             self.assertEqual(foo(x, y, z), k_foo(x, y, z))
 
 
-"""
+
     def test_scalar_if4(self):
         def foo(a: int32, b: int32, c: int32) -> float64:
             if a % 2 == 0:

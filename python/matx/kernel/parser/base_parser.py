@@ -21,16 +21,18 @@
 from __future__ import annotations
 
 import ast
-from typing import Any, TYPE_CHECKING
+import numbers
+from typing import Any, List, Union, TYPE_CHECKING
 
-from matx import ir as _ir
-from .utils import build_span
-from ..ir import *
+import matx.kernel.graphIR as _gir
+import matx.kernel.typing.utils as typing_utils
+from .utils import scalar_or_int_var
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelInspector
 
 
+# todo update return
 class BaseParser(ast.NodeVisitor):
 
     def __init__(
@@ -64,24 +66,19 @@ class BaseParser(ast.NodeVisitor):
         visit_res = visitor(node)
         return visit_res
 
-    def build_span(self, node):
-        return build_span(self.root_node, node)
-
-    def visit_Constant(self, node: ast.Constant) -> Any:
+    def visit_Constant(self, node: ast.Constant) -> _gir.Tensor:
         if node.value is None:
             raise SyntaxError("None is not allowed")
         elif isinstance(node.value, numbers.Number):
-            dtype = get_dtype(node.value)
-
-            const_scalar_ctx = ConstScalarNode(node.value,
-                                               PYTYPE_TO_KERNEL_TYPE[dtype],
-                                               build_span(self.root_node, node))
+            dtype = typing_utils.get_dtype_str(node.value)
+            const_scalar_ctx = _gir.Scalar(value=node.value, dtype=dtype, is_internal_constant=True)
+            self.kernel_p.graph_nodes.append(const_scalar_ctx)
             return const_scalar_ctx
         else:
             raise NotImplementedError(f'Unsupported value {node.value}')
 
     # variables
-    def visit_Name(self, node: ast.Name) -> Any:
+    def visit_Name(self, node: ast.Name) -> _gir.Node:
         if isinstance(node.ctx, ast.Del):
             raise SyntaxError(f"del {node.id} is not allowed")
         name = node.id
@@ -97,190 +94,35 @@ class BaseParser(ast.NodeVisitor):
         if name in self.tmp_ndarray_table:
             ctx = self.tmp_ndarray_table[name]
             return ctx
-        raise NotImplementedError(f'the type of {name} is not support')
+        raise SyntaxError(f'the type of {name} is not support')
         # return node.id
 
     # Expressions
-    def visit_UnaryOp(self, node: ast.UnaryOp) -> Any:
-        opname = type(node.op).__name__
+    def visit_UnaryOp(self, node: ast.UnaryOp) -> _gir.Tensor:
+        # todo modify the code below
         operand_ir = self.visit(node.operand)
-        if (is_scalar_type(operand_ir.kernel_type) or is_symbol_type(operand_ir.kernel_type)):
-            return UnaryOp(operand_ir, type(node.op), self.build_span(node))
+        if scalar_or_int_var(operand_ir):
+            op = _gir.UnaryElementWiseOperator(type(node.op))
+            result = op(operand_ir)[0]
+            self.kernel_p.graph_nodes.append(result)
+            self.kernel_p.graph_nodes.append(op)
+            return result
         else:
-            raise SyntaxError(f"{opname} ({operand_ir}) is not supported "
+            raise SyntaxError(f"{type(node.op).__name__} ({operand_ir}) is not supported "
                               f"because {operand_ir} is not a scalar")
 
-    def visit_BinOp(self, node: ast.BinOp) -> Any:
-        opname = type(node.op).__name__
+    def visit_BinOp(self, node: ast.BinOp) -> _gir.Tensor:
         lhs_ir = self.visit(node.left)
         rhs_ir = self.visit(node.right)
-        if (is_scalar_type(lhs_ir.kernel_type) or is_symbol_type(lhs_ir.kernel_type)) \
-                and (is_scalar_type(rhs_ir.kernel_type) or is_symbol_type(rhs_ir.kernel_type)):
-            return BinaryOp(lhs_ir, rhs_ir, type(node.op), self.build_span(node))
+        if scalar_or_int_var(lhs_ir) and scalar_or_int_var(rhs_ir):
+            op = _gir.BinaryElementWiseOperator(type(node.op))
+            result = op(lhs_ir, rhs_ir)[0]
+            self.kernel_p.graph_nodes.append(result)
+            self.kernel_p.graph_nodes.append(op)
+            return result
         else:
-            raise SyntaxError(f"{lhs_ir} {opname} {rhs_ir} is not supported "
+            raise SyntaxError(f"{lhs_ir} {type(node.op).__name__} {rhs_ir} is not supported "
                               f"because they are not both scalar")
-
-    def visit_Slice(self, node: ast.Slice) -> Any:
-        raise NotImplementedError("slice is not supported yet")
-        lower = node.lower
-        upper = node.upper
-        step = node.step
-        if lower is None:
-            lower = _ir.const(0, "int64")
-        else:
-            pass
-
-        if step is None:
-            step = _ir.const(1, "int64")
-        else:
-            step = self.visit(step)
-            self.var_stack.pop()
-
-    def visit_Subscript(self, node: ast.Subscript) -> Any:
-        # is load
-        value_ctx = self.visit(node.value)
-        if isinstance(node.slice, (ast.Slice,)):
-            raise SyntaxError(
-                f"slicing ndarray {value_ctx.name} is not supported because it doesn't generate a scalar.")
-        sls = self._get_indexing(node.slice)
-        if isinstance(node.ctx, ast.Del):
-            raise SyntaxError(f"del {value_ctx.name} is not allowed")
-        return NDArrayIndexingNode(value_ctx, sls, self.build_span(node))
-
-    def _get_indexing(self, sls):
-        if not isinstance(sls, ast.Tuple):
-            return [self.visit(sls)]
-        idx = []
-        for i in sls.elts:
-            rt_ir = self.visit(i)
-            idx.append(rt_ir)
-        return idx
-
-    def visit_Assign(self, node: ast.Assign) -> Any:
-        if len(node.targets) > 1:
-            raise SyntaxError(f"Assigning multiple is not allowed")
-        if not isinstance(node.targets[0], (ast.Name, ast.Subscript)):
-            raise SyntaxError(f"Assigning to {type(node.targets)} is not allowed.")
-        span = self.build_span(node)
-        value = self.visit(node.value)
-        target = self.visit(node.targets[0])
-        if isinstance(node.targets[0], ast.Name):
-            return self._assign_scalar(target.name, value, node, span)
-        elif isinstance(node.targets[0], ast.Subscript):
-            return AssignScalarNode(target, value, span)
-        else:
-            raise SyntaxError(f"not supported node type {type(node.target)}")
-
-    def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
-        span = self.build_span(node)
-        ann = self.annotation_to_kernel_type(node.annotation)
-        value = self.visit(node.value)
-        if not isinstance(node.target, (ast.Name, ast.Subscript)):
-            raise SyntaxError(f"Assigning to {type(node.target)} is not allowed.")
-        if isinstance(node.target, ast.Name):
-            if is_scalar_type(ann):
-                return self._allocate_scalar(node.target.id, value, ann, span)
-            if is_ndarray_type(ann):
-                return self._allocate_ndarray(node.target.id, value, ann, span)
-        # symbol case
-        elif isinstance(node.target, ast.Subscript):
-            raise NotImplementedError("assigning to ndarray not supported yet")
-        else:
-            raise SyntaxError(f"not supported node type {type(node.target)}")
-
-    def _allocate_scalar(self, target_name, value, ann, span):
-        # the name is conflict with args
-        if target_name in self.arg_context_table:
-            raise SyntaxError(
-                f"Reassigning the scalar {target_name} defined in arguments is not allowed")
-        # the name is conflict with previous defined scalar
-        if target_name in self.tmp_scalar_table and self.tmp_scalar_table[target_name].kernel_type != ann:
-            raise SyntaxError(
-                f"Reallocating the scalar {target_name} defined previous is not allowed")
-        # make sure it is annotated as scalar
-        if not is_scalar_type(ann):
-            raise SyntaxError(f"Annotating {target_name} with type {ann} is not allowed.")
-        # make sure the annotated type is the same as rhs value
-        if value.kernel_type != ann:
-            if value.kernel_type.shape != ann.shape:
-                raise SyntaxError(
-                    f"Assigning {value.kernel_type} to {ann} is not allowed because they have different shapes")
-            elif value.kernel_type.dtype != ann.dtype:
-                value = CastOp(value, ann.dtype, span)
-            else:
-                raise SyntaxError(f"Assigning {value.kernel_type} to {ann} is not allowed")
-        tmp_scalar_ctx = ScalarNode(target_name, ann, span)
-        self.tmp_scalar_table[target_name] = tmp_scalar_ctx
-        return ScalarAllocationNode(tmp_scalar_ctx, value, span)
-
-    def _allocate_ndarray(self, target_name, value, ann, span):
-        # the name is conflict with args
-        if target_name in self.arg_context_table:
-            raise SyntaxError(
-                f"Reassigning the ndarray {target_name} defined in arguments is not allowed")
-        # the name is conflict with previous defined ndarray
-        if target_name in self.tmp_ndarray_table and self.tmp_ndarray_table[target_name].kernel_type != ann:
-            raise SyntaxError(
-                f"Reallocating the ndarray {target_name} defined previous is not allowed")
-        # make sure it is annotated as scalar
-        if not is_ndarray_type(ann):
-            raise SyntaxError(f"Annotating {target_name} with type {ann} is not allowed.")
-        # make sure the annotated type is the same as rhs value
-        if value.kernel_type != ann:
-            raise SyntaxError(f"Assigning {value.kernel_type} to {ann} is not allowed")
-        # todo shape marked here may be by scalars.
-        tmp_ndarray_ctx = NDArrayNode(target_name, ann, self.shape_symbol_table, span)
-        self.tmp_ndarray_table[target_name] = tmp_ndarray_ctx
-        return ScopedNDArrayAllocationNode(
-            tmp_ndarray_ctx, value, self.kernel_p.continue_parse_as_scoped(), span)
-
-    def _assign_scalar(self, target_name, value, node, span):
-        # the name is conflict with args
-        if target_name in self.arg_context_table:
-            raise SyntaxError(
-                f"Reassigning scalars {target_name} defined in arguments is not allowed")
-        # it has not been defined
-        if target_name not in self.tmp_scalar_table:
-            raise SyntaxError(
-                f"Assigning scalars {target_name} is not allowed because it not defined")
-        # node cannot be annotated assign or other (unlikely to be other)
-        if not isinstance(node, ast.Assign):
-            raise SyntaxError(f"Using annotated assign to assign {target_name} is not allowed "
-                              f"since it has already been defined above")
-        previous_ctx = self.tmp_scalar_table[target_name]
-        if value.kernel_type != previous_ctx.kernel_type:
-            raise SyntaxError(f"the value assigned to {target_name} is not scalar")
-        return AssignScalarNode(previous_ctx, value, span)
-
-    def _assign_ndarray(self, target_name, value, node, span):
-        # the name is conflict with args
-        if target_name in self.arg_context_table:
-            raise SyntaxError(
-                f"Reassigning ndarray {target_name} defined in arguments is not allowed")
-        # it has not been defined
-        if target_name not in self.tmp_ndarray_table:
-            raise SyntaxError(
-                f"Assigning ndarray {target_name} is not allowed because it not defined")
-        # node cannot be annotated assign or other (unlikely to be other)
-        if not isinstance(node, ast.Assign):
-            raise SyntaxError(f"Using annotated assign to assign {target_name} is not allowed "
-                              f"since it has already been defined above")
-        previous_ctx = self.tmp_ndarray_table[target_name]
-        if value.kernel_type != previous_ctx.kernel_type:
-            raise SyntaxError(f"the value assigned to {target_name} is not scalar")
-        return AssignNDArrayNode(previous_ctx, value)
-
-    def visit_If(self, node: ast.If) -> Any:
-        test = self.visit(node.test)
-        body = [self.visit(s) for s in node.body]
-        orelse = [self.visit(s) for s in node.orelse]
-        return IfNode(test, body, orelse, self.build_span(node))
-
-    def visit_Pass(self, node: ast.Pass) -> Any:
-        lhs = ConstScalarNode(1, kernelNDArrayT((1, 1), np.int32), self.build_span(node))
-        rhs = ConstScalarNode(2, kernelNDArrayT((1, 1), np.int32), self.build_span(node))
-        return BinaryOp(lhs, rhs, ast.Add, self.build_span(node))
 
     def visit_BoolOp(self, node: ast.BoolOp) -> Any:
         opname = type(node.op).__name__
@@ -288,9 +130,11 @@ class BaseParser(ast.NodeVisitor):
         for i in range(len(values) - 1):
             lhs = values[i]
             rhs = values[i + 1]
-            if (is_scalar_type(lhs.kernel_type) or is_symbol_type(lhs.kernel_type)) \
-                    and (is_scalar_type(rhs.kernel_type) or is_symbol_type(rhs.kernel_type)):
-                t = BinaryOp(lhs, rhs, type(node.op), self.build_span(node))
+            if scalar_or_int_var(lhs) and scalar_or_int_var(rhs):
+                op = _gir.BinaryElementWiseOperator(type(node.op))
+                t = op(lhs, rhs)[0]
+                self.kernel_p.graph_nodes.append(t)
+                self.kernel_p.graph_nodes.append(op)
                 values[i + 1] = t
             else:
                 raise SyntaxError(f"{lhs} {opname} {rhs} is not supported "
@@ -304,13 +148,211 @@ class BaseParser(ast.NodeVisitor):
             op = node.ops[i]
             opname = type(op).__name__
             rhs = comparators[i]
-            if (is_scalar_type(lhs.kernel_type) or is_symbol_type(lhs.kernel_type)) \
-                    and (is_scalar_type(rhs.kernel_type) or is_symbol_type(rhs.kernel_type)):
-                lhs = BinaryOp(lhs, rhs, type(op), self.build_span(node))
+            if scalar_or_int_var(lhs) and scalar_or_int_var(rhs):
+                op = _gir.BinaryElementWiseOperator(type(op))
+                lhs = op(lhs, rhs)[0]
+                self.kernel_p.graph_nodes.append(lhs)
+                self.kernel_p.graph_nodes.append(op)
             else:
                 raise SyntaxError(f"{lhs} {opname} {rhs} is not supported "
                                   f"because they are not both scalar")
         return lhs
+
+    def visit_Slice(self, node: ast.Slice) -> Any:
+        """
+        lower = node.lower
+        upper = node.upper
+        step = node.step
+        if lower is None:
+            lower = _ir.const(0, "int64")
+        else:
+            pass
+
+        if step is None:
+            step = _ir.const(1, "int64")
+        else:
+            step = self.visit(step)
+            self.var_stack.pop()"""
+        raise NotImplementedError("slice is not supported yet")
+
+    def visit_Subscript(self, node: ast.Subscript) -> _gir.Scalar:
+        # todo modify the code below
+        # is load
+        """
+        value_ctx = self.visit(node.value)
+        if isinstance(node.slice, (ast.Slice,)):
+            raise SyntaxError(
+                f"slicing ndarray {value_ctx.name} is not supported because it doesn't generate a scalar.")
+        sls = self._get_indexing(node.slice)
+        if isinstance(node.ctx, ast.Del):
+            raise SyntaxError(f"del {value_ctx.name} is not allowed")
+        return NDArrayIndexingNode(value_ctx, sls, self.build_span(node))"""
+        raise NotImplementedError("visit_Subscript is not supported yet")
+
+    def _get_indexing(self, sls):
+        if not isinstance(sls, ast.Tuple):
+            return [self.visit(sls)]
+        idx = []
+        for i in sls.elts:
+            rt_ir = self.visit(i)
+            idx.append(rt_ir)
+        return idx
+
+    def visit_Assign(self, node: ast.Assign) -> _gir.Node:
+        if len(node.targets) > 1:
+            raise SyntaxError(f"Assigning multiple is not allowed")
+        if not isinstance(node.targets[0], (ast.Name, ast.Subscript)):
+            raise SyntaxError(f"Assigning to {type(node.targets)} is not allowed.")
+        value = self.visit(node.value)
+        target = self.visit(node.targets[0])
+        if isinstance(node.targets[0], ast.Name):
+            return self._assign_scalar(target.name(), value, node)
+        elif isinstance(node.targets[0], ast.Subscript):
+            raise SyntaxError(f"not supported node type {type(target)}")
+        else:
+            raise SyntaxError(f"not supported node type {type(target)}")
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
+        ann = self.annotation_to_kernel_type(node.annotation)
+        value = self.visit(node.value)
+        if not isinstance(node.target, (ast.Name, ast.Subscript)):
+            raise SyntaxError(f"Assigning to {type(node.target)} is not allowed.")
+        if isinstance(node.target, ast.Name):
+            if typing_utils.is_scalar_type(ann):
+                return self._allocate_scalar(node.target.id, value, ann)
+            if typing_utils.is_ndarray_type(ann):
+                return self._allocate_ndarray(node.target.id, value, ann)
+        # symbol case
+        elif isinstance(node.target, ast.Subscript):
+            raise NotImplementedError("assigning to ndarray not supported yet")
+        else:
+            raise SyntaxError(f"not supported node type {type(node.target)}")
+
+    def _allocate_scalar(self, target_name, value, ann):
+        # the name is conflict with args
+        if target_name in self.arg_context_table:
+            raise SyntaxError(
+                f"Reassigning the scalar {target_name} defined in arguments is not allowed")
+        # the name is conflict with previous defined scalar
+        if target_name in self.tmp_scalar_table:
+            t = self.tmp_scalar_table[target_name]
+            t = _gir.utils.convert_to_kernel_type(t)
+            if t != ann:
+                raise SyntaxError(
+                    f"Reallocating the scalar {target_name} defined previous is not allowed")
+        # make sure it is annotated as scalar
+        if not typing_utils.is_scalar_type(ann):
+            raise SyntaxError(f"Annotating {target_name} with type {ann} is not allowed.")
+        # make sure the annotated type is the same as rhs value
+        v_kernel = _gir.utils.convert_to_kernel_type(value)
+        if v_kernel != ann:
+            if v_kernel.shape != ann.shape:
+                raise SyntaxError(
+                    f"Assigning {value.kernel_type} to {ann} is not allowed because they have different shapes")
+            elif v_kernel.dtype != ann.dtype:
+                pass
+            else:
+                raise SyntaxError(f"Assigning {value.kernel_type} to {ann} is not allowed")
+        tmp_scalar_ctx = _gir.Scalar(
+            name=target_name,
+            dtype=ann.dtype_str(),
+            is_internal_constant=True)
+        self.tmp_scalar_table[target_name] = tmp_scalar_ctx
+        copy_op = _gir.CopyOperator()
+        rt = copy_op(tmp_scalar_ctx, value)[0]
+        self.kernel_p.graph_nodes.append(copy_op)
+        self.kernel_p.graph_nodes.append(tmp_scalar_ctx)
+        return rt
+
+    def _allocate_ndarray(self, target_name, value, ann):
+        # the name is conflict with args
+        if target_name in self.arg_context_table:
+            raise SyntaxError(
+                f"Reassigning the ndarray {target_name} defined in arguments is not allowed")
+        # the name is conflict with previous defined ndarray
+        if target_name in self.tmp_ndarray_table and \
+                _gir.utils.convert_to_kernel_type(self.tmp_ndarray_table[target_name]) != ann:
+            raise SyntaxError(
+                f"Reallocating the ndarray {target_name} defined previous is not allowed")
+        # make sure it is annotated as scalar
+        if not typing_utils.is_ndarray_type(ann):
+            raise SyntaxError(f"Annotating {target_name} with type {ann} is not allowed.")
+        # make sure the annotated type is the same as rhs value
+        v_kernel = _gir.utils.convert_to_kernel_type(value)
+        if v_kernel != ann:
+            raise SyntaxError(f"Assigning {v_kernel} to {ann} is not allowed")
+        # todo shape marked here may be by scalars.
+        tmp_ndarray_ctx = _gir.Tensor(name=target_name, dtype=value.dtype(), shape=value.shape())
+        self.tmp_ndarray_table[target_name] = tmp_ndarray_ctx
+        copy_op = _gir.CopyOperator()
+        rt = copy_op(tmp_ndarray_ctx, value)[0]
+        self.kernel_p.graph_nodes.append(copy_op)
+        self.kernel_p.graph_nodes.append(tmp_ndarray_ctx)
+        return rt
+
+    def _assign_scalar(self, target_name, value, node):
+        # the name is conflict with args
+        if target_name in self.arg_context_table:
+            raise SyntaxError(
+                f"Reassigning scalars {target_name} defined in arguments is not allowed")
+        # it has not been defined
+        if target_name not in self.tmp_scalar_table:
+            raise SyntaxError(
+                f"Assigning scalars {target_name} is not allowed because it not defined")
+        # node cannot be annotated assign or other (unlikely to be other)
+        if not isinstance(node, ast.Assign):
+            raise SyntaxError(f"Using annotated assign to assign {target_name} is not allowed "
+                              f"since it has already been defined above")
+        previous_ctx = self.tmp_scalar_table[target_name]
+        if _gir.utils.is_compatible(previous_ctx, value):
+            raise SyntaxError(f"the value assigned to {target_name} is not scalar")
+        new_ctx = _gir.Scalar(
+            name=target_name,
+            dtype=previous_ctx.dtype(),
+            is_internal_constant=True)
+        self.tmp_scalar_table[target_name] = new_ctx
+        copy_op = _gir.CopyOperator()
+        rt = copy_op(new_ctx, value)
+        return rt[0]
+
+    def _assign_ndarray(self, target_name, value, node):
+        """
+        # the name is conflict with args
+        if target_name in self.arg_context_table:
+            raise SyntaxError(
+                f"Reassigning ndarray {target_name} defined in arguments is not allowed")
+        # it has not been defined
+        if target_name not in self.tmp_ndarray_table:
+            raise SyntaxError(
+                f"Assigning ndarray {target_name} is not allowed because it not defined")
+        # node cannot be annotated assign or other (unlikely to be other)
+        if not isinstance(node, ast.Assign):
+            raise SyntaxError(f"Using annotated assign to assign {target_name} is not allowed "
+                              f"since it has already been defined above")
+        previous_ctx = self.tmp_ndarray_table[target_name]
+        self.tmp_ndarray_table[target_name] = value
+        if _gir.utils.is_compatible(previous_ctx, value):
+            raise SyntaxError(f"the value assigned to {target_name} is not scalar")
+        return value"""
+        pass
+
+    def visit_If(self, node: ast.If) -> Any:
+        """
+        test = self.visit(node.test)
+        body = [self.visit(s) for s in node.body]
+        orelse = [self.visit(s) for s in node.orelse]
+        return IfNode(test, body, orelse, self.build_span(node))"""
+        raise NotImplementedError("visit_If is not supported yet")
+
+    def visit_Pass(self, node: ast.Pass) -> Any:
+        lhs = _gir.Scalar(value=1, is_internal_constant=True)
+        rhs = _gir.Scalar(value=2, is_internal_constant=True)
+        self.kernel_p.graph_nodes.append(lhs)
+        self.kernel_p.graph_nodes.append(rhs)
+        op = _gir.BinaryElementWiseOperator(ast.Add)
+        self.kernel_p.graph_nodes.append(op)
+        result = op(lhs, rhs)[0]
+        return result
 
     def visit_Call(self, node: ast.Call) -> Any:
         raise NotImplementedError("visit_Call is not Implemented")
@@ -322,21 +364,21 @@ class BaseParser(ast.NodeVisitor):
             return [value, attr_name]
         return [*value, attr_name]
 
-    def visit_Return(self, node: ast.Return) -> Any:
+    def visit_Return(self, node: ast.Return) -> Union[None, _gir.Node]:
         if node.value is None:
-            return _ir.ReturnStmt(NoneExpr())
-        if not is_scalar_type(self.return_ctx.kernel_type):
+            return None
+        if not _gir.utils.is_graph_ir_scalar(self.return_ctx):
             raise NotImplementedError(
                 "base parser does not support returning things other than scalar")
 
         rt_ir = self.visit(node.value)
-        if not is_scalar_shape(rt_ir.shape):
+        if not _gir.utils.is_graph_ir_scalar(rt_ir):
             raise NotImplementedError(
                 "The return value is not a scalar which does not match the annotation")
+        copy_operator = _gir.CopyOperator()
+        return copy_operator(self.return_ctx, rt_ir)[0]
 
-        return _ir.ReturnStmt(rt_ir.to_matx_ir())
-
-    def visit_Tuple(self, node: ast.Tuple) -> Any:
+    def visit_Tuple(self, node: ast.Tuple) -> List[_gir.Node]:
         values = []
         for e in node.elts:
             if not isinstance(e, ast.Name):
@@ -344,7 +386,7 @@ class BaseParser(ast.NodeVisitor):
             if e.id not in self.kernel_p.shape_symbol_table:
                 raise SyntaxError(f"for now tuple only support symbol")
             s = self.kernel_p.shape_symbol_table[e.id]
-            values.append(s.symbol)
+            values.append(s.symbolic_value())
         return values
 
     def annotation_to_kernel_type(self, ann):
@@ -353,19 +395,19 @@ class BaseParser(ast.NodeVisitor):
                 raise SyntaxError(
                     f"kernel variable can only be marked with kernel type, but get ann.value is {type(ann.value)}")
             type_name = ann.value.id
-            if type_name not in STR_TO_KERNEL_TYPE:
+            if type_name not in typing_utils.STR_TO_KERNEL_TYPE:
                 raise SyntaxError(
                     f"kernel variable can only be marked with kernel type, but get {type_name}")
-            kernel_t = STR_TO_KERNEL_TYPE[type_name]
+            kernel_t = typing_utils.STR_TO_KERNEL_TYPE[type_name]
             if not isinstance(ann.slice, ast.Tuple):
                 raise SyntaxError(
                     f"kernel variable can only be marked with kernel type, but get ann.slice is {type(ann.slice)}")
             return kernel_t[self.visit(ann.slice)]
         if isinstance(ann, ast.Name):
             type_name = ann.id
-            if type_name not in STR_TO_KERNEL_TYPE:
+            if type_name not in typing_utils.STR_TO_KERNEL_TYPE:
                 raise SyntaxError(
                     f"kernel variable can only be marked with kernel type, but get {type_name}")
-            return STR_TO_KERNEL_TYPE[type_name]
+            return typing_utils.STR_TO_KERNEL_TYPE[type_name]
         raise SyntaxError(
             f"kernel variable can only be marked with kernel type, but get {type(ann)}")
