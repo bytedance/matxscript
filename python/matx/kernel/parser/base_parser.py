@@ -27,6 +27,8 @@ from typing import Any, List, Union, TYPE_CHECKING
 import matx.kernel.graphIR as _gir
 import matx.kernel.typing.utils as typing_utils
 from .utils import scalar_or_int_var
+import matx.kernel.kernel_parser
+from matx.kernel.func_registery import FUNC_REGISTRY
 
 if TYPE_CHECKING:
     from ..kernel_parser import KernelInspector
@@ -51,6 +53,8 @@ class BaseParser(ast.NodeVisitor):
         self.return_ctx = self.kernel_p.return_ctx
 
         self.reads = []
+
+        self.can_inline = True
 
     def generic_visit(self, node):
         """Override method in ast.NodeVisitor.
@@ -355,7 +359,35 @@ class BaseParser(ast.NodeVisitor):
         return result
 
     def visit_Call(self, node: ast.Call) -> Any:
-        raise NotImplementedError("visit_Call is not Implemented")
+        func = node.func
+        if isinstance(func, ast.Name):
+            f_obj = self.kernel_p.root_node.module.globals.get(func.id)
+            if func.id not in FUNC_REGISTRY:
+                p = matx.kernel.kernel_parser.KernelParser(f_obj)
+                p.parse()
+            func_inspector = FUNC_REGISTRY[id(f_obj)]
+        else:
+            raise SyntaxError("only support inline function for now")
+        self.can_inline = self.can_inline and func_inspector.can_inline
+        if func_inspector.can_inline:
+            return self._inline_func(node, func_inspector)
+        else:
+            raise NotImplementedError("only support inline function for now")
+
+    def _inline_func(self, node: ast.Call, inspector: 'KernelInspector'):
+        tensors_nodes = (s for s in inspector.graph_input if isinstance(s, _gir.Tensor))
+        for arg, tensor_node in zip(node.args, tensors_nodes):
+            arg_value_node = self.visit(arg)
+            cp_op = _gir.CopyOperator()
+            cp_op(tensor_node, arg_value_node)
+            self.kernel_p.graph_nodes.append(cp_op)
+            for a_symbol, tensor_symbol in zip(arg_value_node.shape(), tensor_node.shape()):
+                if isinstance(tensor_symbol, _gir.IntVar) and (not isinstance(tensor_symbol, _gir.IntImm)):
+                    tensor_symbol._attrs["symbolic_value"] = a_symbol.symbolic_value()
+                    tensor_symbol._attrs["name"] = a_symbol._attrs["name"]
+        self.kernel_p.graph_nodes.extend(inspector.graph_nodes)
+        output = inspector.graph_output[0]
+        return output
 
     def visit_Attribute(self, node: ast.Attribute) -> Any:
         value = self.visit(node.value)

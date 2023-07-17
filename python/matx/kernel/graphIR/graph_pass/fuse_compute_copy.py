@@ -116,8 +116,13 @@ class TmpVarEliminator:
             if isinstance(op, ElementWiseOperator):
                 new_inputs: OrderedDict[Tensor, Scalar] = OrderedDict()
                 for k, v in op.sub_graph_input.items():
-                    if k != to_node:
-                        new_inputs[k] = v
-                    else:
-                        new_inputs[from_node] = v
+                    new_key = k
+                    if k == to_node:
+                        new_key = from_node
+                    if new_key in new_inputs:
+                        v2 = new_inputs[new_key]
+                        copy_op = CopyOperator()
+                        copy_op(v2, v)
+                        op.sub_graph_nodes.append(copy_op)
+                    new_inputs[new_key] = v
                 op.sub_graph_input = new_inputs

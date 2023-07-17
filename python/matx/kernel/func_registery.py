@@ -16,7 +16,17 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
+"""
+Registry for basic operators and math functions.
+"""
+from typing import Callable, Dict, List
+from typing import Any, List, Union, TYPE_CHECKING
 
-from .fuse_element_wise import ElementWiseOpFuser
-from .fuse_compute_copy import TmpVarEliminator
-from .eliminate_unreachable_node import UnreachableNodeEliminator
+if TYPE_CHECKING:
+    from .parser.inspector import KernelInspector
+
+# OP_REGISTRY defines a mapping from a FuncEnum name to a function to create this elementwise operator.
+# This object is initialized in elementwise.py, and referenced in base.py and math.py.
+FUNC_REGISTRY: Dict[int, 'KernelInspector'] = {
+}
+

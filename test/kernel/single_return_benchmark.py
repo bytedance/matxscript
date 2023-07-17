@@ -25,24 +25,27 @@ import sympy
 import time
 from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.compile_linalg import compile_linalg
-from matx.kernel.typing import int32, int64, float32
+from matx.kernel.typing import int32, int64, float64, float32
 
 WARM_UP = 10000
 ITERATION = 60000
 
 
 def benchmark():
+    B = sympy.Symbol('B', positive=True)
     M = sympy.Symbol('M', positive=True)
     N = sympy.Symbol('N', positive=True)
 
-    def foo(a: int32[M, N], b: int64[M, N], c: float32) -> float32[M, N]:
-        return ((a + b) * c) + 1 + a
+    def foo(a: int32[B, M, N], b: int64[B, M, N], c: float32) -> float64[B, M, N]:
+        t0: int64[B, M, N] = a + b
+        t1: float64[B, M, N] = c * a
+        return t0 + 1 + t1
 
     p = KernelParser(foo)
     p.parse()
 
-    a = np.arange(300 * 400, dtype=np.int32).reshape(300, 400)
-    b = np.arange(300 * 400, dtype=np.int64).reshape(300, 400)
+    a = np.arange(8 * 300 * 400, dtype=np.int32).reshape((8, 300, 400))
+    b = np.arange(8 * 300 * 400, dtype=np.int64).reshape((8, 300, 400))
     c = np.float32(3)
     rt = np.zeros(a.shape, dtype=np.float32)
     f = compile_linalg(p)
@@ -52,12 +55,12 @@ def benchmark():
 
     # warmup
     for _ in range(WARM_UP):
-        _ = np.zeros(a.shape, dtype=np.float32)
+        _ = np.zeros(a.shape, dtype=np.float64)
         f.raw_call(*c_args)
 
     linalg_start_time = time.time()
     for _ in range(ITERATION):
-        _ = np.zeros(a.shape, dtype=np.float32)
+        _ = np.zeros(a.shape, dtype=np.float64)
         f.raw_call(*c_args)
     print("--- linalg time: %s seconds ---" % (time.time() - linalg_start_time))
 

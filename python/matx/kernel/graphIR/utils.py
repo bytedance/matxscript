@@ -137,3 +137,45 @@ def convert_to_kernel_type(node: '_gir.Tensor'):
     if len(shape) == 0:
         shape = [1]
     return matx.kernel.typing.STR_TO_KERNEL_TYPE[dtype][shape]
+
+
+def draw_graph(graph_nodes):
+    import networkx as nx
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    def str_node(node):
+        if _gir.utils.is_graph_ir_scalar(node):
+            return f"scalar({node.name() if len(node.name()) != 0 else f'tmp{id(node)}'})"
+        elif isinstance(node, _gir.Tensor):
+            return f"Tensor({node.name() if len(node.name()) != 0 else f'tmp{id(node)}'})"
+        elif isinstance(node, _gir.IntImm):
+            return f"IntImm({node.value()})"
+        elif isinstance(node, _gir.IntVar):
+            return f"IntVar({node.symbolic_value()})"
+        elif isinstance(node, _gir.Operator):
+            return f"op({str(type(node)).split('.')[-1][:-2]}({id(node)}))"
+        else:
+            return f"{type(node)}({id(node)})"
+
+    G = nx.DiGraph()
+
+    # Add nodes and edges to the graph
+    for node in graph_nodes:
+        G.add_node(str_node(node))
+        if isinstance(node, _gir.Operator):
+            for i in node._attrs["inputs"]:
+                G.add_edge(str_node(i), str_node(node))
+        elif isinstance(node, _gir.Tensor):
+            for src in node.src_ops():
+                G.add_edge(str_node(src), str_node(node))
+            for dst in node.dst_ops():
+                G.add_edge(str_node(node), str_node(dst))
+        elif isinstance(node, _gir.IntVar):
+            ...
+        else:
+            ...
+    # Draw the graph
+    pos = nx.spring_layout(G, scale=20, k=6 / np.sqrt(G.order()))
+    nx.draw_networkx(G, pos, with_labels=True)
+    plt.show()

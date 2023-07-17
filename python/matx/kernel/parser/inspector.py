@@ -28,6 +28,7 @@ from matx.kernel.parser.for_loop_parser import ForLoopParser
 from matx.kernel.parser.single_return_parser import KernelSingleReturnParser
 from matx.kernel.typing import NDArrayType as kernelNDArrayT
 from matx.script import context as script_context
+from matx.kernel.func_registery import FUNC_REGISTRY
 
 if TYPE_CHECKING:
     from matx.kernel.kernel_parser import KernelParser
@@ -50,7 +51,7 @@ class BodyIterator:
         if len(self.node_stack[-1]) > 0:
             return True
         return self.auto_add_return and (
-            len(self.body) == 0 or not isinstance(self.last_ast, ast.Return))
+                len(self.body) == 0 or not isinstance(self.last_ast, ast.Return))
 
     def next(self):
         if len(self.node_stack[-1]) > 0:
@@ -70,12 +71,16 @@ class BodyIterator:
 
 
 class KernelInspector(ast.NodeVisitor):
-    return_var_name = '__return_93502842947314__'
+    return_var_id = 93502842947314
 
     def __init__(
             self,
             kernel_p: 'KernelParser',
-            node: script_context.ASTNode):
+            node: script_context.ASTNode,
+            inline=True):
+
+        self.return_var_name = f'__return_{KernelInspector.return_var_id}__'
+        KernelInspector.return_var_id += 1
         self.kernel_p = kernel_p
 
         # necessary for reuse script functionality
@@ -101,17 +106,18 @@ class KernelInspector(ast.NodeVisitor):
         self.graph_nodes: List[_gir.Node] = []
 
         self.body_visitor = None
+        self.can_inline = inline
 
     def check_and_dispatch(self, node: ast.AST) -> Any:
         if isinstance(node, ast.For):
             p = ForLoopParser(self)
-            return p.visit(node)
         elif KernelSingleReturnParser.can_parse(self, node):
             p = KernelSingleReturnParser(self)
-            return p.visit(node)
         else:
             p = BaseParser(self)
-            return p.visit(node)
+        t = p.visit(node)
+        self.can_inline = self.can_inline and p.can_inline
+        return t
 
     def declare_shape_var(self, type_annotation):
         if not isinstance(type_annotation, kernelNDArrayT):
@@ -211,17 +217,20 @@ class KernelInspector(ast.NodeVisitor):
         self.context.new_scope(nodes=node.body)
         self.parse_body(True)
         self.context.pop_scope()
-        cfuse = _gir.graph_pass.TmpVarEliminator()
-        cfuse.apply(self.graph_input, self.graph_output, self.graph_nodes)
-        # self.print_graph()
+        #_gir.utils.draw_graph(self.graph_nodes)
+        cfuser = _gir.graph_pass.TmpVarEliminator()
+        cfuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
         efuser = _gir.graph_pass.ElementWiseOpFuser()
         efuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
-        # self.print_graph()
+        udeleter = _gir.graph_pass.UnreachableNodeEliminator()
+        udeleter.apply(self.graph_input, self.graph_output, self.graph_nodes)
+        #_gir.utils.draw_graph(self.graph_nodes)
         return self
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:
         if self.visited_FunctionDef:
             raise SyntaxError("nested function def is not allowed.")
+        FUNC_REGISTRY[id(self.kernel_p.func)] = self
         self.visited_FunctionDef = True
         self.init_args()
         self.check_return()
@@ -247,43 +256,3 @@ class KernelInspector(ast.NodeVisitor):
                     f"the shape ({shape}) of the ndarray is expected to be an symbol or int,"
                     f" but get {d} ({type(d)})")
         return gir_shape
-
-    def print_graph(self):
-        import networkx as nx
-        import matplotlib.pyplot as plt
-
-        def str_node(node):
-            if _gir.utils.is_graph_ir_scalar(node):
-                return f"scalar({node.name() if len(node.name()) != 0 else f'tmp{id(node)}'})"
-            elif isinstance(node, _gir.Tensor):
-                return f"Tensor({node.name() if len(node.name()) != 0 else f'tmp{id(node)}'})"
-            elif isinstance(node, _gir.IntImm):
-                return f"IntImm({node.value()})"
-            elif isinstance(node, _gir.IntVar):
-                return f"IntVar({node.symbolic_value()})"
-            elif isinstance(node, _gir.Operator):
-                return f"op({str(type(node)).split('.')[-1][:-2]}({id(node)}))"
-            else:
-                return f"{type(node)}({id(node)})"
-
-        G = nx.DiGraph()
-
-        # Add nodes and edges to the graph
-        for node in self.graph_nodes:
-            G.add_node(str_node(node))
-            if isinstance(node, _gir.Operator):
-                for i in node._attrs["inputs"]:
-                    G.add_edge(str_node(i), str_node(node))
-            elif isinstance(node, _gir.Tensor):
-                for src in node.src_ops():
-                    G.add_edge(str_node(src), str_node(node))
-                for dst in node.dst_ops():
-                    G.add_edge(str_node(node), str_node(dst))
-            elif isinstance(node, _gir.IntVar):
-                ...
-            else:
-                ...
-        # Draw the graph
-        pos = nx.spring_layout(G, scale=20, k=6 / np.sqrt(G.order()))
-        nx.draw_networkx(G, pos, with_labels=True)
-        plt.show()
