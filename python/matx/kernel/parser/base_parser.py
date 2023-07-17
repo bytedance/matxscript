@@ -382,7 +382,12 @@ class BaseParser(ast.NodeVisitor):
             cp_op(tensor_node, arg_value_node)
             self.kernel_p.graph_nodes.append(cp_op)
             for a_symbol, tensor_symbol in zip(arg_value_node.shape(), tensor_node.shape()):
-                if isinstance(tensor_symbol, _gir.IntVar) and (not isinstance(tensor_symbol, _gir.IntImm)):
+                if isinstance(
+                    tensor_symbol,
+                    _gir.IntVar) and (
+                    not isinstance(
+                        tensor_symbol,
+                        _gir.IntImm)):
                     tensor_symbol._attrs["symbolic_value"] = a_symbol.symbolic_value()
                     tensor_symbol._attrs["name"] = a_symbol._attrs["name"]
         self.kernel_p.graph_nodes.extend(inspector.graph_nodes)

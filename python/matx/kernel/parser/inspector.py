@@ -51,7 +51,7 @@ class BodyIterator:
         if len(self.node_stack[-1]) > 0:
             return True
         return self.auto_add_return and (
-                len(self.body) == 0 or not isinstance(self.last_ast, ast.Return))
+            len(self.body) == 0 or not isinstance(self.last_ast, ast.Return))
 
     def next(self):
         if len(self.node_stack[-1]) > 0:
@@ -217,14 +217,14 @@ class KernelInspector(ast.NodeVisitor):
         self.context.new_scope(nodes=node.body)
         self.parse_body(True)
         self.context.pop_scope()
-        #_gir.utils.draw_graph(self.graph_nodes)
+        # _gir.utils.draw_graph(self.graph_nodes)
         cfuser = _gir.graph_pass.TmpVarEliminator()
         cfuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
         efuser = _gir.graph_pass.ElementWiseOpFuser()
         efuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
         udeleter = _gir.graph_pass.UnreachableNodeEliminator()
         udeleter.apply(self.graph_input, self.graph_output, self.graph_nodes)
-        #_gir.utils.draw_graph(self.graph_nodes)
+        # _gir.utils.draw_graph(self.graph_nodes)
         return self
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:

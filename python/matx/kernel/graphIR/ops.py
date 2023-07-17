@@ -193,14 +193,10 @@ class DeepCopyOperator(CopyOperator):
         return super().__call__(copy_to, copy_from)
 
 
-
-
-
 class IntVarCopyOperator(Node):
 
     def pseudo_code(self, with_shape: bool = False) -> str:
         return "IntVarCopyOperator"
-
 
     def __init__(self):
         super().__init__()

@@ -86,7 +86,6 @@ class TestSingleReturnParser(unittest.TestCase):
         f(a, b, c, rt=rt)
         np.testing.assert_equal(rt, foo(a, b, c))
 
-
     def test_two_op_diff_shape_symbol2(self):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
@@ -116,7 +115,6 @@ class TestSingleReturnParser(unittest.TestCase):
         f(a, b, c, rt=rt)
         np.testing.assert_equal(rt, foo(a, b, c))
 
-
     def test_two_op_multi_call(self):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
@@ -128,10 +126,10 @@ class TestSingleReturnParser(unittest.TestCase):
             return a - b
 
         def boo2(c: int32[P, Q], d: int32[P, Q]) -> int32[P, Q]:
-            return boo1(c, d) + c + d #+ 1
+            return boo1(c, d) + c + d  # + 1
 
         def foo(e: int32[M, N], f: int32[M, N], g: int32[M, N]) -> int32[M, N]:
-            return boo2(e, f) #+ e + boo1(f, g)
+            return boo2(e, f)  # + e + boo1(f, g)
 
         # todo check ir structure
         p = KernelParser(foo)

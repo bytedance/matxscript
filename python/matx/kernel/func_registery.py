@@ -29,4 +29,3 @@ if TYPE_CHECKING:
 # This object is initialized in elementwise.py, and referenced in base.py and math.py.
 FUNC_REGISTRY: Dict[int, 'KernelInspector'] = {
 }
-
