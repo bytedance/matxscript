@@ -140,9 +140,11 @@ def convert_to_kernel_type(node: '_gir.Tensor'):
 
 
 def draw_graph(graph_nodes):
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    import numpy as np
+    try:
+        import networkx as nx
+        import matplotlib.pyplot as plt
+    except ImportError:
+        return None
 
     def str_node(node):
         if _gir.utils.is_graph_ir_scalar(node):
@@ -163,7 +165,9 @@ def draw_graph(graph_nodes):
     # Add nodes and edges to the graph
     for node in graph_nodes:
         G.add_node(str_node(node))
-        if isinstance(node, _gir.Operator):
+        if isinstance(node, _gir.CopyOperator):
+            G.add_edge(str_node(node.copy_from), str_node(node))
+        elif isinstance(node, _gir.Operator):
             for i in node._attrs["inputs"]:
                 G.add_edge(str_node(i), str_node(node))
         elif isinstance(node, _gir.Tensor):
@@ -175,7 +179,16 @@ def draw_graph(graph_nodes):
             ...
         else:
             ...
+    # topological sort
+    for layer, nodes in enumerate(nx.topological_generations(G)):
+        # `multipartite_layout` expects the layer as a node attribute, so add the
+        # numeric layer value as a node attribute
+        for node in nodes:
+            G.nodes[node]["layer"] = layer
+
     # Draw the graph
-    pos = nx.spring_layout(G, scale=20, k=6 / np.sqrt(G.order()))
-    nx.draw_networkx(G, pos, with_labels=True)
+    fig, ax = plt.subplots()
+    pos = nx.multipartite_layout(G, subset_key="layer")
+    nx.draw_networkx(G, pos, ax=ax, with_labels=True)
+    fig.tight_layout()
     plt.show()

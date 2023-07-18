@@ -112,7 +112,10 @@ class TmpVarEliminator:
             if to_node in op._attrs["inputs"]:
                 idx = op._attrs["inputs"].index(to_node)
                 if idx != -1:
-                    op._attrs["inputs"][idx] = from_node
+                    if from_node not in op._attrs["inputs"]:
+                        op._attrs["inputs"][idx] = from_node
+                    else:
+                        op._attrs["inputs"].pop(idx)
             if isinstance(op, ElementWiseOperator):
                 new_inputs: OrderedDict[Tensor, Scalar] = OrderedDict()
                 for k, v in op.sub_graph_input.items():

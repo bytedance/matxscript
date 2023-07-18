@@ -25,7 +25,7 @@ from matx.kernel.compile_linalg import compile_linalg
 from matx.kernel.typing import int32, int64, float32
 
 
-class TestSingleReturnParser(unittest.TestCase):
+class TestFunctionCalls(unittest.TestCase):
 
     def test_two_op(self):
         M = sympy.Symbol('M', positive=True)
@@ -115,7 +115,7 @@ class TestSingleReturnParser(unittest.TestCase):
         f(a, b, c, rt=rt)
         np.testing.assert_equal(rt, foo(a, b, c))
 
-    def test_two_op_multi_call(self):
+    def test_two_op_multi_call1(self):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
         K = sympy.Symbol('K', positive=True)
@@ -126,10 +126,80 @@ class TestSingleReturnParser(unittest.TestCase):
             return a - b
 
         def boo2(c: int32[P, Q], d: int32[P, Q]) -> int32[P, Q]:
-            return boo1(c, d) + c + d  # + 1
+            return boo1(c, d) + c + d
 
         def foo(e: int32[M, N], f: int32[M, N], g: int32[M, N]) -> int32[M, N]:
-            return boo2(e, f)  # + e + boo1(f, g)
+            return boo2(e, f)
+
+        # todo check ir structure
+        p = KernelParser(foo)
+        p.parse()
+        print()
+        print("=" * 30, "linalg_code", "=" * 30, sep="")
+        print()
+        print(p.linalg_code())
+        print()
+        print("=" * 30, "compile and run", "=" * 30, sep="")
+        print()
+        a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
+        c = np.array([[13, 14, 15], [16, 17, 18]], dtype=np.int32)
+        print(a.shape)
+        rt = np.zeros(a.shape, dtype=np.int32)
+        f = compile_linalg(p)
+        f(a, b, c, rt=rt)
+        np.testing.assert_equal(rt, foo(a, b, c))
+
+    def test_two_op_multi_call2(self):
+        M = sympy.Symbol('M', positive=True)
+        N = sympy.Symbol('N', positive=True)
+        K = sympy.Symbol('K', positive=True)
+        P = sympy.Symbol('P', positive=True)
+        Q = sympy.Symbol('Q', positive=True)
+
+        def boo1(a: int32[M, K], b: int32[M, K]) -> int32[M, K]:
+            return a - b
+
+        def boo2(c: int32[P, Q], d: int32[P, Q]) -> int32[P, Q]:
+            return boo1(c, d) + d  # + c
+
+        def foo(e: int32[M, N], f: int32[M, N], g: int32[M, N]) -> int32[M, N]:
+            return boo2(e, f) + e  # + boo1(f, g)
+
+        # todo check ir structure
+        p = KernelParser(foo)
+        p.parse()
+        print()
+        print("=" * 30, "linalg_code", "=" * 30, sep="")
+        print()
+        print(p.linalg_code())
+        print()
+        print("=" * 30, "compile and run", "=" * 30, sep="")
+        print()
+        a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
+        c = np.array([[13, 14, 15], [16, 17, 18]], dtype=np.int32)
+        print(a.shape)
+        rt = np.zeros(a.shape, dtype=np.int32)
+        f = compile_linalg(p)
+        f(a, b, c, rt=rt)
+        np.testing.assert_equal(rt, foo(a, b, c))
+
+    def test_two_op_multi_call3(self):
+        M = sympy.Symbol('M', positive=True)
+        N = sympy.Symbol('N', positive=True)
+        K = sympy.Symbol('K', positive=True)
+        P = sympy.Symbol('P', positive=True)
+        Q = sympy.Symbol('Q', positive=True)
+
+        def boo1(a: int32[M, K], b: int32[M, K]) -> int32[M, K]:
+            return a - b
+
+        def boo2(c: int32[P, Q], d: int32[P, Q]) -> int32[P, Q]:
+            return boo1(c, d) + d + c
+
+        def foo(e: int32[M, N], f: int32[M, N], g: int32[M, N]) -> int32[M, N]:
+            return boo2(e, f) + e + boo1(f, g)
 
         # todo check ir structure
         p = KernelParser(foo)
