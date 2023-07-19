@@ -158,7 +158,24 @@ class UnaryElementWiseOperator(ElementWiseOperator):
 
 
 class ReductionOperator(Operator):
-    pass
+
+    def __init__(self):
+        super().__init__()
+        self.results: List[Tensor] = []
+        self.reduction_dims: List[int] = []
+        self.sub_graph_init_values: List[Scalar] = []
+        self.sub_graph_input: OrderedDict[Tensor, Scalar] = OrderedDict()
+        self.sub_graph_nodes: List[Node] = []
+        self.sub_graph_outputs: OrderedDict[Scalar, Scalar] = OrderedDict()
+
+    def __call__(self, operand: Tensor) -> List[Tensor]:
+        raise NotImplementedError("This")
+
+    def get_inputs(self):
+        return self._attrs["inputs"]
+
+    def get_outputs(self):
+        return self.results
 
 
 class CopyOperator(Operator):
@@ -193,6 +210,7 @@ class DeepCopyOperator(CopyOperator):
         return super().__call__(copy_to, copy_from)
 
 
+"""
 class IntVarCopyOperator(Node):
 
     def pseudo_code(self, with_shape: bool = False) -> str:
@@ -204,3 +222,4 @@ class IntVarCopyOperator(Node):
 
     def __call__(self, *args, **kwargs):
         pass
+"""

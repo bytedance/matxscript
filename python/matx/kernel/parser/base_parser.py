@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import ast
 import numbers
+import numpy as np
 from typing import Any, List, Union, TYPE_CHECKING
 
 import matx.kernel.graphIR as _gir
@@ -360,6 +361,12 @@ class BaseParser(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call) -> Any:
         func = node.func
+        if isinstance(func, ast.Attribute):
+            func_name = func.attr
+            package_name = func.value.id
+            visited_args = (self.visit(a) for a in node.args)
+            return self.library_node_dispatcher(package_name, func_name, visited_args)
+
         if isinstance(func, ast.Name):
             f_obj = self.kernel_p.root_node.module.globals.get(func.id)
             if func.id not in FUNC_REGISTRY:
@@ -367,12 +374,25 @@ class BaseParser(ast.NodeVisitor):
                 p.parse()
             func_inspector = FUNC_REGISTRY[id(f_obj)]
         else:
-            raise SyntaxError("only support inline function for now")
+            raise SyntaxError(f"{func} is not supported now")
         self.can_inline = self.can_inline and func_inspector.can_inline
         if func_inspector.can_inline:
             return self._inline_func(node, func_inspector)
         else:
             raise NotImplementedError("only support inline function for now")
+
+    def library_node_dispatcher(self, package_name, func_name, args):
+        package = self.kernel_p.root_node.module.globals.get(package_name)
+        if package is np:
+            from ..library import NP_LIB
+            func = NP_LIB.get_func(func_name)
+            func_node = func()
+            result = func_node(*args)
+            self.kernel_p.graph_nodes.append(func_node)
+            self.kernel_p.graph_nodes.extend(result)
+            return result[0]
+        else:
+            raise NotImplementedError("only support numpy function for now")
 
     def _inline_func(self, node: ast.Call, inspector: 'KernelInspector'):
         tensors_nodes = (s for s in inspector.graph_input if isinstance(s, _gir.Tensor))

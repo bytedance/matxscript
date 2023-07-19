@@ -25,7 +25,7 @@ from typing import Any, List, Union, TYPE_CHECKING, Dict, Callable
 import matx.kernel.typing.utils as typing_utils
 from functools import partial
 from matx.kernel.kernel_parser import KernelInspector
-from .linalg_printer import LinalgGenericPrinter
+from .linalg_printer import LinalgGenericPrinter, LinalgReductionPrinter
 
 
 @dataclass
@@ -174,7 +174,7 @@ class GraphIRPrinter:
 
     @staticmethod
     def convert_type_to_mlir(node: _gir.Node):
-        if isinstance(node, _gir.Scalar):
+        if isinstance(node, _gir.Scalar) or _gir.utils.is_graph_ir_scalar(node):
             return str(DTYPE_TO_MLIR[node.dtype()])
         if isinstance(node, _gir.Tensor):
             def dim_cvt(dim):
@@ -453,9 +453,21 @@ class GraphIRPrinter:
     def _generic_visit(self, node, _from):
         raise NotImplementedError(f'This node is not supported now: {node.__class__.__name__}')
 
+    def _recursive_visit(self, _class):
+        method = "_visit_" + _class.__name__
+        visitor: Callable = getattr(self, method, None)
+        if visitor is not None:
+            return visitor
+        for base in _class.__bases__:
+            rt_method = self._recursive_visit(base)
+            if rt_method is not None:
+                return rt_method
+        return None
+
     def visit(self, node: _gir.Node, _from: Union[_gir.Node, None]):
-        method = "_visit_" + node.__class__.__name__
-        visitor: Callable = getattr(self, method, self._generic_visit)
+        visitor: Callable = self._recursive_visit(node.__class__)
+        if visitor is None:
+            visitor = self._generic_visit
         visit_res = visitor(node, _from)
         return visit_res
 
@@ -540,3 +552,10 @@ class GraphIRPrinter:
                f"\n\touts({self.mlir_var_map[copy_to]}: {self.convert_type_to_mlir(copy_to)})"
         self.mlir_printer.print(stmt)
         return self.mlir_var_map[copy_to]
+
+    def _visit_ReductionOperator(self, node: _gir.ReductionOperator, _from: _gir.Node) -> str:
+        for init_value in node.sub_graph_init_values:
+            self.visit(init_value, node)
+        reduction_printer = LinalgReductionPrinter(node, self)
+        reduction_printer.gen_code()
+        return reduction_printer.results[0]
