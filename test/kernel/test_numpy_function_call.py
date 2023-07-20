@@ -27,12 +27,34 @@ from matx.kernel.typing import int32, int64, float32
 
 class TestNumpyFunctionCalls(unittest.TestCase):
 
-    def test_two_op(self):
+    def test_sum_op(self):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
 
         def foo(a: int32[M, N]) -> int64:
             return np.sum(a)
+
+        # todo check ir structure
+        p = KernelParser(foo)
+        p.parse()
+        print()
+        print("=" * 30, "linalg_code", "=" * 30, sep="")
+        print()
+        print(p.linalg_code())
+        print()
+        print("=" * 30, "compile and run", "=" * 30, sep="")
+        print()
+        a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        f = compile_linalg(p)
+        f(a)
+        np.testing.assert_equal(f(a), foo(a))
+
+    def test_prod_op(self):
+        M = sympy.Symbol('M', positive=True)
+        N = sympy.Symbol('N', positive=True)
+
+        def foo(a: int32[M, N]) -> int64:
+            return np.prod(a)
 
         # todo check ir structure
         p = KernelParser(foo)
