@@ -23,12 +23,12 @@ import numpy as np
 
 import matx.kernel.graphIR as _gir
 import matx.kernel.typing.utils as typing_utils
-from matx.kernel.parser.base_parser import BaseParser
-from matx.kernel.parser.for_loop_parser import ForLoopParser
-from matx.kernel.parser.single_return_parser import KernelSingleReturnParser
+from matx.kernel.func_registery import FUNC_REGISTRY
+from matx.kernel.parser.general_parser import GeneralParser
+from matx.kernel.parser.loop_parser import LoopParser
+from matx.kernel.parser.tensor_op_parser import TensorOpParser
 from matx.kernel.typing import NDArrayType as kernelNDArrayT
 from matx.script import context as script_context
-from matx.kernel.func_registery import FUNC_REGISTRY
 
 if TYPE_CHECKING:
     from matx.kernel.kernel_parser import KernelParser
@@ -70,7 +70,7 @@ class BodyIterator:
             pass
 
 
-class KernelInspector(ast.NodeVisitor):
+class FunctionVisitor(ast.NodeVisitor):
     return_var_id = 93502842947314
 
     def __init__(
@@ -79,8 +79,8 @@ class KernelInspector(ast.NodeVisitor):
             node: script_context.ASTNode,
             inline=True):
 
-        self.return_var_name = f'__return_{KernelInspector.return_var_id}__'
-        KernelInspector.return_var_id += 1
+        self.return_var_name = f'__return_{FunctionVisitor.return_var_id}__'
+        FunctionVisitor.return_var_id += 1
         self.kernel_p = kernel_p
 
         # necessary for reuse script functionality
@@ -110,11 +110,11 @@ class KernelInspector(ast.NodeVisitor):
 
     def check_and_dispatch(self, node: ast.AST) -> Any:
         if isinstance(node, ast.For):
-            p = ForLoopParser(self)
-        elif KernelSingleReturnParser.can_parse(self, node):
-            p = KernelSingleReturnParser(self)
+            p = LoopParser(self)
+        elif TensorOpParser.can_parse(self, node):
+            p = TensorOpParser(self)
         else:
-            p = BaseParser(self)
+            p = GeneralParser(self)
         t = p.visit(node)
         self.can_inline = self.can_inline and p.can_inline
         return t

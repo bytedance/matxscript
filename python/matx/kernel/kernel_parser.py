@@ -20,10 +20,10 @@
 import inspect
 
 import matx.kernel.parser.utils as parser_utils
-from matx.kernel.parser import KernelInspector
+from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
+from matx.kernel.parser import FunctionVisitor
 from matx.script import analysis
 from matx.script import context as script_context
-from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 
 
 class KernelParser:
@@ -82,7 +82,7 @@ class KernelParser:
         self.passes(sc_ctx)
 
         def parser_node(node: script_context.ASTNode):
-            inspector = KernelInspector(self, node).visit_FunctionDef(node.ast)
+            inspector = FunctionVisitor(self, node).visit_FunctionDef(node.ast)
             printer = GraphIRPrinter(inspector)
             print(printer.as_linalg_text())
             return inspector

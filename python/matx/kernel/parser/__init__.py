@@ -17,4 +17,4 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from .inspector import *
+from .function_visitor import *
