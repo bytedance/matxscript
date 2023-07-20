@@ -20,6 +20,7 @@
 import itertools
 import unittest
 
+import matx.kernel
 from matx.kernel.compile_linalg import compile_linalg
 from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.typing import int32, float32, float64
@@ -44,7 +45,11 @@ class TestMLIRIntArithmeticOp(unittest.TestCase):
             c: int32 = a + b
             return a - c
 
-        k_foo = self.helper(foo)
+        @matx.kernel.func
+        def k_foo(a: int32, b: int32) -> int32:
+            c: int32 = a + b
+            return a - c
+
         for x, y in itertools.product([-50, -1, 0, 6, 32], repeat=2):
             self.assertEqual(foo(x, y), k_foo(x, y))
 
