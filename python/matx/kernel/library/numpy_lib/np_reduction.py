@@ -99,7 +99,7 @@ class Prod(_gir.ReductionOperator):
         self.sub_graph_input[operand] = sub_graph_input[1]
         result = _gir.Scalar(dtype=result_dtype_str, src_ops=[self])
         self.sub_graph_outputs[sub_graph_output[0]] = result
-        self.sub_graph_nodes.extend(sub_graph_output)
+        self.sub_graph_nodes.extend(sub_graph_nodes)
         self.results.append(result)
         return [result]
 
