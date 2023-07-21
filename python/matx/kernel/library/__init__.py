@@ -16,7 +16,4 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-
-from .fuse_element_wise import ElementWiseOpFuser
-from .fuse_compute_copy import TmpVarEliminator
-from .eliminate_unreachable_node import UnreachableNodeEliminator
+from .numpy_lib import LIB as NP_LIB

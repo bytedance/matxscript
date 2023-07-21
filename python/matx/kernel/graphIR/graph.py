@@ -436,7 +436,7 @@ class Tensor(Node):
         """
         super().__init__()
         self._attrs["shape"] = self._convert_shape(shape)
-        self._attrs["name"] = name if name is not None else ""
+        self._attrs["name"] = name if name is not None else f"{id(self)}"
         self._attrs["src_ops"] = set(src_ops) if src_ops is not None else set()
         self._attrs["dst_ops"] = set(dst_ops) if dst_ops is not None else set()
         self._attrs["dtype"] = dtype

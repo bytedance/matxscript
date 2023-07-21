@@ -17,6 +17,4 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from .fuse_element_wise import ElementWiseOpFuser
-from .fuse_compute_copy import TmpVarEliminator
-from .eliminate_unreachable_node import UnreachableNodeEliminator
+from .np_reduction import *

@@ -17,6 +17,14 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from .fuse_element_wise import ElementWiseOpFuser
-from .fuse_compute_copy import TmpVarEliminator
-from .eliminate_unreachable_node import UnreachableNodeEliminator
+
+_TEMPLATE_FUNCTION_DICT = {}
+_LIBRARY_NODE_DICT = {}
+
+
+def get_func(s):
+    if s in _TEMPLATE_FUNCTION_DICT:
+        return _TEMPLATE_FUNCTION_DICT[s]
+    if s in _LIBRARY_NODE_DICT:
+        return _LIBRARY_NODE_DICT[s]
+    return None

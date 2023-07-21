@@ -92,7 +92,7 @@ class KernelSingleReturnParser(BaseParser):
         rt_ir = self.visit(node.value)
         if list(result_shape) != list(_gir.utils.unwrap_shape(rt_ir.shape())):
             raise SyntaxError(
-                f"The return shape is annotated as {result_shape} but get {rt_ir.shape}")
+                f"The return shape is annotated as {result_shape} but get {rt_ir.shape()}")
 
         if isinstance(self.return_ctx, _gir.Tensor):
             if self.return_ctx.name() != self.kernel_p.return_var_name:

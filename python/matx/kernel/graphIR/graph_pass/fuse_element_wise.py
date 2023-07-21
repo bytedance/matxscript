@@ -40,6 +40,10 @@ class FusedElementWiseOperator(ElementWiseOperator):
         self.sub_graph_nodes = sub_graph_nodes
         self.sub_graph_outputs = sub_graph_outputs
 
+    def draw_sub_graph(self):
+        from ..utils import draw_graph
+        draw_graph(self.sub_graph_nodes)
+
 
 class ElementWiseOpFuser:
 

@@ -137,3 +137,58 @@ def convert_to_kernel_type(node: '_gir.Tensor'):
     if len(shape) == 0:
         shape = [1]
     return matx.kernel.typing.STR_TO_KERNEL_TYPE[dtype][shape]
+
+
+def draw_graph(graph_nodes):
+    try:
+        import networkx as nx
+        import matplotlib.pyplot as plt
+    except ImportError:
+        return None
+
+    def str_node(node):
+        if _gir.utils.is_graph_ir_scalar(node):
+            return f"scalar({node.name() if len(node.name()) != 0 else f'tmp{id(node)}'})"
+        elif isinstance(node, _gir.Tensor):
+            return f"Tensor({node.name() if len(node.name()) != 0 else f'tmp{id(node)}'})"
+        elif isinstance(node, _gir.IntImm):
+            return f"IntImm({node.value()})"
+        elif isinstance(node, _gir.IntVar):
+            return f"IntVar({node.symbolic_value()})"
+        elif isinstance(node, _gir.Operator):
+            return f"op({str(type(node)).split('.')[-1][:-2]}({id(node)}))"
+        else:
+            return f"{type(node)}({id(node)})"
+
+    G = nx.DiGraph()
+
+    # Add nodes and edges to the graph
+    for node in graph_nodes:
+        G.add_node(str_node(node))
+        if isinstance(node, _gir.CopyOperator):
+            G.add_edge(str_node(node.copy_from), str_node(node))
+        elif isinstance(node, _gir.Operator):
+            for i in node._attrs["inputs"]:
+                G.add_edge(str_node(i), str_node(node))
+        elif isinstance(node, _gir.Tensor):
+            for src in node.src_ops():
+                G.add_edge(str_node(src), str_node(node))
+            for dst in node.dst_ops():
+                G.add_edge(str_node(node), str_node(dst))
+        elif isinstance(node, _gir.IntVar):
+            ...
+        else:
+            ...
+    # topological sort
+    for layer, nodes in enumerate(nx.topological_generations(G)):
+        # `multipartite_layout` expects the layer as a node attribute, so add the
+        # numeric layer value as a node attribute
+        for node in nodes:
+            G.nodes[node]["layer"] = layer
+
+    # Draw the graph
+    fig, ax = plt.subplots()
+    pos = nx.multipartite_layout(G, subset_key="layer")
+    nx.draw_networkx(G, pos, ax=ax, with_labels=True)
+    fig.tight_layout()
+    plt.show()

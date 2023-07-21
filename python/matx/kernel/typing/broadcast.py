@@ -38,8 +38,8 @@ def calculate_output_axis(arr1_shape, arr2_shape, axis_idx):
         if symbol_utils.equals(axis1, axis2):
             return symbol_utils.simplify(axis1)
         else:
-            SyntaxError(f"{arr1_shape} cannot broadcast with {arr2_shape} "
-                        f"because {axis1} is not equal to {axis2}.")
+            raise SyntaxError(f"{arr1_shape} cannot broadcast with {arr2_shape} "
+                              f"because {axis1} is not equal to {axis2}.")
 
     if symbol_utils.is_symbol(axis1):
         raise SyntaxError(f"{arr1_shape} cannot broadcast with {arr2_shape} "
