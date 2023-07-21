@@ -18,13 +18,14 @@
 #  under the License.
 
 import unittest
+
 import numpy as np
 import sympy
 
 import matx.kernel
-from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.compile_linalg import compile_linalg
-from matx.kernel.typing import int32, int64, float32
+from matx.kernel.kernel_parser import KernelParser
+from matx.kernel.typing import int32
 
 
 class TestSingleReturnParser(unittest.TestCase):
@@ -69,6 +70,30 @@ class TestSingleReturnParser(unittest.TestCase):
             d: int32[M, N] = c * b
             e: int32[M, N] = c + b
             return a + (b - c) * d + e
+
+        a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
+        c = np.array([13, 14, 15], dtype=np.int32)
+        rt = np.zeros(a.shape, dtype=np.int32)
+        k_foo(a, b, c, rt=rt)
+        np.testing.assert_equal(rt, foo(a, b, c))
+
+    def test_three_op2(self):
+        M = sympy.Symbol('M', positive=True)
+        N = sympy.Symbol('N', positive=True)
+
+        def foo(a: int32[M, N], b: int32[M, N], c: int32[N]) -> int32[M, N]:
+            d: int32[M, N] = c * b
+            e: int32[M, N] = c + b
+            d = d + e
+            return a + (b - c) * d
+
+        @matx.kernel.func
+        def k_foo(a: int32[M, N], b: int32[M, N], c: int32[N]) -> int32[M, N]:
+            d: int32[M, N] = c * b
+            e: int32[M, N] = c + b
+            d = d + e
+            return a + (b - c) * d
 
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)

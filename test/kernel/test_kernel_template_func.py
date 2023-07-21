@@ -27,7 +27,7 @@ from matx.kernel.typing import int32
 
 class TestKernelTemplateFunc(unittest.TestCase):
 
-    def test_simple_tempalte(self):
+    def test_simple_template(self):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
 
@@ -44,3 +44,26 @@ class TestKernelTemplateFunc(unittest.TestCase):
 
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
         np.testing.assert_equal(k_boo(a), boo(a))
+
+    def test_simple_template2(self):
+        M = sympy.Symbol('M', positive=True)
+        N = sympy.Symbol('N', positive=True)
+
+        def foo(a, b):
+            c = a + 1
+            return c + b
+
+        @matx.kernel.template
+        def foo(a, b):
+            c = a + 1
+            return c + b
+
+        @matx.kernel.func
+        def k_boo(a: int32[M, N]) -> int32[M, N]:
+            return foo(a, a)
+
+        def boo(a: int32[M, N]) -> int32[M, N]:
+            return foo(a, a)
+
+        c = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        np.testing.assert_equal(k_boo(c), boo(c))

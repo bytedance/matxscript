@@ -75,6 +75,26 @@ class GeneralParser(ast.NodeVisitor):
     def visit_Constant(self, node: ast.Constant) -> _gir.Tensor:
         if node.value is None:
             raise SyntaxError("None is not allowed")
+        elif isinstance(node.value, int):
+            dtypes = ["int8", "int16", "int32", "int64"]
+            for dtype in dtypes:
+                if np.iinfo(dtype).min <= node.value <= np.iinfo(dtype).max:
+                    break
+            else:
+                raise SyntaxError("int is out of range ")
+            const_scalar_ctx = _gir.Scalar(value=node.value, dtype=dtype, is_internal_constant=True)
+            self.func_visitor.graph_nodes.append(const_scalar_ctx)
+            return const_scalar_ctx
+        elif isinstance(node.value, float):
+            dtypes = ["float16", "float32", "float64"]
+            for dtype in dtypes:
+                if np.finfo(dtype).min <= node.value <= np.finfo(dtype).max:
+                    break
+            else:
+                raise SyntaxError("int is out of range ")
+            const_scalar_ctx = _gir.Scalar(value=node.value, dtype=dtype, is_internal_constant=True)
+            self.func_visitor.graph_nodes.append(const_scalar_ctx)
+            return const_scalar_ctx
         elif isinstance(node.value, numbers.Number):
             dtype = typing_utils.get_dtype_str(node.value)
             const_scalar_ctx = _gir.Scalar(value=node.value, dtype=dtype, is_internal_constant=True)
@@ -84,7 +104,7 @@ class GeneralParser(ast.NodeVisitor):
             raise NotImplementedError(f'Unsupported value {node.value}')
 
     # variables
-    def visit_Name(self, node: ast.Name) -> _gir.Node:
+    def visit_Name(self, node: ast.Name) -> Union[_gir.Node, None]:
         if isinstance(node.ctx, ast.Del):
             raise SyntaxError(f"del {node.id} is not allowed")
         name = node.id
@@ -100,7 +120,7 @@ class GeneralParser(ast.NodeVisitor):
         if name in self.tmp_ndarray_table:
             ctx = self.tmp_ndarray_table[name]
             return ctx
-        raise SyntaxError(f'the type of {name} is not support')
+        return None
         # return node.id
 
     # Expressions
@@ -210,13 +230,23 @@ class GeneralParser(ast.NodeVisitor):
         if not isinstance(node.targets[0], (ast.Name, ast.Subscript)):
             raise SyntaxError(f"Assigning to {type(node.targets)} is not allowed.")
         value = self.visit(node.value)
+        value_type = _gir.utils.convert_to_kernel_type(value)
         target = self.visit(node.targets[0])
+        if target is None:
+            if not isinstance(node.targets[0], ast.Name):
+                raise SyntaxError(f"not supported node type {type(target)}")
+            if typing_utils.is_scalar_type(value_type):
+                return self._allocate_scalar(node.targets[0].id, value, value_type)
+            if typing_utils.is_ndarray_type(value_type):
+                return self._allocate_ndarray(node.targets[0].id, value, value_type)
         if isinstance(node.targets[0], ast.Name):
-            return self._assign_scalar(target.name(), value, node)
+            if typing_utils.is_scalar_type(value_type):
+                return self._assign_scalar(target.name(), value, node)
+            if typing_utils.is_ndarray_type(value_type):
+                return self._assign_ndarray(target.name(), value, node)
         elif isinstance(node.targets[0], ast.Subscript):
             raise SyntaxError(f"not supported node type {type(target)}")
-        else:
-            raise SyntaxError(f"not supported node type {type(target)}")
+        raise SyntaxError(f"not supported node type {type(target)}")
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
         ann = self.annotation_to_kernel_type(node.annotation)
@@ -310,19 +340,21 @@ class GeneralParser(ast.NodeVisitor):
             raise SyntaxError(f"Using annotated assign to assign {target_name} is not allowed "
                               f"since it has already been defined above")
         previous_ctx = self.tmp_scalar_table[target_name]
-        if _gir.utils.is_compatible(previous_ctx, value):
-            raise SyntaxError(f"the value assigned to {target_name} is not scalar")
+        if not _gir.utils.is_compatible(previous_ctx, value):
+            raise SyntaxError(
+                f"the value assigned to {target_name} is not compatible {previous_ctx.dtype()} and {value.dtype()}")
         new_ctx = _gir.Scalar(
-            name=target_name,
+            name=f"{target_name}_{self.func_visitor.get_new_tmp_var_id()}",
             dtype=previous_ctx.dtype(),
             is_internal_constant=True)
         self.tmp_scalar_table[target_name] = new_ctx
         copy_op = _gir.CopyOperator()
+        self.func_visitor.graph_nodes.append(copy_op)
+        self.func_visitor.graph_nodes.append(new_ctx)
         rt = copy_op(new_ctx, value)
         return rt[0]
 
     def _assign_ndarray(self, target_name, value, node):
-        """
         # the name is conflict with args
         if target_name in self.arg_context_table:
             raise SyntaxError(
@@ -336,11 +368,19 @@ class GeneralParser(ast.NodeVisitor):
             raise SyntaxError(f"Using annotated assign to assign {target_name} is not allowed "
                               f"since it has already been defined above")
         previous_ctx = self.tmp_ndarray_table[target_name]
-        self.tmp_ndarray_table[target_name] = value
-        if _gir.utils.is_compatible(previous_ctx, value):
-            raise SyntaxError(f"the value assigned to {target_name} is not scalar")
-        return value"""
-        pass
+        if not _gir.utils.is_compatible(previous_ctx, value):
+            raise SyntaxError(f"the value assigned to {target_name} is not a ndarray")
+        new_ctx = _gir.Tensor(
+            name=f"{target_name}_{self.func_visitor.get_new_tmp_var_id()}",
+            dtype=previous_ctx.dtype(),
+            shape=previous_ctx.shape()
+        )
+        self.tmp_ndarray_table[target_name] = new_ctx
+        copy_op = _gir.DeepCopyOperator()
+        self.func_visitor.graph_nodes.append(copy_op)
+        self.func_visitor.graph_nodes.append(new_ctx)
+        rt = copy_op(new_ctx, value)
+        return rt[0]
 
     def visit_If(self, node: ast.If) -> Any:
         """
@@ -408,11 +448,11 @@ class GeneralParser(ast.NodeVisitor):
             self.func_visitor.graph_nodes.append(cp_op)
             for a_symbol, tensor_symbol in zip(arg_node.shape(), tensor_node.shape()):
                 if isinstance(
-                    tensor_symbol,
-                    _gir.IntVar) and (
-                    not isinstance(
                         tensor_symbol,
-                        _gir.IntImm)):
+                        _gir.IntVar) and (
+                        not isinstance(
+                            tensor_symbol,
+                            _gir.IntImm)):
                     tensor_symbol._attrs["symbolic_value"] = a_symbol.symbolic_value()
                     tensor_symbol._attrs["name"] = a_symbol._attrs["name"]
         self.func_visitor.graph_nodes.extend(inspector.graph_nodes)

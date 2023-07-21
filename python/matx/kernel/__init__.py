@@ -28,7 +28,7 @@ def func(compiling_obj, *args, **kwargs):
 
 
 def template(compiling_obj, *args, **kwargs):
-    from .template import TemplateFunc
+    from ._template import TemplateFunc
     from .func_registery import TEMPLATE_REGISTRY
 
     if compiling_obj not in TEMPLATE_REGISTRY:

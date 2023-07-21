@@ -109,6 +109,11 @@ class FunctionVisitor(ast.NodeVisitor):
         self.can_inline = inline
 
         self.no_return_type = False
+        self.tmp_var_id = 891371
+
+    def get_new_tmp_var_id(self):
+        self.tmp_var_id += 1
+        return f"__{self.tmp_var_id}_"
 
     def check_and_dispatch(self, node: ast.AST) -> Any:
         if isinstance(node, ast.For):
@@ -223,14 +228,16 @@ class FunctionVisitor(ast.NodeVisitor):
         self.context.new_scope(nodes=node.body)
         self.parse_body(True)
         self.context.pop_scope()
+        # _gir.utils.draw_graph(self.graph_nodes)
         cfuser = _gir.graph_pass.TmpVarEliminator()
         cfuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
-        _gir.utils.draw_graph(self.graph_nodes)
+        # _gir.utils.draw_graph(self.graph_nodes)
         efuser = _gir.graph_pass.ElementWiseOpFuser()
         efuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
+        # _gir.utils.draw_graph(self.graph_nodes)
         udeleter = _gir.graph_pass.UnreachableNodeEliminator()
         udeleter.apply(self.graph_input, self.graph_output, self.graph_nodes)
-        _gir.utils.draw_graph(self.graph_nodes)
+        # _gir.utils.draw_graph(self.graph_nodes)
         return self
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:

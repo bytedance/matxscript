@@ -179,6 +179,34 @@ def draw_graph(graph_nodes):
             ...
         else:
             ...
+
+    try:
+        draw_topological_graph(G)
+    except nx.NetworkXUnfeasible:
+        draw_spring_layout_graph(G)
+
+
+def draw_spring_layout_graph(G):
+    try:
+        import networkx as nx
+        import matplotlib.pyplot as plt
+    except ImportError:
+        return None
+
+    fig, ax = plt.subplots()
+    pos = nx.spring_layout(G)
+    nx.draw_networkx(G, pos, ax=ax, with_labels=True, font_size=8)
+    fig.tight_layout()
+    plt.show()
+
+
+def draw_topological_graph(G):
+    try:
+        import networkx as nx
+        import matplotlib.pyplot as plt
+    except ImportError:
+        return None
+
     # topological sort
     for layer, nodes in enumerate(nx.topological_generations(G)):
         # `multipartite_layout` expects the layer as a node attribute, so add the
@@ -189,6 +217,6 @@ def draw_graph(graph_nodes):
     # Draw the graph
     fig, ax = plt.subplots()
     pos = nx.multipartite_layout(G, subset_key="layer")
-    nx.draw_networkx(G, pos, ax=ax, with_labels=True)
+    nx.draw_networkx(G, pos, ax=ax, with_labels=True, font_size=8)
     fig.tight_layout()
     plt.show()
