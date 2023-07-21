@@ -108,6 +108,8 @@ class FunctionVisitor(ast.NodeVisitor):
         self.body_visitor = None
         self.can_inline = inline
 
+        self.no_return_type = False
+
     def check_and_dispatch(self, node: ast.AST) -> Any:
         if isinstance(node, ast.For):
             p = LoopParser(self)
@@ -155,23 +157,7 @@ class FunctionVisitor(ast.NodeVisitor):
                 raise SyntaxError(f"right now only kernel ndarray are supported, "
                                   f"but get {type_annotation} for {arg}")
 
-    def check_return(self) -> Any:
-        # todo fix return input ndarray
-        if self.kernel_p.return_types is None:
-            raise SyntaxError("annotating return type is required for kernel functions")
-        if not typing_utils.is_ndarray_type(self.kernel_p.return_types):
-            raise SyntaxError("kernel function is supposed to return a kernel ndarray"
-                              " or scalar(a.k.a kernel ndarray with shape 1)"
-                              f"but get {self.kernel_p.return_types}")
-        for dim in self.kernel_p.return_types.shape:
-            if typing_utils.is_symbol(dim) and str(dim) not in self.shape_symbol_table:
-                raise SyntaxError(
-                    f"{dim} in the return type is not defined in any of the shape in input args")
-        if self.return_var_name in self.arg_context_table:
-            raise SyntaxError("return var name is being used")
-
-        dtype = typing_utils.convert_to_string_dtype(self.kernel_p.return_types.dtype)
-        shape = self.convert_to_gir_shape(self.kernel_p.return_types.shape)
+    def make_return(self, shape, dtype: str):
         if typing_utils.is_scalar_type(self.kernel_p.return_types):
             nd_ctx = _gir.Scalar(
                 name=self.return_var_name,
@@ -195,6 +181,26 @@ class FunctionVisitor(ast.NodeVisitor):
         self.graph_nodes.append(self.return_ctx)
         self.graph_output.append(self.return_ctx)
 
+    def check_return(self) -> Any:
+        # todo fix return input ndarray
+        if self.kernel_p.empty_return_signature:
+            self.no_return_type = True
+            return
+        if not typing_utils.is_ndarray_type(self.kernel_p.return_types):
+            raise SyntaxError("kernel function is supposed to return a kernel ndarray"
+                              " or scalar(a.k.a kernel ndarray with shape 1)"
+                              f"but get {self.kernel_p.return_types}")
+        for dim in self.kernel_p.return_types.shape:
+            if typing_utils.is_symbol(dim) and str(dim) not in self.shape_symbol_table:
+                raise SyntaxError(
+                    f"{dim} in the return type is not defined in any of the shape in input args")
+        if self.return_var_name in self.arg_context_table:
+            raise SyntaxError("return var name is being used")
+
+        dtype = typing_utils.convert_to_string_dtype(self.kernel_p.return_types.dtype)
+        shape = self.convert_to_gir_shape(self.kernel_p.return_types.shape)
+        self.make_return(shape, dtype)
+
     def parse_body(self, auto_add_return=False):
         self.body_visitor = BodyIterator(self.context.node_stack, auto_add_return)
         while self.body_visitor.has_next():
@@ -217,14 +223,14 @@ class FunctionVisitor(ast.NodeVisitor):
         self.context.new_scope(nodes=node.body)
         self.parse_body(True)
         self.context.pop_scope()
-        # _gir.utils.draw_graph(self.graph_nodes)
         cfuser = _gir.graph_pass.TmpVarEliminator()
         cfuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
+        _gir.utils.draw_graph(self.graph_nodes)
         efuser = _gir.graph_pass.ElementWiseOpFuser()
         efuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
         udeleter = _gir.graph_pass.UnreachableNodeEliminator()
         udeleter.apply(self.graph_input, self.graph_output, self.graph_nodes)
-        # _gir.utils.draw_graph(self.graph_nodes)
+        _gir.utils.draw_graph(self.graph_nodes)
         return self
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:

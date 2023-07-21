@@ -29,7 +29,7 @@ import numpy as np
 import matx.kernel.graphIR as _gir
 import matx.kernel.kernel_parser
 import matx.kernel.typing.utils as typing_utils
-from matx.kernel.func_registery import FUNC_REGISTRY
+from matx.kernel.func_registery import FUNC_REGISTRY, TEMPLATE_REGISTRY
 from .utils import scalar_or_int_var
 
 if TYPE_CHECKING:
@@ -362,23 +362,28 @@ class GeneralParser(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call) -> Any:
         func = node.func
+        visited_args = [self.visit(a) for a in node.args]
         if isinstance(func, ast.Attribute):
             func_name = func.attr
             package_name = func.value.id
-            visited_args = (self.visit(a) for a in node.args)
             return self.library_node_dispatcher(package_name, func_name, visited_args)
 
         if isinstance(func, ast.Name):
             f_obj = self.func_visitor.root_node.module.globals.get(func.id)
-            if func.id not in FUNC_REGISTRY:
-                p = matx.kernel.kernel_parser.KernelParser(f_obj)
-                p.parse()
-            func_inspector = FUNC_REGISTRY[id(f_obj)]
+            if f_obj in TEMPLATE_REGISTRY:
+                template = TEMPLATE_REGISTRY[f_obj]
+                args_type_list = [_gir.utils.convert_to_kernel_type(i) for i in visited_args]
+                func_inspector = template.get_function(args_type_list).graph
+            else:
+                if func.id not in FUNC_REGISTRY:
+                    p = matx.kernel.kernel_parser.KernelParser(f_obj)
+                    p.parse()
+                func_inspector = FUNC_REGISTRY[id(f_obj)]
         else:
             raise SyntaxError(f"{func} is not supported now")
         self.can_inline = self.can_inline and func_inspector.can_inline
         if func_inspector.can_inline:
-            return self._inline_func(node, func_inspector)
+            return self._inline_func(func_inspector, visited_args)
         else:
             raise NotImplementedError("only support inline function for now")
 
@@ -395,14 +400,13 @@ class GeneralParser(ast.NodeVisitor):
         else:
             raise NotImplementedError("only support numpy function for now")
 
-    def _inline_func(self, node: ast.Call, inspector: 'FunctionVisitor'):
+    def _inline_func(self, inspector: 'FunctionVisitor', args):
         tensors_nodes = (s for s in inspector.graph_input if isinstance(s, _gir.Tensor))
-        for arg, tensor_node in zip(node.args, tensors_nodes):
-            arg_value_node = self.visit(arg)
+        for arg_node, tensor_node in zip(args, tensors_nodes):
             cp_op = _gir.CopyOperator()
-            cp_op(tensor_node, arg_value_node)
+            cp_op(tensor_node, arg_node)
             self.func_visitor.graph_nodes.append(cp_op)
-            for a_symbol, tensor_symbol in zip(arg_value_node.shape(), tensor_node.shape()):
+            for a_symbol, tensor_symbol in zip(arg_node.shape(), tensor_node.shape()):
                 if isinstance(
                     tensor_symbol,
                     _gir.IntVar) and (

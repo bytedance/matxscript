@@ -84,6 +84,29 @@ class TensorOpParser(GeneralParser):
         if node.value is None or _gir.utils.is_graph_ir_scalar(self.return_ctx):
             return super().visit_Return(node)
 
+        if self.func_visitor.kernel_p.empty_return_signature:
+            self.visit_return_without_signature(node)
+        else:
+            self.visit_return_with_signature(node)
+
+    def visit_return_without_signature(self, node: ast.Return) -> Union[None, _gir.Node]:
+        rt_ir = self.visit(node.value)
+        dtype = rt_ir.dtype()
+        shape = rt_ir.shape()
+        self.func_visitor.kernel_p.return_types = _gir.utils.convert_to_kernel_type(rt_ir)
+        self.func_visitor.make_return(shape, dtype)
+        self.return_ctx = self.func_visitor.return_ctx
+        if isinstance(self.return_ctx, _gir.Tensor):
+            if self.return_ctx.name() != self.func_visitor.return_var_name:
+                return None
+            op = _gir.DeepCopyOperator()
+            self.func_visitor.graph_nodes.append(op)
+            op(self.return_ctx, rt_ir)
+            return None
+        else:
+            raise RuntimeError(f"return {type(rt_ir)} is not support now")
+
+    def visit_return_with_signature(self, node: ast.Return) -> Union[None, _gir.Node]:
         result_shape = self.func_visitor.return_types.shape
         if list(result_shape) != list(_gir.utils.unwrap_shape(self.return_ctx.shape())):
             raise RuntimeError(f"the marked shape {self.return_ctx.shape} "

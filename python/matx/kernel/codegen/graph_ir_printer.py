@@ -21,11 +21,13 @@ import ast
 import warnings
 from dataclasses import dataclass
 from functools import partial
-from typing import List, Union, Dict, Callable
+from typing import List, Union, Dict, Callable, TYPE_CHECKING
 
 import matx.kernel.graphIR as _gir
-from matx.kernel.kernel_parser import FunctionVisitor
 from .linalg_printer import LinalgGenericPrinter, LinalgReductionPrinter
+
+if TYPE_CHECKING:
+    from ..kernel_parser import FunctionVisitor
 
 
 @dataclass

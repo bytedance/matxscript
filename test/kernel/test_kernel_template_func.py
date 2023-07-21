@@ -16,20 +16,31 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-"""
-Registry for basic operators and math functions.
-"""
-from typing import Dict, Any
-from typing import TYPE_CHECKING
+import unittest
 
-if TYPE_CHECKING:
-    from .parser.function_visitor import FunctionVisitor
-    from .template import TemplateFunc
+import numpy as np
+import sympy
 
-# OP_REGISTRY defines a mapping from a FuncEnum name to a function to create this elementwise operator.
-# This object is initialized in elementwise.py, and referenced in base.py and math.py.
-FUNC_REGISTRY: Dict[int, 'FunctionVisitor'] = {
-}
+import matx.kernel
+from matx.kernel.typing import int32
 
-TEMPLATE_REGISTRY: Dict[Any, 'TemplateFunc'] = {
-}
+
+class TestKernelTemplateFunc(unittest.TestCase):
+
+    def test_simple_tempalte(self):
+        M = sympy.Symbol('M', positive=True)
+        N = sympy.Symbol('N', positive=True)
+
+        @matx.kernel.template
+        def foo(a, b):
+            return a + b
+
+        @matx.kernel.func
+        def k_boo(a: int32[M, N]) -> int32[M, N]:
+            return foo(a, a)
+
+        def boo(a: int32[M, N]) -> int32[M, N]:
+            return foo(a, a)
+
+        a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        np.testing.assert_equal(k_boo(a), boo(a))

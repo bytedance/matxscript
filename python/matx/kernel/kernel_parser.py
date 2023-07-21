@@ -28,16 +28,22 @@ from matx.script import context as script_context
 
 class KernelParser:
 
-    def __init__(self, func):
+    def __init__(self, func, args_types=None):
         self.func = func
         self.func_name = func.__name__
         self.file_name = inspect.getfile(func)
         # get args
         self.signature = inspect.signature(func)
-        self.args = {k: v.annotation for k, v in self.signature.parameters.items()}
-        self.arg_types = list(self.args.values())
+        if args_types is None:
+            self.args = {k: v.annotation for k, v in self.signature.parameters.items()}
+            self.arg_types = list(self.args.values())
+        else:
+            self.args = {k: ann for k, ann in zip(self.signature.parameters.keys(), args_types)}
+            self.arg_types = args_types
+
         # get return type
         self.return_types = self.signature.return_annotation
+        self.empty_return_signature = self.return_types is inspect.Signature.empty
         # get shape symbols in dict like {'x':X}
         self.symbols = dict()
         for arg_type in self.arg_types:

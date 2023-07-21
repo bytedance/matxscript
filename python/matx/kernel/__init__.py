@@ -27,5 +27,10 @@ def func(compiling_obj, *args, **kwargs):
     return compile_linalg(p)
 
 
-def template():
-    pass
+def template(compiling_obj, *args, **kwargs):
+    from .template import TemplateFunc
+    from .func_registery import TEMPLATE_REGISTRY
+
+    if compiling_obj not in TEMPLATE_REGISTRY:
+        TEMPLATE_REGISTRY[compiling_obj] = TemplateFunc(compiling_obj)
+    return compiling_obj
