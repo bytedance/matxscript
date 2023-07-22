@@ -21,19 +21,19 @@ from __future__ import annotations
 from typing import Any, TYPE_CHECKING
 
 from matx import ir as _ir
-from .base_parser import BaseParser
+from .general_parser import GeneralParser
 from ...ir.tensor_stmt import ComputeBlock
 
 if TYPE_CHECKING:
-    from .inspector import KernelInspector
+    from .function_visitor import FunctionVisitor
 
 
-class ForLoopParser(BaseParser):
+class LoopParser(GeneralParser):
     allowed_ast_node = []
 
     def __init__(self,
-                 kernel_p: 'KernelInspector'):
-        super().__init__(kernel_p)
+                 func_visitor: 'FunctionVisitor'):
+        super().__init__(func_visitor)
         self.loop_variable_map = {}
         self.writes = []
         self.reads = []
@@ -125,7 +125,7 @@ class ForLoopParser(BaseParser):
 
         body = _ir.SeqStmt([i.to_matx_ir() for i in rt_ir])
 
-        return ComputeBlock(iter_vars, reads, writes, self.kernel_p.func_name, body)
+        return ComputeBlock(iter_vars, reads, writes, self.func_visitor.func_name, body)
 
     def _visit_for_loop_body(self, body):
         nested_for = None

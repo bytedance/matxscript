@@ -17,19 +17,14 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-import ast
-import warnings
-from dataclasses import dataclass
-import matx.kernel.graphIR as _gir
 from collections import OrderedDict
-from typing import Any, List, Union, TYPE_CHECKING, Dict, Callable
-import matx.kernel.typing.utils as typing_utils
-from functools import partial
 from itertools import chain
-from matx.kernel.kernel_parser import KernelInspector
+from typing import List, TYPE_CHECKING
+
+import matx.kernel.graphIR as _gir
 
 if TYPE_CHECKING:
-    from .graph_ir_printer import IrPrinter, GraphIRPrinter
+    from .graph_ir_printer import GraphIRPrinter
 
 
 class LinalgGenericPrinter:

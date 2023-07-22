@@ -40,6 +40,9 @@ class NDArrayType:
     def __eq__(self, other):
         return self.shape == other.shape and self.dtype == other.dtype
 
+    def __hash__(self):
+        return hash((self.shape, self.dtype))
+
     def compatible_with(self, other):
         # todo check dtype
         return self.shape == other.shape and self.dtype == other.dtype

@@ -22,36 +22,37 @@ from __future__ import annotations
 
 import ast
 import numbers
-import numpy as np
 from typing import Any, List, Union, TYPE_CHECKING
 
+import numpy as np
+
 import matx.kernel.graphIR as _gir
-import matx.kernel.typing.utils as typing_utils
-from .utils import scalar_or_int_var
 import matx.kernel.kernel_parser
-from matx.kernel.func_registery import FUNC_REGISTRY
+import matx.kernel.typing.utils as typing_utils
+from matx.kernel.func_registery import FUNC_REGISTRY, TEMPLATE_REGISTRY
+from .utils import scalar_or_int_var
 
 if TYPE_CHECKING:
-    from ..kernel_parser import KernelInspector
+    from ..kernel_parser import FunctionVisitor
 
 
 # todo update return
-class BaseParser(ast.NodeVisitor):
+class GeneralParser(ast.NodeVisitor):
 
     def __init__(
             self,
-            kernel_p: 'KernelInspector'):
-        self.kernel_p = kernel_p
+            func_visitor: 'FunctionVisitor'):
+        self.func_visitor = func_visitor
 
         # necessary for reuse script functionality
-        self.root_node = self.kernel_p.root_node
+        self.root_node = self.func_visitor.root_node
 
         # for kernel use
-        self.arg_context_table = self.kernel_p.arg_context_table
-        self.shape_symbol_table = self.kernel_p.shape_symbol_table
-        self.tmp_scalar_table = self.kernel_p.tmp_scalar_table
-        self.tmp_ndarray_table = self.kernel_p.tmp_ndarray_table
-        self.return_ctx = self.kernel_p.return_ctx
+        self.arg_context_table = self.func_visitor.arg_context_table
+        self.shape_symbol_table = self.func_visitor.shape_symbol_table
+        self.tmp_scalar_table = self.func_visitor.tmp_scalar_table
+        self.tmp_ndarray_table = self.func_visitor.tmp_ndarray_table
+        self.return_ctx = self.func_visitor.return_ctx
 
         self.reads = []
 
@@ -74,16 +75,36 @@ class BaseParser(ast.NodeVisitor):
     def visit_Constant(self, node: ast.Constant) -> _gir.Tensor:
         if node.value is None:
             raise SyntaxError("None is not allowed")
+        elif isinstance(node.value, int):
+            dtypes = ["int8", "int16", "int32", "int64"]
+            for dtype in dtypes:
+                if np.iinfo(dtype).min <= node.value <= np.iinfo(dtype).max:
+                    break
+            else:
+                raise SyntaxError("int is out of range ")
+            const_scalar_ctx = _gir.Scalar(value=node.value, dtype=dtype, is_internal_constant=True)
+            self.func_visitor.graph_nodes.append(const_scalar_ctx)
+            return const_scalar_ctx
+        elif isinstance(node.value, float):
+            dtypes = ["float16", "float32", "float64"]
+            for dtype in dtypes:
+                if np.finfo(dtype).min <= node.value <= np.finfo(dtype).max:
+                    break
+            else:
+                raise SyntaxError("int is out of range ")
+            const_scalar_ctx = _gir.Scalar(value=node.value, dtype=dtype, is_internal_constant=True)
+            self.func_visitor.graph_nodes.append(const_scalar_ctx)
+            return const_scalar_ctx
         elif isinstance(node.value, numbers.Number):
             dtype = typing_utils.get_dtype_str(node.value)
             const_scalar_ctx = _gir.Scalar(value=node.value, dtype=dtype, is_internal_constant=True)
-            self.kernel_p.graph_nodes.append(const_scalar_ctx)
+            self.func_visitor.graph_nodes.append(const_scalar_ctx)
             return const_scalar_ctx
         else:
             raise NotImplementedError(f'Unsupported value {node.value}')
 
     # variables
-    def visit_Name(self, node: ast.Name) -> _gir.Node:
+    def visit_Name(self, node: ast.Name) -> Union[_gir.Node, None]:
         if isinstance(node.ctx, ast.Del):
             raise SyntaxError(f"del {node.id} is not allowed")
         name = node.id
@@ -99,7 +120,7 @@ class BaseParser(ast.NodeVisitor):
         if name in self.tmp_ndarray_table:
             ctx = self.tmp_ndarray_table[name]
             return ctx
-        raise SyntaxError(f'the type of {name} is not support')
+        return None
         # return node.id
 
     # Expressions
@@ -109,8 +130,8 @@ class BaseParser(ast.NodeVisitor):
         if scalar_or_int_var(operand_ir):
             op = _gir.UnaryElementWiseOperator(type(node.op))
             result = op(operand_ir)[0]
-            self.kernel_p.graph_nodes.append(result)
-            self.kernel_p.graph_nodes.append(op)
+            self.func_visitor.graph_nodes.append(result)
+            self.func_visitor.graph_nodes.append(op)
             return result
         else:
             raise SyntaxError(f"{type(node.op).__name__} ({operand_ir}) is not supported "
@@ -122,8 +143,8 @@ class BaseParser(ast.NodeVisitor):
         if scalar_or_int_var(lhs_ir) and scalar_or_int_var(rhs_ir):
             op = _gir.BinaryElementWiseOperator(type(node.op))
             result = op(lhs_ir, rhs_ir)[0]
-            self.kernel_p.graph_nodes.append(result)
-            self.kernel_p.graph_nodes.append(op)
+            self.func_visitor.graph_nodes.append(result)
+            self.func_visitor.graph_nodes.append(op)
             return result
         else:
             raise SyntaxError(f"{lhs_ir} {type(node.op).__name__} {rhs_ir} is not supported "
@@ -138,8 +159,8 @@ class BaseParser(ast.NodeVisitor):
             if scalar_or_int_var(lhs) and scalar_or_int_var(rhs):
                 op = _gir.BinaryElementWiseOperator(type(node.op))
                 t = op(lhs, rhs)[0]
-                self.kernel_p.graph_nodes.append(t)
-                self.kernel_p.graph_nodes.append(op)
+                self.func_visitor.graph_nodes.append(t)
+                self.func_visitor.graph_nodes.append(op)
                 values[i + 1] = t
             else:
                 raise SyntaxError(f"{lhs} {opname} {rhs} is not supported "
@@ -156,8 +177,8 @@ class BaseParser(ast.NodeVisitor):
             if scalar_or_int_var(lhs) and scalar_or_int_var(rhs):
                 op = _gir.BinaryElementWiseOperator(type(op))
                 lhs = op(lhs, rhs)[0]
-                self.kernel_p.graph_nodes.append(lhs)
-                self.kernel_p.graph_nodes.append(op)
+                self.func_visitor.graph_nodes.append(lhs)
+                self.func_visitor.graph_nodes.append(op)
             else:
                 raise SyntaxError(f"{lhs} {opname} {rhs} is not supported "
                                   f"because they are not both scalar")
@@ -209,13 +230,23 @@ class BaseParser(ast.NodeVisitor):
         if not isinstance(node.targets[0], (ast.Name, ast.Subscript)):
             raise SyntaxError(f"Assigning to {type(node.targets)} is not allowed.")
         value = self.visit(node.value)
+        value_type = _gir.utils.convert_to_kernel_type(value)
         target = self.visit(node.targets[0])
+        if target is None:
+            if not isinstance(node.targets[0], ast.Name):
+                raise SyntaxError(f"not supported node type {type(target)}")
+            if typing_utils.is_scalar_type(value_type):
+                return self._allocate_scalar(node.targets[0].id, value, value_type)
+            if typing_utils.is_ndarray_type(value_type):
+                return self._allocate_ndarray(node.targets[0].id, value, value_type)
         if isinstance(node.targets[0], ast.Name):
-            return self._assign_scalar(target.name(), value, node)
+            if typing_utils.is_scalar_type(value_type):
+                return self._assign_scalar(target.name(), value, node)
+            if typing_utils.is_ndarray_type(value_type):
+                return self._assign_ndarray(target.name(), value, node)
         elif isinstance(node.targets[0], ast.Subscript):
             raise SyntaxError(f"not supported node type {type(target)}")
-        else:
-            raise SyntaxError(f"not supported node type {type(target)}")
+        raise SyntaxError(f"not supported node type {type(target)}")
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
         ann = self.annotation_to_kernel_type(node.annotation)
@@ -265,8 +296,8 @@ class BaseParser(ast.NodeVisitor):
         self.tmp_scalar_table[target_name] = tmp_scalar_ctx
         copy_op = _gir.CopyOperator()
         rt = copy_op(tmp_scalar_ctx, value)[0]
-        self.kernel_p.graph_nodes.append(copy_op)
-        self.kernel_p.graph_nodes.append(tmp_scalar_ctx)
+        self.func_visitor.graph_nodes.append(copy_op)
+        self.func_visitor.graph_nodes.append(tmp_scalar_ctx)
         return rt
 
     def _allocate_ndarray(self, target_name, value, ann):
@@ -291,8 +322,8 @@ class BaseParser(ast.NodeVisitor):
         self.tmp_ndarray_table[target_name] = tmp_ndarray_ctx
         copy_op = _gir.CopyOperator()
         rt = copy_op(tmp_ndarray_ctx, value)[0]
-        self.kernel_p.graph_nodes.append(copy_op)
-        self.kernel_p.graph_nodes.append(tmp_ndarray_ctx)
+        self.func_visitor.graph_nodes.append(copy_op)
+        self.func_visitor.graph_nodes.append(tmp_ndarray_ctx)
         return rt
 
     def _assign_scalar(self, target_name, value, node):
@@ -309,19 +340,21 @@ class BaseParser(ast.NodeVisitor):
             raise SyntaxError(f"Using annotated assign to assign {target_name} is not allowed "
                               f"since it has already been defined above")
         previous_ctx = self.tmp_scalar_table[target_name]
-        if _gir.utils.is_compatible(previous_ctx, value):
-            raise SyntaxError(f"the value assigned to {target_name} is not scalar")
+        if not _gir.utils.is_compatible(previous_ctx, value):
+            raise SyntaxError(
+                f"the value assigned to {target_name} is not compatible {previous_ctx.dtype()} and {value.dtype()}")
         new_ctx = _gir.Scalar(
-            name=target_name,
+            name=f"{target_name}_{self.func_visitor.get_new_tmp_var_id()}",
             dtype=previous_ctx.dtype(),
             is_internal_constant=True)
         self.tmp_scalar_table[target_name] = new_ctx
         copy_op = _gir.CopyOperator()
+        self.func_visitor.graph_nodes.append(copy_op)
+        self.func_visitor.graph_nodes.append(new_ctx)
         rt = copy_op(new_ctx, value)
         return rt[0]
 
     def _assign_ndarray(self, target_name, value, node):
-        """
         # the name is conflict with args
         if target_name in self.arg_context_table:
             raise SyntaxError(
@@ -335,11 +368,19 @@ class BaseParser(ast.NodeVisitor):
             raise SyntaxError(f"Using annotated assign to assign {target_name} is not allowed "
                               f"since it has already been defined above")
         previous_ctx = self.tmp_ndarray_table[target_name]
-        self.tmp_ndarray_table[target_name] = value
-        if _gir.utils.is_compatible(previous_ctx, value):
-            raise SyntaxError(f"the value assigned to {target_name} is not scalar")
-        return value"""
-        pass
+        if not _gir.utils.is_compatible(previous_ctx, value):
+            raise SyntaxError(f"the value assigned to {target_name} is not a ndarray")
+        new_ctx = _gir.Tensor(
+            name=f"{target_name}_{self.func_visitor.get_new_tmp_var_id()}",
+            dtype=previous_ctx.dtype(),
+            shape=previous_ctx.shape()
+        )
+        self.tmp_ndarray_table[target_name] = new_ctx
+        copy_op = _gir.DeepCopyOperator()
+        self.func_visitor.graph_nodes.append(copy_op)
+        self.func_visitor.graph_nodes.append(new_ctx)
+        rt = copy_op(new_ctx, value)
+        return rt[0]
 
     def visit_If(self, node: ast.If) -> Any:
         """
@@ -352,65 +393,69 @@ class BaseParser(ast.NodeVisitor):
     def visit_Pass(self, node: ast.Pass) -> Any:
         lhs = _gir.Scalar(value=1, is_internal_constant=True)
         rhs = _gir.Scalar(value=2, is_internal_constant=True)
-        self.kernel_p.graph_nodes.append(lhs)
-        self.kernel_p.graph_nodes.append(rhs)
+        self.func_visitor.graph_nodes.append(lhs)
+        self.func_visitor.graph_nodes.append(rhs)
         op = _gir.BinaryElementWiseOperator(ast.Add)
-        self.kernel_p.graph_nodes.append(op)
+        self.func_visitor.graph_nodes.append(op)
         result = op(lhs, rhs)[0]
         return result
 
     def visit_Call(self, node: ast.Call) -> Any:
         func = node.func
+        visited_args = [self.visit(a) for a in node.args]
         if isinstance(func, ast.Attribute):
             func_name = func.attr
             package_name = func.value.id
-            visited_args = (self.visit(a) for a in node.args)
             return self.library_node_dispatcher(package_name, func_name, visited_args)
 
         if isinstance(func, ast.Name):
-            f_obj = self.kernel_p.root_node.module.globals.get(func.id)
-            if func.id not in FUNC_REGISTRY:
-                p = matx.kernel.kernel_parser.KernelParser(f_obj)
-                p.parse()
-            func_inspector = FUNC_REGISTRY[id(f_obj)]
+            f_obj = self.func_visitor.root_node.module.globals.get(func.id)
+            if f_obj in TEMPLATE_REGISTRY:
+                template = TEMPLATE_REGISTRY[f_obj]
+                args_type_list = [_gir.utils.convert_to_kernel_type(i) for i in visited_args]
+                func_inspector = template.get_function(args_type_list).graph
+            else:
+                if func.id not in FUNC_REGISTRY:
+                    p = matx.kernel.kernel_parser.KernelParser(f_obj)
+                    p.parse()
+                func_inspector = FUNC_REGISTRY[id(f_obj)]
         else:
             raise SyntaxError(f"{func} is not supported now")
         self.can_inline = self.can_inline and func_inspector.can_inline
         if func_inspector.can_inline:
-            return self._inline_func(node, func_inspector)
+            return self._inline_func(func_inspector, visited_args)
         else:
             raise NotImplementedError("only support inline function for now")
 
     def library_node_dispatcher(self, package_name, func_name, args):
-        package = self.kernel_p.root_node.module.globals.get(package_name)
+        package = self.func_visitor.root_node.module.globals.get(package_name)
         if package is np:
             from ..library import NP_LIB
             func = NP_LIB.get_func(func_name)
             func_node = func()
             result = func_node(*args)
-            self.kernel_p.graph_nodes.append(func_node)
-            self.kernel_p.graph_nodes.extend(result)
+            self.func_visitor.graph_nodes.append(func_node)
+            self.func_visitor.graph_nodes.extend(result)
             return result[0]
         else:
             raise NotImplementedError("only support numpy function for now")
 
-    def _inline_func(self, node: ast.Call, inspector: 'KernelInspector'):
+    def _inline_func(self, inspector: 'FunctionVisitor', args):
         tensors_nodes = (s for s in inspector.graph_input if isinstance(s, _gir.Tensor))
-        for arg, tensor_node in zip(node.args, tensors_nodes):
-            arg_value_node = self.visit(arg)
+        for arg_node, tensor_node in zip(args, tensors_nodes):
             cp_op = _gir.CopyOperator()
-            cp_op(tensor_node, arg_value_node)
-            self.kernel_p.graph_nodes.append(cp_op)
-            for a_symbol, tensor_symbol in zip(arg_value_node.shape(), tensor_node.shape()):
+            cp_op(tensor_node, arg_node)
+            self.func_visitor.graph_nodes.append(cp_op)
+            for a_symbol, tensor_symbol in zip(arg_node.shape(), tensor_node.shape()):
                 if isinstance(
-                    tensor_symbol,
-                    _gir.IntVar) and (
-                    not isinstance(
                         tensor_symbol,
-                        _gir.IntImm)):
+                        _gir.IntVar) and (
+                        not isinstance(
+                            tensor_symbol,
+                            _gir.IntImm)):
                     tensor_symbol._attrs["symbolic_value"] = a_symbol.symbolic_value()
                     tensor_symbol._attrs["name"] = a_symbol._attrs["name"]
-        self.kernel_p.graph_nodes.extend(inspector.graph_nodes)
+        self.func_visitor.graph_nodes.extend(inspector.graph_nodes)
         output = inspector.graph_output[0]
         return output
 
@@ -440,9 +485,9 @@ class BaseParser(ast.NodeVisitor):
         for e in node.elts:
             if not isinstance(e, ast.Name):
                 raise SyntaxError(f"for now tuple only support symbol")
-            if e.id not in self.kernel_p.shape_symbol_table:
+            if e.id not in self.func_visitor.shape_symbol_table:
                 raise SyntaxError(f"for now tuple only support symbol")
-            s = self.kernel_p.shape_symbol_table[e.id]
+            s = self.func_visitor.shape_symbol_table[e.id]
             values.append(s.symbolic_value())
         return values
 

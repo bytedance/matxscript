@@ -20,24 +20,30 @@
 import inspect
 
 import matx.kernel.parser.utils as parser_utils
-from matx.kernel.parser import KernelInspector
+from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
+from matx.kernel.parser import FunctionVisitor
 from matx.script import analysis
 from matx.script import context as script_context
-from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 
 
 class KernelParser:
 
-    def __init__(self, func):
+    def __init__(self, func, args_types=None):
         self.func = func
         self.func_name = func.__name__
         self.file_name = inspect.getfile(func)
         # get args
         self.signature = inspect.signature(func)
-        self.args = {k: v.annotation for k, v in self.signature.parameters.items()}
-        self.arg_types = list(self.args.values())
+        if args_types is None:
+            self.args = {k: v.annotation for k, v in self.signature.parameters.items()}
+            self.arg_types = list(self.args.values())
+        else:
+            self.args = {k: ann for k, ann in zip(self.signature.parameters.keys(), args_types)}
+            self.arg_types = args_types
+
         # get return type
         self.return_types = self.signature.return_annotation
+        self.empty_return_signature = self.return_types is inspect.Signature.empty
         # get shape symbols in dict like {'x':X}
         self.symbols = dict()
         for arg_type in self.arg_types:
@@ -82,7 +88,7 @@ class KernelParser:
         self.passes(sc_ctx)
 
         def parser_node(node: script_context.ASTNode):
-            inspector = KernelInspector(self, node).visit_FunctionDef(node.ast)
+            inspector = FunctionVisitor(self, node).visit_FunctionDef(node.ast)
             printer = GraphIRPrinter(inspector)
             print(printer.as_linalg_text())
             return inspector

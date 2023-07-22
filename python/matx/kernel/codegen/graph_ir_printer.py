@@ -20,12 +20,14 @@
 import ast
 import warnings
 from dataclasses import dataclass
-import matx.kernel.graphIR as _gir
-from typing import Any, List, Union, TYPE_CHECKING, Dict, Callable
-import matx.kernel.typing.utils as typing_utils
 from functools import partial
-from matx.kernel.kernel_parser import KernelInspector
+from typing import List, Union, Dict, Callable, TYPE_CHECKING
+
+import matx.kernel.graphIR as _gir
 from .linalg_printer import LinalgGenericPrinter, LinalgReductionPrinter
+
+if TYPE_CHECKING:
+    from ..kernel_parser import FunctionVisitor
 
 
 @dataclass
@@ -105,7 +107,7 @@ def not_supported_op(*_, node=None):
 
 class GraphIRPrinter:
 
-    def __init__(self, kernel_p: 'KernelInspector'):
+    def __init__(self, kernel_p: 'FunctionVisitor'):
         self.kernel_p = kernel_p
 
         self.graph_input: List[_gir.Node] = kernel_p.graph_input

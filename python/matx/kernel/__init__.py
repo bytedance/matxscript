@@ -17,3 +17,20 @@
 #   * specific language governing permissions and limitations
 #   * under the License.
 #   */
+
+
+def func(compiling_obj, *args, **kwargs):
+    from .kernel_parser import KernelParser
+    from .compile_linalg import compile_linalg
+    p = KernelParser(compiling_obj)
+    p.parse()
+    return compile_linalg(p)
+
+
+def template(compiling_obj, *args, **kwargs):
+    from ._template import TemplateFunc
+    from .func_registery import TEMPLATE_REGISTRY
+
+    if compiling_obj not in TEMPLATE_REGISTRY:
+        TEMPLATE_REGISTRY[compiling_obj] = TemplateFunc(compiling_obj)
+    return compiling_obj

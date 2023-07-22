@@ -22,23 +22,23 @@ import ast
 from typing import Any, Union, TYPE_CHECKING
 
 import matx.kernel.graphIR as _gir
-from matx.kernel.parser.base_parser import BaseParser
+from matx.kernel.parser.general_parser import GeneralParser
 
 if TYPE_CHECKING:
-    from .inspector import KernelInspector
+    from .function_visitor import FunctionVisitor
 
 
-class KernelSingleReturnParser(BaseParser):
+class TensorOpParser(GeneralParser):
 
     @staticmethod
-    def can_parse(kernel_p: 'KernelInspector', node):
+    def can_parse(kernel_p: 'FunctionVisitor', node):
         if isinstance(node, (ast.Return, ast.AnnAssign, ast.Assign)):
             return True
         return False
 
     def __init__(self,
-                 kernel_p: 'KernelInspector'):
-        super().__init__(kernel_p)
+                 func_visitor: 'FunctionVisitor'):
+        super().__init__(func_visitor)
         self.iter_vars_names = []
 
     def visit_BinOp(self, node: ast.BinOp) -> Any:
@@ -46,8 +46,8 @@ class KernelSingleReturnParser(BaseParser):
         lhs_ir = self.visit(node.left)
         rhs_ir = self.visit(node.right)
         result = op(lhs_ir, rhs_ir)[0]
-        self.kernel_p.graph_nodes.append(result)
-        self.kernel_p.graph_nodes.append(op)
+        self.func_visitor.graph_nodes.append(result)
+        self.func_visitor.graph_nodes.append(op)
         return result
 
     def visit_Assign(self, node: ast.Assign) -> Any:
@@ -84,7 +84,30 @@ class KernelSingleReturnParser(BaseParser):
         if node.value is None or _gir.utils.is_graph_ir_scalar(self.return_ctx):
             return super().visit_Return(node)
 
-        result_shape = self.kernel_p.return_types.shape
+        if self.func_visitor.kernel_p.empty_return_signature:
+            self.visit_return_without_signature(node)
+        else:
+            self.visit_return_with_signature(node)
+
+    def visit_return_without_signature(self, node: ast.Return) -> Union[None, _gir.Node]:
+        rt_ir = self.visit(node.value)
+        dtype = rt_ir.dtype()
+        shape = rt_ir.shape()
+        self.func_visitor.kernel_p.return_types = _gir.utils.convert_to_kernel_type(rt_ir)
+        self.func_visitor.make_return(shape, dtype)
+        self.return_ctx = self.func_visitor.return_ctx
+        if isinstance(self.return_ctx, _gir.Tensor):
+            if self.return_ctx.name() != self.func_visitor.return_var_name:
+                return None
+            op = _gir.DeepCopyOperator()
+            self.func_visitor.graph_nodes.append(op)
+            op(self.return_ctx, rt_ir)
+            return None
+        else:
+            raise RuntimeError(f"return {type(rt_ir)} is not support now")
+
+    def visit_return_with_signature(self, node: ast.Return) -> Union[None, _gir.Node]:
+        result_shape = self.func_visitor.return_types.shape
         if list(result_shape) != list(_gir.utils.unwrap_shape(self.return_ctx.shape())):
             raise RuntimeError(f"the marked shape {self.return_ctx.shape} "
                                f"is not equal to {result_shape}")
@@ -95,10 +118,10 @@ class KernelSingleReturnParser(BaseParser):
                 f"The return shape is annotated as {result_shape} but get {rt_ir.shape()}")
 
         if isinstance(self.return_ctx, _gir.Tensor):
-            if self.return_ctx.name() != self.kernel_p.return_var_name:
+            if self.return_ctx.name() != self.func_visitor.return_var_name:
                 return None
             op = _gir.DeepCopyOperator()
-            self.kernel_p.graph_nodes.append(op)
+            self.func_visitor.graph_nodes.append(op)
             op(self.return_ctx, rt_ir)
             return None
         else:

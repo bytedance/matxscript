@@ -23,12 +23,12 @@ import numpy as np
 
 import matx.kernel.graphIR as _gir
 import matx.kernel.typing.utils as typing_utils
-from matx.kernel.parser.base_parser import BaseParser
-from matx.kernel.parser.for_loop_parser import ForLoopParser
-from matx.kernel.parser.single_return_parser import KernelSingleReturnParser
+from matx.kernel.func_registery import FUNC_REGISTRY
+from matx.kernel.parser.general_parser import GeneralParser
+from matx.kernel.parser.loop_parser import LoopParser
+from matx.kernel.parser.tensor_op_parser import TensorOpParser
 from matx.kernel.typing import NDArrayType as kernelNDArrayT
 from matx.script import context as script_context
-from matx.kernel.func_registery import FUNC_REGISTRY
 
 if TYPE_CHECKING:
     from matx.kernel.kernel_parser import KernelParser
@@ -70,7 +70,7 @@ class BodyIterator:
             pass
 
 
-class KernelInspector(ast.NodeVisitor):
+class FunctionVisitor(ast.NodeVisitor):
     return_var_id = 93502842947314
 
     def __init__(
@@ -79,8 +79,8 @@ class KernelInspector(ast.NodeVisitor):
             node: script_context.ASTNode,
             inline=True):
 
-        self.return_var_name = f'__return_{KernelInspector.return_var_id}__'
-        KernelInspector.return_var_id += 1
+        self.return_var_name = f'__return_{FunctionVisitor.return_var_id}__'
+        FunctionVisitor.return_var_id += 1
         self.kernel_p = kernel_p
 
         # necessary for reuse script functionality
@@ -108,13 +108,20 @@ class KernelInspector(ast.NodeVisitor):
         self.body_visitor = None
         self.can_inline = inline
 
+        self.no_return_type = False
+        self.tmp_var_id = 891371
+
+    def get_new_tmp_var_id(self):
+        self.tmp_var_id += 1
+        return f"__{self.tmp_var_id}_"
+
     def check_and_dispatch(self, node: ast.AST) -> Any:
         if isinstance(node, ast.For):
-            p = ForLoopParser(self)
-        elif KernelSingleReturnParser.can_parse(self, node):
-            p = KernelSingleReturnParser(self)
+            p = LoopParser(self)
+        elif TensorOpParser.can_parse(self, node):
+            p = TensorOpParser(self)
         else:
-            p = BaseParser(self)
+            p = GeneralParser(self)
         t = p.visit(node)
         self.can_inline = self.can_inline and p.can_inline
         return t
@@ -155,23 +162,7 @@ class KernelInspector(ast.NodeVisitor):
                 raise SyntaxError(f"right now only kernel ndarray are supported, "
                                   f"but get {type_annotation} for {arg}")
 
-    def check_return(self) -> Any:
-        # todo fix return input ndarray
-        if self.kernel_p.return_types is None:
-            raise SyntaxError("annotating return type is required for kernel functions")
-        if not typing_utils.is_ndarray_type(self.kernel_p.return_types):
-            raise SyntaxError("kernel function is supposed to return a kernel ndarray"
-                              " or scalar(a.k.a kernel ndarray with shape 1)"
-                              f"but get {self.kernel_p.return_types}")
-        for dim in self.kernel_p.return_types.shape:
-            if typing_utils.is_symbol(dim) and str(dim) not in self.shape_symbol_table:
-                raise SyntaxError(
-                    f"{dim} in the return type is not defined in any of the shape in input args")
-        if self.return_var_name in self.arg_context_table:
-            raise SyntaxError("return var name is being used")
-
-        dtype = typing_utils.convert_to_string_dtype(self.kernel_p.return_types.dtype)
-        shape = self.convert_to_gir_shape(self.kernel_p.return_types.shape)
+    def make_return(self, shape, dtype: str):
         if typing_utils.is_scalar_type(self.kernel_p.return_types):
             nd_ctx = _gir.Scalar(
                 name=self.return_var_name,
@@ -194,6 +185,26 @@ class KernelInspector(ast.NodeVisitor):
                               f"but get {self.kernel_p.return_types}")
         self.graph_nodes.append(self.return_ctx)
         self.graph_output.append(self.return_ctx)
+
+    def check_return(self) -> Any:
+        # todo fix return input ndarray
+        if self.kernel_p.empty_return_signature:
+            self.no_return_type = True
+            return
+        if not typing_utils.is_ndarray_type(self.kernel_p.return_types):
+            raise SyntaxError("kernel function is supposed to return a kernel ndarray"
+                              " or scalar(a.k.a kernel ndarray with shape 1)"
+                              f"but get {self.kernel_p.return_types}")
+        for dim in self.kernel_p.return_types.shape:
+            if typing_utils.is_symbol(dim) and str(dim) not in self.shape_symbol_table:
+                raise SyntaxError(
+                    f"{dim} in the return type is not defined in any of the shape in input args")
+        if self.return_var_name in self.arg_context_table:
+            raise SyntaxError("return var name is being used")
+
+        dtype = typing_utils.convert_to_string_dtype(self.kernel_p.return_types.dtype)
+        shape = self.convert_to_gir_shape(self.kernel_p.return_types.shape)
+        self.make_return(shape, dtype)
 
     def parse_body(self, auto_add_return=False):
         self.body_visitor = BodyIterator(self.context.node_stack, auto_add_return)
@@ -220,8 +231,10 @@ class KernelInspector(ast.NodeVisitor):
         # _gir.utils.draw_graph(self.graph_nodes)
         cfuser = _gir.graph_pass.TmpVarEliminator()
         cfuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
+        # _gir.utils.draw_graph(self.graph_nodes)
         efuser = _gir.graph_pass.ElementWiseOpFuser()
         efuser.apply(self.graph_input, self.graph_output, self.graph_nodes)
+        # _gir.utils.draw_graph(self.graph_nodes)
         udeleter = _gir.graph_pass.UnreachableNodeEliminator()
         udeleter.apply(self.graph_input, self.graph_output, self.graph_nodes)
         # _gir.utils.draw_graph(self.graph_nodes)
