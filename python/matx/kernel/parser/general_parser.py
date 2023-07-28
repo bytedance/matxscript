@@ -108,17 +108,17 @@ class GeneralParser(ast.NodeVisitor):
         if isinstance(node.ctx, ast.Del):
             raise SyntaxError(f"del {node.id} is not allowed")
         name = node.id
-        if name in self.shape_symbol_table:
-            ctx = self.shape_symbol_table[name]
-            return ctx
-        if name in self.arg_context_table:
-            ctx = self.arg_context_table[name]
-            return ctx
         if name in self.tmp_scalar_table:
             ctx = self.tmp_scalar_table[name]
             return ctx
         if name in self.tmp_ndarray_table:
             ctx = self.tmp_ndarray_table[name]
+            return ctx
+        if name in self.shape_symbol_table:
+            ctx = self.shape_symbol_table[name]
+            return ctx
+        if name in self.arg_context_table:
+            ctx = self.arg_context_table[name]
             return ctx
         return None
         # return node.id
@@ -185,42 +185,48 @@ class GeneralParser(ast.NodeVisitor):
         return lhs
 
     def visit_Slice(self, node: ast.Slice) -> Any:
-        """
-        lower = node.lower
-        upper = node.upper
-        step = node.step
-        if lower is None:
-            lower = _ir.const(0, "int64")
+        if node.lower is None:
+            lower = _gir.Scalar(value=0, dtype="int8", is_internal_constant=True)
         else:
-            pass
-
-        if step is None:
-            step = _ir.const(1, "int64")
+            lower = self.visit(node.lower)
+        if node.upper is None:
+            upper = None
         else:
-            step = self.visit(step)
-            self.var_stack.pop()"""
-        raise NotImplementedError("slice is not supported yet")
+            upper = self.visit(node.upper)
+        if node.step is None:
+            step = _gir.Scalar(value=1, dtype="int8", is_internal_constant=True)
+        else:
+            step = self.visit(node.step)
+        return lower, upper, step
 
-    def visit_Subscript(self, node: ast.Subscript) -> _gir.Scalar:
-        # todo modify the code below
-        # is load
-        """
-        value_ctx = self.visit(node.value)
-        if isinstance(node.slice, (ast.Slice,)):
-            raise SyntaxError(
-                f"slicing ndarray {value_ctx.name} is not supported because it doesn't generate a scalar.")
-        sls = self._get_indexing(node.slice)
-        if isinstance(node.ctx, ast.Del):
-            raise SyntaxError(f"del {value_ctx.name} is not allowed")
-        return NDArrayIndexingNode(value_ctx, sls, self.build_span(node))"""
-        raise NotImplementedError("visit_Subscript is not supported yet")
+    def visit_Subscript(self, node: ast.Subscript, value=None) -> _gir.Tensor:
+        if isinstance(node.ctx, (ast.Del, ast.Store)):
+            raise SyntaxError(f"del is not allowed")
+        value_node = self.visit(node.value)
+        sls = self._get_indexing(node.slice, value_node)
+        is_indexing = all(not isinstance(s, tuple)
+                          for s in sls) and len(sls) == len(value_node.shape())
+        if is_indexing:
+            subscript_op = _gir.TensorGetItemOperator()
+        else:
+            subscript_op = _gir.TensorSliceOperator()
+        self.func_visitor.graph_nodes.append(subscript_op)
+        result = subscript_op(value_node, sls)[0]
+        self.func_visitor.graph_nodes.append(result)
+        return result
 
-    def _get_indexing(self, sls):
+    def _get_indexing(self, sls: Any, target):
+        if isinstance(sls, ast.Slice):
+            return list(self.visit(sls))
         if not isinstance(sls, ast.Tuple):
             return [self.visit(sls)]
         idx = []
-        for i in sls.elts:
-            rt_ir = self.visit(i)
+        for e, s in zip(sls.elts, target.shape()):
+            rt_ir = self.visit(e)
+            if isinstance(rt_ir, tuple) and rt_ir[1] is None:
+                rt_ir = list(rt_ir)
+                rt_ir[1] = s
+                rt_ir = tuple(rt_ir)
             idx.append(rt_ir)
         return idx
 
@@ -229,24 +235,22 @@ class GeneralParser(ast.NodeVisitor):
             raise SyntaxError(f"Assigning multiple is not allowed")
         if not isinstance(node.targets[0], (ast.Name, ast.Subscript)):
             raise SyntaxError(f"Assigning to {type(node.targets)} is not allowed.")
+        if isinstance(node.targets[0], ast.Subscript):
+            value = self.visit(node.value)
+            return self._assign_item(node.targets[0], value)
         value = self.visit(node.value)
         value_type = _gir.utils.convert_to_kernel_type(value)
         target = self.visit(node.targets[0])
         if target is None:
-            if not isinstance(node.targets[0], ast.Name):
-                raise SyntaxError(f"not supported node type {type(target)}")
             if typing_utils.is_scalar_type(value_type):
                 return self._allocate_scalar(node.targets[0].id, value, value_type)
             if typing_utils.is_ndarray_type(value_type):
                 return self._allocate_ndarray(node.targets[0].id, value, value_type)
-        if isinstance(node.targets[0], ast.Name):
+        else:
             if typing_utils.is_scalar_type(value_type):
                 return self._assign_scalar(target.name(), value, node)
             if typing_utils.is_ndarray_type(value_type):
                 return self._assign_ndarray(target.name(), value, node)
-        elif isinstance(node.targets[0], ast.Subscript):
-            raise SyntaxError(f"not supported node type {type(target)}")
-        raise SyntaxError(f"not supported node type {type(target)}")
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
         ann = self.annotation_to_kernel_type(node.annotation)
@@ -263,6 +267,21 @@ class GeneralParser(ast.NodeVisitor):
             raise NotImplementedError("assigning to ndarray not supported yet")
         else:
             raise SyntaxError(f"not supported node type {type(node.target)}")
+
+    def _assign_item(self, node: ast.Subscript, value):
+        target_name = node.value.id
+        target_node = self.visit(node.value)
+        sls = self._get_indexing(node.slice, target_node)
+        is_indexing = all(not isinstance(s, tuple)
+                          for s in sls) and len(sls) == len(target_node.shape())
+        if not is_indexing:
+            raise SyntaxError(f"not supported syntax")
+        subscript_op = _gir.TensorSetItemOperator()
+        self.func_visitor.graph_nodes.append(subscript_op)
+        result = subscript_op(target_node, sls, value)[0]
+        self.func_visitor.graph_nodes.append(result)
+        self.tmp_ndarray_table[target_name] = result
+        return result
 
     def _allocate_scalar(self, target_name, value, ann):
         # the name is conflict with args

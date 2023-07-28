@@ -18,12 +18,14 @@
 #  under the License.
 
 import ast
-import numpy as np
-from typing import List, Set
 from collections import OrderedDict
+from typing import List, Any
+
+import numpy as np
+
 import matx.kernel.graphIR.utils as graph_utils
 import matx.kernel.typing.utils as typing_utils
-from matx.kernel.graphIR import Operator, Tensor, Node, Scalar
+from matx.kernel.graphIR import Operator, Tensor, Node, Scalar, IntVar
 
 
 def not_tensor(x):
@@ -208,6 +210,110 @@ class DeepCopyOperator(CopyOperator):
 
     def __call__(self, copy_to: Tensor, copy_from: Tensor) -> List[Tensor]:
         return super().__call__(copy_to, copy_from)
+
+
+class TensorSubscriptOperator(Operator):
+
+    def __init__(self):
+        super().__init__()
+        self.tensor = None
+        self.index = None
+        self.produce_scalar = True
+
+    def __call__(self, target: Tensor, idx: List[Any]) -> List[Tensor]:
+        raise NotImplementedError(f"TensorSubscriptOperator is not callable")
+
+
+class TensorSliceOperator(TensorSubscriptOperator):
+
+    def __init__(self):
+        super().__init__()
+        self.produce_scalar = False
+        self.offset = []
+        self.size = []
+        self.stride = []
+
+    def __call__(self, target: Tensor, idx: List[Any]) -> List[Tensor]:
+        self._attrs["inputs"] = [target]
+        self.tensor = target
+        self.index = idx
+        input_shape = target.shape()
+        shape = []
+        for e in idx:
+            if isinstance(e, Scalar):
+                shape.append(1)
+                self.offset.append(e.value() if e.is_a_const_num() else e)
+                self.size.append(1)
+                self.stride.append(1)
+            elif isinstance(e, (tuple, list)):
+                new_shape_var = IntVar([0, np.iinfo(np.int64).max])
+                shape.append(new_shape_var)
+                self.produce_scalar = False
+                self.offset.append(e[0] if graph_utils.is_graph_ir_scalar(e)
+                                   and e.is_a_const_num() else e)
+                self.size.append(new_shape_var)
+                self.stride.append(e[2] if graph_utils.is_graph_ir_scalar(e)
+                                   and e.is_a_const_num() else e)
+            else:
+                raise SyntaxError(f"not support op")
+
+        for axis in input_shape[len(shape):]:
+            shape.append(axis)
+            self.offset.append(0)
+            self.size.append(axis)
+            self.stride.append(1)
+
+        trim_idx = len(shape)
+        for i in range(len(shape)):
+            if shape[i] != 1:
+                trim_idx = i
+                break
+        shape = shape[trim_idx:]
+
+        target.dst_ops().add(self)
+        view = Tensor(name=f"{target.name()}_view_{id(self)}", shape=shape, is_view_of=target)
+        view.src_ops().add(self)
+        return [view]
+
+
+class TensorGetItemOperator(TensorSubscriptOperator):
+
+    def __init__(self):
+        super().__init__()
+        self.produce_scalar = True
+
+    def __call__(self, target: Tensor, idx: List[Any]) -> List[Tensor]:
+        self._attrs["inputs"] = [target]
+        self.tensor = target
+        self.index = idx
+        target.dst_ops().add(self)
+        scalar = Scalar(name=f"{target.name()}_view_{id(self)}", is_view_of=target)
+        scalar.src_ops().add(self)
+        return [scalar]
+
+
+class TensorSetItemOperator(Operator):
+
+    def __init__(self):
+        super().__init__()
+        self.tensor = None
+        self.index = None
+        self.value = None
+        self.produce_scalar = True
+
+    def __call__(self, target: Tensor, idx: List[Any], value: Scalar) -> List[Tensor]:
+        self._attrs["inputs"] = [target, value]
+        self.tensor = target
+        self.index = idx
+        self.value = value
+        target.dst_ops().add(self)
+        value.dst_ops().add(self)
+        new_tensor = Tensor(
+            name=f"{target.name()}_set_item_{id(self)}",
+            dtype=target.dtype(),
+            shape=target.shape())
+        new_tensor.src_ops().add(self)
+        return [new_tensor]
 
 
 """

@@ -17,16 +17,18 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from matx.kernel.kernel_parser import KernelParser
-from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 import ctypes
-from matx.kernel.typing import PYTYPE_TO_C_TYPE
-import matx.kernel.typing.utils as typing_utils
-from collections import OrderedDict
-import subprocess
 import os
+import subprocess
 import time
+from collections import OrderedDict
+
 import numpy as np
+
+import matx.kernel.typing.utils as typing_utils
+from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
+from matx.kernel.kernel_parser import KernelParser
+from matx.kernel.typing import PYTYPE_TO_C_TYPE
 
 
 def nd_to_c(nd, nd_t):
@@ -99,6 +101,9 @@ def lower_linalg_to_cpu(input_fname, output_fname="llvm_tmp.mlir"):
                               '--convert-linalg-to-loops',
                               '--lower-affine',
                               '--arith-expand',
+                              '--memref-expand',
+                              '--normalize-memrefs',
+                              '--fold-memref-alias-ops',
                               '--arith-unsigned-when-equivalent',
                               '--convert-scf-to-cf',
                               '--convert-linalg-to-llvm',

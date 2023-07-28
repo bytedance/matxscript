@@ -25,6 +25,10 @@ def is_symbol(x):
     return isinstance(x, sympy.Basic)
 
 
+def is_symbol_expression(x):
+    return isinstance(x, sympy.Expr) and not x.is_symbol
+
+
 def equals(x, y):
     # https://stackoverflow.com/questions/37112738/sympy-comparing-expressions
     return sympy.simplify(x - y) == 0
