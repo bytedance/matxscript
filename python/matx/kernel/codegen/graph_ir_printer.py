@@ -63,23 +63,6 @@ DTYPE_TO_MLIR = {
 }
 
 
-class MemrefType:
-
-    def __init__(self, shape, dtype, offsets=None, sizes=None, strides=None):
-        self.shape = shape
-        self.dtype = dtype
-        self.ndim = len(self.shape)
-        self.offsets = offsets
-        if self.offsets is None:
-            self.offsets = [0] * self.ndim
-        self.sizes = sizes
-        if self.sizes is None:
-            self.sizes = self.shape
-        self.strides = strides
-        if self.strides is None:
-            pass
-
-
 class IrPrinter:
     def __init__(self):
         self.output = ''
