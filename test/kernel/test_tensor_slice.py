@@ -91,30 +91,23 @@ class TestTensorSliceParser(unittest.TestCase):
         f = compile_linalg(p)
         np.testing.assert_equal(f(a), foo(a))
 
-
-"""
-    def test_complex_slice_tensor_return(self):
+    def test_constant_slice_tensor_return(self):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
 
-        def foo(a: int32[M, N]) -> int32[M/2, N/2]:
-            #m = a.shape[0]
-            #n = a.shape[1]
-            m:int32 = 2
-            n:int32 = 2
-            return a[0:m//2, n//2:]
+        def foo(a: int32[M, N]) -> int32[2, 2]:
+            return a[:2, :2]
 
         p = KernelParser(foo)
         p.parse()
         print()
         print("=" * 30, "linalg_code", "=" * 30, sep="")
         print()
-        #print(p.linalg_code())
+        print(p.linalg_code())
         print()
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
         foo(a)
-        #f = compile_linalg(p)
-        #np.testing.assert_equal(f(a), foo(a))
-"""
+        f = compile_linalg(p)
+        np.testing.assert_equal(f(a), foo(a))

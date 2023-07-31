@@ -523,6 +523,9 @@ class GraphIRPrinter:
             for e in l:
                 if _gir.utils.is_graph_ir_scalar(e):
                     result.append(self.visit(e, node))
+                elif isinstance(e, _gir.IntImm):
+                    rc = self.visit_int_var(e)
+                    result.append(rc)
                 elif isinstance(e, _gir.IntVar):
                     self.visit_int_var(e)
                     result.append(self._cast_to_idx(e))
@@ -654,6 +657,11 @@ class GraphIRPrinter:
         return index_var
 
     def visit_int_var(self, node):
+        if isinstance(node, _gir.IntImm):
+            mlir_name = self.new_var_name
+            stmt = f"{mlir_name} = index.constant {node.value()}"
+            self.mlir_printer.print(stmt)
+            return mlir_name
         if node in self.mlir_var_map:
             return self.mlir_var_map[node]
         raise NotImplementedError("not supported now")

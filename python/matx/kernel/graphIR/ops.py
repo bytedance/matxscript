@@ -25,7 +25,7 @@ import numpy as np
 
 import matx.kernel.graphIR.utils as graph_utils
 import matx.kernel.typing.utils as typing_utils
-from matx.kernel.graphIR import Operator, Tensor, Node, Scalar, IntVar
+from matx.kernel.graphIR import Operator, Tensor, Node, Scalar, IntVar, IntImm
 
 
 def not_tensor(x):
@@ -246,14 +246,22 @@ class TensorSliceOperator(TensorSubscriptOperator):
                 self.size.append(1)
                 self.stride.append(1)
             elif isinstance(e, (tuple, list)):
-                new_shape_var = IntVar([0, np.iinfo(np.int64).max])
+                if all(isinstance(s, Scalar) and s.is_a_const_num() for s in e):
+                    lower = e[0].value()
+                    upper = e[1].value()
+                    step = e[2].value()
+                    new_shape_var = IntImm(value=(upper - lower - 1) // step + 1)
+                else:
+                    new_shape_var = IntVar([0, np.iinfo(np.int64).max])
                 shape.append(new_shape_var)
                 self.produce_scalar = False
-                self.offset.append(e[0] if graph_utils.is_graph_ir_scalar(e)
-                                   and e.is_a_const_num() else e)
+                self.offset.append(
+                    e[0].value() if graph_utils.is_graph_ir_scalar(
+                        e[0]) and e[0].is_a_const_num() else e[0])
                 self.size.append(new_shape_var)
-                self.stride.append(e[2] if graph_utils.is_graph_ir_scalar(e)
-                                   and e.is_a_const_num() else e)
+                self.stride.append(
+                    e[2].value() if graph_utils.is_graph_ir_scalar(
+                        e[2]) and e[2].is_a_const_num() else e[2])
             else:
                 raise SyntaxError(f"not support op")
 

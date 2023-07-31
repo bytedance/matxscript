@@ -210,6 +210,8 @@ class LinalgFuncWrapper:
                     s) else s for s in self.rt_types.shape]
                 rt = np.zeros(shape=shape, dtype=self.rt_types.dtype)
             for actual_s, ann_s in zip(rt.shape, self.rt_types.shape):
+                if isinstance(ann_s, int):
+                    continue
                 assert symbol_dict[ann_s] == actual_s
             binded_args.append((rt, self.rt_types))
 
