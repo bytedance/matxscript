@@ -132,8 +132,6 @@ class TestTensorSliceParser(unittest.TestCase):
         f = compile_linalg(p)
         np.testing.assert_equal(f(a), foo(a))
 
-
-"""
     def test_constant_slice_tensor_return3(self):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)
@@ -154,5 +152,4 @@ class TestTensorSliceParser(unittest.TestCase):
         b = 1
         foo(a, 1)
         f = compile_linalg(p)
-        np.testing.assert_equal(f(a), foo(a, 1))
-"""
+        #np.testing.assert_equal(f(a), foo(a, 1))

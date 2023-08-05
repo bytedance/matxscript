@@ -25,7 +25,7 @@ import numpy as np
 
 import matx.kernel.graphIR.utils as graph_utils
 import matx.kernel.typing.utils as typing_utils
-from matx.kernel.graphIR import Operator, Tensor, Node, Scalar, IntVar, IntImm
+from matx.kernel.graphIR import Operator, Tensor, Node, Scalar, DynamicTensor
 
 
 def not_tensor(x):
@@ -212,19 +212,7 @@ class DeepCopyOperator(CopyOperator):
         return super().__call__(copy_to, copy_from)
 
 
-class TensorSubscriptOperator(Operator):
-
-    def __init__(self):
-        super().__init__()
-        self.tensor = None
-        self.index = None
-        self.produce_scalar = True
-
-    def __call__(self, target: Tensor, idx: List[Any]) -> List[Tensor]:
-        raise NotImplementedError(f"TensorSubscriptOperator is not callable")
-
-
-class TensorSliceOperator(TensorSubscriptOperator):
+class TensorSliceOperator(Operator):
 
     def __init__(self):
         super().__init__()
@@ -232,62 +220,71 @@ class TensorSliceOperator(TensorSubscriptOperator):
         self.offset = []
         self.size = []
         self.stride = []
+        self.shape = []
 
-    def __call__(self, target: Tensor, idx: List[Any]) -> List[Tensor]:
+    def _make_tensor(self, shape, target, produce_dynamic_tensor):
+        view_name = f"{target.name()}_view_{id(self)}"
+        dims = len(shape)
+        if produce_dynamic_tensor:
+            return DynamicTensor(dims=dims, name=view_name, shape=shape, is_view_of=target)
+        else:
+            return Tensor(name=view_name, shape=shape, is_view_of=target)
+
+    @staticmethod
+    def _unwrap_const_scalar_or_do_nothing(e):
+        if graph_utils.is_graph_ir_const_scalar(e):
+            return e.value()
+        return e
+
+    @staticmethod
+    def _is_reducing_dim(e):
+        return graph_utils.is_graph_ir_scalar(e)
+
+    @staticmethod
+    def _is_range(e):
+        return isinstance(e, (tuple, list))
+
+    @staticmethod
+    def _is_constant_range(e):
+        return TensorSliceOperator._is_range(e) and all(
+            graph_utils.is_graph_ir_const_scalar(s) for s in e)
+
+    def __call__(self, target: Tensor, idx: List[Any], result_shape: List[Tensor]) -> List[Tensor]:
         self._attrs["inputs"] = [target]
+        target.dst_ops().add(self)
         self.tensor = target
         self.index = idx
-        input_shape = target.shape()
-        shape = []
+        self.size = [i for i in result_shape]
+        self.shape = result_shape
+        produce_dynamic_tensor = isinstance(target, DynamicTensor)
         for e in idx:
-            if isinstance(e, Scalar):
-                shape.append(1)
-                self.offset.append(e.value() if e.is_a_const_num() else e)
-                self.size.append(1)
+            if self._is_reducing_dim(e):
+                self.offset.append(self._unwrap_const_scalar_or_do_nothing(e))
                 self.stride.append(1)
-            elif isinstance(e, (tuple, list)):
-                if all(isinstance(s, Scalar) and s.is_a_const_num() for s in e):
-                    lower = e[0].value()
-                    upper = e[1].value()
-                    step = e[2].value()
-                    new_shape_var = IntImm(value=(upper - lower - 1) // step + 1)
-                else:
-                    new_shape_var = IntVar([0, np.iinfo(np.int64).max])
-                shape.append(new_shape_var)
-                self.produce_scalar = False
-                self.offset.append(
-                    e[0].value() if graph_utils.is_graph_ir_scalar(
-                        e[0]) and e[0].is_a_const_num() else e[0])
-                self.size.append(new_shape_var)
-                self.stride.append(
-                    e[2].value() if graph_utils.is_graph_ir_scalar(
-                        e[2]) and e[2].is_a_const_num() else e[2])
+            elif self._is_range(e):
+                produce_dynamic_tensor = not self._is_constant_range(e)
+                self.offset.append(self._unwrap_const_scalar_or_do_nothing(e[0]))
+                self.stride.append(self._unwrap_const_scalar_or_do_nothing(e[2]))
             else:
                 raise SyntaxError(f"not support op")
-
-        for axis in input_shape[len(shape):]:
-            shape.append(axis)
-            self.offset.append(0)
-            self.size.append(axis)
-            self.stride.append(1)
-
-        trim_idx = len(shape)
-        for i in range(len(shape)):
-            if shape[i] != 1:
-                trim_idx = i
-                break
-        shape = shape[trim_idx:]
-
-        target.dst_ops().add(self)
-        view = Tensor(name=f"{target.name()}_view_{id(self)}", shape=shape, is_view_of=target)
+        padding_size = len(target.shape()) - len(idx)
+        size_pad = [1] * padding_size
+        offset_pad = [0] * padding_size
+        stride_pad = [0] * padding_size
+        self.size = [*size_pad, *self.size]
+        self.offset = [*offset_pad, *self.offset]
+        self.stride = [*stride_pad, *self.stride]
+        view = self._make_tensor(result_shape, target, produce_dynamic_tensor)
         view.src_ops().add(self)
         return [view]
 
 
-class TensorGetItemOperator(TensorSubscriptOperator):
+class TensorGetItemOperator(Operator):
 
     def __init__(self):
         super().__init__()
+        self.tensor = None
+        self.index = None
         self.produce_scalar = True
 
     def __call__(self, target: Tensor, idx: List[Any]) -> List[Tensor]:

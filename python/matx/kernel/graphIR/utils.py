@@ -76,6 +76,10 @@ def is_graph_ir_scalar(t):
     return False
 
 
+def is_graph_ir_const_scalar(t):
+    return is_graph_ir_scalar(t) and t.is_a_const_num()
+
+
 def is_graph_ir_scalar_shape(s):
     return len(s) == 0
 

@@ -95,10 +95,14 @@ class IrPrinter:
 
 
 def dim_cvt(dim):
+    if isinstance(dim, int):
+        return f"{dim}x"
     if isinstance(dim, _gir.IntVar):
         return "?x"
     if isinstance(dim, _gir.IntImm):
         return f"{dim.value()}x"
+    if _gir.utils.is_graph_ir_scalar(dim):
+        return "?x"
     raise SyntaxError(f"not supported type {type(dim)} for {dim} as tensor dim")
 
 
@@ -183,12 +187,15 @@ class GraphIRPrinter:
         self._var_index_var += 1
         return f"%{i}"
 
-    def get_strided_memref_type(self, node) -> str:
+    def get_strided_memref_type(self, node, shape=None, stride=None, offset=None) -> str:
         if node in self.special_type_map:
             return self.special_type_map[node]
         ndim = len(node.shape())
-        dims = (dim_cvt(d) for d in node.shape())
-        return f"memref<{''.join(dims)}{DTYPE_TO_MLIR[node.dtype()]}, strided<[{', '.join(['?'] * ndim)}], offset: ?>>"
+        if shape is None:
+            mlir_shape = (dim_cvt(d) for d in node.shape())
+        else:
+            mlir_shape = (dim_cvt(d) for d in shape)
+        return f"memref<{''.join(mlir_shape)}{DTYPE_TO_MLIR[node.dtype()]}, strided<[{', '.join(['?'] * ndim)}], offset: ?>>"
 
     def convert_type_to_mlir(self, node: _gir.Node):
         if node in self.special_type_map:
@@ -522,7 +529,8 @@ class GraphIRPrinter:
             result = []
             for e in l:
                 if _gir.utils.is_graph_ir_scalar(e):
-                    result.append(self.visit(e, node))
+                    self.visit(e, node)
+                    result.append(self._cast_to_idx(e))
                 elif isinstance(e, _gir.IntImm):
                     rc = self.visit_int_var(e)
                     result.append(rc)
@@ -541,7 +549,7 @@ class GraphIRPrinter:
         size = ', '.join(map(str, shape_helper(node.size)))
         stride = ', '.join(map(str, shape_helper(node.stride)))
         o_type = self.convert_type_to_mlir(node.tensor)
-        v_type = self.get_strided_memref_type(_from)
+        v_type = self.get_strided_memref_type(_from, node.shape)
         self.special_type_map[_from] = v_type
         stmt = f"{result_name} = memref.subview {tensor} [{offset}][{size}][{stride}] : {o_type} to {v_type}"
         self.mlir_printer.print(stmt)
@@ -652,7 +660,10 @@ class GraphIRPrinter:
     def _cast_to_idx(self, node):
         node_var = self.mlir_var_map[node]
         index_var = self.new_var_name
-        stmt = f"{index_var} = arith.index_cast {node_var} : {self.convert_type_to_mlir(node)} to index"
+        in_type = self.convert_type_to_mlir(node)
+        if in_type != "i64":
+            node_var = self._cast(node, "int64")
+        stmt = f"{index_var} = arith.index_cast {node_var} : i64 to index"
         self.mlir_printer.print(stmt)
         return index_var
 

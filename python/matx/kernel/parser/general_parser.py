@@ -207,13 +207,50 @@ class GeneralParser(ast.NodeVisitor):
         is_indexing = all(not isinstance(s, tuple)
                           for s in sls) and len(sls) == len(value_node.shape())
         if is_indexing:
-            subscript_op = _gir.TensorGetItemOperator()
+            git_item_op = _gir.TensorGetItemOperator()
+            self.func_visitor.graph_nodes.append(git_item_op)
+            result = git_item_op(value_node, sls)[0]
         else:
-            subscript_op = _gir.TensorSliceOperator()
-        self.func_visitor.graph_nodes.append(subscript_op)
-        result = subscript_op(value_node, sls)[0]
+            slice_op = _gir.TensorSliceOperator()
+            self.func_visitor.graph_nodes.append(slice_op)
+            result_shape = self.calculate_slice_shape(value_node, sls)
+            result = slice_op(value_node, sls, result_shape)[0]
         self.func_visitor.graph_nodes.append(result)
         return result
+
+    def calculate_slice_shape(self, target, sls):
+        shape = []
+        for e in sls:
+            if _gir.utils.is_graph_ir_scalar(e):
+                shape.append(1)
+            elif not isinstance(e, (tuple, list)):
+                raise SyntaxError("slice has to be tuple or list")
+            elif all(_gir.utils.is_graph_ir_const_scalar(s) for s in e):
+                lower = e[0].value()
+                upper = e[1].value()
+                step = e[2].value()
+                shape.append((upper - lower - 1) // step + 1)
+            else:
+                lower = e[0]
+                upper = e[1]
+                step = e[2]
+                const_1 = _gir.Scalar(value=1, dtype="int8", is_internal_constant=True)
+                self.func_visitor.graph_nodes.append(const_1)
+                sub_op1 = _gir.BinaryElementWiseOperator(ast.Sub)
+                sub_op2 = _gir.BinaryElementWiseOperator(ast.Sub)
+                add_op1 = _gir.BinaryElementWiseOperator(ast.Add)
+                floor_div = _gir.BinaryElementWiseOperator(ast.FloorDiv)
+                self.func_visitor.graph_nodes.extend((sub_op1, sub_op2, add_op1, floor_div))
+                sub_result1 = sub_op1(upper, lower)[0]
+                sub_result2 = sub_op2(sub_result1, const_1)[0]
+                add_result = add_op1(step, const_1)[0]
+                size = floor_div(sub_result2, add_result)[0]
+                self.func_visitor.graph_nodes.extend((sub_result1, sub_result2, add_result, size))
+                shape.append(size)
+        input_shape = target.shape()
+        shape.extend(input_shape[len(shape):])
+        trim_idx = next((i for i, x in enumerate(shape) if x != 1), len(shape))
+        return shape[trim_idx:]
 
     def _get_indexing(self, sls: Any, target):
         if isinstance(sls, ast.Slice):
