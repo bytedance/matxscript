@@ -152,4 +152,4 @@ class TestTensorSliceParser(unittest.TestCase):
         b = 1
         foo(a, 1)
         f = compile_linalg(p)
-        #np.testing.assert_equal(f(a), foo(a, 1))
+        np.testing.assert_equal(f(a, b), foo(a, b))

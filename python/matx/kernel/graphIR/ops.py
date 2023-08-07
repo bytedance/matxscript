@@ -25,7 +25,7 @@ import numpy as np
 
 import matx.kernel.graphIR.utils as graph_utils
 import matx.kernel.typing.utils as typing_utils
-from matx.kernel.graphIR import Operator, Tensor, Node, Scalar, DynamicTensor
+from .graph import Operator, Tensor, Node, Scalar, DynamicTensor
 
 
 def not_tensor(x):
