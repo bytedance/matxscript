@@ -55,11 +55,7 @@ class ScalarType(NDArrayType):
 
     def __getitem__(self, shape) -> NDArrayType:
         if isinstance(shape, list) or isinstance(shape, tuple):
-            if list(shape) == [1]:
-                return self
             return NDArrayType(tuple(shape), self.dtype)
-        if shape == 1:
-            return self
         return NDArrayType((shape,), self.dtype)
 
     def __repr__(self) -> str:
