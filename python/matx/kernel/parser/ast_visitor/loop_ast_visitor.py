@@ -44,7 +44,7 @@ from .general_ast_visitor import GeneralAstVisitor
 from matx.ir.tensor_stmt import ComputeBlock
 
 if TYPE_CHECKING:
-    from matx.kernel.parser.kernel_function_parser import FunctionParser
+    from matx.kernel.parser.function_parser import FunctionParser
 
 
 class LoopAstVisitor(GeneralAstVisitor):

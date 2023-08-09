@@ -19,19 +19,19 @@
 
 from typing import Dict, Any
 
-from matx.kernel.kernel_parser import KernelParser
+from matx.kernel.kernel_parser import KernelTemplateParser
 
 
 class TemplateFunc:
 
     def __init__(self, func):
-        self.fun_dict: Dict[Any, KernelParser] = {}
+        self.fun_dict: Dict[Any, KernelTemplateParser] = {}
         self.func = func
 
-    def get_function(self, args_type_list) -> KernelParser:
+    def get_function(self, args_type_list) -> KernelTemplateParser:
         args_types = tuple(args_type_list)
         if args_types not in self.fun_dict:
-            p = KernelParser(self.func, args_types)
+            p = KernelTemplateParser(self.func, args_types)
             p.parse()
             self.fun_dict[args_types] = p
         return self.fun_dict[args_types]

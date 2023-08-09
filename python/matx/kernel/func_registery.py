@@ -23,7 +23,7 @@ from typing import Dict, Any
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .parser.kernel_function_parser import FunctionParser
+    from .parser.function_parser import FunctionParser
     from ._template import TemplateFunc
 
 # OP_REGISTRY defines a mapping from a FuncEnum name to a function to create this elementwise operator.

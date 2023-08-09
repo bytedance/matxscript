@@ -523,6 +523,9 @@ class GeneralAstVisitor(ast.NodeVisitor):
 
         rt_ir = self.visit(node.value)
         rt_ir_shape = rt_ir.shape()
+        if self.func_parser.func_return_kind.is_template():
+            self.func_parser.graph_output.append(rt_ir)
+            return rt_ir
         if self.func_parser.func_return_kind.is_dynamic_tensor():
             self.func_parser.return_dtype_str = rt_ir.dtype()
             self.func_parser.return_shape = rt_ir_shape

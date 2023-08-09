@@ -24,7 +24,8 @@ class FuncReturnKind(Enum):
     VOID = 1,
     SCALAR = 2,
     STATIC_TENSOR = 3,
-    DYNAMIC_TENSOR = 4
+    DYNAMIC_TENSOR = 4,
+    TEMPLATE = 5,
 
     def is_void(self):
         return self is FuncReturnKind.VOID
@@ -37,3 +38,6 @@ class FuncReturnKind(Enum):
 
     def is_dynamic_tensor(self):
         return self is FuncReturnKind.DYNAMIC_TENSOR
+
+    def is_template(self):
+        return self is FuncReturnKind.TEMPLATE

@@ -58,7 +58,7 @@ class FunctionParser(ast.NodeVisitor):
         self.shape_symbol_table: Dict[str, _gir.IntVar] = {}
         self.tmp_scalar_table: Dict[str, _gir.Scalar] = {}
         self.tmp_ndarray_table: Dict[str, _gir.Tensor] = {}
-        # return ctx is not only if function return kind is static tensor
+        # return ctx is not None only if function return kind is static tensor
         self.return_ctx: Union[None, _gir.Tensor] = None
         # return_dtype_str is "" only if function return kind is void
         self.return_dtype_str: str = ""
