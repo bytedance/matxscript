@@ -25,9 +25,8 @@ import matx.kernel.graphIR as _gir
 import matx.kernel.symbol.utils as symbol_utils
 import matx.kernel.typing.utils as typing_utils
 from matx.kernel.func_registery import FUNC_REGISTRY
-from matx.kernel.parser.general_parser import GeneralParser
-from matx.kernel.parser.loop_parser import LoopParser
-from matx.kernel.parser.tensor_op_parser import TensorOpParser
+from matx.kernel.parser.ast_visitor.general_ast_visitor import GeneralAstVisitor
+from matx.kernel.parser.ast_visitor.loop_ast_visitor import LoopAstVisitor
 from matx.kernel.typing import NDArrayType as kernelNDArrayT
 from matx.script import context as script_context
 
@@ -37,7 +36,7 @@ if TYPE_CHECKING:
     from matx.kernel.kernel_parser import KernelParser
 
 
-class FunctionVisitor(ast.NodeVisitor):
+class FunctionParser(ast.NodeVisitor):
     return_var_id = 93502842947314
 
     def __init__(
@@ -46,8 +45,8 @@ class FunctionVisitor(ast.NodeVisitor):
             node: script_context.ASTNode,
             inline=True):
 
-        self.return_var_name = f'__return_{FunctionVisitor.return_var_id}__'
-        FunctionVisitor.return_var_id += 1
+        self.return_var_name = f'__return_{FunctionParser.return_var_id}__'
+        FunctionParser.return_var_id += 1
         self.kernel_p = kernel_p
 
         # necessary for reuse script functionality
@@ -95,11 +94,11 @@ class FunctionVisitor(ast.NodeVisitor):
 
     def check_and_dispatch(self, node: ast.AST) -> Any:
         if isinstance(node, ast.For):
-            p = LoopParser(self)
+            p = LoopAstVisitor(self)
         # elif TensorOpParser.can_parse(self, node):
         #     p = TensorOpParser(self)
         else:
-            p = GeneralParser(self)
+            p = GeneralAstVisitor(self)
         t = p.visit(node)
         self.can_inline = self.can_inline and p.can_inline
         return t

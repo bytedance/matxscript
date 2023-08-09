@@ -22,7 +22,7 @@ from typing import Union
 
 import matx.kernel.parser.utils as parser_utils
 from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
-from matx.kernel.parser import FunctionVisitor
+from matx.kernel.parser import FunctionParser
 from matx.script import analysis
 from matx.script import context as script_context
 
@@ -50,7 +50,7 @@ class KernelParser:
         for arg_type in self.arg_types:
             shape_symbol = parser_utils.extract_symbol_from_type(arg_type)
             self.symbols.update(shape_symbol)
-        self.graph: Union[FunctionVisitor, None] = None
+        self.graph: Union[FunctionParser, None] = None
 
     def passes(self, sc_ctx):
         dep_anls = analysis.DepsAnalysis()
@@ -89,10 +89,10 @@ class KernelParser:
         self.passes(sc_ctx)
 
         def parser_node(node: script_context.ASTNode):
-            visitor = FunctionVisitor(self, node).visit_FunctionDef(node.ast)
-            printer = GraphIRPrinter(visitor)
+            parser = FunctionParser(self, node).visit_FunctionDef(node.ast)
+            printer = GraphIRPrinter(parser)
             print(printer.as_linalg_text())
-            return visitor
+            return parser
 
         self.graph = parser_node(sc_ctx.main_node)
 
