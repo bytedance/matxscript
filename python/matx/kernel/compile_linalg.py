@@ -255,33 +255,35 @@ class LinalgFuncWrapper:
         return self.call_c_arg(*c_args, rt_np_nd=rt_np_nd)
 
     def call_c_arg(self, *c_args, rt_np_nd=None):
+        # if this is a void function do nothing
         if self.func_return_kind.is_void():
             self.raw_call(*c_args)
             return
+        # if the return is a scalar, then just return the scalar
         elif self.func_return_kind.is_scalar():
             return self.raw_call(*c_args)
+        # if the return is a static tensor, then return the pre allocated a np nd
         elif self.func_return_kind.is_static_tensor():
             self.raw_call(*c_args)
             return rt_np_nd
+        # if the return is a dynamic tensor,
         elif self.func_return_kind.is_dynamic_tensor():
+            # the memory of this memref is to be allocated by MLIR
             return_nd = make_memref_descriptor(self.return_dim)
             return_nd_ptr = ctypes.byref(return_nd)
             self.raw_call(*(return_nd_ptr, *c_args))
-            if _is_inputs(c_args, return_nd):
-                shape = return_nd.shape
-                rt_dtype = PYTYPE_TO_C_TYPE[STR_TO_PYTYPE[self.return_dtype_str]]
-                rt_ptr_type = ctypes.POINTER(rt_dtype)
-                casted_return_ptr = ctypes.cast(
-                    return_nd.aligned_ptr + return_nd.offset, rt_ptr_type)
-                rt = np.ctypeslib.as_array(casted_return_ptr, shape)
-            else:
-                shape = return_nd.shape
-                rt_dtype = PYTYPE_TO_C_TYPE[STR_TO_PYTYPE[self.return_dtype_str]]
-                rt_ptr_type = ctypes.POINTER(rt_dtype)
-                casted_return_ptr = ctypes.cast(
-                    return_nd.aligned_ptr + return_nd.offset, rt_ptr_type)
-                rt = np.ctypeslib.as_array(casted_return_ptr, shape)
-                rt = np.array(rt, copy=True)
+            # based on the return, construct a new array,
+            # so the memory space is managed by python
+            shape = return_nd.shape
+            rt_dtype = PYTYPE_TO_C_TYPE[STR_TO_PYTYPE[self.return_dtype_str]]
+            rt_ptr_type = ctypes.POINTER(rt_dtype)
+            casted_return_ptr = ctypes.cast(
+                return_nd.aligned_ptr + return_nd.offset, rt_ptr_type)
+            rt = np.ctypeslib.as_array(casted_return_ptr, shape)
+            rt = np.array(rt, copy=True)
+            # if the memref ends up pointing to memory space allocated by MLIR
+            # deallocate the space
+            if not _is_inputs(c_args, return_nd):
                 self.deallocator(return_nd.allocated_ptr)
             return rt
         else:
