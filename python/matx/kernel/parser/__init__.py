@@ -17,5 +17,6 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from .kernel_function_parser import *
+from .function_parser import *
+from .template_parser import *
 from .utils import FuncReturnKind
