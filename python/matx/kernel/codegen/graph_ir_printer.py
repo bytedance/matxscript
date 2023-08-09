@@ -24,6 +24,7 @@ from functools import partial
 from typing import List, Union, Dict, Callable, TYPE_CHECKING
 
 import matx.kernel.graphIR as _gir
+import matx.kernel.typing.utils as typing_utils
 from .linalg_printer import LinalgGenericPrinter, LinalgReductionPrinter
 
 if TYPE_CHECKING:
@@ -119,12 +120,12 @@ def not_supported_op(*_, node=None):
 
 class GraphIRPrinter:
 
-    def __init__(self, kernel_p: 'FunctionVisitor'):
-        self.kernel_p = kernel_p
+    def __init__(self, func_visitor: 'FunctionVisitor'):
+        self.func_visitor = func_visitor
 
-        self.graph_input: List[_gir.Node] = kernel_p.graph_input
-        self.graph_output: List[_gir.Node] = kernel_p.graph_output
-        self.graph_nodes: List[_gir.Node] = kernel_p.graph_nodes
+        self.graph_input: List[_gir.Node] = func_visitor.graph_input
+        self.graph_output: List[_gir.Node] = func_visitor.graph_output
+        self.graph_nodes: List[_gir.Node] = func_visitor.graph_nodes
 
         self.mlir_printer = IrPrinter()
         self.mlir_var_map = {}
@@ -212,7 +213,7 @@ class GraphIRPrinter:
     def as_linalg_text(self):
         mlir_args = []
         mlir_arg_types = []
-        for arg, node in self.kernel_p.arg_context_table.items():
+        for arg, node in self.func_visitor.arg_context_table.items():
             if not (isinstance(node, _gir.Tensor) or isinstance(node, _gir.Scalar)):
                 raise NotImplementedError("func parameters can only be marked as ndarray or scalar")
             name = f"%{arg}"
@@ -220,7 +221,7 @@ class GraphIRPrinter:
             mlir_arg_types.append(self.convert_type_to_mlir(node))
             self.mlir_var_map[node] = name
 
-        for dim, dim_var in self.kernel_p.shape_symbol_table.items():
+        for dim, dim_var in self.func_visitor.shape_symbol_table.items():
             name = f"%{dim}"
             mlir_args.append(name)
             mlir_arg_types.append(self.convert_type_to_mlir(dim_var))
@@ -232,23 +233,25 @@ class GraphIRPrinter:
                               f"but get {len(self.graph_output)}, "
                               f"which contains {self.graph_output}")
 
-        self.mlir_printer.print(f"func.func @{self.kernel_p.func_name}", end='')
+        self.mlir_printer.print(f"func.func @{self.func_visitor.func_name}", end='')
         mlir_name_and_type = (f"{name}: {t}" for name, t in zip(mlir_args, mlir_arg_types))
         self.mlir_printer.print(f"({', '.join(mlir_name_and_type)})", end='')
-        if self.kernel_p.is_scalar_return():
-            self.mlir_printer.print(
-                f"->{self.convert_type_to_mlir(self.kernel_p.return_ctx)}", end='')
+        if typing_utils.is_scalar_shape(self.func_visitor.return_shape):
+            rt_type = str(DTYPE_TO_MLIR[self.func_visitor.return_dtype_str])
+        else:
+            dims = (dim_cvt(d) for d in self.func_visitor.return_shape)
+            # todo use self.convert_type_to_mlir(self.graph_output[0])
+            rt_type = f"memref<{''.join(dims)}{DTYPE_TO_MLIR[self.func_visitor.return_dtype_str]}>"
+
+        self.mlir_printer.print(f"->{rt_type}", end='')
+        self.mlir_printer.print(" attributes {llvm.emit_c_interface} ", end='')
         self.mlir_printer.print("{")
         self.mlir_printer.new_scope()
 
         # convert graph
         self.visit(self.graph_output[0], None)
-        if not self.kernel_p.is_scalar_return():
-            self.mlir_printer.print(f"func.return")
-        else:
-            self.mlir_printer.print(
-                f"func.return {self.mlir_var_map[self.graph_output[0]]}", end='')
-            self.mlir_printer.print(f" : {self.convert_type_to_mlir(self.graph_output[0])}")
+        self.mlir_printer.print(f"func.return {self.mlir_var_map[self.graph_output[0]]}", end='')
+        self.mlir_printer.print(f" : {self.convert_type_to_mlir(self.graph_output[0])}")
         self.mlir_printer.pop_scope()
         self.mlir_printer.print("}")
         return str(self.mlir_printer)
@@ -389,7 +392,7 @@ class GraphIRPrinter:
             predicate = "o" + predicate
         elif compare_type != "eq" and compare_type != "ne":
             if suffix == "ui":
-                warnings.warn(f"Enconuntered a unsuppoerted type: {suffix}."
+                warnings.warn(f"Encountered a unsupported type: {suffix}."
                               f" Will try to treat it as unsigned int")
                 predicate = "u" + predicate
             elif suffix == "i":
