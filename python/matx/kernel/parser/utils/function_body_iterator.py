@@ -56,7 +56,7 @@ class BodyIterator:
         if len(self.node_stack[-1]) > 0:
             return True
         return self.auto_add_return and (
-                len(self.body) == 0 or not isinstance(self.last_ast, ast.Return))
+            len(self.body) == 0 or not isinstance(self.last_ast, ast.Return))
 
     def next(self):
         if len(self.node_stack[-1]) > 0:
