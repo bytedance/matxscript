@@ -28,17 +28,49 @@ import numpy as np
 import matx.kernel.typing.utils as typing_utils
 from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 from matx.kernel.kernel_parser import KernelParser
-from matx.kernel.typing import PYTYPE_TO_C_TYPE
+from matx.kernel.typing import PYTYPE_TO_C_TYPE, STR_TO_PYTYPE
 
 
-def nd_to_c(nd, nd_t):
-    allocated_ptr = nd.ctypes.data_as(ctypes.POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
-    aligned_ptr = nd.ctypes.data_as(ctypes.POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
-    offset = ctypes.c_int64(0)
-    # shape = list(nd.ctypes.shape_as(c_int64))
+def make_memref_descriptor(
+        dim,
+        allocated_ptr=None,
+        aligned_ptr=None,
+        offset=0,
+        shape=None,
+        strides=None):
+    if shape is None:
+        shape = [0] * dim
+
+    if strides is None:
+        strides = [0] * dim
+
+    shape_array_t = ctypes.c_int64 * dim
+    stride_array_t = ctypes.c_int64 * dim
+
+    class MemRefDescriptor(ctypes.Structure):
+        _fields_ = [
+            ("allocated_ptr", ctypes.c_void_p),
+            ("aligned_ptr", ctypes.c_void_p),
+            ("offset", ctypes.c_int64),
+            ("shape", shape_array_t),
+            ("strides", stride_array_t)
+        ]
+
+    memref_struct = MemRefDescriptor(allocated_ptr, aligned_ptr, offset,
+                                     shape_array_t(*shape), stride_array_t(*strides))
+    return memref_struct
+
+
+def nd_to_c(nd):
+    allocated_ptr = nd.ctypes.data_as(ctypes.c_void_p)
+    aligned_ptr = nd.ctypes.data_as(ctypes.c_void_p)
+    offset = 0
+    # shape = list(nd.ctypes.shape_as(c_int64))]
     shape = [ctypes.c_int64(s) for s in nd.shape]
     strides = [ctypes.c_int64(s // nd.dtype.itemsize) for s in nd.strides]
-    return [allocated_ptr, aligned_ptr, offset, *shape, *strides]
+    dim = len(shape)
+    # return [allocated_ptr, aligned_ptr, offset, *shape, *strides]
+    return make_memref_descriptor(dim, allocated_ptr, aligned_ptr, offset, shape, strides)
 
 
 def scalar_to_c(v, v_t):
@@ -76,7 +108,7 @@ def binded_args_to_c(binded_args):
         if typing_utils.is_scalar_type(t):
             args.append(scalar_to_c(value, t))
         elif typing_utils.is_ndarray_type(t):
-            args += nd_to_c(value, t)
+            args.append(ctypes.byref(nd_to_c(value)))
         elif typing_utils.is_symbol(t):
             args.append(symbol_to_c(value))
         else:
@@ -186,54 +218,106 @@ def llvm_compile(input_fname, output_fname="llvm_tmp.ll"):
     return output_fname
 
 
+def _is_inputs(in_args, rt):
+    if not hasattr(rt, "allocated_ptr"):
+        return
+    rt_allocated_ptr = getattr(rt, "allocated_ptr")
+    for a in in_args:
+        if not hasattr(a, "_obj"):
+            continue
+        a = a._obj
+        if not hasattr(a, "allocated_ptr"):
+            continue
+        a_allocated_ptr = getattr(a, "allocated_ptr")
+        if a_allocated_ptr == rt_allocated_ptr:
+            return True
+    return False
+
+
 class LinalgFuncWrapper:
 
-    def __init__(self, func, parser: KernelParser):
+    def __init__(self, func, parser: KernelParser, deallocator):
         self.func = func
+        self.deallocator = deallocator
         self.arg_types = parser.arg_types
         self.rt_types = parser.return_types
-        if typing_utils.is_scalar_type(self.rt_types):
+        self.func_return_kind = parser.graph.func_return_kind
+        if self.func_return_kind.is_scalar():
             self.func.restype = PYTYPE_TO_C_TYPE[self.rt_types.dtype]
+        self.return_dim = len(parser.graph.return_shape)
+        self.return_dtype_str = parser.graph.return_dtype_str
 
     def __call__(self, *args, rt=None):
         if len(args) != len(self.arg_types):
             raise NotImplementedError(f"the size of the given input {len(args)}"
                                       f" is not the same as the annotation {len(self.arg_types)}")
-        args, rt = self.to_c_args(*args, rt=rt)
-        rc = self.raw_call(*args)
-        return rt if rt is not None else rc
+        c_args, rt_np_nd = self.to_c_args(*args, rt_np_nd=rt)
+        return self.call_c_arg(*c_args, rt_np_nd=rt_np_nd)
+
+    def call_c_arg(self, *c_args, rt_np_nd=None):
+        if self.func_return_kind.is_void():
+            self.raw_call(*c_args)
+            return
+        elif self.func_return_kind.is_scalar():
+            return self.raw_call(*c_args)
+        elif self.func_return_kind.is_static_tensor():
+            self.raw_call(*c_args)
+            return rt_np_nd
+        elif self.func_return_kind.is_dynamic_tensor():
+            return_nd = make_memref_descriptor(self.return_dim)
+            return_nd_ptr = ctypes.byref(return_nd)
+            self.raw_call(*(return_nd_ptr, *c_args))
+            if _is_inputs(c_args, return_nd):
+                shape = return_nd.shape
+                rt_dtype = PYTYPE_TO_C_TYPE[STR_TO_PYTYPE[self.return_dtype_str]]
+                rt_ptr_type = ctypes.POINTER(rt_dtype)
+                casted_return_ptr = ctypes.cast(
+                    return_nd.aligned_ptr + return_nd.offset, rt_ptr_type)
+                rt = np.ctypeslib.as_array(casted_return_ptr, shape)
+            else:
+                shape = return_nd.shape
+                rt_dtype = PYTYPE_TO_C_TYPE[STR_TO_PYTYPE[self.return_dtype_str]]
+                rt_ptr_type = ctypes.POINTER(rt_dtype)
+                casted_return_ptr = ctypes.cast(
+                    return_nd.aligned_ptr + return_nd.offset, rt_ptr_type)
+                rt = np.ctypeslib.as_array(casted_return_ptr, shape)
+                rt = np.array(rt, copy=True)
+                self.deallocator(return_nd.allocated_ptr)
+            return rt
+        else:
+            raise SyntaxError(f"unknown function return kind {self.func_return_kind}")
 
     def raw_call(self, *args):
         return self.func(*args)
 
-    def to_c_args(self, *args, rt=None):
+    def to_c_args(self, *args, rt_np_nd=None):
         binded_args, symbol_dict = bind_data_to_type(args, self.arg_types)
-        if not typing_utils.is_scalar_type(self.rt_types):
-            if rt is None:
+        if self.func_return_kind.is_static_tensor():
+            if rt_np_nd is None:
                 shape = [symbol_dict[s] if typing_utils.is_symbol(
                     s) else s for s in self.rt_types.shape]
-                rt = np.zeros(shape=shape, dtype=self.rt_types.dtype)
-            for actual_s, ann_s in zip(rt.shape, self.rt_types.shape):
-                if isinstance(ann_s, int):
-                    continue
-                assert symbol_dict[ann_s] == actual_s
-            binded_args.append((rt, self.rt_types))
-
+                rt_np_nd = np.zeros(shape=shape, dtype=self.rt_types.dtype)
+            binded_args.insert(0, (rt_np_nd, self.rt_types))
         for t, value in symbol_dict.items():
             binded_args.append((value, t))
-        return binded_args_to_c(binded_args), rt
+        c_args = binded_args_to_c(binded_args)
+        return c_args, rt_np_nd
+
+    def _to_py_return(self, memref_descriptor):
+        ...
 
 
 def load_func(shared_lib, parser: KernelParser):
     linalg_func = ctypes.CDLL(os.path.join(os.getcwd(), shared_lib))
-    func = getattr(linalg_func, parser.func_name)
-    return LinalgFuncWrapper(func, parser)
+    func = getattr(linalg_func, f"_mlir_ciface_{parser.func_name}")
+    deallocator = getattr(linalg_func, f"free")
+    return LinalgFuncWrapper(func, parser, deallocator)
 
 
 def compile_linalg(
         parser: KernelParser,
         file_name=None,
-        dir="__mlir_output__",
+        out_dir="__mlir_output__",
         debug=False,
         over_written_code=None):
     current_path = os.getcwd()
@@ -243,9 +327,9 @@ def compile_linalg(
             file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
         if debug:
             file_name = f"_mlir_debug"
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        os.chdir(dir)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        os.chdir(out_dir)
         mlir_f = write_linalg(parser.graph, file_name + ".mlir", debug, over_written_code)
         lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
         llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")

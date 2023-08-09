@@ -236,22 +236,28 @@ class GraphIRPrinter:
         self.mlir_printer.print(f"func.func @{self.func_visitor.func_name}", end='')
         mlir_name_and_type = (f"{name}: {t}" for name, t in zip(mlir_args, mlir_arg_types))
         self.mlir_printer.print(f"({', '.join(mlir_name_and_type)})", end='')
-        if typing_utils.is_scalar_shape(self.func_visitor.return_shape):
+
+        if self.func_visitor.func_return_kind.is_scalar():
             rt_type = str(DTYPE_TO_MLIR[self.func_visitor.return_dtype_str])
-        else:
+            self.mlir_printer.print(f"->{rt_type}", end='')
+        elif self.func_visitor.func_return_kind.is_dynamic_tensor():
             dims = (dim_cvt(d) for d in self.func_visitor.return_shape)
             # todo use self.convert_type_to_mlir(self.graph_output[0])
             rt_type = f"memref<{''.join(dims)}{DTYPE_TO_MLIR[self.func_visitor.return_dtype_str]}>"
+            self.mlir_printer.print(f"->{rt_type}", end='')
 
-        self.mlir_printer.print(f"->{rt_type}", end='')
         self.mlir_printer.print(" attributes {llvm.emit_c_interface} ", end='')
         self.mlir_printer.print("{")
         self.mlir_printer.new_scope()
 
         # convert graph
         self.visit(self.graph_output[0], None)
-        self.mlir_printer.print(f"func.return {self.mlir_var_map[self.graph_output[0]]}", end='')
-        self.mlir_printer.print(f" : {self.convert_type_to_mlir(self.graph_output[0])}")
+        if self.func_visitor.func_return_kind.is_scalar() or self.func_visitor.func_return_kind.is_dynamic_tensor():
+            self.mlir_printer.print(
+                f"func.return {self.mlir_var_map[self.graph_output[0]]}", end='')
+            self.mlir_printer.print(f" : {self.convert_type_to_mlir(self.graph_output[0])}")
+        else:
+            self.mlir_printer.print("func.return")
         self.mlir_printer.pop_scope()
         self.mlir_printer.print("}")
         return str(self.mlir_printer)

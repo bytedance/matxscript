@@ -31,6 +31,7 @@ import matx.kernel.kernel_parser
 import matx.kernel.typing.utils as typing_utils
 from matx.kernel.func_registery import FUNC_REGISTRY, TEMPLATE_REGISTRY
 from .utils import scalar_or_int_var
+from .utils import FuncReturnKind
 
 if TYPE_CHECKING:
     from ..kernel_parser import FunctionVisitor
@@ -127,28 +128,20 @@ class GeneralParser(ast.NodeVisitor):
     def visit_UnaryOp(self, node: ast.UnaryOp) -> _gir.Tensor:
         # todo modify the code below
         operand_ir = self.visit(node.operand)
-        if scalar_or_int_var(operand_ir):
-            op = _gir.UnaryElementWiseOperator(type(node.op))
-            result = op(operand_ir)[0]
-            self.func_visitor.graph_nodes.append(result)
-            self.func_visitor.graph_nodes.append(op)
-            return result
-        else:
-            raise SyntaxError(f"{type(node.op).__name__} ({operand_ir}) is not supported "
-                              f"because {operand_ir} is not a scalar")
+        op = _gir.UnaryElementWiseOperator(type(node.op))
+        result = op(operand_ir)[0]
+        self.func_visitor.graph_nodes.append(result)
+        self.func_visitor.graph_nodes.append(op)
+        return result
 
     def visit_BinOp(self, node: ast.BinOp) -> _gir.Tensor:
         lhs_ir = self.visit(node.left)
         rhs_ir = self.visit(node.right)
-        if scalar_or_int_var(lhs_ir) and scalar_or_int_var(rhs_ir):
-            op = _gir.BinaryElementWiseOperator(type(node.op))
-            result = op(lhs_ir, rhs_ir)[0]
-            self.func_visitor.graph_nodes.append(result)
-            self.func_visitor.graph_nodes.append(op)
-            return result
-        else:
-            raise SyntaxError(f"{lhs_ir} {type(node.op).__name__} {rhs_ir} is not supported "
-                              f"because they are not both scalar")
+        op = _gir.BinaryElementWiseOperator(type(node.op))
+        result = op(lhs_ir, rhs_ir)[0]
+        self.func_visitor.graph_nodes.append(result)
+        self.func_visitor.graph_nodes.append(op)
+        return result
 
     def visit_BoolOp(self, node: ast.BoolOp) -> Any:
         opname = type(node.op).__name__
@@ -525,16 +518,26 @@ class GeneralParser(ast.NodeVisitor):
     def visit_Return(self, node: ast.Return) -> Union[None, _gir.Node]:
         if node.value is None:
             return None
-        if not _gir.utils.is_graph_ir_scalar(self.return_ctx):
-            raise NotImplementedError(
-                "base parser does not support returning things other than scalar")
+        if self.func_visitor.func_return_kind.is_void():
+            raise SyntaxError("Void function should return nothing")
 
         rt_ir = self.visit(node.value)
-        if not _gir.utils.is_graph_ir_scalar(rt_ir):
-            raise NotImplementedError(
-                "The return value is not a scalar which does not match the annotation")
-        copy_operator = _gir.CopyOperator()
-        return copy_operator(self.return_ctx, rt_ir)[0]
+        rt_ir_shape = rt_ir.shape()
+        if self.func_visitor.func_return_kind.is_dynamic_tensor():
+            self.func_visitor.return_dtype_str = rt_ir.dtype()
+            self.func_visitor.return_shape = rt_ir_shape
+
+        if list(rt_ir_shape) != list(self.func_visitor.return_shape):
+            raise RuntimeError(f"the marked shape {self.func_visitor.return_shape} "
+                               f"is not equal to {rt_ir_shape}")
+
+        if self.func_visitor.func_return_kind.is_static_tensor():
+            op = _gir.DeepCopyOperator()
+            self.func_visitor.graph_nodes.append(op)
+            op(self.return_ctx, rt_ir)
+            return self.return_ctx
+        self.func_visitor.graph_output.append(rt_ir)
+        return rt_ir
 
     def visit_Tuple(self, node: ast.Tuple) -> List[_gir.Node]:
         values = []

@@ -31,44 +31,10 @@ from matx.kernel.parser.tensor_op_parser import TensorOpParser
 from matx.kernel.typing import NDArrayType as kernelNDArrayT
 from matx.script import context as script_context
 
+from .utils import BodyIterator, FuncReturnKind
+
 if TYPE_CHECKING:
     from matx.kernel.kernel_parser import KernelParser
-
-
-class BodyIterator:
-
-    def __init__(self, node_stack, auto_add_return=False):
-        self.body = []
-        self.last_ast = None
-        self.node_stack = node_stack
-        self.auto_add_return = auto_add_return
-        self.visited_added_return = False
-
-    def has_next(self) -> bool:
-        if not self.auto_add_return:
-            return len(self.node_stack[-1]) > 0
-        if self.visited_added_return:
-            return False
-        if len(self.node_stack[-1]) > 0:
-            return True
-        return self.auto_add_return and (
-            len(self.body) == 0 or not isinstance(self.last_ast, ast.Return))
-
-    def next(self):
-        if len(self.node_stack[-1]) > 0:
-            self.last_ast = self.node_stack[-1].pop()
-            return self.last_ast
-        self.visited_added_return = True
-        return ast.Return(value=None)
-
-    def push_ir(self, res):
-        if res is not None:
-            if not isinstance(res, _gir.Node):
-                raise SyntaxError('Every IR node here should be a graphIR node!')
-            self.body.append(res)
-        else:
-            # ignore the stmt
-            pass
 
 
 class FunctionVisitor(ast.NodeVisitor):
@@ -95,6 +61,18 @@ class FunctionVisitor(ast.NodeVisitor):
         self.tmp_ndarray_table: Dict[str, _gir.Tensor] = {}
         self.return_ctx: Union[None, _gir.Tensor] = None
         self.return_types = kernel_p.return_types
+        self.return_dtype_str: str = ""
+        self.return_shape = []
+
+        if self.kernel_p.empty_return_signature:
+            self.func_return_kind: FuncReturnKind = FuncReturnKind.VOID
+        elif typing_utils.is_scalar(self.return_types):
+            self.func_return_kind: FuncReturnKind = FuncReturnKind.SCALAR
+        elif typing_utils.is_dynamic_ndarray(self.return_types):
+            self.func_return_kind: FuncReturnKind = FuncReturnKind.DYNAMIC_TENSOR
+        else:
+            self.func_return_kind: FuncReturnKind = FuncReturnKind.STATIC_TENSOR
+
         self.func_name: str = kernel_p.func_name
 
         # for checking
@@ -109,7 +87,6 @@ class FunctionVisitor(ast.NodeVisitor):
         self.body_visitor = None
         self.can_inline = inline
 
-        self.no_return_type = False
         self.tmp_var_id = 891371
 
     def get_new_tmp_var_id(self):
@@ -119,8 +96,8 @@ class FunctionVisitor(ast.NodeVisitor):
     def check_and_dispatch(self, node: ast.AST) -> Any:
         if isinstance(node, ast.For):
             p = LoopParser(self)
-        elif TensorOpParser.can_parse(self, node):
-            p = TensorOpParser(self)
+        # elif TensorOpParser.can_parse(self, node):
+        #     p = TensorOpParser(self)
         else:
             p = GeneralParser(self)
         t = p.visit(node)
@@ -164,21 +141,17 @@ class FunctionVisitor(ast.NodeVisitor):
                                   f"but get {type_annotation} for {arg}")
 
     def make_return(self, shape, dtype: str):
-        if typing_utils.is_scalar_type(self.kernel_p.return_types):
-            nd_ctx = _gir.Scalar(
-                name=self.return_var_name,
-                dtype=dtype,
-                is_input=False,
-                is_output=True)
-            self.return_ctx = nd_ctx
-        elif typing_utils.is_ndarray_type(self.kernel_p.return_types):
+        if typing_utils.is_ndarray_type(self.kernel_p.return_types):
             nd_ctx = _gir.Tensor(
                 shape=shape,
                 name=self.return_var_name,
                 dtype=dtype,
                 is_input=True,
                 is_output=True)
-            self.arg_context_table[self.return_var_name] = nd_ctx
+
+            new_arg_context_table = {self.return_var_name: nd_ctx, **self.arg_context_table}
+
+            self.arg_context_table = new_arg_context_table
             self.return_ctx = nd_ctx
         else:
             raise SyntaxError("kernel function is supposed to return a kernel ndarray"
@@ -189,8 +162,12 @@ class FunctionVisitor(ast.NodeVisitor):
 
     def check_return(self) -> Any:
         # todo fix return input ndarray
-        if self.kernel_p.empty_return_signature:
-            self.no_return_type = True
+        if self.func_return_kind.is_void():
+            return
+        if self.func_return_kind.is_scalar():
+            dtype = typing_utils.convert_to_string_dtype(self.kernel_p.return_types.dtype)
+            self.return_dtype_str = dtype
+            self.return_shape = []
             return
         if not typing_utils.is_ndarray_type(self.kernel_p.return_types):
             raise SyntaxError("kernel function is supposed to return a kernel ndarray"
@@ -204,8 +181,10 @@ class FunctionVisitor(ast.NodeVisitor):
             raise SyntaxError("return var name is being used")
 
         dtype = typing_utils.convert_to_string_dtype(self.kernel_p.return_types.dtype)
-        shape = self.convert_to_gir_shape(self.kernel_p.return_types.shape)
-        self.make_return(shape, dtype)
+        self.return_dtype_str = dtype
+        self.return_shape = self.convert_to_gir_shape(self.kernel_p.return_types.shape)
+        if self.func_return_kind.is_static_tensor():
+            self.make_return(self.return_shape, self.return_dtype_str)
 
     def parse_body(self, auto_add_return=False):
         self.body_visitor = BodyIterator(self.context.node_stack, auto_add_return)
@@ -249,9 +228,6 @@ class FunctionVisitor(ast.NodeVisitor):
         self.init_args()
         self.check_return()
         return self.visit_body(node)
-
-    def is_scalar_return(self):
-        return typing_utils.is_scalar_type(self.return_types)
 
     def substitute_symbol_expr(self, symbol_expr):
         free_symbols = symbol_expr.free_symbols
