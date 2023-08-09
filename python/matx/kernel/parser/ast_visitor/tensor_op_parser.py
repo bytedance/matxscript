@@ -16,16 +16,17 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
+'''
 from __future__ import annotations
 
 import ast
 from typing import Any, Union, TYPE_CHECKING
 
 import matx.kernel.graphIR as _gir
-from matx.kernel.parser.general_parser import GeneralParser
+from matx.kernel.parser.ast_visitor.general_visitor import GeneralParser
 
 if TYPE_CHECKING:
-    from .function_visitor import FunctionVisitor
+    from matx.kernel.parser.function_visitor import FunctionVisitor
 
 
 class TensorOpParser(GeneralParser):
@@ -127,3 +128,4 @@ class TensorOpParser(GeneralParser):
             return None
         else:
             raise RuntimeError(f"return {type(rt_ir)} is not support now")
+'''

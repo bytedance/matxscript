@@ -16,24 +16,3 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-
-from enum import Enum
-
-
-class FuncReturnKind(Enum):
-    VOID = 1,
-    SCALAR = 2,
-    STATIC_TENSOR = 3,
-    DYNAMIC_TENSOR = 4
-
-    def is_void(self):
-        return self is FuncReturnKind.VOID
-
-    def is_scalar(self):
-        return self is FuncReturnKind.SCALAR
-
-    def is_static_tensor(self):
-        return self is FuncReturnKind.STATIC_TENSOR
-
-    def is_dynamic_tensor(self):
-        return self is FuncReturnKind.DYNAMIC_TENSOR

@@ -28,7 +28,7 @@ import matx.kernel.typing.utils as typing_utils
 from .linalg_printer import LinalgGenericPrinter, LinalgReductionPrinter
 
 if TYPE_CHECKING:
-    from ..kernel_parser import FunctionVisitor
+    from ..kernel_parser import FunctionParser
 
 
 @dataclass
@@ -120,12 +120,12 @@ def not_supported_op(*_, node=None):
 
 class GraphIRPrinter:
 
-    def __init__(self, func_visitor: 'FunctionVisitor'):
-        self.func_visitor = func_visitor
+    def __init__(self, func_parser: 'FunctionParser'):
+        self.func_parser = func_parser
 
-        self.graph_input: List[_gir.Node] = func_visitor.graph_input
-        self.graph_output: List[_gir.Node] = func_visitor.graph_output
-        self.graph_nodes: List[_gir.Node] = func_visitor.graph_nodes
+        self.graph_input: List[_gir.Node] = func_parser.graph_input
+        self.graph_output: List[_gir.Node] = func_parser.graph_output
+        self.graph_nodes: List[_gir.Node] = func_parser.graph_nodes
 
         self.mlir_printer = IrPrinter()
         self.mlir_var_map = {}
@@ -213,7 +213,7 @@ class GraphIRPrinter:
     def as_linalg_text(self):
         mlir_args = []
         mlir_arg_types = []
-        for arg, node in self.func_visitor.arg_context_table.items():
+        for arg, node in self.func_parser.arg_context_table.items():
             if not (isinstance(node, _gir.Tensor) or isinstance(node, _gir.Scalar)):
                 raise NotImplementedError("func parameters can only be marked as ndarray or scalar")
             name = f"%{arg}"
@@ -221,7 +221,7 @@ class GraphIRPrinter:
             mlir_arg_types.append(self.convert_type_to_mlir(node))
             self.mlir_var_map[node] = name
 
-        for dim, dim_var in self.func_visitor.shape_symbol_table.items():
+        for dim, dim_var in self.func_parser.shape_symbol_table.items():
             name = f"%{dim}"
             mlir_args.append(name)
             mlir_arg_types.append(self.convert_type_to_mlir(dim_var))
@@ -233,17 +233,17 @@ class GraphIRPrinter:
                               f"but get {len(self.graph_output)}, "
                               f"which contains {self.graph_output}")
 
-        self.mlir_printer.print(f"func.func @{self.func_visitor.func_name}", end='')
+        self.mlir_printer.print(f"func.func @{self.func_parser.func_name}", end='')
         mlir_name_and_type = (f"{name}: {t}" for name, t in zip(mlir_args, mlir_arg_types))
         self.mlir_printer.print(f"({', '.join(mlir_name_and_type)})", end='')
 
-        if self.func_visitor.func_return_kind.is_scalar():
-            rt_type = str(DTYPE_TO_MLIR[self.func_visitor.return_dtype_str])
+        if self.func_parser.func_return_kind.is_scalar():
+            rt_type = str(DTYPE_TO_MLIR[self.func_parser.return_dtype_str])
             self.mlir_printer.print(f"->{rt_type}", end='')
-        elif self.func_visitor.func_return_kind.is_dynamic_tensor():
-            dims = (dim_cvt(d) for d in self.func_visitor.return_shape)
+        elif self.func_parser.func_return_kind.is_dynamic_tensor():
+            dims = (dim_cvt(d) for d in self.func_parser.return_shape)
             # todo use self.convert_type_to_mlir(self.graph_output[0])
-            rt_type = f"memref<{''.join(dims)}{DTYPE_TO_MLIR[self.func_visitor.return_dtype_str]}>"
+            rt_type = f"memref<{''.join(dims)}{DTYPE_TO_MLIR[self.func_parser.return_dtype_str]}>"
             self.mlir_printer.print(f"->{rt_type}", end='')
 
         self.mlir_printer.print(" attributes {llvm.emit_c_interface} ", end='')
@@ -252,7 +252,7 @@ class GraphIRPrinter:
 
         # convert graph
         self.visit(self.graph_output[0], None)
-        if self.func_visitor.func_return_kind.is_scalar() or self.func_visitor.func_return_kind.is_dynamic_tensor():
+        if self.func_parser.func_return_kind.is_scalar() or self.func_parser.func_return_kind.is_dynamic_tensor():
             self.mlir_printer.print(
                 f"func.return {self.mlir_var_map[self.graph_output[0]]}", end='')
             self.mlir_printer.print(f" : {self.convert_type_to_mlir(self.graph_output[0])}")
