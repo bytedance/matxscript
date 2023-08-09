@@ -58,16 +58,18 @@ class FunctionParser(ast.NodeVisitor):
         self.shape_symbol_table: Dict[str, _gir.IntVar] = {}
         self.tmp_scalar_table: Dict[str, _gir.Scalar] = {}
         self.tmp_ndarray_table: Dict[str, _gir.Tensor] = {}
+        # return ctx is not only if function return kind is static tensor
         self.return_ctx: Union[None, _gir.Tensor] = None
-        self.return_types = kernel_p.return_types
+        # return_dtype_str is "" only if function return kind is void
         self.return_dtype_str: str = ""
+        # return_shape is [] only if function return kind is void or scalar
         self.return_shape = []
 
         if self.kernel_p.empty_return_signature:
             self.func_return_kind: FuncReturnKind = FuncReturnKind.VOID
-        elif typing_utils.is_scalar(self.return_types):
+        elif typing_utils.is_scalar(kernel_p.return_types):
             self.func_return_kind: FuncReturnKind = FuncReturnKind.SCALAR
-        elif typing_utils.is_dynamic_ndarray(self.return_types):
+        elif typing_utils.is_dynamic_ndarray(kernel_p.return_types):
             self.func_return_kind: FuncReturnKind = FuncReturnKind.DYNAMIC_TENSOR
         else:
             self.func_return_kind: FuncReturnKind = FuncReturnKind.STATIC_TENSOR
