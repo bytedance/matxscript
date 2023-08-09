@@ -45,10 +45,8 @@ class TestSingleReturnParser(unittest.TestCase):
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
         a = np.array([[1, 2], [3, 4]], dtype=np.int32)
-        rt = np.array([[0, 0], [0, 0]], dtype=np.int32)
         f = compile_linalg(p)
-        f(a, rt=rt)
-        np.testing.assert_equal(rt, foo(a))
+        np.testing.assert_equal(f(a), foo(a))
         # todo check ir structure
 
     def test_one_bin_op(self):

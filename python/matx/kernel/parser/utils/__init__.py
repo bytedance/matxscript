@@ -17,5 +17,7 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from .function_visitor import *
-from .utils import FuncReturnKind
+from .utils import *
+from .func_return_kind import FuncReturnKind
+
+from .function_body_iterator import BodyIterator
