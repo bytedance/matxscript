@@ -27,7 +27,6 @@ from typing import Any, List, Union, TYPE_CHECKING
 import numpy as np
 
 import matx.kernel.graphIR as _gir
-import matx.kernel.kernel_parser
 import matx.kernel.typing.utils as typing_utils
 from matx.kernel.func_registery import FUNC_REGISTRY, TEMPLATE_REGISTRY
 from matx.kernel.parser.utils import scalar_or_int_var
