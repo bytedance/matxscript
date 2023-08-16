@@ -1,0 +1,81 @@
+// Copyright 2023 ByteDance Ltd. and/or its affiliates.
+//
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+
+#include "matxscript/runtime/mlir/convert_memref.h"
+#include "matxscript/runtime/mlir/func_loader.h"
+#include "matxscript/runtime/runtime_value.h"
+#include "matxscript/runtime/registry.h"
+
+static_assert(sizeof (__fp16) == 2, "__fp16(a.k.a float16) size must be 2 bytes, your machine/gcc may not support __fp16 type");
+static_assert(sizeof (float) == 4, "float(a.k.a float32) size must be 4 bytes, your machine/gcc may not support float type");
+static_assert(sizeof (double) == 8, "double(a.k.a float64) size must be 8 bytes, your machine/gcc may not support double type");
+
+{%- set func_prefix = "_" ~ unique_id ~ "_" ~ func_name ~ "_" %}
+{%- set func_type = func_prefix ~ "_mlir_func_type" %}
+{%- set c_interface_func_name = func_prefix ~ "_matx_c_api_" %}
+using namespace matxscript::runtime;
+using namespace matxscript::runtime::mlir;
+
+using {{func_type}} = {{return_type}}(*)({{input_types |join(', ') }});
+
+RTValue {{ c_interface_func_name }}(PyArgs args){
+  static void * func_ptr = load_func("{{func_name}}", "{{lib_path}}");
+  static auto casted_func_ptr = reinterpret_cast<{{func_type}}>(func_ptr);
+
+  //convert input types
+  {%- set func_args_list = [] %}
+  {%- for t in input_types %}
+  {%- set i = loop.index-1 %}
+  {%- if t == "void *" %}
+  auto && _memref_data_{{i}} = args[{{i}}].As<NDArray>();
+  auto && _memref_ptr_{{i}} = convert_from_ndarray(_memref_data_{{i}});
+  auto _cast_arg_{{i}}_ = _memref_ptr_{{i}}.get();
+  {%- else %}
+  auto _cast_arg_{{i}}_ = args[{{i}}].As<{{t}}>();
+  {%- endif %}
+  {% set _ = func_args_list.append("_cast_arg_" ~ i ~ "_") %}
+  {%- endfor %}
+  {%- set func_args = func_args_list|join(', ') %}
+
+  // call funtion
+  {%- if func_return_kind.is_void() %}
+  casted_func_ptr({{func_args}});
+  return None;
+
+  {%- elif func_return_kind.is_scalar() %}
+  return casted_func_ptr({{func_args}});
+
+  {%- elif func_return_kind.is_static_tensor() %}
+  static_assert(false, "function_return_kind({{func_return_kind}}) is not supported");
+  return None;
+
+  {%- elif func_return_kind.is_dynamic_tensor() %}
+  void * _mlir_return_31905 = casted_func_ptr({{func_args}});
+  return convert_to_ndarray(_mlir_return_31905, {{return_ndim}}, cvt_str_to_dl_dtype("{{return_dtype}}"));
+
+
+  {%- else %}
+  static_assert(false, "function_return_kind({{func_return_kind}}) is not supported");
+  return None;
+
+  {%- endif %}
+}
+
+MATX_REGISTER_NATIVE_FUNC({{c_interface_func_name}});
