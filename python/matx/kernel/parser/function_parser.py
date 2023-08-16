@@ -27,7 +27,7 @@ import matx.kernel.typing.utils as typing_utils
 from matx.kernel.func_registery import FUNC_REGISTRY
 from matx.kernel.parser.ast_visitor.general_ast_visitor import GeneralAstVisitor
 from matx.kernel.parser.ast_visitor.loop_ast_visitor import LoopAstVisitor
-from matx.kernel.typing import NDArrayType as kernelNDArrayT
+from matx.kernel.typing import NDArrayType as kernelNDArrayT, dynamic
 from matx.script import context as script_context
 
 from .utils import BodyIterator, FuncReturnKind
@@ -62,7 +62,7 @@ class FunctionParser(ast.NodeVisitor):
         self.return_ctx: Union[None, _gir.Tensor] = None
         # return_dtype_str is "" only if function return kind is void
         self.return_dtype_str: str = ""
-        # return_shape is [] only if function return kind is void or scalar
+        # return_shape is not [] only if function return kind is static tensor
         self.return_shape = []
 
         if self.kernel_p.empty_return_signature:
@@ -183,9 +183,9 @@ class FunctionParser(ast.NodeVisitor):
 
         dtype = typing_utils.convert_to_string_dtype(self.kernel_p.return_types.dtype)
         self.return_dtype_str = dtype
-        self.return_shape = self.convert_to_gir_shape(self.kernel_p.return_types.shape)
         if self.func_return_kind.is_static_tensor():
             self.make_return(self.return_shape, self.return_dtype_str)
+            self.return_shape = self.convert_to_gir_shape(self.kernel_p.return_types.shape)
 
     def parse_body(self, auto_add_return=False):
         self.body_visitor = BodyIterator(self.context.node_stack, auto_add_return)

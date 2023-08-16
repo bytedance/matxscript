@@ -21,6 +21,15 @@ import matx.kernel.symbol.utils as symbol_utils
 import matx.kernel.typing.utils as typing_utils
 
 
+class VariableLength:
+
+    def __eq__(self, other):
+        return self is other
+
+
+dynamic = VariableLength()
+
+
 class NDArrayType:
     def __init__(self, shape, dtype):
         self.shape = tuple(shape)
