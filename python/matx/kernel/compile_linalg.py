@@ -19,16 +19,19 @@
 
 import ctypes
 import os
+import pathlib
 import subprocess
 import time
 from collections import OrderedDict
 
 import numpy as np
 
+import matx
 import matx.kernel.typing.utils as typing_utils
 from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.typing import PYTYPE_TO_C_TYPE, STR_TO_PYTYPE
+from matx.kernel.codegen.cpp_template.function_meta_data import from_kernel_parser
 
 
 def make_memref_descriptor(
@@ -316,6 +319,76 @@ def load_func(shared_lib, parser: KernelParser):
     return LinalgFuncWrapper(func, parser, deallocator)
 
 
+interface_lib = set()
+
+
+def generate_matx_c_interface(parser, file_name, shard_lib_path):
+    env = os.environ.copy()
+    c_interface_code = from_kernel_parser(
+        parser, os.path.join(
+            os.path.abspath(
+                os.curdir), shard_lib_path))
+    shard_lib_dir = os.path.dirname(shard_lib_path)
+    file_path = os.path.join(shard_lib_dir, f"{file_name}_c_interface.cpp")
+    with open(file_path, "w+") as f:
+        f.write(c_interface_code.code())
+
+    include_dir = pathlib.Path(os.path.abspath(
+        __file__)).parent.parent.parent.parent.joinpath("include")
+    output_file = os.path.join(shard_lib_dir, f"{file_name}_c_interface.o")
+
+    # gcc -fPIC -I/matxscript/include -std=c++14 file1.c
+    compile_c_interface = subprocess.Popen(["g++",
+                                            "-fPIC",
+                                            f"-I{include_dir}",
+                                            "-std=c++14",
+                                            "-c",
+                                            file_path],
+                                           env=env,
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
+
+    stdout, stderr = compile_c_interface.communicate()
+    print(stdout.decode())
+    err = stderr.decode()
+    if len(err) != 0:
+        raise RuntimeError("\n" + err)
+
+    # gcc -shared -o libexample.so file1.o file2.o
+    compile_c_interface = subprocess.Popen(["g++",
+                                            "-shared",
+                                            "-o",
+                                            f"lib{file_name}_c_interface.so",
+                                            output_file,
+                                            "-L/Users/bytedance/Desktop/workspace/matxscript/lib/",
+                                            "-lmatx"],
+                                           env=env,
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
+
+    stdout, stderr = compile_c_interface.communicate()
+    print(stdout.decode())
+    err = stderr.decode()
+    if len(err) != 0:
+        raise RuntimeError("\n" + err)
+
+    LIB = ctypes.CDLL(
+        os.path.join(
+            shard_lib_dir,
+            f"lib{file_name}_c_interface.so"),
+        ctypes.RTLD_LOCAL)
+    interface_lib.add(LIB)
+
+    from .matx_compatible_interface import KernelFunction, get_kernel_func
+    func_name = "_" + str(c_interface_code.unique_id) + "_" + \
+        c_interface_code.func_name + "__matx_c_api_"
+    return get_kernel_func(func_name)
+    py_wrapper = KernelFunction("_" + str(c_interface_code.unique_id) +
+                                "_" + c_interface_code.func_name + "__matx_c_api_")
+
+    return py_wrapper
+
+
 def compile_linalg(
         parser: KernelParser,
         file_name=None,
@@ -332,10 +405,19 @@ def compile_linalg(
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
         os.chdir(out_dir)
+        # codegen linalg code to local file
         mlir_f = write_linalg(parser.graph, file_name + ".mlir", debug, over_written_code)
+        # apply mlir passes
         lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
+        # lower mlir to llvm
         llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
+        # compile llvm code to shared library
         shared_lib = llvm_compile(llvm_f, file_name + ".so")
+        # codegen the c inter face that is compatible with matx
+        matx_c_interface = generate_matx_c_interface(parser, file_name, shared_lib)
+        return matx_c_interface
+
+        # todo remove this part
         func = load_func(shared_lib, parser)
         return func
     except Exception as e:
