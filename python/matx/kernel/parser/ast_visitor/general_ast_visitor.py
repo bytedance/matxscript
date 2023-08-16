@@ -26,6 +26,7 @@ from typing import Any, List, Union, TYPE_CHECKING
 
 import numpy as np
 
+
 import matx.kernel.graphIR as _gir
 import matx.kernel.typing.utils as typing_utils
 from matx.kernel.func_registery import FUNC_REGISTRY, TEMPLATE_REGISTRY
@@ -464,7 +465,8 @@ class GeneralAstVisitor(ast.NodeVisitor):
                 func_inspector = template.get_function(args_type_list).graph
             else:
                 if func.id not in FUNC_REGISTRY:
-                    p = matx.kernel.kernel_parser.KernelParser(f_obj)
+                    from matx.kernel.kernel_parser import KernelParser
+                    p = KernelParser(f_obj)
                     p.parse()
                 func_inspector = FUNC_REGISTRY[id(f_obj)]
         else:
