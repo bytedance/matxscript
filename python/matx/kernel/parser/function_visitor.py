@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Union, TYPE_CHECKING
 import numpy as np
 
 import matx.kernel.graphIR as _gir
+import matx.kernel.symbol.utils as symbol_utils
 import matx.kernel.typing.utils as typing_utils
 from matx.kernel.func_registery import FUNC_REGISTRY
 from matx.kernel.parser.general_parser import GeneralParser
@@ -196,7 +197,7 @@ class FunctionVisitor(ast.NodeVisitor):
                               " or scalar(a.k.a kernel ndarray with shape 1)"
                               f"but get {self.kernel_p.return_types}")
         for dim in self.kernel_p.return_types.shape:
-            if typing_utils.is_symbol(dim) and str(dim) not in self.shape_symbol_table:
+            if typing_utils.is_symbol(dim) and (not self.all_in_dict(dim)):
                 raise SyntaxError(
                     f"{dim} in the return type is not defined in any of the shape in input args")
         if self.return_var_name in self.arg_context_table:
@@ -252,10 +253,23 @@ class FunctionVisitor(ast.NodeVisitor):
     def is_scalar_return(self):
         return typing_utils.is_scalar_type(self.return_types)
 
+    def substitute_symbol_expr(self, symbol_expr):
+        free_symbols = symbol_expr.free_symbols
+        sub_dict = {}
+        for s in free_symbols:
+            if str(s) in self.shape_symbol_table:
+                sub_dict[str(s)] = self.shape_symbol_table[str(s)]
+            else:
+                raise SyntaxError(f"the symbol {s} in the expr ({symbol_expr}) is not defined.")
+        return symbol_expr.subs(sub_dict).evalf()
+
     def convert_to_gir_shape(self, shape):
+
         gir_shape = []
         for d in shape:
-            if typing_utils.is_symbol(d):
+            if symbol_utils.is_symbol_expression(d):
+                _ = self.substitute_symbol_expr(d)
+            elif symbol_utils.is_symbol(d):
                 if str(d) in self.shape_symbol_table:
                     gir_shape.append(self.shape_symbol_table[str(d)])
                 else:
@@ -269,3 +283,6 @@ class FunctionVisitor(ast.NodeVisitor):
                     f"the shape ({shape}) of the ndarray is expected to be an symbol or int,"
                     f" but get {d} ({type(d)})")
         return gir_shape
+
+    def all_in_dict(self, expr):
+        return all(str(s) in self.shape_symbol_table for s in expr.free_symbols)

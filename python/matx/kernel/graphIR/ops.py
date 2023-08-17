@@ -18,12 +18,14 @@
 #  under the License.
 
 import ast
-import numpy as np
-from typing import List, Set
 from collections import OrderedDict
+from typing import List, Any
+
+import numpy as np
+
 import matx.kernel.graphIR.utils as graph_utils
 import matx.kernel.typing.utils as typing_utils
-from matx.kernel.graphIR import Operator, Tensor, Node, Scalar
+from .graph import Operator, Tensor, Node, Scalar, DynamicTensor
 
 
 def not_tensor(x):
@@ -208,6 +210,115 @@ class DeepCopyOperator(CopyOperator):
 
     def __call__(self, copy_to: Tensor, copy_from: Tensor) -> List[Tensor]:
         return super().__call__(copy_to, copy_from)
+
+
+class TensorSliceOperator(Operator):
+
+    def __init__(self):
+        super().__init__()
+        self.produce_scalar = False
+        self.offset = []
+        self.size = []
+        self.stride = []
+        self.shape = []
+
+    def _make_tensor(self, shape, target, produce_dynamic_tensor):
+        view_name = f"{target.name()}_view_{id(self)}"
+        dims = len(shape)
+        if produce_dynamic_tensor:
+            return DynamicTensor(dims=dims, name=view_name, shape=shape, is_view_of=target)
+        else:
+            return Tensor(name=view_name, shape=shape, is_view_of=target)
+
+    @staticmethod
+    def _unwrap_const_scalar_or_do_nothing(e):
+        if graph_utils.is_graph_ir_const_scalar(e):
+            return e.value()
+        return e
+
+    @staticmethod
+    def _is_reducing_dim(e):
+        return graph_utils.is_graph_ir_scalar(e)
+
+    @staticmethod
+    def _is_range(e):
+        return isinstance(e, (tuple, list))
+
+    @staticmethod
+    def _is_constant_range(e):
+        return TensorSliceOperator._is_range(e) and all(
+            graph_utils.is_graph_ir_const_scalar(s) for s in e)
+
+    def __call__(self, target: Tensor, idx: List[Any], result_shape: List[Tensor]) -> List[Tensor]:
+        self._attrs["inputs"] = [target]
+        target.dst_ops().add(self)
+        self.tensor = target
+        self.index = idx
+        self.size = [i for i in result_shape]
+        self.shape = result_shape
+        produce_dynamic_tensor = isinstance(target, DynamicTensor)
+        for e in idx:
+            if self._is_reducing_dim(e):
+                self.offset.append(self._unwrap_const_scalar_or_do_nothing(e))
+                self.stride.append(1)
+            elif self._is_range(e):
+                produce_dynamic_tensor = not self._is_constant_range(e)
+                self.offset.append(self._unwrap_const_scalar_or_do_nothing(e[0]))
+                self.stride.append(self._unwrap_const_scalar_or_do_nothing(e[2]))
+            else:
+                raise SyntaxError(f"not support op")
+        padding_size = len(target.shape()) - len(idx)
+        size_pad = [1] * padding_size
+        offset_pad = [0] * padding_size
+        stride_pad = [0] * padding_size
+        self.size = [*size_pad, *self.size]
+        self.offset = [*offset_pad, *self.offset]
+        self.stride = [*stride_pad, *self.stride]
+        view = self._make_tensor(result_shape, target, produce_dynamic_tensor)
+        view.src_ops().add(self)
+        return [view]
+
+
+class TensorGetItemOperator(Operator):
+
+    def __init__(self):
+        super().__init__()
+        self.tensor = None
+        self.index = None
+        self.produce_scalar = True
+
+    def __call__(self, target: Tensor, idx: List[Any]) -> List[Tensor]:
+        self._attrs["inputs"] = [target]
+        self.tensor = target
+        self.index = idx
+        target.dst_ops().add(self)
+        scalar = Scalar(name=f"{target.name()}_view_{id(self)}", is_view_of=target)
+        scalar.src_ops().add(self)
+        return [scalar]
+
+
+class TensorSetItemOperator(Operator):
+
+    def __init__(self):
+        super().__init__()
+        self.tensor = None
+        self.index = None
+        self.value = None
+        self.produce_scalar = True
+
+    def __call__(self, target: Tensor, idx: List[Any], value: Scalar) -> List[Tensor]:
+        self._attrs["inputs"] = [target, value]
+        self.tensor = target
+        self.index = idx
+        self.value = value
+        target.dst_ops().add(self)
+        value.dst_ops().add(self)
+        new_tensor = Tensor(
+            name=f"{target.name()}_set_item_{id(self)}",
+            dtype=target.dtype(),
+            shape=target.shape())
+        new_tensor.src_ops().add(self)
+        return [new_tensor]
 
 
 """

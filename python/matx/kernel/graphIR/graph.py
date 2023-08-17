@@ -29,6 +29,7 @@ from numbers import Number
 from pprint import pformat
 from typing import Any, Dict, Iterable, List, Optional, Set, Union
 
+import numpy as np
 import sympy
 
 import matx.kernel.graphIR
@@ -616,6 +617,46 @@ class Scalar(Tensor):
         shape = []
         super().__init__(shape, name, src_ops, dst_ops, dtype, is_input, is_output, value, is_view_of,
                          is_internal_constant, skip_constant_folding, check_nan_and_inf, check_outputs)
+
+
+AnySymbol = sympy.Symbol('DynamicTensorAnyShapeSymbol', positive=True)
+
+
+class DynamicTensor(Tensor):
+
+    def __init__(self,
+                 dims: int,
+                 shape: List[Union[Tensor, Scalar, IntVar]],
+                 name: str = None,
+                 src_ops: Iterable[Node] = None,
+                 dst_ops: Iterable[Node] = None,
+                 dtype: str = "float16",
+                 is_input: bool = False,
+                 is_output: bool = False,
+                 value: Any = None,
+                 is_view_of: Any = None,
+                 is_internal_constant: bool = False,
+                 skip_constant_folding: bool = False,
+                 check_nan_and_inf: bool = False,
+                 check_outputs: bool = False,
+                 ):
+        int_var_shape = [IntVar([0, np.iinfo(np.int64).max], symbolic_value=AnySymbol)
+                         for _ in range(dims)]
+        self.shape_vars = shape
+        super().__init__(
+            int_var_shape,
+            name,
+            src_ops,
+            dst_ops,
+            dtype,
+            is_input,
+            is_output,
+            value,
+            is_view_of,
+            is_internal_constant,
+            skip_constant_folding,
+            check_nan_and_inf,
+            check_outputs)
 
 
 class Operator(Node):

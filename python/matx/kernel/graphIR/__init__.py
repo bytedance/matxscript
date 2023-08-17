@@ -18,9 +18,9 @@
 #  under the License.
 
 
+from . import graph_pass
 from . import symbolic
 from . import utils
 from .graph import *
 from .op_registry import *
 from .ops import *
-from . import graph_pass

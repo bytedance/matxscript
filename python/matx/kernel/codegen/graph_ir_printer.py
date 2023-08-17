@@ -94,6 +94,18 @@ class IrPrinter:
         return self.output
 
 
+def dim_cvt(dim):
+    if isinstance(dim, int):
+        return f"{dim}x"
+    if isinstance(dim, _gir.IntVar):
+        return "?x"
+    if isinstance(dim, _gir.IntImm):
+        return f"{dim.value()}x"
+    if _gir.utils.is_graph_ir_scalar(dim):
+        return "?x"
+    raise SyntaxError(f"not supported type {type(dim)} for {dim} as tensor dim")
+
+
 def is_scalar_op(inputs: List[_gir.Tensor]) -> bool:
     return all((len(t.shape()) == 0 for t in inputs))
 
@@ -116,6 +128,7 @@ class GraphIRPrinter:
 
         self.mlir_printer = IrPrinter()
         self.mlir_var_map = {}
+        self.special_type_map = {}
         self._var_index_var = 0
         self.visited = set(self.graph_input)
 
@@ -174,23 +187,27 @@ class GraphIRPrinter:
         self._var_index_var += 1
         return f"%{i}"
 
-    @staticmethod
-    def convert_type_to_mlir(node: _gir.Node):
+    def get_strided_memref_type(self, node, shape=None, stride=None, offset=None) -> str:
+        if node in self.special_type_map:
+            return self.special_type_map[node]
+        ndim = len(node.shape())
+        if shape is None:
+            mlir_shape = (dim_cvt(d) for d in node.shape())
+        else:
+            mlir_shape = (dim_cvt(d) for d in shape)
+        return f"memref<{''.join(mlir_shape)}{DTYPE_TO_MLIR[node.dtype()]}, strided<[{', '.join(['?'] * ndim)}], offset: ?>>"
+
+    def convert_type_to_mlir(self, node: _gir.Node):
+        if node in self.special_type_map:
+            return self.special_type_map[node]
         if isinstance(node, _gir.Scalar) or _gir.utils.is_graph_ir_scalar(node):
             return str(DTYPE_TO_MLIR[node.dtype()])
         if isinstance(node, _gir.Tensor):
-            def dim_cvt(dim):
-                if isinstance(dim, _gir.IntVar):
-                    return "?x"
-                if isinstance(dim, _gir.IntImm):
-                    return f"{dim.value()}x"
-                raise SyntaxError(f"not supported type {type(dim)} for {dim} as tensor dim")
-
             dims = (dim_cvt(d) for d in node.shape())
             return f"memref<{''.join(dims)}{DTYPE_TO_MLIR[node.dtype()]}>"
         if isinstance(node, (_gir.IntImm, _gir.IntVar)):
             return "i64"
-        raise SyntaxError(f"Type {type} does not have a corresponding mlir type")
+        raise SyntaxError(f"Type {type(node)} does not have a corresponding mlir type")
 
     def as_linalg_text(self):
         mlir_args = []
@@ -473,6 +490,71 @@ class GraphIRPrinter:
         visit_res = visitor(node, _from)
         return visit_res
 
+    def _visit_IntImm(self, node: _gir.IntImm, _from: _gir.Node) -> str:
+        if node in self.visited:
+            return self.mlir_var_map[node]
+        mlir_var = self.new_var_name
+        stmt = f"{mlir_var} = index.constant {node.value()}"
+        self.mlir_printer.print(stmt)
+        self.mlir_var_map[node] = mlir_var
+        self.visited.add(node)
+        return mlir_var
+
+    def _convert_index(self, index, node):
+        result = []
+        for e in index:
+            if _gir.utils.is_graph_ir_scalar(e):
+                self.visit(e, node)
+                result.append(self._cast_to_idx(e))
+            elif isinstance(e, _gir.IntImm):
+                result.append(self.visit(e, node))
+            else:
+                raise SyntaxError("not support")
+        return result
+
+    def _visit_TensorGetItemOperator(
+            self,
+            node: _gir.TensorGetItemOperator,
+            _from: _gir.Node) -> str:
+        result_name = self.new_var_name
+        tensor_name = self._visit_Tensor(node.tensor, node)
+        tensor_type = self.convert_type_to_mlir(node.tensor)
+        index = self._convert_index(node.index, node)
+        stmt = f"{result_name} = memref.load {tensor_name}[{', '.join(index)}] : {tensor_type}"
+        self.mlir_printer.print(stmt)
+        return result_name
+
+    def _visit_TensorSliceOperator(self, node: _gir.TensorSliceOperator, _from: _gir.Node) -> str:
+        def shape_helper(l):
+            result = []
+            for e in l:
+                if _gir.utils.is_graph_ir_scalar(e):
+                    self.visit(e, node)
+                    result.append(self._cast_to_idx(e))
+                elif isinstance(e, _gir.IntImm):
+                    rc = self.visit_int_var(e)
+                    result.append(rc)
+                elif isinstance(e, _gir.IntVar):
+                    self.visit_int_var(e)
+                    result.append(self._cast_to_idx(e))
+                elif isinstance(e, int):
+                    result.append(e)
+                else:
+                    raise SyntaxError(f"not supported {type(e)}")
+            return result
+
+        result_name = self.new_var_name
+        tensor = self.visit(node.tensor, node)
+        offset = ', '.join(map(str, shape_helper(node.offset)))
+        size = ', '.join(map(str, shape_helper(node.size)))
+        stride = ', '.join(map(str, shape_helper(node.stride)))
+        o_type = self.convert_type_to_mlir(node.tensor)
+        v_type = self.get_strided_memref_type(_from, node.shape)
+        self.special_type_map[_from] = v_type
+        stmt = f"{result_name} = memref.subview {tensor} [{offset}][{size}][{stride}] : {o_type} to {v_type}"
+        self.mlir_printer.print(stmt)
+        return result_name
+
     def _visit_Scalar(self, node: _gir.Scalar, _from: _gir.Node) -> str:
         if node in self.visited:
             return self.mlir_var_map[node]
@@ -561,3 +643,36 @@ class GraphIRPrinter:
         reduction_printer = LinalgReductionPrinter(node, self)
         reduction_printer.gen_code()
         return reduction_printer.results[0]
+
+    def _visit_TensorSetItemOperator(
+            self,
+            node: _gir.TensorSetItemOperator,
+            _from: _gir.Node) -> str:
+        tensor_mlir_name = self.visit(node.tensor, node)
+        _ = self.visit(node.value, node)
+        tensor_type = self.convert_type_to_mlir(node.tensor)
+        index = self._convert_index(node.index, node)
+        value_mlie_name = self._cast(node.value, node.tensor.dtype())
+        stmt = f"memref.store {value_mlie_name}, {tensor_mlir_name}[{', '.join(index)}] : {tensor_type}"
+        self.mlir_printer.print(stmt)
+        return tensor_mlir_name
+
+    def _cast_to_idx(self, node):
+        node_var = self.mlir_var_map[node]
+        index_var = self.new_var_name
+        in_type = self.convert_type_to_mlir(node)
+        if in_type != "i64":
+            node_var = self._cast(node, "int64")
+        stmt = f"{index_var} = arith.index_cast {node_var} : i64 to index"
+        self.mlir_printer.print(stmt)
+        return index_var
+
+    def visit_int_var(self, node):
+        if isinstance(node, _gir.IntImm):
+            mlir_name = self.new_var_name
+            stmt = f"{mlir_name} = index.constant {node.value()}"
+            self.mlir_printer.print(stmt)
+            return mlir_name
+        if node in self.mlir_var_map:
+            return self.mlir_var_map[node]
+        raise NotImplementedError("not supported now")
