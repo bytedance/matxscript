@@ -43,7 +43,8 @@ class TestKernelTemplateFunc(unittest.TestCase):
             return foo(a, a)
 
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
-        np.testing.assert_equal(k_boo(a), boo(a))
+        matx_a = matx.array.from_numpy(a)
+        np.testing.assert_equal(k_boo(matx_a), boo(a))
 
     def test_simple_template2(self):
         M = sympy.Symbol('M', positive=True)
@@ -66,4 +67,5 @@ class TestKernelTemplateFunc(unittest.TestCase):
             return foo(a, a)
 
         c = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
-        np.testing.assert_equal(k_boo(c), boo(c))
+        matx_c = matx.array.from_numpy(c)
+        np.testing.assert_equal(k_boo(matx_c), boo(c))

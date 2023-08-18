@@ -22,6 +22,7 @@ import unittest
 import numpy as np
 import sympy
 
+import matx
 from matx.kernel.compile_linalg import compile_linalg
 from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.typing import int32, dynamic
@@ -47,8 +48,9 @@ class TestTensorSliceParser(unittest.TestCase):
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        matx_a = matx.array.from_numpy(a)
         f = compile_linalg(p)
-        np.testing.assert_equal(f(a), foo(a))
+        np.testing.assert_equal(f(matx_a), foo(a))
 
     def test_simple_load(self):
         M = sympy.Symbol('M', positive=True)
@@ -68,8 +70,9 @@ class TestTensorSliceParser(unittest.TestCase):
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        matx_a = matx.array.from_numpy(a)
         f = compile_linalg(p)
-        np.testing.assert_equal(f(a), foo(a))
+        np.testing.assert_equal(f(matx_a), foo(a))
 
     def test_simple_tensor_return(self):
         M = sympy.Symbol('M', positive=True)
@@ -88,8 +91,9 @@ class TestTensorSliceParser(unittest.TestCase):
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        matx_a = matx.array.from_numpy(a)
         f = compile_linalg(p)
-        np.testing.assert_equal(f(a), foo(a))
+        np.testing.assert_equal(f(matx_a), foo(a))
 
     def test_constant_slice_tensor_return(self):
         M = sympy.Symbol('M', positive=True)
@@ -142,9 +146,9 @@ class TestTensorSliceParser(unittest.TestCase):
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
-        foo(a)
+        matx_a = matx.array.from_numpy(a)
         f = compile_linalg(p)
-        np.testing.assert_equal(f(a), foo(a))
+        np.testing.assert_equal(f(matx_a), foo(a))
 
     def test_constant_slice_tensor_return3(self):
         M = sympy.Symbol('M', positive=True)

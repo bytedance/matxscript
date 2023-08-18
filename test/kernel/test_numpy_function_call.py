@@ -20,6 +20,7 @@ import unittest
 import numpy as np
 import sympy
 
+import matx
 from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.compile_linalg import compile_linalg
 from matx.kernel.typing import int32, int64, float32
@@ -45,9 +46,9 @@ class TestNumpyFunctionCalls(unittest.TestCase):
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        matx_a = matx.array.from_numpy(a)
         f = compile_linalg(p)
-        f(a)
-        np.testing.assert_equal(f(a), foo(a))
+        np.testing.assert_equal(f(matx_a), foo(a))
 
     def test_prod_op(self):
         M = sympy.Symbol('M', positive=True)
@@ -67,6 +68,6 @@ class TestNumpyFunctionCalls(unittest.TestCase):
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        matx_a = matx.array.from_numpy(a)
         f = compile_linalg(p)
-        f(a)
-        np.testing.assert_equal(f(a), foo(a))
+        np.testing.assert_equal(f(matx_a), foo(a))

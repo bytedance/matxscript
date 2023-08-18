@@ -51,10 +51,12 @@ class TestSingleReturnParser(unittest.TestCase):
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
         c = np.array([[13, 14, 15], [16, 17, 18]], dtype=np.int32)
         print(a.shape)
-        rt = np.zeros(a.shape, dtype=np.int32)
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
-        np.testing.assert_equal(rt, foo(a, b, c))
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        np.testing.assert_equal(f(matx_a, matx_b, matx_c), foo(a, b, c))
+
 
     def test_three_op(self):
         M = sympy.Symbol('M', positive=True)
@@ -74,9 +76,11 @@ class TestSingleReturnParser(unittest.TestCase):
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
         c = np.array([13, 14, 15], dtype=np.int32)
-        rt = np.zeros(a.shape, dtype=np.int32)
-        k_foo(a, b, c, rt=rt)
-        np.testing.assert_equal(rt, foo(a, b, c))
+        print(a.shape)
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        np.testing.assert_equal(k_foo(matx_a, matx_b, matx_c), foo(a, b, c))
 
     def test_three_op2(self):
         M = sympy.Symbol('M', positive=True)
@@ -98,9 +102,11 @@ class TestSingleReturnParser(unittest.TestCase):
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
         c = np.array([13, 14, 15], dtype=np.int32)
-        rt = np.zeros(a.shape, dtype=np.int32)
-        k_foo(a, b, c, rt=rt)
-        np.testing.assert_equal(rt, foo(a, b, c))
+        print(a.shape)
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        np.testing.assert_equal(k_foo(matx_a, matx_b, matx_c), foo(a, b, c))
 
 
 if __name__ == "__main__":
