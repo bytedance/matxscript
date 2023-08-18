@@ -112,9 +112,10 @@ class TestTensorSliceParser(unittest.TestCase):
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
+        matx_a = matx.array.from_numpy(a)
         foo(a)
         f = compile_linalg(p)
-        np.testing.assert_equal(f(a), foo(a))
+        np.testing.assert_equal(f(matx_a), foo(a))
 
     def test_constant_slice_tensor_return2(self):
         M = sympy.Symbol('M', positive=True)
