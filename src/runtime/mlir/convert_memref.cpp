@@ -18,6 +18,7 @@
 // under the License.
 
 #include "matxscript/runtime/mlir/convert_memref.h"
+#include <unordered_map>
 #include "matxscript/runtime/mlir/memref_cpp_interface.h"
 
 template <typename src_t, typename dst_t>
