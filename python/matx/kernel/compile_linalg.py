@@ -133,12 +133,12 @@ def write_linalg(graph_ir, output_fname="tmp.mlir", debug=False, over_written_co
 def lower_linalg_to_cpu(input_fname, output_fname="llvm_tmp.mlir"):
     env = os.environ.copy()
     lower = subprocess.Popen(['mlir-opt',
-                              '--expand-strided-metadata', # for lower strided memref
+                              '--expand-strided-metadata',  # for lower strided memref
                               '--convert-linalg-to-loops',
                               '--lower-affine',
                               '--arith-expand',
                               '--memref-expand',
-                              #'--normalize-memrefs',
+                              # '--normalize-memrefs',
                               '--fold-memref-alias-ops',
                               '--arith-unsigned-when-equivalent',
                               '--convert-scf-to-cf',
@@ -151,10 +151,10 @@ def lower_linalg_to_cpu(input_fname, output_fname="llvm_tmp.mlir"):
                               '--convert-cf-to-llvm',
                               '--scf-for-loop-peeling',
                               '--scf-for-loop-specialization',
-                              #'--affine-expand-index-ops',
-                              #'--affine-data-copy-generate',
-                              #'--lower-affine',
-                              #'--convert-arith-to-llvm',
+                              # '--affine-expand-index-ops',
+                              # '--affine-data-copy-generate',
+                              # '--lower-affine',
+                              # '--convert-arith-to-llvm',
                               '--reconcile-unrealized-casts',
                               input_fname,
                               '-o',

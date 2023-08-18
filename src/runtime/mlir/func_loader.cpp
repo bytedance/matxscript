@@ -18,7 +18,6 @@
 // under the License.
 
 #include "matxscript/runtime/mlir/func_loader.h"
-#include "matxscript/runtime/mlir/convert_memref.h"
 #include "matxscript/runtime/py_args.h"
 namespace matxscript {
 namespace runtime {

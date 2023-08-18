@@ -231,7 +231,6 @@ class GraphIRPrinter:
         mlir_name_and_type = (f"{name}: {t}" for name, t in zip(mlir_args, mlir_arg_types))
         self.mlir_printer.print(f"({', '.join(mlir_name_and_type)})", end='')
 
-
         old_printer = self.mlir_printer
         body_printer = IrPrinter()
         self.mlir_printer = body_printer
