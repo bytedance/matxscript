@@ -18,8 +18,8 @@
 // under the License.
 
 #pragma once
-#include "cstdlib"
 #include <iostream>
+#include "cstdlib"
 
 namespace matxscript {
 namespace runtime {
@@ -27,7 +27,7 @@ namespace mlir {
 
 using memref_size_t = intptr_t;
 using data_t = void;
-using data_array = data_t *;
+using data_array = data_t*;
 
 template <typename T, size_t N>
 struct MemRefDescriptor {
@@ -37,7 +37,6 @@ struct MemRefDescriptor {
   memref_size_t sizes[N];
   memref_size_t strides[N];
 };
-
 
 typedef struct {
   data_t* allocated;
@@ -51,11 +50,12 @@ class MemrefCPPInterface {
   // MemRefDescriptor layout:
   // |allocated_ptr|aligned_ptr|offset|sizes|strides|
   // | data_array  | data_array|memref_size_t*(1+2*ndim)|
-  explicit MemrefCPPInterface(void * memref_des_ptr, size_t ndim) : _memref_des_ptr(memref_des_ptr), _ndim(ndim) {
+  explicit MemrefCPPInterface(void* memref_des_ptr, size_t ndim)
+      : _memref_des_ptr(memref_des_ptr), _ndim(ndim) {
     // view_as_data_arrays layout:
     // |allocated_ptr|aligned_ptr| rest ...
     // | data_array  | data_array| data_array ...
-    auto ci = static_cast<MemrefCInterface *>(memref_des_ptr);
+    auto ci = static_cast<MemrefCInterface*>(memref_des_ptr);
     allocated_ptr = &(ci->allocated);
     aligned_ptr = &(ci->aligned);
 
@@ -96,10 +96,10 @@ class MemrefCPPInterface {
   template <typename T>
   void compute_strides(T* shape) {
     uint64_t last = 1;
-    strides_array[_ndim-1] = static_cast<memref_size_t>(last);
+    strides_array[_ndim - 1] = static_cast<memref_size_t>(last);
 
-    for (int64_t i = static_cast<int64_t>(_ndim) - 2; i >= 0 ; --i) {
-      last = last * shape[i+1];
+    for (int64_t i = static_cast<int64_t>(_ndim) - 2; i >= 0; --i) {
+      last = last * shape[i + 1];
       strides_array[i] = static_cast<memref_size_t>(last);
     }
   }
@@ -117,32 +117,30 @@ class MemrefCPPInterface {
     std::cout << "get_sizes()          = " << get_sizes() << std::endl;
     std::cout << "get_strides()        = " << get_strides() << std::endl;
     size_t total = 1;
-    for(int i=0; i<get_ndim(); i++){
-      std::cout << "memrefCInterface.size_ptr["<<i<<"]" <<(get_sizes())[i]<< std::endl;
+    for (int i = 0; i < get_ndim(); i++) {
+      std::cout << "memrefCInterface.size_ptr[" << i << "]" << (get_sizes())[i] << std::endl;
       total *= (get_sizes())[i];
     }
-    for(int i=0; i<get_ndim(); i++){
-      std::cout << "memrefCInterface.stride_ptr["<<i<<"]" <<(get_strides())[i]<< std::endl;
+    for (int i = 0; i < get_ndim(); i++) {
+      std::cout << "memrefCInterface.stride_ptr[" << i << "]" << (get_strides())[i] << std::endl;
     }
-    auto *data_ptr = static_cast<T*>(get_aligned());
-    for(int i=0; i<total; i++){
-      std::cout << "memrefCInterface.get_aligned()["<<i<<"]" <<data_ptr[i]<< std::endl;
+    auto* data_ptr = static_cast<T*>(get_aligned());
+    for (int i = 0; i < total; i++) {
+      std::cout << "memrefCInterface.get_aligned()[" << i << "]" << data_ptr[i] << std::endl;
     }
 
     std::cout << std::endl;
-
   }
 
-  private:
+ private:
   void* _memref_des_ptr;
   size_t _ndim;
   data_t** allocated_ptr;
   data_t** aligned_ptr;
-  memref_size_t * offset_ptr;
-  memref_size_t * sizes_array;
-  memref_size_t * strides_array;
+  memref_size_t* offset_ptr;
+  memref_size_t* sizes_array;
+  memref_size_t* strides_array;
 };
-
 
 }  // namespace mlir
 }  // namespace runtime

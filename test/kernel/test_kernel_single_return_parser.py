@@ -208,7 +208,7 @@ class TestSingleReturnParser(unittest.TestCase):
         matx_b = matx.array.from_numpy(b)
         # matx_c = matx.array.from_numpy(c)
         # todo matx.array.from_numpy does not support numpy constant
-        rt = f(matx_a, matx_b, 3.0) # not support np.float(3)
+        rt = f(matx_a, matx_b, 3.0)  # not support np.float(3)
         np.testing.assert_equal(rt, foo(a, b, c))
 
 

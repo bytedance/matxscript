@@ -258,7 +258,6 @@ class GraphIRPrinter:
         self.mlir_printer.print("}")
         return str(self.mlir_printer)
 
-
     def _get_symbol_value(self, dim, dim_var):
         corresponding_nd = None
         idx = -1

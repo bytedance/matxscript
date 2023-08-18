@@ -57,7 +57,6 @@ class TestSingleReturnParser(unittest.TestCase):
         matx_c = matx.array.from_numpy(c)
         np.testing.assert_equal(f(matx_a, matx_b, matx_c), foo(a, b, c))
 
-
     def test_three_op(self):
         M = sympy.Symbol('M', positive=True)
         N = sympy.Symbol('N', positive=True)

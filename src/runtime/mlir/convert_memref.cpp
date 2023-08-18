@@ -32,21 +32,19 @@ size_t calculate_memref_descriptor_size(size_t ndim) {
 }
 
 template <typename shape_t, typename dst_t>
-void compute_strides(shape_t * shape, dst_t * dst, size_t n){
+void compute_strides(shape_t* shape, dst_t* dst, size_t n) {
   uint64_t last = 1;
-  dst[n-1] = static_cast<dst_t>(last);
+  dst[n - 1] = static_cast<dst_t>(last);
 
-  for (int64_t i = static_cast<int64_t>(n) - 2; i >= 0 ; --i) {
-    last = last * shape[i+1];
+  for (int64_t i = static_cast<int64_t>(n) - 2; i >= 0; --i) {
+    last = last * shape[i + 1];
     dst[i] = static_cast<dst_t>(last);
   }
 }
 
-
 namespace matxscript {
 namespace runtime {
 namespace mlir {
-
 
 std::shared_ptr<void> alloc_memref_descriptor_ptr(size_t ndim, DLManagedTensor* dl_managed_tensor) {
   void* memref = malloc(calculate_memref_descriptor_size(ndim));
@@ -61,7 +59,7 @@ std::shared_ptr<void> alloc_memref_descriptor_ptr(size_t ndim, DLManagedTensor* 
 
 std::shared_ptr<void> convert_from_raw_ptr(void* raw_memref, bool ok_to_free_data) {
   std::shared_ptr<void> result(raw_memref, [ok_to_free_data](void* p) {
-    if(ok_to_free_data){
+    if (ok_to_free_data) {
       free(p);
     }
   });
@@ -80,9 +78,9 @@ std::shared_ptr<void> convert_from_dl_managed_tensor(DLManagedTensor* dl_managed
   memref_ci.set_aligned_ptr(dl_tensor.data);
   memref_ci.set_offset(static_cast<memref_size_t>(dl_tensor.byte_offset));
   memref_ci.set_sizes(dl_tensor.shape);
-  if (dl_tensor.strides== nullptr){
+  if (dl_tensor.strides == nullptr) {
     memref_ci.compute_strides(dl_tensor.shape);
-  } else{
+  } else {
     memref_ci.set_strides(dl_tensor.strides);
   }
   memref_ci.display<int32_t>();
@@ -170,14 +168,13 @@ DLDataType cvt_str_to_dl_dtype(const std::string& str) {
   return map[str];
 }
 
-bool is_overlapping(void *target, std::initializer_list<void *> others){
-  auto* target_dptr = reinterpret_cast<void **>(target);
-  return std::any_of(others.begin(), others.end(), [target_dptr](void *other_ptr){
-    auto* other_dptr = reinterpret_cast<void **>(other_ptr);
+bool is_overlapping(void* target, std::initializer_list<void*> others) {
+  auto* target_dptr = reinterpret_cast<void**>(target);
+  return std::any_of(others.begin(), others.end(), [target_dptr](void* other_ptr) {
+    auto* other_dptr = reinterpret_cast<void**>(other_ptr);
     return *target_dptr == *other_dptr;
   });
 }
-
 
 }  // namespace mlir
 }  // namespace runtime

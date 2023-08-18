@@ -44,7 +44,7 @@ memref_size_t MemrefCPPInterface::get_offset() const {
 }
 
 memref_size_t* MemrefCPPInterface::get_sizes() const {
-    return sizes_array;
+  return sizes_array;
 }
 
 memref_size_t* MemrefCPPInterface::get_strides() const {
@@ -63,8 +63,6 @@ void MemrefCPPInterface::set_offset(memref_size_t new_offset) {
   *offset_ptr = new_offset;
 }
 
-
 }  // namespace mlir
 }  // namespace runtime
 }  // namespace matxscript
-
