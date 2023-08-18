@@ -221,12 +221,6 @@ class GraphIRPrinter:
             mlir_arg_types.append(self.convert_type_to_mlir(node))
             self.mlir_var_map[node] = name
 
-        for dim, dim_var in self.func_parser.shape_symbol_table.items():
-            name = f"%{dim}"
-            mlir_args.append(name)
-            mlir_arg_types.append(self.convert_type_to_mlir(dim_var))
-            self.mlir_var_map[dim_var] = name
-
         # todo assert one return
         if len(self.graph_output) != 1:
             raise SyntaxError(f"Expect the graph has exact 1 output "
@@ -249,6 +243,8 @@ class GraphIRPrinter:
         self.mlir_printer.print(" attributes {llvm.emit_c_interface} ", end='')
         self.mlir_printer.print("{")
         self.mlir_printer.new_scope()
+        for dim, dim_var in self.func_parser.shape_symbol_table.items():
+            self._get_symbol_value(dim, dim_var)
 
         # convert graph
         self.visit(self.graph_output[0], None)
@@ -261,6 +257,28 @@ class GraphIRPrinter:
         self.mlir_printer.pop_scope()
         self.mlir_printer.print("}")
         return str(self.mlir_printer)
+
+
+    def _get_symbol_value(self, dim, dim_var):
+        corresponding_nd = None
+        idx = -1
+        for name, nd_node in self.func_parser.arg_context_table.items():
+            if isinstance(nd_node, _gir.Tensor) and dim_var in nd_node.shape():
+                corresponding_nd = nd_node
+                idx = list(nd_node.shape()).index(dim_var)
+        if corresponding_nd is None or idx == -1:
+            raise SyntaxError("Symbol {} not found in arg_context_table".format(dim_var))
+
+        name = f"%{dim}"
+        nd_name = self.mlir_var_map[corresponding_nd]
+        idx_name = self.new_var_name
+        stmt0 = f"{idx_name} = arith.constant {idx} : index"
+        stmt1 = f"{name}_idx = memref.dim {nd_name}, {idx_name} : {self.convert_type_to_mlir(corresponding_nd)}"
+        stmt2 = f"{name} = index.castu {name}_idx : index to i64"
+        self.mlir_printer.print(stmt0)
+        self.mlir_printer.print(stmt1)
+        self.mlir_printer.print(stmt2)
+        self.mlir_var_map[dim_var] = name
 
     def _gen_arith_statement(
             self,
@@ -466,7 +484,11 @@ class GraphIRPrinter:
                             f"i64 to index"
                 self.mlir_printer.print(cast_stmt)
                 casted_shape_var.append(sv_name)
-            stmt = f"{mlir_var} = memref.alloca({', '.join(casted_shape_var)}) : {self.convert_type_to_mlir(_from)}"
+            if _from in self.graph_output:
+                alloc_op = "memref.alloc"
+            else:
+                alloc_op = "memref.alloca"
+            stmt = f"{mlir_var} = {alloc_op}({', '.join(casted_shape_var)}) : {self.convert_type_to_mlir(_from)}"
             lg_printer.add_allocate_stmt((mlir_var, _from, stmt))
             self.mlir_var_map[_from] = mlir_var
         else:

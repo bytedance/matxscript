@@ -72,7 +72,9 @@ class FunctionParser(ast.NodeVisitor):
         elif typing_utils.is_dynamic_ndarray(kernel_p.return_types):
             self.func_return_kind: FuncReturnKind = FuncReturnKind.DYNAMIC_TENSOR
         else:
-            self.func_return_kind: FuncReturnKind = FuncReturnKind.STATIC_TENSOR
+            # disable static tensor
+            # self.func_return_kind: FuncReturnKind = FuncReturnKind.STATIC_TENSOR
+            self.func_return_kind: FuncReturnKind = FuncReturnKind.DYNAMIC_TENSOR
 
         self.func_name: str = kernel_p.func_name
 

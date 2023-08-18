@@ -33,6 +33,8 @@ if TYPE_CHECKING:
     from matx.kernel.parser.utils import FuncReturnKind
     from matx.kernel.kernel_parser import KernelParser
 
+DEBUG = False
+
 
 @dataclass
 class CInterfaceCodegenData:
@@ -45,10 +47,12 @@ class CInterfaceCodegenData:
     input_types: List[str]
     lib_path: str
     func_return_kind: 'FuncReturnKind'
+    free_return: bool
+    debug: bool
 
     def __init__(self, unique_id: int, func_name: str, return_type: str, return_ndim: int,
                  return_dtype: str, input_types: List[str], lib_path: str,
-                 func_return_kind: 'FuncReturnKind'):
+                 func_return_kind: 'FuncReturnKind', debug: bool = False):
         self.env = jinja2.Environment(loader=jinja2.FileSystemLoader(TEMPLATE_DIR))
         self.template = self.env.get_template('cpp_header.txt')
         self.unique_id = unique_id
@@ -59,6 +63,7 @@ class CInterfaceCodegenData:
         self.input_types = input_types
         self.lib_path = lib_path
         self.func_return_kind = func_return_kind
+        self.debug = DEBUG or debug
 
     def code(self):
         output = self.template.render(unique_id=self.unique_id,
@@ -68,7 +73,8 @@ class CInterfaceCodegenData:
                                       return_dtype=self.return_dtype,
                                       input_types=self.input_types,
                                       lib_path=self.lib_path,
-                                      func_return_kind=self.func_return_kind)
+                                      func_return_kind=self.func_return_kind,
+                                      debug=self.debug)
         return output
 
 
@@ -121,7 +127,7 @@ def from_kernel_parser(parser: 'KernelParser', lib_path: str) -> CInterfaceCodeg
     elif func_return_kind.is_scalar():
         return_type: str = PYTYPE_TO_CPP_TYPE_STR[STR_TO_PYTYPE[parser.graph.return_dtype_str]]
     elif func_return_kind.is_dynamic_tensor():
-        return_type: str = "void *"
+        return_type: str = "void"
     else:
         raise SyntaxError(f"Unsupported return type {func_return_kind}")
     return CInterfaceCodegenData(unique_id, func_name, return_type, return_ndim,

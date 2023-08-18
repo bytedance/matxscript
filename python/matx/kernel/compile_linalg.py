@@ -340,6 +340,7 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
     # gcc -fPIC -I/matxscript/include -std=c++14 file1.c
     compile_c_interface = subprocess.Popen(["g++",
                                             "-fPIC",
+                                            "-g",
                                             f"-I{include_dir}",
                                             "-std=c++14",
                                             "-c",
@@ -356,6 +357,7 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
 
     # gcc -shared -o libexample.so file1.o file2.o
     compile_c_interface = subprocess.Popen(["g++",
+                                            "-g",
                                             "-shared",
                                             "-o",
                                             f"lib{file_name}_c_interface.so",

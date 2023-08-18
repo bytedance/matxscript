@@ -18,11 +18,12 @@
 // under the License.
 
 #include "matxscript/runtime/mlir/convert_memref.h"
+#include "matxscript/runtime/mlir/memref_cpp_interface.h"
 
 template <typename src_t, typename dst_t>
 void copy(src_t* src, dst_t* dst, size_t n) {
   for (int i = 0; i < n; i++) {
-    dst[n] = static_cast<dst_t>(src[n]);
+    dst[i] = static_cast<dst_t>(src[i]);
   }
 }
 
@@ -30,28 +31,22 @@ size_t calculate_memref_descriptor_size(size_t ndim) {
   return sizeof(void*) * 2 + sizeof(intptr_t) * (2 * ndim + 1);
 }
 
+template <typename shape_t, typename dst_t>
+void compute_strides(shape_t * shape, dst_t * dst, size_t n){
+  uint64_t last = 1;
+  dst[n-1] = static_cast<dst_t>(last);
+
+  for (int64_t i = static_cast<int64_t>(n) - 2; i >= 0 ; --i) {
+    last = last * shape[i+1];
+    dst[i] = static_cast<dst_t>(last);
+  }
+}
+
+
 namespace matxscript {
 namespace runtime {
 namespace mlir {
 
-typedef struct {
-  void* raw_ptr;
-  void** allocated_dptr;
-  void** aligned_dptr;
-  memref_size_t* offset_ptr;
-  memref_size_t* size_ptr;
-  memref_size_t* stride_ptr;
-} MemrefCInterface;
-
-inline MemrefCInterface get_memref_ci(void* raw_ptr, size_t ndim) {
-  void* memref = raw_ptr;
-  void** allocated = (void**)(memref);
-  void** aligned = allocated + 1;
-  auto* offset = (memref_size_t*)(allocated + 1);
-  memref_size_t* sizes = (offset + 1);
-  memref_size_t* strides = sizes + ndim;
-  return {raw_ptr, allocated, aligned, offset, sizes, strides};
-}
 
 std::shared_ptr<void> alloc_memref_descriptor_ptr(size_t ndim, DLManagedTensor* dl_managed_tensor) {
   void* memref = malloc(calculate_memref_descriptor_size(ndim));
@@ -64,24 +59,33 @@ std::shared_ptr<void> alloc_memref_descriptor_ptr(size_t ndim, DLManagedTensor* 
   return result;
 }
 
-std::shared_ptr<void> convert_from_raw_ptr(void* raw_memref) {
-  std::shared_ptr<void> result(raw_memref, [](void* p) { free(p); });
+std::shared_ptr<void> convert_from_raw_ptr(void* raw_memref, bool ok_to_free_data) {
+  std::shared_ptr<void> result(raw_memref, [ok_to_free_data](void* p) {
+    if(ok_to_free_data){
+      free(p);
+    }
+  });
   return result;
 }
 
 std::shared_ptr<void> convert_from_dl_managed_tensor(DLManagedTensor* dl_managed_tensor) {
   DLTensor& dl_tensor = dl_managed_tensor->dl_tensor;
-  int& ndim = dl_tensor.ndim;
+  auto& ndim = dl_tensor.ndim;
   // allocate memref_descriptor_ptr
   auto result = alloc_memref_descriptor_ptr(ndim, dl_managed_tensor);
   // get memory address
-  auto&& memref_ci = get_memref_ci(result.get(), ndim);
+  MemrefCPPInterface memref_ci(result.get(), ndim);
   // setup memref
-  *(memref_ci.allocated_dptr) = dl_tensor.data;
-  *(memref_ci.aligned_dptr) = dl_tensor.data;
-  *(memref_ci.offset_ptr) = static_cast<memref_size_t>(dl_tensor.byte_offset);
-  copy(dl_tensor.shape, memref_ci.size_ptr, ndim);
-  copy(dl_tensor.strides, memref_ci.stride_ptr, ndim);
+  memref_ci.set_allocated_ptr(dl_tensor.data);
+  memref_ci.set_aligned_ptr(dl_tensor.data);
+  memref_ci.set_offset(static_cast<memref_size_t>(dl_tensor.byte_offset));
+  memref_ci.set_sizes(dl_tensor.shape);
+  if (dl_tensor.strides== nullptr){
+    memref_ci.compute_strides(dl_tensor.shape);
+  } else{
+    memref_ci.set_strides(dl_tensor.strides);
+  }
+  memref_ci.display<int32_t>();
   return result;
 }
 
@@ -89,7 +93,8 @@ DLManagedTensor* convert_to_dl_managed_tensor(std::shared_ptr<void>& memref_ptr,
                                               size_t ndim,
                                               DLDataType dtype) {
   // get memory address
-  auto&& memref_ci = get_memref_ci(memref_ptr.get(), ndim);
+  MemrefCPPInterface memref_ci(memref_ptr.get(), ndim);
+  memref_ci.display<int32_t>();
 
   // in case the element type of dltensor is change
   using shape_ptr_type = decltype(DLTensor::shape);
@@ -104,16 +109,16 @@ DLManagedTensor* convert_to_dl_managed_tensor(std::shared_ptr<void>& memref_ptr,
   auto dl_tensor_strides = static_cast<strides_ptr_type>(dl_tensor_shape + ndim);
 
   // copy info from memref to dl tensor
-  copy(memref_ci.stride_ptr, dl_tensor_shape, ndim);
-  copy(memref_ci.stride_ptr, dl_tensor_strides, ndim);
+  copy(memref_ci.get_sizes(), dl_tensor_shape, ndim);
+  copy(memref_ci.get_strides(), dl_tensor_strides, ndim);
 
-  auto dl_offset = static_cast<uint64_t>(*(memref_ci.offset_ptr));
+  auto dl_offset = static_cast<uint64_t>(memref_ci.get_offset());
 
   // for now assume it to be on CPU
   DLDevice dlDevice = {kDLCPU, 0};
-  DLTensor dlTensor = {*(memref_ci.aligned_dptr),
+  DLTensor dlTensor = {memref_ci.get_aligned(),
                        dlDevice,
-                       (int32_t)ndim,
+                       static_cast<int32_t>(ndim),
                        dtype,
                        dl_tensor_shape,
                        dl_tensor_strides,
@@ -126,7 +131,7 @@ DLManagedTensor* convert_to_dl_managed_tensor(std::shared_ptr<void>& memref_ptr,
     auto* manager_ctx = static_cast<std::shared_ptr<void>*>(self->manager_ctx);
     manager_ctx[0].reset();
     manager_ctx[1].reset();
-    delete manager_ctx;
+    delete[] manager_ctx;
     delete self;
   };
   auto managed_tensor = new DLManagedTensor{dlTensor, manager_ctx, deleter};
@@ -139,8 +144,8 @@ NDArray convert_to_ndarray(std::shared_ptr<void>& memref_ptr, size_t ndim, DLDat
   return NDArray::FromDLPack(dl_managed_tensor);
 }
 
-NDArray convert_to_ndarray(void* memref_ptr, size_t ndim, DLDataType dtype) {
-  auto&& shared_memref = convert_from_raw_ptr(memref_ptr);
+NDArray convert_to_ndarray(void* memref_ptr, size_t ndim, DLDataType dtype, bool ok_to_free_data) {
+  auto&& shared_memref = convert_from_raw_ptr(memref_ptr, ok_to_free_data);
   return convert_to_ndarray(shared_memref, ndim, dtype);
 }
 
@@ -164,6 +169,15 @@ DLDataType cvt_str_to_dl_dtype(const std::string& str) {
                                                             {"float64", {kDLFloat, 64, 1}}};
   return map[str];
 }
+
+bool is_overlapping(void *target, std::initializer_list<void *> others){
+  auto* target_dptr = reinterpret_cast<void **>(target);
+  return std::any_of(others.begin(), others.end(), [target_dptr](void *other_ptr){
+    auto* other_dptr = reinterpret_cast<void **>(other_ptr);
+    return *target_dptr == *other_dptr;
+  });
+}
+
 
 }  // namespace mlir
 }  // namespace runtime

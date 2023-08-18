@@ -31,30 +31,24 @@ namespace matxscript {
 namespace runtime {
 namespace mlir {
 
-using memref_size_t = intptr_t;
-
-template <typename T, size_t N>
-struct MemRefDescriptor {
-  T* allocated;
-  T* aligned;
-  memref_size_t offset;
-  memref_size_t sizes[N];
-  memref_size_t strides[N];
-};
-
 std::shared_ptr<void> alloc_memref_descriptor_ptr(size_t ndim,
                                                   DLManagedTensor* dl_managed_tensor = nullptr);
-std::shared_ptr<void> convert_from_raw_ptr(void* raw_memref);
+std::shared_ptr<void> convert_from_raw_ptr(void* raw_memref, bool ok_to_free_data = false);
 std::shared_ptr<void> convert_from_dl_managed_tensor(DLManagedTensor* dl_managed_tensor);
 DLManagedTensor* convert_to_dl_managed_tensor(std::shared_ptr<void>& memref_ptr,
                                               size_t ndim,
                                               DLDataType dtype);
 
 NDArray convert_to_ndarray(std::shared_ptr<void>& memref_ptr, size_t ndim, DLDataType dtype);
-NDArray convert_to_ndarray(void* memref_ptr, size_t ndim, DLDataType dtype);
+NDArray convert_to_ndarray(void* memref_ptr,
+                           size_t ndim,
+                           DLDataType dtype,
+                           bool ok_to_free_data = false);
 std::shared_ptr<void> convert_from_ndarray(NDArray& nd);
 
 DLDataType cvt_str_to_dl_dtype(const std::string& str);
+
+bool is_overlapping(void* target, std::initializer_list<void*> others);
 
 }  // namespace mlir
 }  // namespace runtime
