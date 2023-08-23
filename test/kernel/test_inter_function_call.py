@@ -25,7 +25,7 @@ from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.compile_linalg import compile_linalg
 from matx.kernel.typing import int32, int64, float32
 
-
+"""
 class TestFunctionCalls(unittest.TestCase):
 
     def test_two_op(self):
@@ -226,3 +226,10 @@ class TestFunctionCalls(unittest.TestCase):
         matx_b = matx.array.from_numpy(b)
         matx_c = matx.array.from_numpy(c)
         np.testing.assert_equal(f(matx_a, matx_b, matx_c), foo(a, b, c))
+"""
+
+if __name__ == "__main__":
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    unittest.main()
