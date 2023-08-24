@@ -322,6 +322,12 @@ def load_func(shared_lib, parser: KernelParser):
 
 interface_lib = set()
 
+from matx._ffi.libinfo import find_lib_path
+
+matx_lib_path = os.path.dirname(find_lib_path()[0])
+os.environ['LD_LIBRARY_PATH'] = f'matx_lib_path:' + os.environ.get('LD_LIBRARY_PATH', '')
+
+
 
 def generate_matx_c_interface(parser, file_name, shard_lib_path):
     env = os.environ.copy()
@@ -363,7 +369,7 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
                                             "-o",
                                             f"lib{file_name}_c_interface.so",
                                             output_file,
-                                            "-L/Users/bytedance/Desktop/workspace/matxscript/lib/",
+                                            f"-L{matx_lib_path}",
                                             "-lmatx"],
                                            env=env,
                                            stdout=subprocess.PIPE,
@@ -384,7 +390,7 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
 
     from .matx_compatible_interface import KernelFunction, get_kernel_func
     func_name = "_" + str(c_interface_code.unique_id) + "_" + \
-        c_interface_code.func_name + "__matx_c_api_"
+                c_interface_code.func_name + "__matx_c_api_"
     return get_kernel_func(func_name)
     py_wrapper = KernelFunction("_" + str(c_interface_code.unique_id) +
                                 "_" + c_interface_code.func_name + "__matx_c_api_")

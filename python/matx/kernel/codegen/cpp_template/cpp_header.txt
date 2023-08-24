@@ -16,7 +16,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
+#define _GLIBCXX_USE_CXX11_ABI 0
 {%- macro debug_helper(var) %}
   {%- if debug %}
   std::cout<<"[MLIR c interface]{{var}} = " << {{var}} << std::endl;
@@ -29,7 +29,21 @@
 #include "matxscript/runtime/runtime_value.h"
 #include "matxscript/runtime/registry.h"
 
+#if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 10 )
+#if __has_builtin(__fp16)
 static_assert(sizeof (__fp16) == 2, "__fp16(a.k.a float16) size must be 2 bytes, your machine/gcc may not support __fp16 type");
+#else
+#include <float.h>
+#if __has_builtin(_Float16)
+static_assert(sizeof (_Float16) == 2, "_Float16(a.k.a float16) size must be 2 bytes, your machine/gcc may not support _Float16 type");
+using __fp16 = _Float16;
+#endif
+#endif
+#else
+using __fp16 = uint16_t;
+#endif
+
+
 static_assert(sizeof (float) == 4, "float(a.k.a float32) size must be 4 bytes, your machine/gcc may not support float type");
 static_assert(sizeof (double) == 8, "double(a.k.a float64) size must be 8 bytes, your machine/gcc may not support double type");
 
