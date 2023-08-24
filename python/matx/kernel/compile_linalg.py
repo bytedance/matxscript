@@ -381,6 +381,9 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
     if len(err) != 0:
         raise RuntimeError("\n" + err)
 
+    print(output_so)
+    print(os.path.abspath('.'))
+    print([f for f in os.listdir('.')])
     LIB = ctypes.CDLL(output_so, ctypes.RTLD_LOCAL)
     interface_lib.add(LIB)
 
