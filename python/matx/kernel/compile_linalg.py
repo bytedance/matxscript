@@ -328,7 +328,6 @@ matx_lib_path = os.path.dirname(find_lib_path()[0])
 os.environ['LD_LIBRARY_PATH'] = f'matx_lib_path:' + os.environ.get('LD_LIBRARY_PATH', '')
 
 
-
 def generate_matx_c_interface(parser, file_name, shard_lib_path):
     env = os.environ.copy()
     c_interface_code = from_kernel_parser(
@@ -363,11 +362,12 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
         raise RuntimeError("\n" + err)
 
     # gcc -shared -o libexample.so file1.o file2.o
+    output_so = os.path.join(shard_lib_dir, f"{file_name}_c_interface.so")
     compile_c_interface = subprocess.Popen(["g++",
                                             "-g",
                                             "-shared",
                                             "-o",
-                                            f"lib{file_name}_c_interface.so",
+                                            f"{output_so}",
                                             output_file,
                                             f"-L{matx_lib_path}",
                                             "-lmatx"],
@@ -381,11 +381,7 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
     if len(err) != 0:
         raise RuntimeError("\n" + err)
 
-    LIB = ctypes.CDLL(
-        os.path.join(
-            shard_lib_dir,
-            f"lib{file_name}_c_interface.so"),
-        ctypes.RTLD_LOCAL)
+    LIB = ctypes.CDLL(output_so, ctypes.RTLD_LOCAL)
     interface_lib.add(LIB)
 
     from .matx_compatible_interface import KernelFunction, get_kernel_func
