@@ -17,10 +17,7 @@
 #  specific language governing permissions and limitations
 #  under the License.
 from .base import MatxInterfaceCodegenMetaData, JINJA2_ENV
-from typing import List, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from matx.kernel.parser.utils import FuncReturnKind
+from typing import List
 
 
 class MatxAPIFuncCodegen:
@@ -38,7 +35,6 @@ class MatxAPIFuncCodegen:
         self.arg_type_and_name: str = ""
         self.mlir_args: List[str] = []
 
-        self.gen_mlir_func_type()
         self.gen_ndarray_cvt_code()
         self.gen_mlir_func_call_code()
         self.arg_type_and_name = ", ".join([f"{t} {n}" for t, n in zip(
@@ -60,13 +56,13 @@ class MatxAPIFuncCodegen:
                 self.mlir_args.append(arg_name)
             i += 1
 
-    def gen_mlir_func_type(self):
+    def gen_mlir_func_signature(self):
         if self.meta_data.func_return_kind.is_void():
-            self.mlir_func_type = f"void(*)({', '.join(self.meta_data.mlir_arg_types)});"
+            return f"void {self.meta_data.mlir_func_name}({', '.join(self.meta_data.mlir_arg_types)});"
         elif self.meta_data.func_return_kind.is_scalar():
-            self.mlir_func_type = f"{self.meta_data.matx_rt_type}(*)({', '.join(self.meta_data.mlir_arg_types)});"
+            return f"{self.meta_data.matx_rt_type} {self.meta_data.mlir_func_name}({', '.join(self.meta_data.mlir_arg_types)});"
         elif self.meta_data.func_return_kind.is_dynamic_tensor():
-            self.mlir_func_type = f"void(*)({', '.join(['void *', *self.meta_data.mlir_arg_types])});"
+            return f"void {self.meta_data.mlir_func_name}({', '.join(['void *', *self.meta_data.mlir_arg_types])});"
         else:
             raise SyntaxError(
                 f"function_return_kind({self.meta_data.func_return_kind}) is not supported")
@@ -74,12 +70,12 @@ class MatxAPIFuncCodegen:
     def gen_mlir_func_call_code(self):
         if self.meta_data.func_return_kind.is_void():
             self.call_func_code_list = [
-                f"casted_func_ptr({', '.join(self.mlir_args)});",
+                f"{self.meta_data.mlir_func_name}({', '.join(self.mlir_args)});",
                 "return None;"
             ]
         elif self.meta_data.func_return_kind.is_scalar():
             self.call_func_code_list = [
-                f"return casted_func_ptr({', '.join(self.mlir_args)});"
+                f"return {self.meta_data.mlir_func_name}({', '.join(self.mlir_args)});"
             ]
         elif self.meta_data.func_return_kind.is_dynamic_tensor():
             rt_shared_ptr = "_mlir_return_31905_shared_ptr_571"
@@ -87,7 +83,7 @@ class MatxAPIFuncCodegen:
             self.call_func_code_list = [
                 f"auto && {rt_shared_ptr} = alloc_memref_descriptor_ptr({self.meta_data.return_ndim});",
                 f"void * {rt_ptr} = {rt_shared_ptr}.get();",
-                f"casted_func_ptr({', '.join([rt_ptr, *self.mlir_args])});",
+                f"{self.meta_data.mlir_func_name}({', '.join([rt_ptr, *self.mlir_args])});",
                 f"""return convert_to_ndarray({rt_shared_ptr}, {self.meta_data.return_ndim}, cvt_str_to_dl_dtype("{self.meta_data.return_dtype}"));"""]
         else:
             raise SyntaxError(
@@ -96,11 +92,9 @@ class MatxAPIFuncCodegen:
     def func_definition(self) -> str:
         func_definition_template = JINJA2_ENV.get_template('matx_api_func.txt')
         return func_definition_template.render(
-            mlir_func_type=self.mlir_func_type,
             matx_func_name=self.meta_data.matx_func_name,
             arg_type_and_name=self.arg_type_and_name,
             mlir_func_name=self.meta_data.mlir_func_name,
-            lib_path=self.meta_data.lib_path,
             type_cvt_code_list=self.type_cvt_code_list,
             call_func_code_list=self.call_func_code_list
         )

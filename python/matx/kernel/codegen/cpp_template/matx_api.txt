@@ -43,7 +43,7 @@ using namespace matxscript::runtime::mlir;
 extern "C" void* __matxscript_module_ctx = NULL;
 
 extern "C" MATX_DLL MATXScriptFuncRegistry __matxscript_func_registry__;
-
+extern "C" {{mlir_func_signature}};
 
 namespace {
 {{matx_api_declaration}}

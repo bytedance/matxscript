@@ -101,29 +101,14 @@ def translate_to_llvm(input_fname, output_fname="llvm_tmp.ll"):
     return output_fname
 
 
-def llvm_compile(input_fname, output_fname="llvm_tmp.ll"):
+def llvm_compile(input_fname, output_fname="llvm_tmp.ll.o"):
     env = os.environ.copy()
     compile_llvm = subprocess.Popen(["llc",
                                      "-O3",
                                      "-filetype=obj",
                                      input_fname,
                                      "-o",
-                                     input_fname + ".o"],
-                                    env=env,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-    stdout, stderr = compile_llvm.communicate()
-    print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
-
-    compile_llvm = subprocess.Popen(["g++",
-                                     "-shared",
-                                     "-fPIC",
-                                     "-o",
-                                     output_fname,
-                                     input_fname + ".o"],
+                                     output_fname],
                                     env=env,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
@@ -135,13 +120,10 @@ def llvm_compile(input_fname, output_fname="llvm_tmp.ll"):
     return output_fname
 
 
-def generate_matx_c_interface(parser, file_name, shard_lib_path):
+def generate_matx_c_interface(parser, file_name, mlir_object_file):
     env = os.environ.copy()
-    c_interface_code, meta_data = render_matx_api_code(
-        parser, os.path.join(
-            os.path.abspath(
-                os.curdir), shard_lib_path))
-    shard_lib_dir = os.path.abspath(os.path.dirname(shard_lib_path))
+    c_interface_code, meta_data = render_matx_api_code(parser)
+    shard_lib_dir = os.path.abspath(os.path.dirname(mlir_object_file))
     file_path = os.path.join(shard_lib_dir, f"{file_name}_c_interface.cpp")
     with open(file_path, "w+") as f:
         f.write(c_interface_code)
@@ -153,7 +135,6 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
     # gcc -fPIC -I/matxscript/include -std=c++14 file1.c
     compile_c_interface = subprocess.Popen(["g++",
                                             "-fPIC",
-                                            "-g",
                                             f"-I{include_dir}",
                                             "-std=c++14",
                                             "-c",
@@ -171,11 +152,11 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
     # gcc -shared -o libexample.so file1.o file2.o
     output_so = os.path.join(shard_lib_dir, f"{file_name}_c_interface.so")
     compile_c_interface = subprocess.Popen(["g++",
-                                            "-g",
                                             "-shared",
                                             "-o",
-                                            f"{output_so}",
+                                            output_so,
                                             output_file,
+                                            mlir_object_file,
                                             f"-L{matx_lib_path}",
                                             "-lmatx"],
                                            env=env,
@@ -223,9 +204,9 @@ def compile_linalg(
         # lower mlir to llvm
         llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
         # compile llvm code to shared library
-        shared_lib = llvm_compile(llvm_f, file_name + ".so")
+        mlir_object_file = llvm_compile(llvm_f, file_name + ".o")
         # codegen the c inter face that is compatible with matx
-        matx_c_interface = generate_matx_c_interface(parser, file_name, shared_lib)
+        matx_c_interface = generate_matx_c_interface(parser, file_name, mlir_object_file)
         return matx_c_interface
     except Exception as e:
         raise e

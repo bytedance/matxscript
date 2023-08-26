@@ -39,7 +39,6 @@ class MatxInterfaceCodegenMetaData:
     """Class for keeping track of data necessary for matx interface func codegen."""
     file_name: str
     line_no: int
-    lib_path: str
 
     unique_id: int
     python_func_name: str
@@ -67,7 +66,6 @@ class MatxInterfaceCodegenMetaData:
             self,
             file_name: str,
             line_no: int,
-            lib_path: str,
             unique_id: int,
             py_func_name: str,
             func_return_kind: FuncReturnKind,
@@ -78,7 +76,6 @@ class MatxInterfaceCodegenMetaData:
             return_dtype: str) -> None:
         self.file_name = file_name
         self.line_no = line_no
-        self.lib_path = lib_path
 
         self.unique_id = unique_id
         self.python_func_name = py_func_name
@@ -138,7 +135,7 @@ def cvt_to_cpp_type_str(t):
         raise SyntaxError(f"Unsupported type {t}")
 
 
-def make_meta_data(parser: 'KernelParser', lib_path: str) -> MatxInterfaceCodegenMetaData:
+def make_meta_data(parser: 'KernelParser') -> MatxInterfaceCodegenMetaData:
     file_name: str = parser.file_name
     line_no: int = parser.line_no
 
@@ -162,6 +159,6 @@ def make_meta_data(parser: 'KernelParser', lib_path: str) -> MatxInterfaceCodege
     return_ndim: int = len(parser.graph.return_shape)
     return_dtype: str = parser.graph.return_dtype_str
     return MatxInterfaceCodegenMetaData(
-        file_name, line_no, lib_path, unique_id, python_func_name, func_return_kind,
+        file_name, line_no, unique_id, python_func_name, func_return_kind,
         arg_names, arg_types, return_type, return_ndim, return_dtype
     )

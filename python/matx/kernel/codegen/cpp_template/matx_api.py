@@ -40,11 +40,13 @@ class MatxApiCodegen:
 
     def code(self):
         code_template = JINJA2_ENV.get_template('matx_api.txt')
+        mlir_func_signature = self.matx_api_func_code_gen.gen_mlir_func_signature()
         matx_api_declaration = self.matx_api_func_code_gen.func_declaration()
         matx_c_api_declaration = self.matx_c_api_func_code_gen.func_declaration()
         matx_api_definition = self.matx_api_func_code_gen.func_definition()
         matx_c_api_definition = self.matx_c_api_func_code_gen.func_definition()
         return code_template.render(
+            mlir_func_signature=mlir_func_signature,
             matx_api_declaration=matx_api_declaration,
             matx_c_api_declaration=matx_c_api_declaration,
             matx_api_definition=matx_api_definition,
@@ -54,9 +56,8 @@ class MatxApiCodegen:
         )
 
 
-def render_matx_api_code(parser: 'KernelParser',
-                         lib_path: str) -> Tuple[str,
-                                                 MatxInterfaceCodegenMetaData]:
-    meta_data = make_meta_data(parser, lib_path)
+def render_matx_api_code(parser: 'KernelParser') -> Tuple[str,
+                                                          MatxInterfaceCodegenMetaData]:
+    meta_data = make_meta_data(parser)
     codegen_class = MatxApiCodegen(meta_data)
     return codegen_class.code(), meta_data
