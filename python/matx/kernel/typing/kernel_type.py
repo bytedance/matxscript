@@ -21,6 +21,15 @@ import matx.kernel.symbol.utils as symbol_utils
 import matx.kernel.typing.utils as typing_utils
 
 
+class VariableLength:
+
+    def __eq__(self, other):
+        return self is other
+
+
+dynamic = VariableLength()
+
+
 class NDArrayType:
     def __init__(self, shape, dtype):
         self.shape = tuple(shape)
@@ -55,11 +64,7 @@ class ScalarType(NDArrayType):
 
     def __getitem__(self, shape) -> NDArrayType:
         if isinstance(shape, list) or isinstance(shape, tuple):
-            if list(shape) == [1]:
-                return self
             return NDArrayType(tuple(shape), self.dtype)
-        if shape == 1:
-            return self
         return NDArrayType((shape,), self.dtype)
 
     def __repr__(self) -> str:

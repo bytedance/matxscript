@@ -643,6 +643,7 @@ class DynamicTensor(Tensor):
         int_var_shape = [IntVar([0, np.iinfo(np.int64).max], symbolic_value=AnySymbol)
                          for _ in range(dims)]
         self.shape_vars = shape
+        self.dims = dims
         super().__init__(
             int_var_shape,
             name,

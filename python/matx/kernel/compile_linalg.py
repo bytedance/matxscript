@@ -19,69 +19,19 @@
 
 import ctypes
 import os
+import pathlib
 import subprocess
 import time
-from collections import OrderedDict
-
-import numpy as np
-
-import matx.kernel.typing.utils as typing_utils
 from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 from matx.kernel.kernel_parser import KernelParser
-from matx.kernel.typing import PYTYPE_TO_C_TYPE
+from matx.kernel.codegen.cpp_template.function_meta_data import from_kernel_parser
 
+interface_lib = set()
 
-def nd_to_c(nd, nd_t):
-    allocated_ptr = nd.ctypes.data_as(ctypes.POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
-    aligned_ptr = nd.ctypes.data_as(ctypes.POINTER(PYTYPE_TO_C_TYPE[nd_t.dtype]))
-    offset = ctypes.c_int64(0)
-    # shape = list(nd.ctypes.shape_as(c_int64))
-    shape = [ctypes.c_int64(s) for s in nd.shape]
-    strides = [ctypes.c_int64(s // nd.dtype.itemsize) for s in nd.strides]
-    return [allocated_ptr, aligned_ptr, offset, *shape, *strides]
+from matx._ffi.libinfo import find_lib_path
 
-
-def scalar_to_c(v, v_t):
-    v = PYTYPE_TO_C_TYPE[v_t.dtype](v)
-    return v
-
-
-def symbol_to_c(value):
-    return ctypes.c_int64(value)
-
-
-def bind_data_to_type(ins, types):
-    args = []
-    symbols = OrderedDict()
-    for i, t in zip(ins, types):
-        if not typing_utils.is_ndarray_type(t):
-            raise NotImplementedError(f"{t} is not a legit type.")
-        args.append((i, t))
-
-        if typing_utils.is_scalar_type(t):
-            continue
-        for actual_s, annotated_s in zip(i.shape, t.shape):
-            if not typing_utils.is_symbol(annotated_s):
-                continue
-            if annotated_s in symbols:
-                assert symbols[annotated_s] == actual_s
-                continue
-            symbols[annotated_s] = actual_s
-    return args, symbols
-
-
-def binded_args_to_c(binded_args):
-    args = []
-    for value, t in binded_args:
-        if typing_utils.is_scalar_type(t):
-            args.append(scalar_to_c(value, t))
-        elif typing_utils.is_ndarray_type(t):
-            args += nd_to_c(value, t)
-        elif typing_utils.is_symbol(t):
-            args.append(symbol_to_c(value))
-        else:
-            raise NotImplementedError(f"{t} is not a legit type.")
-    return args
+matx_lib_path = os.path.dirname(find_lib_path()[0])
+os.environ['LD_LIBRARY_PATH'] = f'matx_lib_path:' + os.environ.get('LD_LIBRARY_PATH', '')
 
 
 def write_linalg(graph_ir, output_fname="tmp.mlir", debug=False, over_written_code=None):
@@ -98,11 +48,12 @@ def write_linalg(graph_ir, output_fname="tmp.mlir", debug=False, over_written_co
 def lower_linalg_to_cpu(input_fname, output_fname="llvm_tmp.mlir"):
     env = os.environ.copy()
     lower = subprocess.Popen(['mlir-opt',
+                              '--expand-strided-metadata',  # for lower strided memref
                               '--convert-linalg-to-loops',
                               '--lower-affine',
                               '--arith-expand',
                               '--memref-expand',
-                              '--normalize-memrefs',
+                              # '--normalize-memrefs',
                               '--fold-memref-alias-ops',
                               '--arith-unsigned-when-equivalent',
                               '--convert-scf-to-cf',
@@ -115,10 +66,10 @@ def lower_linalg_to_cpu(input_fname, output_fname="llvm_tmp.mlir"):
                               '--convert-cf-to-llvm',
                               '--scf-for-loop-peeling',
                               '--scf-for-loop-specialization',
-                              '--affine-expand-index-ops',
-                              '--affine-data-copy-generate',
-                              '--lower-affine',
-                              '--convert-arith-to-llvm',
+                              # '--affine-expand-index-ops',
+                              # '--affine-data-copy-generate',
+                              # '--lower-affine',
+                              # '--convert-arith-to-llvm',
                               '--reconcile-unrealized-casts',
                               input_fname,
                               '-o',
@@ -186,54 +137,75 @@ def llvm_compile(input_fname, output_fname="llvm_tmp.ll"):
     return output_fname
 
 
-class LinalgFuncWrapper:
+def generate_matx_c_interface(parser, file_name, shard_lib_path):
+    env = os.environ.copy()
+    c_interface_code = from_kernel_parser(
+        parser, os.path.join(
+            os.path.abspath(
+                os.curdir), shard_lib_path))
+    shard_lib_dir = os.path.abspath(os.path.dirname(shard_lib_path))
+    file_path = os.path.join(shard_lib_dir, f"{file_name}_c_interface.cpp")
+    with open(file_path, "w+") as f:
+        f.write(c_interface_code.code())
 
-    def __init__(self, func, parser: KernelParser):
-        self.func = func
-        self.arg_types = parser.arg_types
-        self.rt_types = parser.return_types
-        if typing_utils.is_scalar_type(self.rt_types):
-            self.func.restype = PYTYPE_TO_C_TYPE[self.rt_types.dtype]
+    include_dir = pathlib.Path(os.path.abspath(
+        __file__)).parent.parent.parent.parent.joinpath("include")
+    output_file = os.path.join(shard_lib_dir, f"{file_name}_c_interface.o")
 
-    def __call__(self, *args, rt=None):
-        if len(args) != len(self.arg_types):
-            raise NotImplementedError(f"the size of the given input {len(args)}"
-                                      f" is not the same as the annotation {len(self.arg_types)}")
-        args, rt = self.to_c_args(*args, rt=rt)
-        rc = self.raw_call(*args)
-        return rt if rt is not None else rc
+    # gcc -fPIC -I/matxscript/include -std=c++14 file1.c
+    compile_c_interface = subprocess.Popen(["g++",
+                                            "-fPIC",
+                                            "-g",
+                                            f"-I{include_dir}",
+                                            "-std=c++14",
+                                            "-c",
+                                            file_path],
+                                           env=env,
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
 
-    def raw_call(self, *args):
-        return self.func(*args)
+    stdout, stderr = compile_c_interface.communicate()
+    print(stdout.decode())
+    err = stderr.decode()
+    if len(err) != 0:
+        raise RuntimeError("\n" + err)
 
-    def to_c_args(self, *args, rt=None):
-        binded_args, symbol_dict = bind_data_to_type(args, self.arg_types)
-        if not typing_utils.is_scalar_type(self.rt_types):
-            if rt is None:
-                shape = [symbol_dict[s] if typing_utils.is_symbol(
-                    s) else s for s in self.rt_types.shape]
-                rt = np.zeros(shape=shape, dtype=self.rt_types.dtype)
-            for actual_s, ann_s in zip(rt.shape, self.rt_types.shape):
-                if isinstance(ann_s, int):
-                    continue
-                assert symbol_dict[ann_s] == actual_s
-            binded_args.append((rt, self.rt_types))
+    # gcc -shared -o libexample.so file1.o file2.o
+    output_so = os.path.join(shard_lib_dir, f"{file_name}_c_interface.so")
+    compile_c_interface = subprocess.Popen(["g++",
+                                            "-g",
+                                            "-shared",
+                                            "-o",
+                                            f"{output_so}",
+                                            output_file,
+                                            f"-L{matx_lib_path}",
+                                            "-lmatx"],
+                                           env=env,
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
 
-        for t, value in symbol_dict.items():
-            binded_args.append((value, t))
-        return binded_args_to_c(binded_args), rt
+    stdout, stderr = compile_c_interface.communicate()
+    print(stdout.decode())
+    err = stderr.decode()
+    if len(err) != 0:
+        raise RuntimeError("\n" + err)
 
+    print(output_so)
+    print(os.path.abspath('.'))
+    print([f for f in os.listdir('.')])
+    LIB = ctypes.CDLL(output_so, ctypes.RTLD_LOCAL)
+    interface_lib.add(LIB)
 
-def load_func(shared_lib, parser: KernelParser):
-    linalg_func = ctypes.CDLL(os.path.join(os.getcwd(), shared_lib))
-    func = getattr(linalg_func, parser.func_name)
-    return LinalgFuncWrapper(func, parser)
+    from .matx_compatible_interface import get_kernel_func
+    func_name = "_" + str(c_interface_code.unique_id) + "_" + \
+                c_interface_code.func_name + "__matx_c_api_"
+    return get_kernel_func(func_name)
 
 
 def compile_linalg(
         parser: KernelParser,
         file_name=None,
-        dir="__mlir_output__",
+        out_dir="__mlir_output__",
         debug=False,
         over_written_code=None):
     current_path = os.getcwd()
@@ -243,15 +215,20 @@ def compile_linalg(
             file_name = f"_{code_file_name}___{parser.func_name}_{int(time.time() * 100000)}"
         if debug:
             file_name = f"_mlir_debug"
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        os.chdir(dir)
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        os.chdir(out_dir)
+        # codegen linalg code to local file
         mlir_f = write_linalg(parser.graph, file_name + ".mlir", debug, over_written_code)
+        # apply mlir passes
         lowered_f = lower_linalg_to_cpu(mlir_f, "llvm_" + file_name + ".mlir")
+        # lower mlir to llvm
         llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
+        # compile llvm code to shared library
         shared_lib = llvm_compile(llvm_f, file_name + ".so")
-        func = load_func(shared_lib, parser)
-        return func
+        # codegen the c inter face that is compatible with matx
+        matx_c_interface = generate_matx_c_interface(parser, file_name, shared_lib)
+        return matx_c_interface
     except Exception as e:
         raise e
     finally:

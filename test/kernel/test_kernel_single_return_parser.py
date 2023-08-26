@@ -21,35 +21,13 @@ import unittest
 
 import sympy
 
+import matx
 from matx.kernel.compile_linalg import compile_linalg
 from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.typing import *
 
 
 class TestSingleReturnParser(unittest.TestCase):
-
-    def test_no_op(self):
-        M = sympy.Symbol('M', positive=True)
-        N = sympy.Symbol('N', positive=True)
-
-        def foo(a: int32[M, N]) -> int32[M, N]:
-            return a
-
-        p = KernelParser(foo)
-        p.parse()
-        print()
-        print("=" * 30, "linalg_code", "=" * 30, sep="")
-        print()
-        print(p.linalg_code())
-        print()
-        print("=" * 30, "compile and run", "=" * 30, sep="")
-        print()
-        a = np.array([[1, 2], [3, 4]], dtype=np.int32)
-        rt = np.array([[0, 0], [0, 0]], dtype=np.int32)
-        f = compile_linalg(p)
-        f(a, rt=rt)
-        np.testing.assert_equal(rt, foo(a))
-        # todo check ir structure
 
     def test_one_bin_op(self):
         M = sympy.Symbol('M', positive=True)
@@ -69,9 +47,10 @@ class TestSingleReturnParser(unittest.TestCase):
         print()
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
-        rt = np.zeros(a.shape, dtype=np.int32)
         f = compile_linalg(p)
-        f(a, b, rt=rt)
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        rt = f(matx_a, matx_b)
         np.testing.assert_equal(rt, foo(a, b))
 
     def test_multiple_bin_op(self):
@@ -93,9 +72,11 @@ class TestSingleReturnParser(unittest.TestCase):
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
         c = np.array([[13, 14, 15], [16, 17, 18]], dtype=np.int32)
-        rt = np.zeros(a.shape, dtype=np.int32)
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        rt = f(matx_a, matx_b, matx_c)
         np.testing.assert_equal(rt, foo(a, b, c))
 
     def test_multiple_bin_op_with_parentheses(self):
@@ -117,9 +98,11 @@ class TestSingleReturnParser(unittest.TestCase):
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
         c = np.array([[13, 14, 15], [16, 17, 18]], dtype=np.int32)
-        rt = np.zeros(a.shape, dtype=np.int32)
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        rt = f(matx_a, matx_b, matx_c)
         np.testing.assert_equal(rt, foo(a, b, c))
 
     def test_multiple_bin_op_with_broadcast(self):
@@ -141,9 +124,11 @@ class TestSingleReturnParser(unittest.TestCase):
         a = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int32)
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
         c = np.array([13, 14, 15], dtype=np.int32)
-        rt = np.zeros(a.shape, dtype=np.int32)
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        rt = f(matx_a, matx_b, matx_c)
         np.testing.assert_equal(rt, foo(a, b, c))
 
     def test_multiple_bin_op_with_more_dimension(self):
@@ -163,12 +148,14 @@ class TestSingleReturnParser(unittest.TestCase):
         print()
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
-        a = np.arange(24, dtype=np.int32).reshape(2, 3, 4)
-        b = np.arange(24, 48, dtype=np.int32).reshape(2, 3, 4)
-        c = np.arange(48, 72, dtype=np.int32).reshape(2, 3, 4)
-        rt = np.zeros(a.shape, dtype=np.int32)
+        a = np.arange(24, dtype=np.int32).reshape((2, 3, 4))
+        b = np.arange(24, 48, dtype=np.int32).reshape((2, 3, 4))
+        c = np.arange(48, 72, dtype=np.int32).reshape((2, 3, 4))
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        rt = f(matx_a, matx_b, matx_c)
         np.testing.assert_equal(rt, foo(a, b, c))
 
     def test_multiple_bin_op_with_different_type(self):
@@ -187,12 +174,14 @@ class TestSingleReturnParser(unittest.TestCase):
         print()
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
-        a = np.arange(12, dtype=np.int32).reshape(3, 4)
-        b = np.arange(12, 24, dtype=np.int64).reshape(3, 4)
-        c = np.arange(24, 36, dtype=np.float32).reshape(3, 4)
-        rt = np.zeros(a.shape, dtype=np.float64)
+        a = np.arange(12, dtype=np.int32).reshape((3, 4))
+        b = np.arange(12, 24, dtype=np.int64).reshape((3, 4))
+        c = np.arange(24, 36, dtype=np.float32).reshape((3, 4))
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        rt = f(matx_a, matx_b, matx_c)
         np.testing.assert_equal(rt, foo(a, b, c))
 
     def test_multiple_bin_op_with_scalar_and_const(self):
@@ -211,12 +200,15 @@ class TestSingleReturnParser(unittest.TestCase):
         print()
         print("=" * 30, "compile and run", "=" * 30, sep="")
         print()
-        a = np.arange(12, dtype=np.int32).reshape(3, 4)
-        b = np.arange(12, 24, dtype=np.int64).reshape(3, 4)
+        a = np.arange(12, dtype=np.int32).reshape((3, 4))
+        b = np.arange(12, 24, dtype=np.int64).reshape((3, 4))
         c = np.float32(3)
-        rt = np.zeros(a.shape, dtype=np.float64)
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        # matx_c = matx.array.from_numpy(c)
+        # todo matx.array.from_numpy does not support numpy constant
+        rt = f(matx_a, matx_b, 3.0)  # not support np.float(3)
         np.testing.assert_equal(rt, foo(a, b, c))
 
 

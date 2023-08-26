@@ -20,12 +20,12 @@
 
 
 import numbers
+import typing
 
-import numpy as np
 import sympy
 
-from matx.kernel.symbol.utils import is_symbol, is_symbol_type
-from matx.kernel.typing.kernel_type import NDArrayType
+from matx.kernel.symbol.utils import is_symbol
+from matx.kernel.typing.kernel_type import NDArrayType, dynamic
 from matx.kernel.typing.type_def import *
 
 
@@ -98,3 +98,7 @@ def np_result_dtype(nptypes):
             if k == restype.type:
                 return k
     return restype.type
+
+
+def is_dynamic_ndarray(t):
+    return isinstance(t, NDArrayType) and any(i == dynamic for i in t.shape)

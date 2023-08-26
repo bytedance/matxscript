@@ -16,20 +16,19 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-"""
-Registry for basic operators and math functions.
-"""
-from typing import Dict, Any
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .parser.function_parser import FunctionParser
-    from ._template import TemplateFunc
+import matx
+from typing import Any
 
-# OP_REGISTRY defines a mapping from a FuncEnum name to a function to create this elementwise operator.
-# This object is initialized in elementwise.py, and referenced in base.py and math.py.
-FUNC_REGISTRY: Dict[int, 'FunctionParser'] = {
-}
 
-TEMPLATE_REGISTRY: Dict[Any, 'TemplateFunc'] = {
-}
+class KernelFunction:
+
+    def __init__(self, function_name: str) -> None:
+        self.op: matx.native.NativeFunction = matx.make_native_function(function_name)
+
+    def __call__(self, *args: Any) -> Any:
+        return self.op(*args)
+
+
+def get_kernel_func(function_name: str) -> matx.native.NativeFunction:
+    return matx.make_native_function(function_name)

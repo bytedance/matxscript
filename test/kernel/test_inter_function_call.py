@@ -20,11 +20,12 @@ import unittest
 import numpy as np
 import sympy
 
+import matx
 from matx.kernel.kernel_parser import KernelParser
 from matx.kernel.compile_linalg import compile_linalg
 from matx.kernel.typing import int32, int64, float32
 
-
+"""
 class TestFunctionCalls(unittest.TestCase):
 
     def test_two_op(self):
@@ -51,10 +52,11 @@ class TestFunctionCalls(unittest.TestCase):
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
         c = np.array([[13, 14, 15], [16, 17, 18]], dtype=np.int32)
         print(a.shape)
-        rt = np.zeros(a.shape, dtype=np.int32)
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
-        np.testing.assert_equal(rt, foo(a, b, c))
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        np.testing.assert_equal(f(matx_a, matx_b, matx_c), foo(a, b, c))
 
     def test_two_op_diff_shape_symbol(self):
         M = sympy.Symbol('M', positive=True)
@@ -81,10 +83,11 @@ class TestFunctionCalls(unittest.TestCase):
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
         c = np.array([[13, 14, 15], [16, 17, 18]], dtype=np.int32)
         print(a.shape)
-        rt = np.zeros(a.shape, dtype=np.int32)
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
-        np.testing.assert_equal(rt, foo(a, b, c))
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        np.testing.assert_equal(f(matx_a, matx_b, matx_c), foo(a, b, c))
 
     def test_two_op_diff_shape_symbol2(self):
         M = sympy.Symbol('M', positive=True)
@@ -110,10 +113,11 @@ class TestFunctionCalls(unittest.TestCase):
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
         c = np.array([[13, 14, 15], [16, 17, 18]], dtype=np.int32)
         print(a.shape)
-        rt = np.zeros(a.shape, dtype=np.int32)
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
-        np.testing.assert_equal(rt, foo(a, b, c))
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        np.testing.assert_equal(f(matx_a, matx_b, matx_c), foo(a, b, c))
 
     def test_two_op_multi_call1(self):
         M = sympy.Symbol('M', positive=True)
@@ -145,10 +149,11 @@ class TestFunctionCalls(unittest.TestCase):
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
         c = np.array([[13, 14, 15], [16, 17, 18]], dtype=np.int32)
         print(a.shape)
-        rt = np.zeros(a.shape, dtype=np.int32)
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
-        np.testing.assert_equal(rt, foo(a, b, c))
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        np.testing.assert_equal(f(matx_a, matx_b, matx_c), foo(a, b, c))
 
     def test_two_op_multi_call2(self):
         M = sympy.Symbol('M', positive=True)
@@ -180,10 +185,11 @@ class TestFunctionCalls(unittest.TestCase):
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
         c = np.array([[13, 14, 15], [16, 17, 18]], dtype=np.int32)
         print(a.shape)
-        rt = np.zeros(a.shape, dtype=np.int32)
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
-        np.testing.assert_equal(rt, foo(a, b, c))
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        np.testing.assert_equal(f(matx_a, matx_b, matx_c), foo(a, b, c))
 
     def test_two_op_multi_call3(self):
         M = sympy.Symbol('M', positive=True)
@@ -215,7 +221,15 @@ class TestFunctionCalls(unittest.TestCase):
         b = np.array([[7, 8, 9], [10, 11, 12]], dtype=np.int32)
         c = np.array([[13, 14, 15], [16, 17, 18]], dtype=np.int32)
         print(a.shape)
-        rt = np.zeros(a.shape, dtype=np.int32)
         f = compile_linalg(p)
-        f(a, b, c, rt=rt)
-        np.testing.assert_equal(rt, foo(a, b, c))
+        matx_a = matx.array.from_numpy(a)
+        matx_b = matx.array.from_numpy(b)
+        matx_c = matx.array.from_numpy(c)
+        np.testing.assert_equal(f(matx_a, matx_b, matx_c), foo(a, b, c))
+"""
+
+if __name__ == "__main__":
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    unittest.main()

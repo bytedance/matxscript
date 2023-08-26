@@ -24,10 +24,11 @@ from functools import partial
 from typing import List, Union, Dict, Callable, TYPE_CHECKING
 
 import matx.kernel.graphIR as _gir
+import matx.kernel.typing.utils as typing_utils
 from .linalg_printer import LinalgGenericPrinter, LinalgReductionPrinter
 
 if TYPE_CHECKING:
-    from ..kernel_parser import FunctionVisitor
+    from ..kernel_parser import FunctionParser
 
 
 @dataclass
@@ -119,12 +120,12 @@ def not_supported_op(*_, node=None):
 
 class GraphIRPrinter:
 
-    def __init__(self, kernel_p: 'FunctionVisitor'):
-        self.kernel_p = kernel_p
+    def __init__(self, func_parser: 'FunctionParser'):
+        self.func_parser = func_parser
 
-        self.graph_input: List[_gir.Node] = kernel_p.graph_input
-        self.graph_output: List[_gir.Node] = kernel_p.graph_output
-        self.graph_nodes: List[_gir.Node] = kernel_p.graph_nodes
+        self.graph_input: List[_gir.Node] = func_parser.graph_input
+        self.graph_output: List[_gir.Node] = func_parser.graph_output
+        self.graph_nodes: List[_gir.Node] = func_parser.graph_nodes
 
         self.mlir_printer = IrPrinter()
         self.mlir_var_map = {}
@@ -212,7 +213,7 @@ class GraphIRPrinter:
     def as_linalg_text(self):
         mlir_args = []
         mlir_arg_types = []
-        for arg, node in self.kernel_p.arg_context_table.items():
+        for arg, node in self.func_parser.arg_context_table.items():
             if not (isinstance(node, _gir.Tensor) or isinstance(node, _gir.Scalar)):
                 raise NotImplementedError("func parameters can only be marked as ndarray or scalar")
             name = f"%{arg}"
@@ -220,38 +221,73 @@ class GraphIRPrinter:
             mlir_arg_types.append(self.convert_type_to_mlir(node))
             self.mlir_var_map[node] = name
 
-        for dim, dim_var in self.kernel_p.shape_symbol_table.items():
-            name = f"%{dim}"
-            mlir_args.append(name)
-            mlir_arg_types.append(self.convert_type_to_mlir(dim_var))
-            self.mlir_var_map[dim_var] = name
-
         # todo assert one return
         if len(self.graph_output) != 1:
             raise SyntaxError(f"Expect the graph has exact 1 output "
                               f"but get {len(self.graph_output)}, "
                               f"which contains {self.graph_output}")
 
-        self.mlir_printer.print(f"func.func @{self.kernel_p.func_name}", end='')
+        self.mlir_printer.print(f"func.func @{self.func_parser.func_name}", end='')
         mlir_name_and_type = (f"{name}: {t}" for name, t in zip(mlir_args, mlir_arg_types))
         self.mlir_printer.print(f"({', '.join(mlir_name_and_type)})", end='')
-        if self.kernel_p.is_scalar_return():
-            self.mlir_printer.print(
-                f"->{self.convert_type_to_mlir(self.kernel_p.return_ctx)}", end='')
+
+        old_printer = self.mlir_printer
+        body_printer = IrPrinter()
+        self.mlir_printer = body_printer
+
+        self.mlir_printer.print(" attributes {llvm.emit_c_interface} ", end='')
         self.mlir_printer.print("{")
         self.mlir_printer.new_scope()
+        for dim, dim_var in self.func_parser.shape_symbol_table.items():
+            self._get_symbol_value(dim, dim_var)
 
         # convert graph
         self.visit(self.graph_output[0], None)
-        if not self.kernel_p.is_scalar_return():
-            self.mlir_printer.print(f"func.return")
-        else:
+
+        self.mlir_printer = old_printer
+
+        if self.func_parser.func_return_kind.is_scalar():
+            rt_type = str(DTYPE_TO_MLIR[self.func_parser.return_dtype_str])
+            self.mlir_printer.print(f"->{rt_type}", end='')
+        elif self.func_parser.func_return_kind.is_dynamic_tensor():
+            # dims = (dim_cvt(d) for d in self.func_parser.return_shape)
+            # todo use self.convert_type_to_mlir(self.graph_output[0])
+            rt_type = self.convert_type_to_mlir(self.graph_output[0])
+            self.mlir_printer.print(f"->{rt_type}", end='')
+
+        self.mlir_printer.print(str(body_printer))
+        self.mlir_printer.new_scope()
+
+        if self.func_parser.func_return_kind.is_scalar() or self.func_parser.func_return_kind.is_dynamic_tensor():
             self.mlir_printer.print(
                 f"func.return {self.mlir_var_map[self.graph_output[0]]}", end='')
             self.mlir_printer.print(f" : {self.convert_type_to_mlir(self.graph_output[0])}")
+        else:
+            self.mlir_printer.print("func.return")
         self.mlir_printer.pop_scope()
         self.mlir_printer.print("}")
         return str(self.mlir_printer)
+
+    def _get_symbol_value(self, dim, dim_var):
+        corresponding_nd = None
+        idx = -1
+        for name, nd_node in self.func_parser.arg_context_table.items():
+            if isinstance(nd_node, _gir.Tensor) and dim_var in nd_node.shape():
+                corresponding_nd = nd_node
+                idx = list(nd_node.shape()).index(dim_var)
+        if corresponding_nd is None or idx == -1:
+            raise SyntaxError("Symbol {} not found in arg_context_table".format(dim_var))
+
+        name = f"%{dim}"
+        nd_name = self.mlir_var_map[corresponding_nd]
+        idx_name = self.new_var_name
+        stmt0 = f"{idx_name} = arith.constant {idx} : index"
+        stmt1 = f"{name}_idx = memref.dim {nd_name}, {idx_name} : {self.convert_type_to_mlir(corresponding_nd)}"
+        stmt2 = f"{name} = index.castu {name}_idx : index to i64"
+        self.mlir_printer.print(stmt0)
+        self.mlir_printer.print(stmt1)
+        self.mlir_printer.print(stmt2)
+        self.mlir_var_map[dim_var] = name
 
     def _gen_arith_statement(
             self,
@@ -389,7 +425,7 @@ class GraphIRPrinter:
             predicate = "o" + predicate
         elif compare_type != "eq" and compare_type != "ne":
             if suffix == "ui":
-                warnings.warn(f"Enconuntered a unsuppoerted type: {suffix}."
+                warnings.warn(f"Encountered a unsupported type: {suffix}."
                               f" Will try to treat it as unsigned int")
                 predicate = "u" + predicate
             elif suffix == "i":
@@ -457,7 +493,11 @@ class GraphIRPrinter:
                             f"i64 to index"
                 self.mlir_printer.print(cast_stmt)
                 casted_shape_var.append(sv_name)
-            stmt = f"{mlir_var} = memref.alloca({', '.join(casted_shape_var)}) : {self.convert_type_to_mlir(_from)}"
+            if _from in self.graph_output:
+                alloc_op = "memref.alloc"
+            else:
+                alloc_op = "memref.alloca"
+            stmt = f"{mlir_var} = {alloc_op}({', '.join(casted_shape_var)}) : {self.convert_type_to_mlir(_from)}"
             lg_printer.add_allocate_stmt((mlir_var, _from, stmt))
             self.mlir_var_map[_from] = mlir_var
         else:

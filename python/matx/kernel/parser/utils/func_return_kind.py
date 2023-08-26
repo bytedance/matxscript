@@ -16,20 +16,28 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-"""
-Registry for basic operators and math functions.
-"""
-from typing import Dict, Any
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .parser.function_parser import FunctionParser
-    from ._template import TemplateFunc
+from enum import Enum
 
-# OP_REGISTRY defines a mapping from a FuncEnum name to a function to create this elementwise operator.
-# This object is initialized in elementwise.py, and referenced in base.py and math.py.
-FUNC_REGISTRY: Dict[int, 'FunctionParser'] = {
-}
 
-TEMPLATE_REGISTRY: Dict[Any, 'TemplateFunc'] = {
-}
+class FuncReturnKind(Enum):
+    VOID = 1,
+    SCALAR = 2,
+    STATIC_TENSOR = 3,
+    DYNAMIC_TENSOR = 4,
+    TEMPLATE = 5,
+
+    def is_void(self):
+        return self is FuncReturnKind.VOID
+
+    def is_scalar(self):
+        return self is FuncReturnKind.SCALAR
+
+    def is_static_tensor(self):
+        return self is FuncReturnKind.STATIC_TENSOR
+
+    def is_dynamic_tensor(self):
+        return self is FuncReturnKind.DYNAMIC_TENSOR
+
+    def is_template(self):
+        return self is FuncReturnKind.TEMPLATE

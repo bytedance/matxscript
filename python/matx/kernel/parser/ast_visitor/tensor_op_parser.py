@@ -16,16 +16,17 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
+'''
 from __future__ import annotations
 
 import ast
 from typing import Any, Union, TYPE_CHECKING
 
 import matx.kernel.graphIR as _gir
-from matx.kernel.parser.general_parser import GeneralParser
+from matx.kernel.parser.ast_visitor.general_visitor import GeneralParser
 
 if TYPE_CHECKING:
-    from .function_visitor import FunctionVisitor
+    from matx.kernel.parser.function_visitor import FunctionVisitor
 
 
 class TensorOpParser(GeneralParser):
@@ -91,23 +92,24 @@ class TensorOpParser(GeneralParser):
 
     def visit_return_without_signature(self, node: ast.Return) -> Union[None, _gir.Node]:
         rt_ir = self.visit(node.value)
-        dtype = rt_ir.dtype()
-        shape = rt_ir.shape()
+        # dtype = rt_ir.dtype()
+        # shape = rt_ir.shape()
         self.func_visitor.kernel_p.return_types = _gir.utils.convert_to_kernel_type(rt_ir)
-        self.func_visitor.make_return(shape, dtype)
-        self.return_ctx = self.func_visitor.return_ctx
-        if isinstance(self.return_ctx, _gir.Tensor):
-            if self.return_ctx.name() != self.func_visitor.return_var_name:
-                return None
-            op = _gir.DeepCopyOperator()
-            self.func_visitor.graph_nodes.append(op)
-            op(self.return_ctx, rt_ir)
+        # self.func_visitor.make_return(shape, dtype)
+        # self.return_ctx = self.func_visitor.return_ctx
+        if isinstance(rt_ir, _gir.Tensor):
+            # if self.return_ctx.name() != self.func_visitor.return_var_name:
+            #    return None
+            # op = _gir.DeepCopyOperator()
+            # self.func_visitor.graph_nodes.append(op)
+            # op(self.return_ctx, rt_ir)
+            self.func_visitor.graph_output.append(rt_ir)
             return None
         else:
             raise RuntimeError(f"return {type(rt_ir)} is not support now")
 
     def visit_return_with_signature(self, node: ast.Return) -> Union[None, _gir.Node]:
-        result_shape = self.func_visitor.return_types.shape
+        result_shape = self.func_visitor.return_shape
         if list(result_shape) != list(_gir.utils.unwrap_shape(self.return_ctx.shape())):
             raise RuntimeError(f"the marked shape {self.return_ctx.shape} "
                                f"is not equal to {result_shape}")
@@ -126,3 +128,4 @@ class TensorOpParser(GeneralParser):
             return None
         else:
             raise RuntimeError(f"return {type(rt_ir)} is not support now")
+'''

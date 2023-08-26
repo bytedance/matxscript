@@ -17,4 +17,6 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from .function_visitor import *
+from .function_parser import *
+from .template_parser import *
+from .utils import FuncReturnKind
