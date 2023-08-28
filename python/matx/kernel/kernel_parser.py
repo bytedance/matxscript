@@ -42,6 +42,7 @@ class KernelParser:
             self.args = {k: ann for k, ann in zip(self.signature.parameters.keys(), args_types)}
             self.arg_types = args_types
 
+
         # get return type
         self.return_types = self.signature.return_annotation
         self.empty_return_signature = self.return_types is inspect.Signature.empty

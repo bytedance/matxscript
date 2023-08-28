@@ -1,0 +1,2 @@
+auto && {{mem_shared_ptr}} = convert_from_ndarray({{nd}});
+auto {{func_arg}} = {{mem_shared_ptr}}.get();

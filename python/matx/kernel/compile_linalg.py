@@ -24,7 +24,7 @@ import subprocess
 import time
 from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 from matx.kernel.kernel_parser import KernelParser
-from matx.kernel.codegen.cpp_template.function_meta_data import from_kernel_parser
+from matx.kernel.codegen.cpp_template.function_meta_data import get_codegen_data
 
 interface_lib = set()
 
@@ -139,7 +139,7 @@ def llvm_compile(input_fname, output_fname="llvm_tmp.ll"):
 
 def generate_matx_c_interface(parser, file_name, shard_lib_path):
     env = os.environ.copy()
-    c_interface_code = from_kernel_parser(
+    c_interface_code = get_codegen_data(
         parser, os.path.join(
             os.path.abspath(
                 os.curdir), shard_lib_path))

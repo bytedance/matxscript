@@ -17,6 +17,7 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
+
 from dataclasses import dataclass
 from typing import List, TYPE_CHECKING
 import jinja2
@@ -32,8 +33,6 @@ TEMPLATE_DIR = os.path.dirname(os.path.abspath(__file__))
 if TYPE_CHECKING:
     from matx.kernel.parser.utils import FuncReturnKind
     from matx.kernel.kernel_parser import KernelParser
-
-DEBUG = False
 
 
 @dataclass
@@ -65,7 +64,6 @@ class CInterfaceCodegenData:
         self.input_args = input_args
         self.lib_path = lib_path
         self.func_return_kind = func_return_kind
-        self.debug = DEBUG or debug
 
     def code(self):
         output = self.template.render(unique_id=self.unique_id,

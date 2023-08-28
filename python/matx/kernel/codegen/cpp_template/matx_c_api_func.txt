@@ -1,0 +1,28 @@
+int {{c_api_func_name}}(MATXScriptAny* args, int num_args, MATXScriptAny* out_ret_value, void* resource_handle = nullptr)
+{
+  TArgs args_t(args, num_args);
+
+  if (num_args > 0 && args[num_args - 1].code == TypeIndex::kRuntimeKwargs) {
+    string_view arg_names[{{arg_len}}] { {{arg_name_str}} };
+    KwargsUnpackHelper helper("{{py_func_name}}", arg_names, {{arg_len}}, nullptr, 0);
+    RTView pos_args[{{arg_len}}];
+    helper.unpack(pos_args, args, num_args);
+    auto ret = {{matx_func_name}}({{func_cvt_code}});
+    RTValue(std::move(ret)).MoveToCHost(out_ret_value);
+  } else {
+    switch(num_args) {
+      case {{arg_len}}: {
+        auto ret = {{matx_func_name}}({{func_cvt_code}});
+        RTValue(std::move(ret)).MoveToCHost(out_ret_value);
+      } break;
+      default: {THROW_PY_TypeError(
+            "File \"{{file_name}}\", line {{line_no}}, in {{py_func_name}}\n",
+            "{{py_func_name}}() takes {{arg_len}} positional arguments but ",
+            num_args,
+            " were given");
+      } break;
+    }
+  }
+
+  return 0;
+}
