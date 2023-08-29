@@ -32,7 +32,8 @@ class _BoxPointsOpImpl:
     def __init__(self, device: Any) -> None:
         self.op: matx.NativeObject = make_native_object("VisionBoxPointsGeneralOp", device())
 
-    def __call__(self, rotated_rect:Tuple[Tuple[float, float], Tuple[float, float], float] ) -> matx.runtime.NDArray:
+    def __call__(self, rotated_rect: Tuple[Tuple[float, float],
+                 Tuple[float, float], float]) -> matx.runtime.NDArray:
         return self.op.process(rotated_rect)
 
 
@@ -48,5 +49,6 @@ class BoxPointsOp:
         """
         self.op_impl: _BoxPointsOpImpl = matx.script(_BoxPointsOpImpl)(device=device)
 
-    def __call__(self, rotated_rect:Tuple[Tuple[float, float], Tuple[float, float], float] ) -> matx.runtime.NDArray:
+    def __call__(self, rotated_rect: Tuple[Tuple[float, float],
+                 Tuple[float, float], float]) -> matx.runtime.NDArray:
         return self.op_impl(rotated_rect)

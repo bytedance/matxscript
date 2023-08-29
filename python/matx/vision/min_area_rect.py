@@ -32,7 +32,8 @@ class _MinAreaRectOpImpl:
     def __init__(self, device: Any) -> None:
         self.op: matx.NativeObject = make_native_object("VisionMinAreaRectGeneralOp", device())
 
-    def __call__(self, points: matx.runtime.NDArray) -> Tuple[Tuple[float, float], Tuple[float, float], float]:
+    def __call__(
+            self, points: matx.runtime.NDArray) -> Tuple[Tuple[float, float], Tuple[float, float], float]:
         return self.op.process(points)
 
 
@@ -48,5 +49,6 @@ class MinAreaRectOp:
         """
         self.op_impl: _MinAreaRectOpImpl = matx.script(_MinAreaRectOpImpl)(device=device)
 
-    def __call__(self, points: matx.runtime.NDArray) -> Tuple[Tuple[float, float], Tuple[float, float], float]:
+    def __call__(
+            self, points: matx.runtime.NDArray) -> Tuple[Tuple[float, float], Tuple[float, float], float]:
         return self.op_impl(points)

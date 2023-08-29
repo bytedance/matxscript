@@ -18,6 +18,7 @@
  * under the License.
  */
 
+#include <opencv2/imgproc.hpp>
 #include "matxscript/runtime/global_type_index.h"
 #include "matxscript/runtime/logging.h"
 #include "matxscript/runtime/native_object_registry.h"
@@ -28,7 +29,6 @@
 #include "utils/opencv_util.h"
 #include "utils/type_helper.h"
 #include "vision_base_op_cpu.h"
-#include <opencv2/imgproc.hpp>
 
 namespace byted_matx_vision {
 namespace ops {
@@ -40,18 +40,17 @@ class VisionMinAreaRectOpCPU : VisionBaseOpCPU {
   }
   ~VisionMinAreaRectOpCPU() = default;
 
-  RTValue process(const NDArray &points);
+  RTValue process(const NDArray& points);
 };
 
-RTValue VisionMinAreaRectOpCPU::process(const NDArray &points) {
+RTValue VisionMinAreaRectOpCPU::process(const NDArray& points) {
   cv::Mat point_mat = NDArrayToOpencvMat(points);
-  const auto & rotated_rect = cv::minAreaRect(point_mat);
+  const auto& rotated_rect = cv::minAreaRect(point_mat);
   Tuple center({rotated_rect.center.x, rotated_rect.center.y});
   Tuple size({rotated_rect.size.width, rotated_rect.size.height});
   auto angle = rotated_rect.angle;
   return Tuple({center, size, angle});
 }
-
 
 class VisionMinAreaRectGeneralOp : public VisionBaseOp {
  public:
@@ -62,15 +61,18 @@ class VisionMinAreaRectGeneralOp : public VisionBaseOp {
 
 MATX_REGISTER_NATIVE_OBJECT(VisionMinAreaRectOpCPU)
     .SetConstructor([](PyArgs args) -> std::shared_ptr<void> {
-      MXCHECK(args.size() == 1) << "[VisionMinAreaRectOpCPU] Expect 1 argument but get " << args.size();
+      MXCHECK(args.size() == 1) << "[VisionMinAreaRectOpCPU] Expect 1 argument but get "
+                                << args.size();
       return std::make_shared<VisionMinAreaRectOpCPU>(args[0]);
     })
-    .RegisterFunction("process", [](void* self, PyArgs args) -> RTValue {
-      MXCHECK_EQ(args.size(), 1) << "[VisionMinAreaRectOpCPU][func: process] Expect 1 arguments but get "
-                                 << args.size();
-      return reinterpret_cast<VisionMinAreaRectOpCPU*>(self)->process(
-          args[0].AsObjectView<NDArray>().data());
-    });
+    .RegisterFunction("process",
+                      [](void* self, PyArgs args) -> RTValue {
+                        MXCHECK_EQ(args.size(), 1)
+                            << "[VisionMinAreaRectOpCPU][func: process] Expect 1 arguments but get "
+                            << args.size();
+                        return reinterpret_cast<VisionMinAreaRectOpCPU*>(self)->process(
+                            args[0].AsObjectView<NDArray>().data());
+                      });
 
 MATX_REGISTER_NATIVE_OBJECT(VisionMinAreaRectGeneralOp)
     .SetConstructor([](PyArgs args) -> std::shared_ptr<void> {
@@ -79,8 +81,6 @@ MATX_REGISTER_NATIVE_OBJECT(VisionMinAreaRectGeneralOp)
     .RegisterFunction("process", [](void* self, PyArgs args) -> RTValue {
       return reinterpret_cast<VisionMinAreaRectGeneralOp*>(self)->process(args);
     });
-
-
 
 }  // namespace ops
 }  // namespace byted_matx_vision

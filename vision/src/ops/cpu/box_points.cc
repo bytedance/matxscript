@@ -18,6 +18,7 @@
  * under the License.
  */
 
+#include <opencv2/imgproc.hpp>
 #include "matxscript/runtime/global_type_index.h"
 #include "matxscript/runtime/logging.h"
 #include "matxscript/runtime/native_object_registry.h"
@@ -28,7 +29,6 @@
 #include "utils/opencv_util.h"
 #include "utils/type_helper.h"
 #include "vision_base_op_cpu.h"
-#include <opencv2/imgproc.hpp>
 
 namespace byted_matx_vision {
 namespace ops {
@@ -40,14 +40,14 @@ class VisionBoxPointsOpCPU : VisionBaseOpCPU {
   }
   ~VisionBoxPointsOpCPU() = default;
 
-  RTValue process(const Tuple & rotated_rect_tuple);
+  RTValue process(const Tuple& rotated_rect_tuple);
 };
 
-RTValue VisionBoxPointsOpCPU::process(const Tuple & rotated_rect_tuple) {
-  const auto & center_tuple_view = rotated_rect_tuple[0].AsObjectView<Tuple>();
-  const auto & center_tuple = center_tuple_view.data();
-  const auto & size_tuple_view = rotated_rect_tuple[1].AsObjectView<Tuple>();
-  const auto & size_tuple = size_tuple_view.data();
+RTValue VisionBoxPointsOpCPU::process(const Tuple& rotated_rect_tuple) {
+  const auto& center_tuple_view = rotated_rect_tuple[0].AsObjectView<Tuple>();
+  const auto& center_tuple = center_tuple_view.data();
+  const auto& size_tuple_view = rotated_rect_tuple[1].AsObjectView<Tuple>();
+  const auto& size_tuple = size_tuple_view.data();
   cv::Point2f center(center_tuple[0].As<float>(), center_tuple[1].As<float>());
   cv::Size2f size(size_tuple[0].As<float>(), size_tuple[1].As<float>());
   float angle = rotated_rect_tuple[2].As<float>();
@@ -56,7 +56,6 @@ RTValue VisionBoxPointsOpCPU::process(const Tuple & rotated_rect_tuple) {
   cv::boxPoints(std::move(rotated_rect), point_mat);
   return OpencvMatToNDArray(std::move(point_mat));
 }
-
 
 class VisionBoxPointsGeneralOp : public VisionBaseOp {
  public:
@@ -67,15 +66,18 @@ class VisionBoxPointsGeneralOp : public VisionBaseOp {
 
 MATX_REGISTER_NATIVE_OBJECT(VisionBoxPointsOpCPU)
     .SetConstructor([](PyArgs args) -> std::shared_ptr<void> {
-      MXCHECK(args.size() == 1) << "[VisionBoxPointsOpCPU] Expect 1 argument but get " << args.size();
+      MXCHECK(args.size() == 1) << "[VisionBoxPointsOpCPU] Expect 1 argument but get "
+                                << args.size();
       return std::make_shared<VisionBoxPointsOpCPU>(args[0]);
     })
-    .RegisterFunction("process", [](void* self, PyArgs args) -> RTValue {
-      MXCHECK_EQ(args.size(), 1) << "[VisionBoxPointsOpCPU][func: process] Expect 1 arguments but get "
-                                 << args.size();
-      return reinterpret_cast<VisionBoxPointsOpCPU*>(self)->process(
-          args[0].AsObjectView<Tuple>().data());
-    });
+    .RegisterFunction("process",
+                      [](void* self, PyArgs args) -> RTValue {
+                        MXCHECK_EQ(args.size(), 1)
+                            << "[VisionBoxPointsOpCPU][func: process] Expect 1 arguments but get "
+                            << args.size();
+                        return reinterpret_cast<VisionBoxPointsOpCPU*>(self)->process(
+                            args[0].AsObjectView<Tuple>().data());
+                      });
 
 MATX_REGISTER_NATIVE_OBJECT(VisionBoxPointsGeneralOp)
     .SetConstructor([](PyArgs args) -> std::shared_ptr<void> {
@@ -84,8 +86,6 @@ MATX_REGISTER_NATIVE_OBJECT(VisionBoxPointsGeneralOp)
     .RegisterFunction("process", [](void* self, PyArgs args) -> RTValue {
       return reinterpret_cast<VisionBoxPointsGeneralOp*>(self)->process(args);
     });
-
-
 
 }  // namespace ops
 }  // namespace byted_matx_vision

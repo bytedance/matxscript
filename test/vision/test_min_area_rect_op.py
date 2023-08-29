@@ -42,7 +42,7 @@ class TestMinAreaRectOp(unittest.TestCase):
             thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     def compare_rect(self, rect1, rect2):
-        def float_eq(f1, f2, threshold = 0.9):
+        def float_eq(f1, f2, threshold=0.9):
             return abs(f1 - f2) < threshold
 
         if rect1 == rect2:
@@ -53,22 +53,36 @@ class TestMinAreaRectOp(unittest.TestCase):
         size2 = rect2[1]
         angle1 = rect1[2]
         angle2 = rect2[2]
-        if not (float_eq(center1[0],center2[0]) and float_eq(center1[1],center2[1])):
+        if not (float_eq(center1[0], center2[0]) and float_eq(center1[1], center2[1])):
             self.assertTrue(False, f"center not equal {rect1} vs {rect2}")
-        if float_eq(size1[0], size1[1], 0.1) and float_eq(size1[0], size2[0], 0.1) and float_eq(size2[0], size2[1], 0.1):
-            if not (float_eq(abs(angle1 - angle2), 180, 5) or (float_eq(abs(angle1 - angle2), 90, 5) or float_eq(abs(angle1 - angle2), 270), 5)):
-                self.assertTrue(False, f"angle not equal (even after rotating 90 180 and 270 degree) {rect1} vs {rect2}")
+        if float_eq(
+                size1[0],
+                size1[1],
+                0.1) and float_eq(
+                size1[0],
+                size2[0],
+                0.1) and float_eq(
+                size2[0],
+                size2[1],
+                0.1):
+            if not (float_eq(abs(angle1 - angle2), 180, 5) or (float_eq(abs(angle1 - angle2),
+                    90, 5) or float_eq(abs(angle1 - angle2), 270), 5)):
+                self.assertTrue(
+                    False, f"angle not equal (even after rotating 90 180 and 270 degree) {rect1} vs {rect2}")
         elif float_eq(size1[0], size2[0], 0.1) and float_eq(size1[1], size2[1], 0.1):
             if not float_eq(abs(angle1 - angle2), 180, 5):
-                self.assertTrue(False, f"angle not equal (even after rotating 180 degree) {rect1} vs {rect2}")
+                self.assertTrue(
+                    False, f"angle not equal (even after rotating 180 degree) {rect1} vs {rect2}")
         elif float_eq(size1[0], size2[1], 0.1) and float_eq(size1[1], size2[0], 0.1):
-            if not (float_eq(abs(angle1 - angle2), 90, 5) or float_eq(abs(angle1 - angle2), 270), 5):
-                self.assertTrue(False, f"angle not equal (even after rotating 90 and 270 degree) {rect1} vs {rect2}")
+            if not (float_eq(abs(angle1 - angle2), 90, 5)
+                    or float_eq(abs(angle1 - angle2), 270), 5):
+                self.assertTrue(
+                    False, f"angle not equal (even after rotating 90 and 270 degree) {rect1} vs {rect2}")
         else:
             self.assertTrue(False, f"size not equal {rect1} vs {rect2}")
 
     def compare_rect_not_assert(self, rect1, rect2):
-        def float_eq(f1, f2, threshold = 0.9):
+        def float_eq(f1, f2, threshold=0.9):
             return abs(f1 - f2) < threshold
 
         if rect1 == rect2:
@@ -79,30 +93,41 @@ class TestMinAreaRectOp(unittest.TestCase):
         size2 = rect2[1]
         angle1 = rect1[2]
         angle2 = rect2[2]
-        if not (float_eq(center1[0],center2[0]) and float_eq(center1[1],center2[1])):
+        if not (float_eq(center1[0], center2[0]) and float_eq(center1[1], center2[1])):
             return False
-        if float_eq(size1[0], size1[1], 0.1) and float_eq(size1[0], size2[0], 0.1) and float_eq(size2[0], size2[1], 0.1):
-            if not (float_eq(abs(angle1 - angle2), 180, 5) or (float_eq(abs(angle1 - angle2), 90, 5) or float_eq(abs(angle1 - angle2), 270), 5)):
+        if float_eq(
+                size1[0],
+                size1[1],
+                0.1) and float_eq(
+                size1[0],
+                size2[0],
+                0.1) and float_eq(
+                size2[0],
+                size2[1],
+                0.1):
+            if not (float_eq(abs(angle1 - angle2), 180, 5) or (float_eq(abs(angle1 - angle2),
+                    90, 5) or float_eq(abs(angle1 - angle2), 270), 5)):
                 return False
         elif float_eq(size1[0], size2[0], 0.1) and float_eq(size1[1], size2[1], 0.1):
             if not float_eq(abs(angle1 - angle2), 180, 5):
                 return False
         elif float_eq(size1[0], size2[1], 0.1) and float_eq(size1[1], size2[0], 0.1):
-            if not (float_eq(abs(angle1 - angle2), 90, 5) or float_eq(abs(angle1 - angle2), 270), 5):
+            if not (float_eq(abs(angle1 - angle2), 90, 5)
+                    or float_eq(abs(angle1 - angle2), 270), 5):
                 return False
         else:
             return False
         return True
-        
 
     def test_simple_min_area_rect(self):
         op = vision.MinAreaRectOp(self.device)
         print(len(self.contours))
         n_diff = 0
         for contour in self.contours:
-            cv2_rect = cv2.minAreaRect(contour) # tuple(tuple('center'), tuple('size'), 'angle')
+            cv2_rect = cv2.minAreaRect(contour)  # tuple(tuple('center'), tuple('size'), 'angle')
             matx_rect = op(matx.array.from_numpy(contour))
-            if not (self.compare_rect_not_assert(cv2_rect, matx_rect)):# the version of matx opencv may be diff from python opencv's
+            if not (self.compare_rect_not_assert(cv2_rect, matx_rect)
+                    ):  # the version of matx opencv may be diff from python opencv's
                 n_diff += 1
         self.assertLessEqual(n_diff, 150)
 
@@ -111,14 +136,12 @@ class TestMinAreaRectOp(unittest.TestCase):
         print(len(self.contours))
         n_diff = 0
         for contour in self.contours:
-            cv2_rect = cv2.minAreaRect(contour) # tuple(tuple('center'), tuple('size'), 'angle')
+            cv2_rect = cv2.minAreaRect(contour)  # tuple(tuple('center'), tuple('size'), 'angle')
             matx_rect = op(matx.array.from_numpy(contour))
-            if not (self.compare_rect_not_assert(cv2_rect, matx_rect)):# the version of matx opencv may be diff from python opencv's
+            if not (self.compare_rect_not_assert(cv2_rect, matx_rect)
+                    ):  # the version of matx opencv may be diff from python opencv's
                 n_diff += 1
         self.assertLessEqual(n_diff, 150)
-
-        
-
 
 
 if __name__ == "__main__":

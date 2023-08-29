@@ -40,8 +40,6 @@ class TestBoxPointsOp(unittest.TestCase):
         contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         self.rects = [cv2.minAreaRect(c) for c in contours]
 
-        
-
     def test_simple_box_points_rect(self):
         op = vision.BoxPointsOp(self.device)
         for rect in self.rects:
@@ -55,7 +53,6 @@ class TestBoxPointsOp(unittest.TestCase):
             cv2_box = cv2.boxPoints(rect)
             matx_box = op(rect)
             np.testing.assert_almost_equal(cv2_box, matx_box)
-
 
 
 if __name__ == "__main__":
