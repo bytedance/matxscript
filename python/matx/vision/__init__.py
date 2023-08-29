@@ -57,6 +57,9 @@ from .stack_op import StackOp
 from .transpose_op import TransposeOp
 from .warp_affine_op import WarpAffineOp
 from .warp_perspective_op import WarpPerspectiveOp
+from .find_contours_op import FindContoursOp
+from .arc_length import ArcLengthOp
+from .approx_poly_dp import ApproxPolyDPOp
 
 
 from .opencv._cv_defines import *
