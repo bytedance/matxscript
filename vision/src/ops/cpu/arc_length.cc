@@ -40,10 +40,10 @@ class VisionArcLengthOpCPU : VisionBaseOpCPU {
   }
   ~VisionArcLengthOpCPU() = default;
 
-  RTValue process(NDArray curve, bool closed);
+  RTValue process(const NDArray& curve, bool closed);
 };
 
-RTValue VisionArcLengthOpCPU::process(NDArray curve, bool closed) {
+RTValue VisionArcLengthOpCPU::process(const NDArray& curve, bool closed) {
   cv::Mat cv_curve = NDArrayToOpencvMat(curve);
   return cv::arcLength(cv_curve, closed);
 }
