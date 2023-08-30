@@ -57,6 +57,24 @@ class TestFindContoursOp(unittest.TestCase):
         self.contours_eq(matx_contours, cv2_contours)
         self.hierarchy_eq(matx_hierarchy, cv2_hierarchy)
 
+    def test_find_contours_with_offset1(self):
+        cv2_contours, cv2_hierarchy = cv2.findContours(
+            self.thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, offset=(5, 10))
+        find_contours = vision.FindContoursOp(self.device)
+        matx_contours, matx_hierarchy = find_contours(
+            self.thresh_nd, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (5, 10))
+        self.contours_eq(matx_contours, cv2_contours)
+        self.hierarchy_eq(matx_hierarchy, cv2_hierarchy)
+
+    def test_find_contours_with_offset2(self):
+        cv2_contours, cv2_hierarchy = cv2.findContours(
+            self.thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, offset=(-7, 5))
+        find_contours = vision.FindContoursOp(self.device)
+        matx_contours, matx_hierarchy = find_contours(
+            self.thresh_nd, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (-7, 5))
+        self.contours_eq(matx_contours, cv2_contours)
+        self.hierarchy_eq(matx_hierarchy, cv2_hierarchy)
+
     def test_find_contours1(self):
         cv2_contours, cv2_hierarchy = cv2.findContours(
             self.thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -99,6 +117,15 @@ class TestFindContoursOp(unittest.TestCase):
         find_contours = matx.script(vision.FindContoursOp)(self.device)
         matx_contours, matx_hierarchy = find_contours(
             self.thresh_nd, cv2.RETR_TREE, cv2.CHAIN_APPROX_TC89_KCOS)
+        self.contours_eq(matx_contours, cv2_contours)
+        self.hierarchy_eq(matx_hierarchy, cv2_hierarchy)
+
+    def test_scripted_find_contours(self):
+        cv2_contours, cv2_hierarchy = cv2.findContours(
+            self.thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, offset=(5, 10))
+        find_contours = matx.script(vision.FindContoursOp)(self.device)
+        matx_contours, matx_hierarchy = find_contours(
+            self.thresh_nd, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE, (5, 10))
         self.contours_eq(matx_contours, cv2_contours)
         self.hierarchy_eq(matx_hierarchy, cv2_hierarchy)
 

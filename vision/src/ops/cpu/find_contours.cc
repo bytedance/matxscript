@@ -41,17 +41,16 @@ class VisionFindContoursOpCPU : VisionBaseOpCPU {
   }
   ~VisionFindContoursOpCPU() = default;
 
-  RTValue process(
-      const NDArray& image, int mode, int method, double offset_x = 0, double offset_y = 0);
+  RTValue process(const NDArray& image, int mode, int method, int offset_x = 0, int offset_y = 0);
 };
 
 RTValue VisionFindContoursOpCPU::process(
-    const NDArray& image, int mode, int method, double offset_x, double offset_y) {
+    const NDArray& image, int mode, int method, int offset_x, int offset_y) {
   cv::Mat&& image_mat = NDArrayToOpencvMat(image);
   std::vector<cv::Mat> contours;
   cv::Mat hierarchy;
   cv::Point offset(offset_x, offset_y);
-  cv::findContours(image_mat, contours, hierarchy, mode, method);
+  cv::findContours(image_mat, contours, hierarchy, mode, method, offset);
   NDArray&& hierarchy_nd = OpencvMatToNDArray(hierarchy);
   List contour_nds;
   contour_nds.reserve(contours.size());
@@ -82,8 +81,8 @@ MATX_REGISTER_NATIVE_OBJECT(VisionFindContoursOpCPU)
           args[0].AsObjectView<NDArray>().data(),
           args[1].As<int>(),
           args[2].As<int>(),
-          args[3].As<double>(),
-          args[4].As<double>());
+          args[3].As<int>(),
+          args[4].As<int>());
     });
 
 MATX_REGISTER_NATIVE_OBJECT(VisionFindContoursGeneralOp)
