@@ -58,10 +58,10 @@ from .transpose_op import TransposeOp
 from .warp_affine_op import WarpAffineOp
 from .warp_perspective_op import WarpPerspectiveOp
 from .find_contours_op import FindContoursOp
-from .arc_length import ArcLengthOp
-from .approx_poly_dp import ApproxPolyDPOp
-from .box_points import BoxPointsOp
-from .min_area_rect import MinAreaRectOp
+from .arc_length_op import ArcLengthOp
+from .approx_poly_dp_op import ApproxPolyDPOp
+from .box_points_op import BoxPointsOp
+from .min_area_rect_op import MinAreaRectOp
 
 from .opencv._cv_defines import *
 from .opencv._cv_interpolation_flags import *
