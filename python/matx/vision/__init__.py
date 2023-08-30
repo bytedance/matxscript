@@ -62,6 +62,7 @@ from .arc_length_op import ArcLengthOp
 from .approx_poly_dp_op import ApproxPolyDPOp
 from .box_points_op import BoxPointsOp
 from .min_area_rect_op import MinAreaRectOp
+from .fill_poly_op import FillPolyOp
 
 from .opencv._cv_defines import *
 from .opencv._cv_interpolation_flags import *
