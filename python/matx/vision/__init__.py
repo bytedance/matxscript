@@ -57,7 +57,13 @@ from .stack_op import StackOp
 from .transpose_op import TransposeOp
 from .warp_affine_op import WarpAffineOp
 from .warp_perspective_op import WarpPerspectiveOp
-
+from .find_contours_op import FindContoursOp
+from .arc_length_op import ArcLengthOp
+from .approx_poly_dp_op import ApproxPolyDPOp
+from .box_points_op import BoxPointsOp
+from .min_area_rect_op import MinAreaRectOp
+from .fill_poly_op import FillPolyOp
+from .estimate_affine_partial_2d_op import EstimateAffinePartial2DOp
 
 from .opencv._cv_defines import *
 from .opencv._cv_interpolation_flags import *

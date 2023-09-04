@@ -56,7 +56,7 @@ class ImencodeOp:
 
         Args:
             device (matx.Device): device used for the operation
-            fmt (str): the color type for output image, support "RGB" and "BGR"
+            fmt (str): the color type for input image, support "RGB" and "BGR"
             quality (int): the jpeg quality, valid between [1, 100]. 100 means no loss.
             optimized_Huffman (bool): boolean value that control if optimized huffman tree is used.
                                       Enabling it usually means slower encoding but smaller binary size.
