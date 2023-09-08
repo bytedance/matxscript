@@ -18,5 +18,4 @@
 #  under the License.
 
 
-def render(parser: 'KernelParser', lib_path: str) -> str:
-    return ''
+from .matx_api import render_matx_api_code

@@ -17,18 +17,24 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-import matx
-from typing import Any
+from matx.pipeline.jit_object import JitObject, JitOpImpl, FuncMeta
 
 
-class KernelFunction:
+def get_kernel_func(dso_path: str, func_name: str, file_name: str, lineno: int) -> JitOpImpl:
+    dso_path_cxx11 = ""
+    meta_info = FuncMeta(func_name, False, [], [])
+    function_mapping = {func_name: func_name}
+    share = False
+    captures = []
 
-    def __init__(self, function_name: str) -> None:
-        self.op: matx.native.NativeFunction = matx.make_native_function(function_name)
-
-    def __call__(self, *args: Any) -> Any:
-        return self.op(*args)
-
-
-def get_kernel_func(function_name: str) -> matx.native.NativeFunction:
-    return matx.make_native_function(function_name)
+    jit_obj = JitObject(
+        dso_path=dso_path,
+        dso_path_cxx11=dso_path_cxx11,
+        meta_info=meta_info,
+        function_mapping=function_mapping,
+        share=share,
+        captures=captures,
+        py_source_file=file_name.encode(),
+        py_source_line=lineno,
+    )
+    return JitOpImpl(func_name, jit_obj)

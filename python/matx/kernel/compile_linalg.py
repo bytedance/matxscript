@@ -24,9 +24,7 @@ import subprocess
 import time
 from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 from matx.kernel.kernel_parser import KernelParser
-from matx.kernel.codegen.cpp_template.function_meta_data import get_codegen_data
-
-interface_lib = set()
+from matx.kernel.codegen.cpp_template import render_matx_api_code
 
 from matx._ffi.libinfo import find_lib_path
 
@@ -139,14 +137,14 @@ def llvm_compile(input_fname, output_fname="llvm_tmp.ll"):
 
 def generate_matx_c_interface(parser, file_name, shard_lib_path):
     env = os.environ.copy()
-    c_interface_code = get_codegen_data(
+    c_interface_code, meta_data = render_matx_api_code(
         parser, os.path.join(
             os.path.abspath(
                 os.curdir), shard_lib_path))
     shard_lib_dir = os.path.abspath(os.path.dirname(shard_lib_path))
     file_path = os.path.join(shard_lib_dir, f"{file_name}_c_interface.cpp")
     with open(file_path, "w+") as f:
-        f.write(c_interface_code.code())
+        f.write(c_interface_code)
 
     include_dir = pathlib.Path(os.path.abspath(
         __file__)).parent.parent.parent.parent.joinpath("include")
@@ -193,13 +191,13 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
     print(output_so)
     print(os.path.abspath('.'))
     print([f for f in os.listdir('.')])
-    LIB = ctypes.CDLL(output_so, ctypes.RTLD_LOCAL)
-    interface_lib.add(LIB)
 
     from .matx_compatible_interface import get_kernel_func
-    func_name = "_" + str(c_interface_code.unique_id) + "_" + \
-                c_interface_code.func_name + "__matx_c_api_"
-    return get_kernel_func(func_name)
+    return get_kernel_func(
+        output_so,
+        meta_data.python_func_name,
+        meta_data.file_name,
+        meta_data.line_no)
 
 
 def compile_linalg(

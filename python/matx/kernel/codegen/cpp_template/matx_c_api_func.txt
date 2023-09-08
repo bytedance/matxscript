@@ -7,12 +7,12 @@ int {{c_api_func_name}}(MATXScriptAny* args, int num_args, MATXScriptAny* out_re
     KwargsUnpackHelper helper("{{py_func_name}}", arg_names, {{arg_len}}, nullptr, 0);
     RTView pos_args[{{arg_len}}];
     helper.unpack(pos_args, args, num_args);
-    auto ret = {{matx_func_name}}({{func_cvt_code}});
+    auto ret = {{matx_func_name}}({{pos_args_cvt_code}});
     RTValue(std::move(ret)).MoveToCHost(out_ret_value);
   } else {
     switch(num_args) {
       case {{arg_len}}: {
-        auto ret = {{matx_func_name}}({{func_cvt_code}});
+        auto ret = {{matx_func_name}}({{args_t_cvt_code}});
         RTValue(std::move(ret)).MoveToCHost(out_ret_value);
       } break;
       default: {THROW_PY_TypeError(

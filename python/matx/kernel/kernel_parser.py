@@ -33,6 +33,7 @@ class KernelParser:
         self.func = func
         self.func_name = func.__name__
         self.file_name = inspect.getfile(func)
+        self.line_no = inspect.getsourcelines(func)[1]
         # get args
         self.signature = inspect.signature(func)
         if args_types is None:
@@ -41,7 +42,6 @@ class KernelParser:
         else:
             self.args = {k: ann for k, ann in zip(self.signature.parameters.keys(), args_types)}
             self.arg_types = args_types
-
 
         # get return type
         self.return_types = self.signature.return_annotation

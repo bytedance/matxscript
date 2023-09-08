@@ -1,11 +1,11 @@
 using _mlir_func_type = {{mlir_func_type}};
 
-MATX_DLL auto {{matx_func_name}}({arg_type_and_name}}) {
+MATX_DLL auto {{matx_func_name}}({{arg_type_and_name}}) {
   static void * func_ptr = load_func("{{mlir_func_name}}", "{{lib_path}}");
   static auto casted_func_ptr = reinterpret_cast<_mlir_func_type>(func_ptr);
   //convert input types
-  {{type_cvt_code_list | join("\n    ")}}
+  {{type_cvt_code_list | join("\n  ")}}
 
   // call funtion
-  {{call_func_code_list | join(\n    ")}}}
+  {{call_func_code_list | join("\n  ")}}
 }

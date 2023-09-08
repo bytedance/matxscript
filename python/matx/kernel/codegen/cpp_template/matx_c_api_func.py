@@ -28,7 +28,8 @@ class MatxCAPIFuncCodegen:
 
     def __init__(self, meta_data: MatxInterfaceCodegenMetaData) -> None:
         self.meta_data = meta_data
-        self.arg_cvt_code = []
+        self.pos_args_cvt_code = []
+        self.args_t_cvt_code = []
         self.gen_cvt_code()
 
     def func_declaration(self) -> str:
@@ -36,16 +37,28 @@ class MatxCAPIFuncCodegen:
 
     def gen_cvt_code(self):
         arg_cvt_template = JINJA2_ENV.get_template('matx_c_api_func_arg_cvt.txt')
-        for arg_idx, arg_type in enumerate(self.meta_data.matx_arg_types):
-            rd = arg_cvt_template.render(
+        for arg_idx, arg_type in enumerate(self.meta_data.arg_types):
+            pos_rd = arg_cvt_template.render(
+                arg_name="pos_args",
                 arg_type=arg_type,
                 arg_idx=arg_idx,
                 file_name=self.meta_data.file_name,
                 line_no=self.meta_data.line_no,
                 python_func_name=self.meta_data.python_func_name
             )
-            self.arg_cvt_code.append(rd)
-        self.arg_cvt_code.append("resource_handle")
+            args_rd = arg_cvt_template.render(
+                arg_name="args_t",
+                arg_type=arg_type,
+                arg_idx=arg_idx,
+                file_name=self.meta_data.file_name,
+                line_no=self.meta_data.line_no,
+                python_func_name=self.meta_data.python_func_name
+            )
+
+            self.pos_args_cvt_code.append(pos_rd)
+            self.args_t_cvt_code.append(args_rd)
+        self.pos_args_cvt_code.append("resource_handle")
+        self.args_t_cvt_code.append("resource_handle")
 
     def func_definition(self) -> str:
         func_definition_template = JINJA2_ENV.get_template('matx_c_api_func.txt')
@@ -55,7 +68,8 @@ class MatxCAPIFuncCodegen:
             arg_name_str=", ".join([f'"{a}"' for a in self.meta_data.arg_names]),
             matx_func_name=self.meta_data.matx_func_name,
             py_func_name=self.meta_data.python_func_name,
-            func_cvt_code=", ".join(self.arg_cvt_code),
+            pos_args_cvt_code=", ".join(self.pos_args_cvt_code),
+            args_t_cvt_code=", ".join(self.args_t_cvt_code),
             file_name=self.meta_data.file_name,
             line_no=self.meta_data.line_no,
         )

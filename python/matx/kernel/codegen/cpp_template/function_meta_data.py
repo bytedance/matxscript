@@ -74,7 +74,7 @@ class CInterfaceCodegenData:
                                       return_ndim=self.return_ndim,
                                       return_dtype=self.return_dtype,
                                       input_types=self.input_types,
-                                      input_args = self.input_args,
+                                      input_args=self.input_args,
                                       lib_path=self.lib_path,
                                       func_return_kind=self.func_return_kind,
                                       debug=self.debug)
