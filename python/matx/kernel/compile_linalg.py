@@ -77,9 +77,9 @@ def lower_linalg_to_cpu(input_fname, output_fname="llvm_tmp.mlir"):
                              stderr=subprocess.PIPE)
     stdout, stderr = lower.communicate()
     print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
+    print(stderr.decode())
+    if lower.returncode != 0:
+        raise RuntimeError("\n" + f"Command failed with exit code {lower.returncode}")
     return output_fname
 
 
@@ -95,9 +95,9 @@ def translate_to_llvm(input_fname, output_fname="llvm_tmp.ll"):
                                stderr=subprocess.PIPE)
     stdout, stderr = to_llvm.communicate()
     print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
+    print(stderr.decode())
+    if to_llvm.returncode != 0:
+        raise RuntimeError("\n" + f"Command failed with exit code {to_llvm.returncode}")
     return output_fname
 
 
@@ -114,9 +114,9 @@ def llvm_compile(input_fname, output_fname="llvm_tmp.ll.o"):
                                     stderr=subprocess.PIPE)
     stdout, stderr = compile_llvm.communicate()
     print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
+    print(stderr.decode())
+    if compile_llvm.returncode != 0:
+        raise RuntimeError("\n" + f"Command failed with exit code {compile_llvm.returncode}")
     return output_fname
 
 
@@ -145,9 +145,9 @@ def generate_matx_c_interface(parser, file_name, mlir_object_file):
 
     stdout, stderr = compile_c_interface.communicate()
     print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
+    print(stderr.decode())
+    if compile_c_interface.returncode != 0:
+        raise RuntimeError("\n" + f"Command failed with exit code {compile_c_interface.returncode}")
 
     # gcc -shared -o libexample.so file1.o file2.o
     output_so = os.path.join(shard_lib_dir, f"{file_name}_c_interface.so")
@@ -165,9 +165,9 @@ def generate_matx_c_interface(parser, file_name, mlir_object_file):
 
     stdout, stderr = compile_c_interface.communicate()
     print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
+    print(stderr.decode())
+    if compile_c_interface.returncode != 0:
+        raise RuntimeError("\n" + f"Command failed with exit code {compile_c_interface.returncode}")
 
     print(output_so)
     print(os.path.abspath('.'))
