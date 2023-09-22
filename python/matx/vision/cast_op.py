@@ -64,7 +64,7 @@ class CastOp:
         """ Cast image data type to target type. Could apply factor scale and shift at the same time.
 
         Args:
-            images (List[matx.runtime.NDArray]) : target images.
+            images (matx.runtime.NDArray) : target images.
             dtype (str) : target data type that want to convert to, e.g. uint8, float32, etc.
             alpha (float, optional) : scale factor when casting the data type, e.g. cast image from uint8 to float32,
                                       if want to change the value range from [0, 255] to [0, 1], alpha can be set as 1.0/255.
