@@ -51,5 +51,5 @@ class FindContoursOp:
         self.op_impl: _FindContoursOpImpl = matx.script(_FindContoursOpImpl)(device=device)
 
     def __call__(self, image: matx.runtime.NDArray, mode: int, method: int, offset: Tuple[int, int] = (
-            0, 0)) -> Tuple[Tuple[matx.runtime.NDArray], matx.runtime.NDArray]:
+            0, 0)) -> Tuple[List[matx.runtime.NDArray], matx.runtime.NDArray]:
         return self.op_impl(image, mode, method, offset[0], offset[1])
