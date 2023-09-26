@@ -34,7 +34,7 @@ class _FindContoursOpImpl:
             "VisionFindContoursGeneralOp", device())
 
     def __call__(self, image: matx.runtime.NDArray, mode: int, method: int, offset_x: int,
-                 offset_y: int) -> Tuple[Tuple[matx.runtime.NDArray], matx.runtime.NDArray]:
+                 offset_y: int) -> Tuple[List[matx.runtime.NDArray], matx.runtime.NDArray]:
         return self.op.process(image, mode, method, offset_x, offset_y)
 
 
