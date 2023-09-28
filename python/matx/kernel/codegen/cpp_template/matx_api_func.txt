@@ -1,0 +1,8 @@
+
+MATX_DLL auto {{matx_func_name}}({{arg_type_and_name}}) {
+  //convert input types
+  {{type_cvt_code_list | join("\n  ")}}
+
+  // call funtion
+  {{call_func_code_list | join("\n  ")}}
+}

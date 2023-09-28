@@ -1,0 +1,1 @@
+internal::TypeAsHelper<{{arg_type}}>::run(({{arg_name}}[{{arg_idx}}]), __FILE__, __LINE__, "File \"{{file_name}}\", line {{line_no}}, in {{python_func_name}}\n", "expect '{{arg_name}}[{{arg_idx}}]' is '{{arg_type}}' type")

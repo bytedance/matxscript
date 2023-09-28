@@ -17,24 +17,5 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-from matx.pipeline.jit_object import JitObject, JitOpImpl, FuncMeta
 
-
-def get_kernel_func(dso_path: str, func_name: str, file_name: str, lineno: int) -> JitOpImpl:
-    dso_path_cxx11 = ""
-    meta_info = FuncMeta(func_name, False, [], [])
-    function_mapping = {func_name: func_name}
-    share = False
-    captures = []
-
-    jit_obj = JitObject(
-        dso_path=dso_path,
-        dso_path_cxx11=dso_path_cxx11,
-        meta_info=meta_info,
-        function_mapping=function_mapping,
-        share=share,
-        captures=captures,
-        py_source_file=file_name.encode(),
-        py_source_line=lineno,
-    )
-    return JitOpImpl(func_name, jit_obj)
+from .matx_api import render_matx_api_code

@@ -77,7 +77,7 @@ struct TypeAsHelper {
       return v.template As<TO_TYPE>();
     }
     bool state = v.template Is<TO_TYPE>();
-    if (std::is_same<double, TO_TYPE>::value) {
+    if (std::is_same<double, TO_TYPE>::value || std::is_floating_point<TO_TYPE>::value) {
       state |= v.template Is<int64_t>();
     }
     if (!state) {

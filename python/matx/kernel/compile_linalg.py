@@ -24,9 +24,7 @@ import subprocess
 import time
 from matx.kernel.codegen.graph_ir_printer import GraphIRPrinter
 from matx.kernel.kernel_parser import KernelParser
-from matx.kernel.codegen.cpp_template.function_meta_data import from_kernel_parser
-
-interface_lib = set()
+from matx.kernel.codegen.cpp_template import render_matx_api_code
 
 from matx._ffi.libinfo import find_lib_path
 
@@ -79,9 +77,9 @@ def lower_linalg_to_cpu(input_fname, output_fname="llvm_tmp.mlir"):
                              stderr=subprocess.PIPE)
     stdout, stderr = lower.communicate()
     print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
+    print(stderr.decode())
+    if lower.returncode != 0:
+        raise RuntimeError("\n" + f"Command failed with exit code {lower.returncode}")
     return output_fname
 
 
@@ -97,56 +95,38 @@ def translate_to_llvm(input_fname, output_fname="llvm_tmp.ll"):
                                stderr=subprocess.PIPE)
     stdout, stderr = to_llvm.communicate()
     print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
+    print(stderr.decode())
+    if to_llvm.returncode != 0:
+        raise RuntimeError("\n" + f"Command failed with exit code {to_llvm.returncode}")
     return output_fname
 
 
-def llvm_compile(input_fname, output_fname="llvm_tmp.ll"):
+def llvm_compile(input_fname, output_fname="llvm_tmp.ll.o"):
     env = os.environ.copy()
     compile_llvm = subprocess.Popen(["llc",
                                      "-O3",
                                      "-filetype=obj",
                                      input_fname,
                                      "-o",
-                                     input_fname + ".o"],
+                                     output_fname],
                                     env=env,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
     stdout, stderr = compile_llvm.communicate()
     print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
-
-    compile_llvm = subprocess.Popen(["g++",
-                                     "-shared",
-                                     "-fPIC",
-                                     "-o",
-                                     output_fname,
-                                     input_fname + ".o"],
-                                    env=env,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-    stdout, stderr = compile_llvm.communicate()
-    print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
+    print(stderr.decode())
+    if compile_llvm.returncode != 0:
+        raise RuntimeError("\n" + f"Command failed with exit code {compile_llvm.returncode}")
     return output_fname
 
 
-def generate_matx_c_interface(parser, file_name, shard_lib_path):
+def generate_matx_c_interface(parser, file_name, mlir_object_file):
     env = os.environ.copy()
-    c_interface_code = from_kernel_parser(
-        parser, os.path.join(
-            os.path.abspath(
-                os.curdir), shard_lib_path))
-    shard_lib_dir = os.path.abspath(os.path.dirname(shard_lib_path))
+    c_interface_code, meta_data = render_matx_api_code(parser)
+    shard_lib_dir = os.path.abspath(os.path.dirname(mlir_object_file))
     file_path = os.path.join(shard_lib_dir, f"{file_name}_c_interface.cpp")
     with open(file_path, "w+") as f:
-        f.write(c_interface_code.code())
+        f.write(c_interface_code)
 
     include_dir = pathlib.Path(os.path.abspath(
         __file__)).parent.parent.parent.parent.joinpath("include")
@@ -155,7 +135,6 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
     # gcc -fPIC -I/matxscript/include -std=c++14 file1.c
     compile_c_interface = subprocess.Popen(["g++",
                                             "-fPIC",
-                                            "-g",
                                             f"-I{include_dir}",
                                             "-std=c++14",
                                             "-c",
@@ -166,18 +145,18 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
 
     stdout, stderr = compile_c_interface.communicate()
     print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
+    print(stderr.decode())
+    if compile_c_interface.returncode != 0:
+        raise RuntimeError("\n" + f"Command failed with exit code {compile_c_interface.returncode}")
 
     # gcc -shared -o libexample.so file1.o file2.o
     output_so = os.path.join(shard_lib_dir, f"{file_name}_c_interface.so")
     compile_c_interface = subprocess.Popen(["g++",
-                                            "-g",
                                             "-shared",
                                             "-o",
-                                            f"{output_so}",
+                                            output_so,
                                             output_file,
+                                            mlir_object_file,
                                             f"-L{matx_lib_path}",
                                             "-lmatx"],
                                            env=env,
@@ -186,20 +165,20 @@ def generate_matx_c_interface(parser, file_name, shard_lib_path):
 
     stdout, stderr = compile_c_interface.communicate()
     print(stdout.decode())
-    err = stderr.decode()
-    if len(err) != 0:
-        raise RuntimeError("\n" + err)
+    print(stderr.decode())
+    if compile_c_interface.returncode != 0:
+        raise RuntimeError("\n" + f"Command failed with exit code {compile_c_interface.returncode}")
 
     print(output_so)
     print(os.path.abspath('.'))
     print([f for f in os.listdir('.')])
-    LIB = ctypes.CDLL(output_so, ctypes.RTLD_LOCAL)
-    interface_lib.add(LIB)
 
     from .matx_compatible_interface import get_kernel_func
-    func_name = "_" + str(c_interface_code.unique_id) + "_" + \
-                c_interface_code.func_name + "__matx_c_api_"
-    return get_kernel_func(func_name)
+    return get_kernel_func(
+        output_so,
+        meta_data.python_func_name,
+        meta_data.file_name,
+        meta_data.line_no)
 
 
 def compile_linalg(
@@ -225,9 +204,9 @@ def compile_linalg(
         # lower mlir to llvm
         llvm_f = translate_to_llvm(lowered_f, "llvm_" + file_name + ".ll")
         # compile llvm code to shared library
-        shared_lib = llvm_compile(llvm_f, file_name + ".so")
+        mlir_object_file = llvm_compile(llvm_f, file_name + ".o")
         # codegen the c inter face that is compatible with matx
-        matx_c_interface = generate_matx_c_interface(parser, file_name, shared_lib)
+        matx_c_interface = generate_matx_c_interface(parser, file_name, mlir_object_file)
         return matx_c_interface
     except Exception as e:
         raise e

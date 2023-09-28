@@ -45,13 +45,14 @@ class CInterfaceCodegenData:
     return_ndim: int
     return_dtype: str
     input_types: List[str]
+    input_args: List[str]
     lib_path: str
     func_return_kind: 'FuncReturnKind'
     free_return: bool
     debug: bool
 
     def __init__(self, unique_id: int, func_name: str, return_type: str, return_ndim: int,
-                 return_dtype: str, input_types: List[str], lib_path: str,
+                 return_dtype: str, input_types: List[str], input_args: List[str], lib_path: str,
                  func_return_kind: 'FuncReturnKind', debug: bool = False):
         self.env = jinja2.Environment(loader=jinja2.FileSystemLoader(TEMPLATE_DIR))
         self.template = self.env.get_template('cpp_header.txt')
@@ -61,6 +62,7 @@ class CInterfaceCodegenData:
         self.return_ndim = return_ndim
         self.return_dtype = return_dtype
         self.input_types = input_types
+        self.input_args = input_args
         self.lib_path = lib_path
         self.func_return_kind = func_return_kind
         self.debug = DEBUG or debug
@@ -72,6 +74,7 @@ class CInterfaceCodegenData:
                                       return_ndim=self.return_ndim,
                                       return_dtype=self.return_dtype,
                                       input_types=self.input_types,
+                                      input_args=self.input_args,
                                       lib_path=self.lib_path,
                                       func_return_kind=self.func_return_kind,
                                       debug=self.debug)
@@ -114,13 +117,14 @@ def cvt_to_cpp_type_str(t):
         raise SyntaxError(f"Unsupported type {t}")
 
 
-def from_kernel_parser(parser: 'KernelParser', lib_path: str) -> CInterfaceCodegenData:
+def get_codegen_data(parser: 'KernelParser', lib_path: str) -> CInterfaceCodegenData:
     nanoseconds = int(time.time() * 1e9)
     unique_id: int = int(nanoseconds / 100) + 0x01b21dd213814000
     func_name: str = parser.func_name
     return_ndim: int = len(parser.graph.return_shape)
     return_dtype: str = parser.graph.return_dtype_str
     input_types: List[str] = [cvt_to_cpp_type_str(t) for t in parser.arg_types]
+    input_args: List[str] = [k for k in parser.args.keys()]
     func_return_kind: 'FuncReturnKind' = parser.graph.func_return_kind
     if func_return_kind.is_void():
         return_type: str = "void"
@@ -131,4 +135,4 @@ def from_kernel_parser(parser: 'KernelParser', lib_path: str) -> CInterfaceCodeg
     else:
         raise SyntaxError(f"Unsupported return type {func_return_kind}")
     return CInterfaceCodegenData(unique_id, func_name, return_type, return_ndim,
-                                 return_dtype, input_types, lib_path, func_return_kind)
+                                 return_dtype, input_types, input_args, lib_path, func_return_kind)
