@@ -1109,7 +1109,7 @@ static String format_float_short(double d,
   /* Now that we've done zero padding, add an exponent if needed. */
   if (use_exp) {
     *p++ = float_strings[OFS_E][0];
-    exp_len = sprintf(p, "%+.02d", exp);
+    exp_len = snprintf(p, bufsize - (p - buf), "%+.02d", exp);
     p += exp_len;
   }
 exit:

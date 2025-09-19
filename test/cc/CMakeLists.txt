@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.5)
 
 # include path
 INCLUDE_DIRECTORIES(/usr/local/include)

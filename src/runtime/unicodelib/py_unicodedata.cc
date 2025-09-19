@@ -862,7 +862,7 @@ _getucname(UnicodeDataPreviousDBVersion *self, Py_UCS4 code, char* buffer, int b
         if (buflen < 28)
             /* Worst case: CJK UNIFIED IDEOGRAPH-20000 */
             return 0;
-        sprintf(buffer, "CJK UNIFIED IDEOGRAPH-%X", code);
+        snprintf(buffer, buflen, "CJK UNIFIED IDEOGRAPH-%X", code);
         return 1;
     }
 

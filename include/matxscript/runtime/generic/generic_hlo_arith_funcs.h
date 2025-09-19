@@ -124,10 +124,10 @@ struct ArithOps {
     List result;
     result.reserve((lhs_e - lhs_b) + (rhs_e - rhs_b));
     for (auto itr = lhs_b; itr != lhs_e; ++itr) {
-      result.template append(*itr);
+      result.append(*itr);
     }
     for (auto itr = rhs_b; itr != rhs_e; ++itr) {
-      result.template append(*itr);
+      result.append(*itr);
     }
     return result;
   }

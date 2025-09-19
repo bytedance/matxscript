@@ -319,7 +319,7 @@ class MATX_DLL FTList : public FTObjectBase {
 
   template <class... Args>
   MATXSCRIPT_INLINE_VISIBILITY auto emplace_back(Args&&... args) const {
-    return MutableImpl().template emplace_back(std::forward<Args>(args)...);
+    return MutableImpl().emplace_back(std::forward<Args>(args)...);
   }
 
   MATXSCRIPT_INLINE_VISIBILITY void reserve(int64_t new_size) const {

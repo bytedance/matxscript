@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.5)
 project(matxscript)
 
 SET(CMAKE_LOCAL "${PROJECT_SOURCE_DIR}/cmake")
